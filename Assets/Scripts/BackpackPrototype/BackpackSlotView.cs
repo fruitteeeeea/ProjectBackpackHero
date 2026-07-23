@@ -1,0 +1,86 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace BackpackPrototype
+{
+    public sealed class BackpackSlotView : MonoBehaviour
+    {
+        [Header("Slot Data")]
+        [SerializeField]
+        private Vector2Int cell;
+
+        [Header("References")]
+        [SerializeField]
+        private Image background;
+
+        [SerializeField]
+        private Text label;
+
+        [Header("Preview Colors")]
+        [SerializeField]
+        private Color defaultColor = Color.white;
+
+        [SerializeField]
+        private Color legalPreviewColor =
+            new Color(0.95f, 0.78f, 0.18f, 1f);
+
+        [SerializeField]
+        private Color illegalPreviewColor =
+            new Color(0.86f, 0.22f, 0.18f, 1f);
+
+        public Vector2Int Cell => cell;
+
+        private void Awake()
+        {
+            CacheBackground();
+            ClearPreview();
+        }
+
+        public void Initialize(Vector2Int slotCell)
+        {
+            cell = slotCell;
+
+            CacheBackground();
+            ClearPreview();
+
+            if (label != null)
+            {
+                label.text = $"({cell.x},{cell.y})";
+            }
+        }
+
+        public void SetPreview(bool canPlace)
+        {
+            CacheBackground();
+
+            if (background == null)
+            {
+                return;
+            }
+
+            background.color = canPlace
+                ? legalPreviewColor
+                : illegalPreviewColor;
+        }
+
+        public void ClearPreview()
+        {
+            CacheBackground();
+
+            if (background == null)
+            {
+                return;
+            }
+
+            background.color = defaultColor;
+        }
+
+        private void CacheBackground()
+        {
+            if (background == null)
+            {
+                background = GetComponent<Image>();
+            }
+        }
+    }
+}

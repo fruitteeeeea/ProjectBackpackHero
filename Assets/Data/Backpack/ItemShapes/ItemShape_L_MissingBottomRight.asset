@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b898854d58d848c4aa05c23ce1e5396, type: 3}
+  m_Name: ItemShape_L_MissingBottomRight
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemShapeData
+  itemName: L Missing Bottom Right
+  icon: {fileID: 1578180853955948841, guid: bc0461c4e20ed436d98059193f203e24, type: 3}
+  shapeOffsets:
+  - {x: 0, y: 0}
+  - {x: 1, y: 0}
+  - {x: 0, y: 1}

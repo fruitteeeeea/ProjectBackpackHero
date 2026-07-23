@@ -1,0 +1,117 @@
+using UnityEngine;
+
+namespace BackpackHero.Battle
+{
+    /// <summary>
+    /// 表示能够造成伤害的2D碰撞区域。
+    /// 当前主要用于子弹。
+    /// </summary>
+    [RequireComponent(typeof(Collider2D))]
+    [RequireComponent(typeof(FactionMember))]
+    public sealed class HitBox2D : MonoBehaviour
+    {
+        [Header("Damage")]
+        [SerializeField, Min(0f)]
+        private float damage = 1f;
+
+        private FactionMember factionMember;
+        private bool hasHitTarget;
+
+        public float Damage =>
+            damage;
+
+        public BattleFaction Faction =>
+            factionMember != null
+                ? factionMember.Faction
+                : BattleFaction.Player;
+
+        private void Awake()
+        {
+            factionMember =
+                GetComponent<FactionMember>();
+        }
+
+        private void OnEnable()
+        {
+            hasHitTarget = false;
+        }
+
+        /// <summary>
+        /// 子弹生成后调用，设置发射阵营和伤害。
+        /// </summary>
+        public void Initialize(
+            BattleFaction faction,
+            float newDamage)
+        {
+            if (factionMember == null)
+            {
+                factionMember =
+                    GetComponent<FactionMember>();
+            }
+
+            factionMember.SetFaction(faction);
+            damage = Mathf.Max(0f, newDamage);
+
+            ConfigureLayer(faction);
+            hasHitTarget = false;
+        }
+
+        private void ConfigureLayer(
+            BattleFaction faction)
+        {
+            int layer =
+                BattlePhysicsLayers.GetHitBoxLayer(
+                    faction);
+
+            if (layer >= 0)
+            {
+                gameObject.layer = layer;
+            }
+        }
+
+        private void OnTriggerEnter2D(
+            Collider2D other)
+        {
+            if (hasHitTarget)
+            {
+                return;
+            }
+
+            HurtBox2D hurtBox =
+                other.GetComponent<HurtBox2D>();
+
+            if (hurtBox == null)
+            {
+                return;
+            }
+
+            bool causedDamage =
+                hurtBox.ReceiveHit(
+                    damage,
+                    Faction);
+
+            if (!causedDamage)
+            {
+                return;
+            }
+
+            hasHitTarget = true;
+            Destroy(gameObject);
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            damage = Mathf.Max(0f, damage);
+
+            Collider2D hitCollider =
+                GetComponent<Collider2D>();
+
+            if (hitCollider != null)
+            {
+                hitCollider.isTrigger = true;
+            }
+        }
+#endif
+    }
+}

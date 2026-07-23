@@ -1,0 +1,171 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace BackpackPrototype
+{
+    public readonly struct PlacementPreview
+    {
+        public PlacementPreview(bool isLegal, IReadOnlyList<Vector2Int> visibleCells)
+        {
+            IsLegal = isLegal;
+            VisibleCells = visibleCells;
+        }
+
+        public bool IsLegal { get; }
+        public IReadOnlyList<Vector2Int> VisibleCells { get; }
+    }
+
+    public sealed class BackpackGridView : MonoBehaviour
+    {
+        [SerializeField] private RectTransform gridRect;
+        [SerializeField] private Vector2 cellSize = new(80f, 80f);
+        [SerializeField] private Vector2 spacing = new(8f, 8f);
+
+        [SerializeField, Min(1)]
+        private int columns = 7;
+
+        [SerializeField, Min(1)]
+        private int rows = 4;
+
+        [SerializeField]
+        private List<BackpackSlotView> slots = new();
+
+        public RectTransform GridRect => gridRect;
+        public Vector2 CellSize => cellSize;
+        public Vector2 Spacing => spacing;
+        public int Columns => columns;
+        public int Rows => rows;
+        public IReadOnlyList<BackpackSlotView> Slots => slots;
+
+        private void Awake()
+        {
+            if (gridRect == null)
+            {
+                gridRect = (RectTransform)transform;
+            }
+        }
+
+        public void Initialize(RectTransform rect, Vector2 slotSize, Vector2 slotSpacing, IReadOnlyList<BackpackSlotView> slotViews)
+        {
+            gridRect = rect;
+            cellSize = slotSize;
+            spacing = slotSpacing;
+            slots = new List<BackpackSlotView>(slotViews);
+        }
+
+        public bool TryGetCellAtScreenPosition(Vector2 screenPosition, Camera eventCamera, out Vector2Int cell)
+        {
+            cell = default;
+
+            if (gridRect == null ||
+                !RectTransformUtility.ScreenPointToLocalPointInRectangle(gridRect, screenPosition, eventCamera, out var localPoint))
+            {
+                return false;
+            }
+
+            var rect = gridRect.rect;
+            var fromTopLeft = new Vector2(localPoint.x - rect.xMin, rect.yMax - localPoint.y);
+            var stepX = cellSize.x + spacing.x;
+            var stepY = cellSize.y + spacing.y;
+
+            if (fromTopLeft.x < 0f || fromTopLeft.y < 0f)
+            {
+                return false;
+            }
+
+            var x = Mathf.FloorToInt(fromTopLeft.x / stepX);
+            var y = Mathf.FloorToInt(fromTopLeft.y / stepY);
+            var inCellX = fromTopLeft.x - x * stepX;
+            var inCellY = fromTopLeft.y - y * stepY;
+
+            if (x < 0 ||
+                x >= columns ||
+                y < 0 ||
+                y >= rows ||
+                inCellX > cellSize.x ||
+                inCellY > cellSize.y)
+            {
+                return false;
+            }
+
+            cell = new Vector2Int(x, y);
+            return true;
+        }
+
+        public void ShowPlacementPreview(
+            BackpackController backpack,
+            ItemInstance item,
+            Vector2Int anchorCell,
+            ItemInstance ignoreItem = null)
+        {
+            ClearPlacementPreview();
+
+            var preview = BuildPlacementPreview(backpack, item, anchorCell, ignoreItem);
+            foreach (var visibleCell in preview.VisibleCells)
+            {
+                var slot = GetSlot(visibleCell);
+                if (slot != null)
+                {
+                    slot.SetPreview(preview.IsLegal);
+                }
+            }
+        }
+
+        public void ClearPlacementPreview()
+        {
+            foreach (var slot in slots)
+            {
+                if (slot != null)
+                {
+                    slot.ClearPreview();
+                }
+            }
+        }
+
+        public Vector2 GetItemAnchoredPosition(Vector2Int anchorCell)
+        {
+            return new Vector2(
+                anchorCell.x * (cellSize.x + spacing.x),
+                -anchorCell.y * (cellSize.y + spacing.y));
+        }
+
+        public static Vector2Int CalculateAnchorCell(Vector2Int pointerCell, Vector2Int grabCellOffset)
+        {
+            return pointerCell - grabCellOffset;
+        }
+
+        public static PlacementPreview BuildPlacementPreview(
+            BackpackController backpack,
+            ItemInstance item,
+            Vector2Int anchorCell,
+            ItemInstance ignoreItem = null)
+        {
+            var visibleCells = new List<Vector2Int>();
+            var isLegal = backpack.CanPlace(item, anchorCell, ignoreItem);
+
+            foreach (var cell in backpack.GetOccupiedCells(item, anchorCell))
+            {
+                if (backpack.IsInside(cell))
+                {
+                    visibleCells.Add(cell);
+                }
+            }
+
+            return new PlacementPreview(isLegal, visibleCells);
+        }
+
+        private BackpackSlotView GetSlot(Vector2Int cell)
+        {
+            foreach (var slot in slots)
+            {
+                if (slot != null && slot.Cell == cell)
+                {
+                    return slot;
+                }
+            }
+
+            return null;
+        }
+    }
+}

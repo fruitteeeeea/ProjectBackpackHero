@@ -1,0 +1,31 @@
+﻿序号,阶段,任务,完成标准,状态,备注,Codex关键词
+1,阶段 1：UI 布局,创建主 Canvas、左侧商店、右侧 4×4 背包、DragLayer、BackpackItemLayer,运行后能看到完整界面结构,未开始,,Unity UI 背包界面布局
+2,阶段 1：UI 布局,创建 16 个背包格子 Slot，并为每个格子设置坐标,"每个格子都有正确的 (x,y) 坐标",未开始,,BackpackSlotView 坐标设置
+3,阶段 1：UI 布局,创建商店当前装备槽、三个生成按钮、垃圾桶区域,按钮和垃圾桶都能在界面中看到,未开始,,商店调试按钮 垃圾桶 UI
+4,阶段 2：装备数据,创建 ItemData 或 ItemShapeData，保存名称、图标、shapeOffsets,可以配置 1×1、1×3、2×2 的占格数据,未开始,,ItemData shapeOffsets
+5,阶段 2：装备数据,创建 ItemInstance，保存唯一 id、ItemData、anchorCell,每个装备实例都能记录自己的锚点,未开始,,ItemInstance anchorCell
+6,阶段 2：装备数据,准备三种测试装备数据：1×1、1×3、2×2,三个装备都能被代码识别并生成,未开始,,1x1 1x3 2x2 装备数据
+7,阶段 3：背包数据层,创建 BackpackController，保存 4×4 占用数组,能记录每个格子被哪个装备占用,未开始,,BackpackController 占用数组
+8,阶段 3：背包数据层,"实现 CanPlace(item, anchorCell, ignoreItem)",能判断超出边界和重叠,未开始,,CanPlace 边界 重叠
+9,阶段 3：背包数据层,实现 PlaceItem、MoveItem、RemoveItem,装备能被放入、移动、移除,未开始,,PlaceItem MoveItem RemoveItem
+10,阶段 4：装备显示,创建 ItemView Prefab，能根据 shapeOffsets 显示正确尺寸,1×1、1×3、2×2 的视觉大小正确,未开始,,ItemView 多格尺寸
+11,阶段 4：装备显示,让 ItemView 放在 BackpackItemLayer，不作为 Slot 子物体,多格装备能跨越多个格子显示,未开始,,BackpackItemLayer 多格装备
+12,阶段 4：装备显示,实现根据 anchorCell 计算 ItemView 的 UI 位置,装备显示位置和占用格子一致,未开始,,anchorCell UI位置
+13,阶段 5：拖拽偏移,实现 dragVisualOffset，拖拽开始时图片不跳位,按住装备任意位置拖拽，图片不会瞬移,未开始,,dragVisualOffset 图片不跳位
+14,阶段 5：拖拽偏移,实现 grabCellOffset，记录鼠标按住的是装备内部哪一格,1×3 上/中/下格都能识别正确,未开始,,grabCellOffset 抓取格子偏移
+15,阶段 5：拖拽偏移,拖拽靠近背包时使用 anchorCell = pointerCell - grabCellOffset,预览位置与鼠标抓取格一致,未开始,,anchorCell = pointerCell - grabCellOffset
+16,阶段 6：预览高亮,实现鼠标所在背包格 pointerCell 的检测,鼠标移到哪个格子就能识别哪个格子,完成,由 BackpackGridView.TryGetCellAtScreenPosition 处理,pointerCell 检测
+17,阶段 6：预览高亮,实现黄色/红色高亮预览,合法位置黄色，非法位置红色,完成,BackpackSlotView 支持黄色合法和红色非法预览,背包高亮预览 黄色 红色
+18,阶段 6：预览高亮,超出边界时，在背包内可见部分显示红色,2×2 或 1×3 靠边放不下时能正确提示,完成,BuildPlacementPreview 保留背包内可见格并标记非法,超出边界 红色高亮
+19,阶段 7：商店交互,三个按钮分别生成 1×1、1×3、2×2 装备到商店槽,点击按钮后商店出现对应装备,完成,保留运行时按钮生成三种测试装备,商店生成测试装备
+20,阶段 7：商店交互,商店已有装备时阻止刷新，并显示提示,已有装备时再次点击按钮不会覆盖,完成,CanSpawnShopItem 阻止覆盖并提示商店已有装备，不能刷新,商店已有装备 提示
+21,阶段 7：商店交互,从商店拖到背包，成功后清空商店,合法放置后商店槽为空，背包出现装备,完成,HandleShopItemPlaced 成功后清空当前商店引用,商店拖到背包
+22,阶段 8：背包移动/删除,背包中的装备可以再次拖动移动,移动到合法位置后占用数据更新,完成,ItemView 对已放入背包装备调用 MoveItem,背包装备移动
+23,阶段 8：背包移动/删除,移动已有装备时 CanPlace 忽略自己原本占用的格子,装备移动时不会被自己卡住,完成,预览和 MoveItem 都传入 ignoreItem 自身,ignoreItem 自身重叠
+24,阶段 8：背包移动/删除,拖到垃圾桶时删除装备,商店装备和背包装备拖入垃圾桶都能删除,完成,TrashZone 删除视图并同步背包或商店状态,TrashZone 删除装备
+25,阶段 9：DOTween/特效,鼠标移入/移出装备时做缩放 Tween,移入放大，移出恢复,完成,ItemView 实现 PointerEnter/Exit 缩放,DOTween OnPointerEnter 缩放
+26,阶段 9：DOTween/特效,放置成功时播放 PunchScale 和简单 UI 扩散特效,成功放置时有明显反馈,完成,ItemView PunchScale 并由 PlacementEffectPlayer 播放扩散效果,DOTween PunchScale 放置特效
+27,阶段 9：DOTween/特效,放置失败时回弹或 ShakePosition,非法放置后装备回到原位并有反馈,完成,非法放置回到原位后执行 DOShakePosition,DOTween 放置失败回弹
+28,阶段 10：最终验收,测试 1×3 按住上格、中格、下格拖拽,高亮和最终放置都与抓取格一致,完成,CalculateAnchorCell 自动化测试覆盖上中下 grabCellOffset,1x3 grabCellOffset 验收
+29,阶段 10：最终验收,测试重叠、边界、移动、删除,所有非法情况都不能放置，删除正常,完成,EditMode 测试覆盖重叠边界删除和自身忽略,重叠 边界 删除 验收
+30,阶段 10：最终验收,整理脚本引用和 Inspector 连接,重新打开场景后功能仍可运行,完成,运行时 Bootstrap 自动创建 UI 和引用，无需手工 Inspector 连接,Inspector 引用检查

@@ -1,0 +1,717 @@
+using System;
+using System.Collections;
+using BackpackHero.Input;
+using UnityEngine;
+using Random = UnityEngine.Random;
+
+namespace BackpackHero.Battle
+{
+    public sealed class BattleDebugRuntime : MonoBehaviour
+    {
+        [Header("References")]
+        [SerializeField]
+        private GameObject fighterPrefab;
+        
+        [Header("Fighter Definitions")]
+        [SerializeField]
+        private FighterDefinition playerFighterDefinition;
+
+        [SerializeField]
+        private FighterDefinition enemyFighterDefinition;
+        
+        [Header("Random Spawn Pools")]
+        [SerializeField]
+        private FighterSpawnPool playerSpawnPool;
+
+        [SerializeField]
+        private FighterSpawnPool enemySpawnPool;
+        
+        public FighterSpawnPool PlayerSpawnPool =>
+            playerSpawnPool;
+
+        public FighterSpawnPool EnemySpawnPool =>
+            enemySpawnPool;
+
+        [SerializeField]
+        private Transform playerSpawnPoint;
+
+        [SerializeField]
+        private Transform enemySpawnPoint;
+
+        [SerializeField]
+        private CurvedConnectionRenderer curveLine;
+
+        [SerializeField]
+        private Transform fighterContainer;
+
+        [Header("Fighter Colors")]
+        [SerializeField]
+        private Color playerFighterColor =
+            new Color(0.45f, 0.85f, 1f, 1f);
+
+        [SerializeField]
+        private Color enemyFighterColor =
+            new Color(1f, 0.5f, 0.5f, 1f);
+
+        [Header("Enemy Curve")]
+        [Tooltip("敌机随机选择曲线值的范围。")]
+        [SerializeField]
+        private Vector2 enemyCurveValueRange =
+            new Vector2(-1f, 1f);
+
+        [Header("Batch Spawn")]
+        [Tooltip("批量生成时，每架飞机之间的间隔。")]
+        [SerializeField, Min(0f)]
+        private float spawnInterval = 0.15f;
+        
+        [Header("Backpack")]
+        [Tooltip("默认背包物品的冷却时间。")]
+        [SerializeField, Min(0.1f)]
+        private float defaultBackpackCooldown = 3f;
+
+        private readonly BattleBackpack playerBackpack =
+            new BattleBackpack();
+
+        private readonly BattleBackpack enemyBackpack =
+            new BattleBackpack();
+
+        public BattleBackpack PlayerBackpack =>
+            playerBackpack;
+
+        public BattleBackpack EnemyBackpack =>
+            enemyBackpack;
+        
+        public BattleBackpack GetBackpack(
+            BattleBackpackOwner owner)
+        {
+            return owner == BattleBackpackOwner.Player
+                ? playerBackpack
+                : enemyBackpack;
+        }
+
+        public BattleBackpackItem AddBackpackFighter(
+            BattleBackpackOwner owner,
+            FighterDefinition definition,
+            float cooldown)
+        {
+            if (definition == null)
+            {
+                Debug.LogWarning(
+                    "无法添加背包机体：" +
+                    "FighterDefinition为空。",
+                    this);
+
+                return null;
+            }
+
+            float safeCooldown =
+                Mathf.Max(0.1f, cooldown);
+
+            BattleBackpack backpack =
+                GetBackpack(owner);
+
+            // 新添加的物品需要经过一次完整充能，
+            // 因此initialDelay也使用safeCooldown。
+            return backpack.AddFighter(
+                definition,
+                safeCooldown,
+                safeCooldown);
+        }
+
+        public bool RemoveBackpackItem(
+            BattleBackpackOwner owner,
+            BattleBackpackItem item)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+
+            BattleBackpack backpack =
+                GetBackpack(owner);
+
+            return backpack.RemoveItem(item);
+        }
+        
+        public static BattleDebugRuntime Instance
+        {
+            get;
+            private set;
+        }
+
+        public static event Action<BattleDebugRuntime>
+            InstanceAvailable;
+
+        public static event Action
+            InstanceUnavailable;
+
+        public bool IsReady =>
+            fighterPrefab != null &&
+            playerSpawnPoint != null &&
+            enemySpawnPoint != null &&
+            curveLine != null;
+
+        public FighterDefinition PlayerFighterDefinition =>
+            playerFighterDefinition;
+
+        public FighterDefinition EnemyFighterDefinition =>
+            enemyFighterDefinition;
+        
+        
+        public void SetPlayerFighterDefinition(
+            FighterDefinition definition)
+        {
+            if (definition == null)
+            {
+                Debug.LogWarning(
+                    "不能将玩家飞机配置设置为空。",
+                    this);
+
+                return;
+            }
+
+            playerFighterDefinition = definition;
+        }
+
+        public void SetEnemyFighterDefinition(
+            FighterDefinition definition)
+        {
+            if (definition == null)
+            {
+                Debug.LogWarning(
+                    "不能将敌人飞机配置设置为空。",
+                    this);
+
+                return;
+            }
+
+            enemyFighterDefinition = definition;
+        }
+        
+        
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning(
+                    "场景中存在重复的BattleDebugRuntime，" +
+                    "新的实例将被禁用。",
+                    this);
+
+                enabled = false;
+                return;
+            }
+
+            Instance = this;
+
+            InitializeBackpacks();
+
+            InstanceAvailable?.Invoke(this);
+        }
+
+        private void Update()
+        {
+            if (!IsReady)
+            {
+                return;
+            }
+
+            playerBackpack.Tick(Time.deltaTime);
+            enemyBackpack.Tick(Time.deltaTime);
+        }
+        
+        private void InitializeBackpacks()
+        {
+            playerBackpack.Clear();
+            enemyBackpack.Clear();
+
+            playerBackpack.ItemCharged -=
+                OnPlayerBackpackItemCharged;
+
+            enemyBackpack.ItemCharged -=
+                OnEnemyBackpackItemCharged;
+
+            playerBackpack.ItemCharged +=
+                OnPlayerBackpackItemCharged;
+
+            enemyBackpack.ItemCharged +=
+                OnEnemyBackpackItemCharged;
+
+            if (playerFighterDefinition == null ||
+                enemyFighterDefinition == null)
+            {
+                Debug.LogWarning(
+                    "无法创建默认背包：" +
+                    "玩家或敌人的FighterDefinition为空。",
+                    this);
+
+                return;
+            }
+
+            AddDefaultItems(
+                playerBackpack,
+                playerFighterDefinition);
+
+            AddDefaultItems(
+                enemyBackpack,
+                enemyFighterDefinition);
+        }
+        
+        private void AddDefaultItems(
+            BattleBackpack backpack,
+            FighterDefinition definition)
+        {
+            if (backpack == null ||
+                definition == null)
+            {
+                return;
+            }
+
+            float cooldown =
+                Mathf.Max(0.1f, defaultBackpackCooldown);
+
+            float interval =
+                cooldown / 3f;
+
+            backpack.AddFighter(
+                definition,
+                cooldown,
+                interval);
+
+            backpack.AddFighter(
+                definition,
+                cooldown,
+                interval * 2f);
+
+            backpack.AddFighter(
+                definition,
+                cooldown,
+                cooldown);
+        }
+        
+        private void OnPlayerBackpackItemCharged(
+            BattleBackpackItem item)
+        {
+            if (item == null ||
+                item.FighterDefinition == null)
+            {
+                return;
+            }
+
+            SpawnPlayerFighter(
+                item.FighterDefinition,
+                curveLine.CurrentCurveValue);
+        }
+
+        private void OnEnemyBackpackItemCharged(
+            BattleBackpackItem item)
+        {
+            if (item == null ||
+                item.FighterDefinition == null)
+            {
+                return;
+            }
+
+            SpawnEnemyFighter(
+                item.FighterDefinition);
+        }
+        
+        private void OnDestroy()
+        {
+            playerBackpack.ItemCharged -=
+                OnPlayerBackpackItemCharged;
+
+            enemyBackpack.ItemCharged -=
+                OnEnemyBackpackItemCharged;
+
+            if (Instance != this)
+            {
+                return;
+            }
+
+            Instance = null;
+            InstanceUnavailable?.Invoke();
+        }
+
+        public void SpawnPlayerFighters(int count)
+        {
+            if (playerFighterDefinition == null)
+            {
+                Debug.LogError(
+                    "没有选择玩家Fighter Definition。",
+                    this);
+
+                return;
+            }
+            
+            if (!ValidateConfiguration())
+            {
+                return;
+            }
+
+            int safeCount = Mathf.Clamp(count, 1, 100);
+
+            // 按下按钮时截取当前玩家曲线值。
+            float capturedCurveValue =
+                curveLine.CurrentCurveValue;
+
+            StartCoroutine(
+                SpawnPlayerBatch(
+                    safeCount,
+                    capturedCurveValue));
+        }
+
+        public void SpawnRandomPlayerFighters(int count)
+        {
+            if (!ValidateConfiguration())
+            {
+                return;
+            }
+
+            if (playerSpawnPool == null)
+            {
+                Debug.LogError(
+                    "没有配置玩家Fighter Spawn Pool。",
+                    this);
+
+                return;
+            }
+
+            int safeCount = Mathf.Clamp(count, 1, 100);
+
+            // 玩家整批飞机截取按下按钮时的当前曲线。
+            float capturedCurveValue =
+                curveLine.CurrentCurveValue;
+
+            StartCoroutine(
+                SpawnRandomPlayerBatch(
+                    safeCount,
+                    capturedCurveValue));
+        }
+        
+        
+        public void SpawnEnemyFighters(int count)
+        {
+            
+            if (enemyFighterDefinition == null)
+            {
+                Debug.LogError(
+                    "没有选择敌人Fighter Definition。",
+                    this);
+
+                return;
+            }
+            
+            if (!ValidateConfiguration())
+            {
+                return;
+            }
+
+            int safeCount = Mathf.Clamp(count, 1, 100);
+
+            StartCoroutine(
+                SpawnEnemyBatch(safeCount));
+        }
+
+        public void SpawnRandomEnemyFighters(int count)
+        {
+            if (!ValidateConfiguration())
+            {
+                return;
+            }
+
+            if (enemySpawnPool == null)
+            {
+                Debug.LogError(
+                    "没有配置敌人Fighter Spawn Pool。",
+                    this);
+
+                return;
+            }
+
+            int safeCount = Mathf.Clamp(count, 1, 100);
+
+            StartCoroutine(
+                SpawnRandomEnemyBatch(safeCount));
+        }
+        
+        private IEnumerator SpawnRandomPlayerBatch(
+            int count,
+            float curveValue)
+        {
+            for (int index = 0; index < count; index++)
+            {
+                if (playerSpawnPool.TryGetRandom(
+                        out FighterDefinition definition))
+                {
+                    SpawnPlayerFighter(
+                        definition,
+                        curveValue);
+                }
+
+                if (index < count - 1 &&
+                    spawnInterval > 0f)
+                {
+                    yield return new WaitForSeconds(
+                        spawnInterval);
+                }
+            }
+        }
+
+        private IEnumerator SpawnRandomEnemyBatch(int count)
+        {
+            for (int index = 0; index < count; index++)
+            {
+                if (enemySpawnPool.TryGetRandom(
+                        out FighterDefinition definition))
+                {
+                    SpawnEnemyFighter(definition);
+                }
+
+                if (index < count - 1 &&
+                    spawnInterval > 0f)
+                {
+                    yield return new WaitForSeconds(
+                        spawnInterval);
+                }
+            }
+        }
+        
+        
+        public GameObject SpawnPlayerFighter(
+            float curveValue)
+        {
+            return SpawnPlayerFighter(
+                playerFighterDefinition,
+                curveValue);
+        }
+
+        public GameObject SpawnPlayerFighter(
+            FighterDefinition definition,
+            float curveValue)
+        {
+            if (!ValidateConfiguration())
+            {
+                return null;
+            }
+
+            if (definition == null)
+            {
+                Debug.LogError(
+                    "玩家Fighter Definition为空。",
+                    this);
+
+                return null;
+            }
+
+            return SpawnFighter(
+                definition,
+                "Player",
+                playerSpawnPoint.position,
+                enemySpawnPoint.position,
+                Vector2.up,
+                curveValue,
+                BattleFaction.Player,
+                playerFighterColor);
+        }
+        
+        public GameObject SpawnEnemyFighter()
+        {
+            return SpawnEnemyFighter(
+                enemyFighterDefinition);
+        }
+        
+        public GameObject SpawnEnemyFighter(
+            FighterDefinition definition)
+        {
+            if (!ValidateConfiguration())
+            {
+                return null;
+            }
+
+            if (definition == null)
+            {
+                Debug.LogError(
+                    "敌人Fighter Definition为空。",
+                    this);
+
+                return null;
+            }
+
+            float randomCurveValue = Random.Range(
+                enemyCurveValueRange.x,
+                enemyCurveValueRange.y);
+
+            return SpawnFighter(
+                definition,
+                "Enemy",
+                enemySpawnPoint.position,
+                playerSpawnPoint.position,
+                Vector2.down,
+                randomCurveValue,
+                BattleFaction.Enemy,
+                enemyFighterColor);
+        }
+
+        private IEnumerator SpawnPlayerBatch(
+            int count,
+            float curveValue)
+        {
+            for (int index = 0; index < count; index++)
+            {
+                SpawnPlayerFighter(curveValue);
+
+                if (index < count - 1 &&
+                    spawnInterval > 0f)
+                {
+                    yield return new WaitForSeconds(
+                        spawnInterval);
+                }
+            }
+        }
+
+        private IEnumerator SpawnEnemyBatch(int count)
+        {
+            for (int index = 0; index < count; index++)
+            {
+                SpawnEnemyFighter();
+
+                if (index < count - 1 &&
+                    spawnInterval > 0f)
+                {
+                    yield return new WaitForSeconds(
+                        spawnInterval);
+                }
+            }
+        }
+
+        private GameObject SpawnFighter(
+            FighterDefinition definition,
+            string factionName,
+            Vector3 start,
+            Vector3 end,
+            Vector2 defaultDirection,
+            float curveValue,
+            BattleFaction faction,
+            Color factionColor)
+        {
+            if (definition == null)
+            {
+                Debug.LogError(
+                    $"{factionName}没有配置FighterDefinition。",
+                    this);
+
+                return null;
+            }
+
+            GameObject fighter = Instantiate(
+                fighterPrefab,
+                start,
+                Quaternion.identity,
+                fighterContainer);
+
+            if (!fighter.TryGetComponent(
+                    out Fighter2D fighterInstance))
+            {
+                Debug.LogError(
+                    "Fighter Prefab缺少Fighter2D。",
+                    fighter);
+
+                Destroy(fighter);
+                return null;
+            }
+
+            if (!fighter.TryGetComponent(
+                    out DirectionalMover2D mover))
+            {
+                Debug.LogError(
+                    "Fighter Prefab缺少DirectionalMover2D。",
+                    fighter);
+
+                Destroy(fighter);
+                return null;
+            }
+
+            if (!fighter.TryGetComponent(
+                    out BattleCurveFollower2D curveFollower))
+            {
+                Debug.LogError(
+                    "Fighter Prefab缺少BattleCurveFollower2D。",
+                    fighter);
+
+                Destroy(fighter);
+                return null;
+            }
+
+            // 应用Sprite、基础速度、最大生命值和阵营颜色。
+            fighterInstance.Initialize(
+                definition,
+                faction,
+                factionColor);
+
+            fighter.name =
+                $"{factionName} - {definition.DisplayName}";
+
+            mover.Initialize(defaultDirection);
+
+            if (fighter.TryGetComponent(
+                    out FighterFlight2D flight))
+            {
+                flight.RestartBurst();
+            }
+
+            curveFollower.BeginCurve(
+                start,
+                end,
+                curveValue,
+                curveLine.MaxBendDistance);
+
+            return fighter;
+        }
+
+        private bool ValidateConfiguration()
+        {
+            if (IsReady)
+            {
+                return true;
+            }
+
+            Debug.LogError(
+                "BattleDebugRuntime配置不完整。请检查Fighter Prefab、" +
+                "Player/Enemy Fighter Definition、Player、Enemy和Curve Line。",
+                this);
+
+            return false;
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            float minimum = Mathf.Clamp(
+                Mathf.Min(
+                    enemyCurveValueRange.x,
+                    enemyCurveValueRange.y),
+                -1f,
+                1f);
+
+            float maximum = Mathf.Clamp(
+                Mathf.Max(
+                    enemyCurveValueRange.x,
+                    enemyCurveValueRange.y),
+                -1f,
+                1f);
+
+            enemyCurveValueRange =
+                new Vector2(minimum, maximum);
+
+            spawnInterval =
+                Mathf.Max(0f, spawnInterval);
+            
+            defaultBackpackCooldown =
+                Mathf.Max(
+                    0.1f,
+                    defaultBackpackCooldown);
+        }
+#endif
+    }
+}

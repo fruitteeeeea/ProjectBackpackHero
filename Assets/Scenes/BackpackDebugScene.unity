@@ -565,27 +565,19 @@ MonoBehaviour:
   - {fileID: 373186157}
   - {fileID: 1405483935}
   itemCatalog:
-  - data: {fileID: 11400000, guid: 70bef0369e3574ab2af4034accad292e, type: 2}
-    prefab: {fileID: 2060890215293225743, guid: 0aef8f10a6bc44a55ab5196b3811bb82, type: 3}
-  - data: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
-    prefab: {fileID: 2060890215293225743, guid: 630443289b5e6450b8833b7c80c18317, type: 3}
-  - data: {fileID: 11400000, guid: 779de2dbf4b6144469f76b3c6dc34fda, type: 2}
+  - data: {fileID: 11400000, guid: 3c987ce4efc394e37a25e866476260a1, type: 2}
     prefab: {fileID: 2060890215293225743, guid: aeb6b57bf78e444d6be854b0e01e0986, type: 3}
-  - data: {fileID: 11400000, guid: 9cb7d1e77bbeb4d2e8bc5751c1d239a7, type: 2}
-    prefab: {fileID: 2060890215293225743, guid: c121e83b2900141048a3a271eeae4953, type: 3}
-  - data: {fileID: 11400000, guid: 84129650cb54b4c05ab80593ee53926b, type: 2}
+  - data: {fileID: 11400000, guid: be3fb60727ecb4e828e4b4174e60ac6f, type: 2}
+    prefab: {fileID: 2060890215293225743, guid: 0aef8f10a6bc44a55ab5196b3811bb82, type: 3}
+  - data: {fileID: 11400000, guid: 6007433df60c04aecab6ba619a64cb26, type: 2}
     prefab: {fileID: 2060890215293225743, guid: 363c75cb744224d4fae2fbf1f53d6564, type: 3}
-  - data: {fileID: 11400000, guid: 2fa3334394efd48cb99dfc925ea989e4, type: 2}
-    prefab: {fileID: 2060890215293225743, guid: b07eee93167a1413cab6cbce611a03fc, type: 3}
-  - data: {fileID: 11400000, guid: 59e16f1ad19014e95b41331316bd0263, type: 2}
-    prefab: {fileID: 2060890215293225743, guid: 499946e6db2054b598bfbe4dc7d5f761, type: 3}
+  - data: {fileID: 11400000, guid: 929801f3993d745089b19529098347d5, type: 2}
+    prefab: {fileID: 2060890215293225743, guid: 630443289b5e6450b8833b7c80c18317, type: 3}
   defaultPlacements:
-  - data: {fileID: 11400000, guid: 70bef0369e3574ab2af4034accad292e, type: 2}
-    anchorCell: {x: 0, y: 0}
-  - data: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
+  - data: {fileID: 11400000, guid: 3c987ce4efc394e37a25e866476260a1, type: 2}
+    anchorCell: {x: 1, y: 1}
+  - data: {fileID: 11400000, guid: be3fb60727ecb4e828e4b4174e60ac6f, type: 2}
     anchorCell: {x: 1, y: 0}
-  - data: {fileID: 11400000, guid: 59e16f1ad19014e95b41331316bd0263, type: 2}
-    anchorCell: {x: 2, y: 1}
 --- !u!224 &1255687022 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1648541945181910981, guid: f0bd8c5ebe942431f99deefbf7bb6fde, type: 3}

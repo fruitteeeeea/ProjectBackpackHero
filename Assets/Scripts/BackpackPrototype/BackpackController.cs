@@ -5,6 +5,14 @@ namespace BackpackPrototype
 {
     public sealed class BackpackController
     {
+        private static readonly Vector2Int[] CardinalDirections =
+        {
+            Vector2Int.up,
+            Vector2Int.down,
+            Vector2Int.left,
+            Vector2Int.right,
+        };
+
         private readonly ItemInstance[,] occupied;
         private readonly List<ItemInstance> items = new();
 
@@ -99,6 +107,75 @@ namespace BackpackPrototype
 
             ClearCells(item);
             return true;
+        }
+
+        public List<ItemInstance> GetAdjacentItems(
+            ItemInstance item)
+        {
+            var adjacentItems =
+                new List<ItemInstance>();
+
+            if (item == null ||
+                item.Data == null ||
+                !items.Contains(item))
+            {
+                return adjacentItems;
+            }
+
+            var uniqueItems =
+                new HashSet<ItemInstance>();
+
+            foreach (Vector2Int occupiedCell
+                     in GetOccupiedCells(
+                         item,
+                         item.AnchorCell))
+            {
+                foreach (Vector2Int direction
+                         in CardinalDirections)
+                {
+                    ItemInstance adjacentItem =
+                        GetItemAt(
+                            occupiedCell + direction);
+
+                    if (adjacentItem == null ||
+                        adjacentItem == item ||
+                        !uniqueItems.Add(adjacentItem))
+                    {
+                        continue;
+                    }
+
+                    adjacentItems.Add(adjacentItem);
+                }
+            }
+
+            return adjacentItems;
+        }
+
+        public List<ItemInstance> GetAdjacentEquipmentItems(
+            ItemInstance aircraft)
+        {
+            var equipmentItems =
+                new List<ItemInstance>();
+
+            if (aircraft == null ||
+                aircraft.Data == null ||
+                aircraft.Data.ItemType != ItemType.Aircraft)
+            {
+                return equipmentItems;
+            }
+
+            foreach (ItemInstance adjacentItem
+                     in GetAdjacentItems(aircraft))
+            {
+                if (adjacentItem.Data != null &&
+                    adjacentItem.Data.ItemType ==
+                    ItemType.Equipment)
+                {
+                    equipmentItems.Add(adjacentItem);
+                }
+            }
+
+            return equipmentItems;
         }
 
         private void FillCells(ItemInstance item, Vector2Int anchorCell)

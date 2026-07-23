@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
+  m_Name: Equipment_1x2
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  itemName: "\u7EB5\u5411\u88C5\u5907"
+  icon: {fileID: 2762365591184756601, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
+  backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
+  itemType: 1
+  cooldownDuration: -1
+  shape: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}

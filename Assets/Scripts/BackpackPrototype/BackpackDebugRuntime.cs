@@ -8,12 +8,12 @@ namespace BackpackPrototype
     public sealed class ItemPrefabEntry
     {
         [SerializeField]
-        private ItemShapeData data;
+        private ItemData data;
 
         [SerializeField]
         private ItemView prefab;
 
-        public ItemShapeData Data => data;
+        public ItemData Data => data;
         public ItemView Prefab => prefab;
     }
 
@@ -21,12 +21,12 @@ namespace BackpackPrototype
     public sealed class DefaultItemPlacement
     {
         [SerializeField]
-        private ItemShapeData data;
+        private ItemData data;
 
         [SerializeField]
         private Vector2Int anchorCell;
 
-        public ItemShapeData Data => data;
+        public ItemData Data => data;
         public Vector2Int AnchorCell => anchorCell;
     }
 
@@ -346,7 +346,7 @@ namespace BackpackPrototype
         }
 
         private ItemPrefabEntry FindCatalogEntry(
-            ItemShapeData data)
+            ItemData data)
         {
             foreach (ItemPrefabEntry entry
                      in itemCatalog)
@@ -423,10 +423,10 @@ namespace BackpackPrototype
                 valid = false;
             }
 
-            if (itemCatalog.Count != 7)
+            if (itemCatalog.Count == 0)
             {
                 Debug.LogError(
-                    "Item Catalog必须正好配置7个物品变体。",
+                    "Item Catalog至少需要配置1个物品。",
                     this);
 
                 valid = false;

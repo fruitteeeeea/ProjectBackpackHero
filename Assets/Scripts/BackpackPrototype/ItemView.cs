@@ -13,6 +13,7 @@ namespace BackpackPrototype
     public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ICanvasRaycastFilter
     {
         [SerializeField] private Image background;
+        [SerializeField] private Image icon;
         [SerializeField] private Text label;
 
         private static readonly int CooldownProgressId =
@@ -34,7 +35,10 @@ namespace BackpackPrototype
         private Vector2 shapeCellSize;
         private Vector2 shapeSpacing;
         
-        private Material cooldownMaterial;
+        private Material originalBackgroundMaterial;
+        private Material originalIconMaterial;
+        private Material backgroundCooldownMaterial;
+        private Material iconCooldownMaterial;
         private Coroutine cooldownCoroutine;
 
         public ItemInstance Instance { get; private set; }
@@ -107,6 +111,18 @@ namespace BackpackPrototype
             {
                 label = GetComponentInChildren<Text>();
             }
+
+            if (icon == null)
+            {
+                Transform iconTransform =
+                    transform.Find("ItemIcon");
+
+                if (iconTransform != null)
+                {
+                    icon =
+                        iconTransform.GetComponent<Image>();
+                }
+            }
         }
 
         public void Bind(
@@ -132,13 +148,25 @@ namespace BackpackPrototype
                 instance != null &&
                 instance.Data != null)
             {
-                background.sprite = instance.Data.Icon;
-                background.color = Color.white;
+                background.color =
+                    instance.Data.BackgroundColor;
                 background.type = Image.Type.Simple;
                 background.preserveAspect = false;
-                
-                InitializeCooldownMaterial();
             }
+
+            if (icon != null &&
+                instance != null &&
+                instance.Data != null)
+            {
+                icon.sprite = instance.Data.Icon;
+                icon.color = Color.white;
+                icon.type = Image.Type.Simple;
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+                icon.enabled = instance.Data.Icon != null;
+            }
+
+            InitializeCooldownMaterials();
 
             if (label != null)
             {
@@ -146,44 +174,90 @@ namespace BackpackPrototype
             }
         }
 
-        private void InitializeCooldownMaterial()
+        private void InitializeCooldownMaterials()
         {
-            ReleaseCooldownMaterial();
+            ReleaseCooldownMaterials();
 
-            if (background == null ||
-                background.material == null)
-            {
-                return;
-            }
+            originalBackgroundMaterial =
+                background != null
+                    ? background.material
+                    : null;
 
-            cooldownMaterial =
-                new Material(background.material)
-                {
-                    name =
-                        $"{background.material.name} " +
-                        $"({name} Runtime)"
-                };
+            originalIconMaterial =
+                icon != null
+                    ? icon.material
+                    : null;
 
-            background.material = cooldownMaterial;
+            backgroundCooldownMaterial =
+                CreateCooldownMaterial(
+                    background,
+                    originalBackgroundMaterial);
+
+            iconCooldownMaterial =
+                CreateCooldownMaterial(
+                    icon,
+                    originalIconMaterial);
 
             CooldownProgress = 1f;
             RemainingCooldown = 0f;
             IsCoolingDown = false;
 
-            cooldownMaterial.SetFloat(
+            SetCooldownFloat(
                 CooldownProgressId,
                 CooldownProgress);
 
-            cooldownMaterial.SetFloat(
+            SetCooldownFloat(
                 FlashAmountId,
                 0f);
+        }
+
+        private Material CreateCooldownMaterial(
+            Image targetImage,
+            Material sourceMaterial)
+        {
+            if (targetImage == null ||
+                sourceMaterial == null)
+            {
+                return null;
+            }
+
+            Material runtimeMaterial =
+                new Material(sourceMaterial)
+                {
+                    name =
+                        $"{sourceMaterial.name} " +
+                        $"({name} Runtime)"
+                };
+
+            targetImage.material = runtimeMaterial;
+            return runtimeMaterial;
+        }
+
+        private void SetCooldownFloat(
+            int propertyId,
+            float value)
+        {
+            if (backgroundCooldownMaterial != null)
+            {
+                backgroundCooldownMaterial.SetFloat(
+                    propertyId,
+                    value);
+            }
+
+            if (iconCooldownMaterial != null)
+            {
+                iconCooldownMaterial.SetFloat(
+                    propertyId,
+                    value);
+            }
         }
         
         public void EnterCooldown()
         {
             if (Instance == null ||
                 Instance.Data == null ||
-                cooldownMaterial == null)
+                !Instance.Data.CanEnterCooldown ||
+                backgroundCooldownMaterial == null)
             {
                 return;
             }
@@ -210,11 +284,11 @@ namespace BackpackPrototype
             RemainingCooldown = duration;
             CooldownProgress = 0f;
 
-            cooldownMaterial.SetFloat(
+            SetCooldownFloat(
                 FlashAmountId,
                 0f);
 
-            cooldownMaterial.SetFloat(
+            SetCooldownFloat(
                 CooldownProgressId,
                 CooldownProgress);
 
@@ -231,7 +305,7 @@ namespace BackpackPrototype
                     1f -
                     RemainingCooldown / duration;
 
-                cooldownMaterial.SetFloat(
+                SetCooldownFloat(
                     CooldownProgressId,
                     CooldownProgress);
             }
@@ -240,7 +314,7 @@ namespace BackpackPrototype
             RemainingCooldown = 0f;
             CooldownProgress = 1f;
 
-            cooldownMaterial.SetFloat(
+            SetCooldownFloat(
                 CooldownProgressId,
                 1f);
 
@@ -253,7 +327,7 @@ namespace BackpackPrototype
         {
             float elapsed = 0f;
 
-            cooldownMaterial.SetFloat(
+            SetCooldownFloat(
                 FlashAmountId,
                 1f);
 
@@ -268,31 +342,51 @@ namespace BackpackPrototype
                     Mathf.Clamp01(
                         elapsed / CooldownFlashDuration);
 
-                cooldownMaterial.SetFloat(
+                SetCooldownFloat(
                     FlashAmountId,
                     flashAmount);
             }
 
-            cooldownMaterial.SetFloat(
+            SetCooldownFloat(
                 FlashAmountId,
                 0f);
         }
         
-        private void ReleaseCooldownMaterial()
+        private void ReleaseCooldownMaterials()
         {
-            if (cooldownMaterial == null)
+            ReleaseCooldownMaterial(
+                background,
+                backgroundCooldownMaterial,
+                originalBackgroundMaterial);
+
+            ReleaseCooldownMaterial(
+                icon,
+                iconCooldownMaterial,
+                originalIconMaterial);
+
+            backgroundCooldownMaterial = null;
+            iconCooldownMaterial = null;
+            originalBackgroundMaterial = null;
+            originalIconMaterial = null;
+        }
+
+        private static void ReleaseCooldownMaterial(
+            Image targetImage,
+            Material runtimeMaterial,
+            Material originalMaterial)
+        {
+            if (runtimeMaterial == null)
             {
                 return;
             }
 
-            if (background != null &&
-                background.material == cooldownMaterial)
+            if (targetImage != null &&
+                targetImage.material == runtimeMaterial)
             {
-                background.material = null;
+                targetImage.material = originalMaterial;
             }
 
-            Destroy(cooldownMaterial);
-            cooldownMaterial = null;
+            Destroy(runtimeMaterial);
         }
         
         public void SetBackpackPosition(Vector2Int anchorCell)
@@ -476,8 +570,15 @@ namespace BackpackPrototype
 
         private void OnDestroy()
         {
+            if (cooldownCoroutine != null)
+            {
+                StopCoroutine(cooldownCoroutine);
+                cooldownCoroutine = null;
+            }
+
             scaleTween?.Kill();
             feedbackTween?.Kill();
+            ReleaseCooldownMaterials();
         }
 
         private void ResizeToShape(Vector2 cellSize, Vector2 spacing)

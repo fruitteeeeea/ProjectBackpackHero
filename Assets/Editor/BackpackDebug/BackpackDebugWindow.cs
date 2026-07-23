@@ -158,7 +158,7 @@ namespace BackpackPrototypeEditor
                 }
                 
                 if (GUILayout.Button(
-                        "背包物品进入冷却",
+                        "背包飞机进入冷却",
                         GUILayout.Height(32f)))
                 {
                     runtime.EnterAllBackpackItemsCooldown();
@@ -211,7 +211,8 @@ namespace BackpackPrototypeEditor
                             GUILayout.Width(28f));
 
                         EditorGUILayout.LabelField(
-                            item.Data.ItemName);
+                            $"{item.Data.ItemName} " +
+                            $"[{item.Data.ItemType}]");
                     }
                 }
             }
@@ -285,6 +286,19 @@ namespace BackpackPrototypeEditor
                         selectedItem.Instance.Data.ShapeOffsets));
 
                 EditorGUILayout.LabelField(
+                    "Type",
+                    selectedItem.Instance.Data.ItemType.ToString());
+
+                string cooldownText =
+                    selectedItem.Instance.Data.CanEnterCooldown
+                        ? BuildCooldownText(selectedItem)
+                        : "Disabled (-1)";
+
+                EditorGUILayout.LabelField(
+                    "Cooldown",
+                    cooldownText);
+
+                EditorGUILayout.LabelField(
                     "Location",
                     selectedItem.LocationName);
 
@@ -297,6 +311,58 @@ namespace BackpackPrototypeEditor
                 EditorGUILayout.LabelField(
                     "Anchor",
                     anchorText);
+
+                DrawAdjacentItems(
+                    runtime,
+                    selectedItem);
+            }
+        }
+
+        private static string BuildCooldownText(
+            ItemView selectedItem)
+        {
+            if (selectedItem.IsCoolingDown)
+            {
+                return
+                    $"{selectedItem.RemainingCooldown:F1}s remaining";
+            }
+
+            return
+                $"{selectedItem.Instance.Data.CooldownDuration:F1}s ready";
+        }
+
+        private static void DrawAdjacentItems(
+            BackpackDebugRuntime runtime,
+            ItemView selectedItem)
+        {
+            if (!selectedItem.IsPlacedInBackpack ||
+                selectedItem.Instance.Data.ItemType !=
+                ItemType.Aircraft ||
+                runtime.Backpack == null)
+            {
+                return;
+            }
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField(
+                "Adjacent Items",
+                EditorStyles.boldLabel);
+
+            IReadOnlyList<ItemInstance> adjacentItems =
+                runtime.Backpack.GetAdjacentItems(
+                    selectedItem.Instance);
+
+            if (adjacentItems.Count == 0)
+            {
+                EditorGUILayout.LabelField("None");
+                return;
+            }
+
+            foreach (ItemInstance adjacentItem
+                     in adjacentItems)
+            {
+                EditorGUILayout.LabelField(
+                    adjacentItem.Data.ItemName);
             }
         }
     }

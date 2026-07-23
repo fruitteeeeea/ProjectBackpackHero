@@ -69,25 +69,30 @@ namespace BackpackPrototype
             var stepX = cellSize.x + spacing.x;
             var stepY = cellSize.y + spacing.y;
 
-            if (fromTopLeft.x < 0f || fromTopLeft.y < 0f)
+            if (fromTopLeft.x < 0f ||
+                fromTopLeft.x > rect.width ||
+                fromTopLeft.y < 0f ||
+                fromTopLeft.y > rect.height ||
+                stepX <= 0f ||
+                stepY <= 0f)
             {
                 return false;
             }
 
-            var x = Mathf.FloorToInt(fromTopLeft.x / stepX);
-            var y = Mathf.FloorToInt(fromTopLeft.y / stepY);
-            var inCellX = fromTopLeft.x - x * stepX;
-            var inCellY = fromTopLeft.y - y * stepY;
-
-            if (x < 0 ||
-                x >= columns ||
-                y < 0 ||
-                y >= rows ||
-                inCellX > cellSize.x ||
-                inCellY > cellSize.y)
-            {
-                return false;
-            }
+            var x =
+                Mathf.Clamp(
+                    Mathf.FloorToInt(
+                        (fromTopLeft.x + spacing.x * 0.5f) /
+                        stepX),
+                    0,
+                    columns - 1);
+            var y =
+                Mathf.Clamp(
+                    Mathf.FloorToInt(
+                        (fromTopLeft.y + spacing.y * 0.5f) /
+                        stepY),
+                    0,
+                    rows - 1);
 
             cell = new Vector2Int(x, y);
             return true;

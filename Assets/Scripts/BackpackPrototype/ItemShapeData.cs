@@ -8,10 +8,13 @@ namespace BackpackPrototype
     {
         [SerializeField] private string itemName = "Item";
         [SerializeField] private Sprite icon;
+        [SerializeField, Min(0.01f)]
+        private float cooldownDuration = 2f;
         [SerializeField] private List<Vector2Int> shapeOffsets = new() { Vector2Int.zero };
 
         public string ItemName => itemName;
         public Sprite Icon => icon;
+        public float CooldownDuration => cooldownDuration;
         public IReadOnlyList<Vector2Int> ShapeOffsets => shapeOffsets;
         
         public void InitializeForTests(

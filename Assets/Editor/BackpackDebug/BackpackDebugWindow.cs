@@ -156,6 +156,13 @@ namespace BackpackPrototypeEditor
                 {
                     runtime.RefreshShop();
                 }
+                
+                if (GUILayout.Button(
+                        "背包物品进入冷却",
+                        GUILayout.Height(32f)))
+                {
+                    runtime.EnterAllBackpackItemsCooldown();
+                }
             }
         }
         

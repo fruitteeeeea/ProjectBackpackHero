@@ -194,6 +194,24 @@ namespace BackpackPrototype
                 : Array.Empty<ItemInstance>();
         }
 
+        public void EnterAllBackpackItemsCooldown()
+        {
+            if (!IsReady)
+            {
+                return;
+            }
+
+            foreach (ItemView view in backpackViews)
+            {
+                if (view == null)
+                {
+                    continue;
+                }
+
+                view.EnterCooldown();
+            }
+        }
+        
         private void CreateBackpackItem(
             ItemPrefabEntry entry,
             Vector2Int anchorCell)

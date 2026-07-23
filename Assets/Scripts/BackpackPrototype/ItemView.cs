@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -9,11 +10,19 @@ namespace BackpackPrototype
 {
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasGroup))]
-    public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+    public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ICanvasRaycastFilter
     {
         [SerializeField] private Image background;
         [SerializeField] private Text label;
 
+        private static readonly int CooldownProgressId =
+            Shader.PropertyToID("_CooldownProgress");
+
+        private static readonly int FlashAmountId =
+            Shader.PropertyToID("_FlashAmount");
+
+        private const float CooldownFlashDuration = 0.12f;
+        
         private RectTransform rectTransform;
         private CanvasGroup canvasGroup;
         private Transform originalParent;
@@ -22,6 +31,11 @@ namespace BackpackPrototype
         private Tween scaleTween;
         private Tween feedbackTween;
         private bool isDragging;
+        private Vector2 shapeCellSize;
+        private Vector2 shapeSpacing;
+        
+        private Material cooldownMaterial;
+        private Coroutine cooldownCoroutine;
 
         public ItemInstance Instance { get; private set; }
         public BackpackController Backpack { get; private set; }
@@ -33,6 +47,25 @@ namespace BackpackPrototype
         public Vector2Int GrabCellOffset { get; private set; }
         public Vector2Int? CandidateAnchorCell { get; private set; }
         public bool IsPlacedInBackpack { get; private set; }
+        
+        public bool IsCoolingDown
+        {
+            get;
+            private set;
+        }
+
+        public float CooldownProgress
+        {
+            get;
+            private set;
+        } = 1f;
+
+        public float RemainingCooldown
+        {
+            get;
+            private set;
+        }
+        
         
         public string DisplayName =>
             Instance != null && Instance.Data != null
@@ -103,6 +136,8 @@ namespace BackpackPrototype
                 background.color = Color.white;
                 background.type = Image.Type.Simple;
                 background.preserveAspect = false;
+                
+                InitializeCooldownMaterial();
             }
 
             if (label != null)
@@ -111,6 +146,155 @@ namespace BackpackPrototype
             }
         }
 
+        private void InitializeCooldownMaterial()
+        {
+            ReleaseCooldownMaterial();
+
+            if (background == null ||
+                background.material == null)
+            {
+                return;
+            }
+
+            cooldownMaterial =
+                new Material(background.material)
+                {
+                    name =
+                        $"{background.material.name} " +
+                        $"({name} Runtime)"
+                };
+
+            background.material = cooldownMaterial;
+
+            CooldownProgress = 1f;
+            RemainingCooldown = 0f;
+            IsCoolingDown = false;
+
+            cooldownMaterial.SetFloat(
+                CooldownProgressId,
+                CooldownProgress);
+
+            cooldownMaterial.SetFloat(
+                FlashAmountId,
+                0f);
+        }
+        
+        public void EnterCooldown()
+        {
+            if (Instance == null ||
+                Instance.Data == null ||
+                cooldownMaterial == null)
+            {
+                return;
+            }
+
+            if (cooldownCoroutine != null)
+            {
+                StopCoroutine(cooldownCoroutine);
+            }
+
+            float duration =
+                Mathf.Max(
+                    0.01f,
+                    Instance.Data.CooldownDuration);
+
+            cooldownCoroutine =
+                StartCoroutine(
+                    PlayCooldown(duration));
+        }
+        
+        private IEnumerator PlayCooldown(
+            float duration)
+        {
+            IsCoolingDown = true;
+            RemainingCooldown = duration;
+            CooldownProgress = 0f;
+
+            cooldownMaterial.SetFloat(
+                FlashAmountId,
+                0f);
+
+            cooldownMaterial.SetFloat(
+                CooldownProgressId,
+                CooldownProgress);
+
+            while (RemainingCooldown > 0f)
+            {
+                yield return null;
+
+                RemainingCooldown =
+                    Mathf.Max(
+                        0f,
+                        RemainingCooldown - Time.deltaTime);
+
+                CooldownProgress =
+                    1f -
+                    RemainingCooldown / duration;
+
+                cooldownMaterial.SetFloat(
+                    CooldownProgressId,
+                    CooldownProgress);
+            }
+
+            IsCoolingDown = false;
+            RemainingCooldown = 0f;
+            CooldownProgress = 1f;
+
+            cooldownMaterial.SetFloat(
+                CooldownProgressId,
+                1f);
+
+            yield return PlayCooldownFlash();
+
+            cooldownCoroutine = null;
+        }
+        
+        private IEnumerator PlayCooldownFlash()
+        {
+            float elapsed = 0f;
+
+            cooldownMaterial.SetFloat(
+                FlashAmountId,
+                1f);
+
+            while (elapsed < CooldownFlashDuration)
+            {
+                yield return null;
+
+                elapsed += Time.deltaTime;
+
+                float flashAmount =
+                    1f -
+                    Mathf.Clamp01(
+                        elapsed / CooldownFlashDuration);
+
+                cooldownMaterial.SetFloat(
+                    FlashAmountId,
+                    flashAmount);
+            }
+
+            cooldownMaterial.SetFloat(
+                FlashAmountId,
+                0f);
+        }
+        
+        private void ReleaseCooldownMaterial()
+        {
+            if (cooldownMaterial == null)
+            {
+                return;
+            }
+
+            if (background != null &&
+                background.material == cooldownMaterial)
+            {
+                background.material = null;
+            }
+
+            Destroy(cooldownMaterial);
+            cooldownMaterial = null;
+        }
+        
         public void SetBackpackPosition(Vector2Int anchorCell)
         {
             if (GridView == null)
@@ -298,10 +482,56 @@ namespace BackpackPrototype
 
         private void ResizeToShape(Vector2 cellSize, Vector2 spacing)
         {
+            shapeCellSize = cellSize;
+            shapeSpacing = spacing;
+
             var bounds = GetShapeBounds(Instance.Data.ShapeOffsets);
             var width = (bounds.x + 1) * cellSize.x + bounds.x * spacing.x;
             var height = (bounds.y + 1) * cellSize.y + bounds.y * spacing.y;
             rectTransform.sizeDelta = new Vector2(width, height);
+        }
+
+        public bool IsRaycastLocationValid(
+            Vector2 screenPoint,
+            Camera eventCamera)
+        {
+            if (Instance == null ||
+                Instance.Data == null ||
+                !RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    rectTransform,
+                    screenPoint,
+                    eventCamera,
+                    out var localPoint))
+            {
+                return false;
+            }
+
+            var rect = rectTransform.rect;
+            var fromTopLeft =
+                new Vector2(
+                    localPoint.x - rect.xMin,
+                    rect.yMax - localPoint.y);
+            var pitch = shapeCellSize + shapeSpacing;
+
+            if (pitch.x <= 0f || pitch.y <= 0f)
+            {
+                return false;
+            }
+
+            var pointedCell =
+                new Vector2Int(
+                    Mathf.FloorToInt(fromTopLeft.x / pitch.x),
+                    Mathf.FloorToInt(fromTopLeft.y / pitch.y));
+
+            foreach (var offset in Instance.Data.ShapeOffsets)
+            {
+                if (offset == pointedCell)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private Vector2Int CalculateGrabCellOffset(Vector2 screenPosition, Camera eventCamera)

@@ -420,8 +420,12 @@ namespace BackpackPrototype
 
             if (preparationActionsRoot != null)
             {
-                preparationActionsRoot.SetActive(
-                    isPreparation);
+                // The bottom action row remains active so its FEEL
+                // feedback can animate it off-screen during combat.
+                if (!preparationActionsRoot.activeSelf)
+                {
+                    preparationActionsRoot.SetActive(true);
+                }
             }
 
             foreach (ItemView view in backpackViews)

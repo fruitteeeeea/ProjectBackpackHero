@@ -562,6 +562,79 @@ public sealed class BackpackControllerTests
         Assert.That(color.a, Is.EqualTo(255));
     }
 
+    [Test]
+    public void ModelEventsAndContains_FollowItemLifecycle()
+    {
+        BackpackController backpack =
+            new BackpackController(4, 4);
+
+        ItemInstance item =
+            NewItem("event-item", OneCell());
+
+        int added = 0;
+        int moved = 0;
+        int removed = 0;
+
+        backpack.ItemAdded += _ => added++;
+        backpack.ItemMoved += _ => moved++;
+        backpack.ItemRemoved += _ => removed++;
+
+        Assert.That(
+            backpack.PlaceItem(
+                item,
+                new Vector2Int(0, 0)),
+            Is.True);
+        Assert.That(backpack.Contains(item), Is.True);
+
+        Assert.That(
+            backpack.MoveItem(
+                item,
+                new Vector2Int(1, 1)),
+            Is.True);
+
+        Assert.That(
+            backpack.RemoveItem(item),
+            Is.True);
+        Assert.That(backpack.Contains(item), Is.False);
+        Assert.That(added, Is.EqualTo(1));
+        Assert.That(moved, Is.EqualTo(1));
+        Assert.That(removed, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void AircraftCooldown_IsStoredOnItemInstance()
+    {
+        ItemInstance aircraft =
+            NewItem(
+                "cooldown-aircraft",
+                OneCell(),
+                ItemType.Aircraft);
+
+        aircraft.BeginCooldown();
+
+        Assert.That(
+            aircraft.IsCoolingDown,
+            Is.True);
+        Assert.That(
+            aircraft.RemainingCooldown,
+            Is.EqualTo(2f));
+        Assert.That(
+            aircraft.TickCooldown(1f),
+            Is.False);
+        Assert.That(
+            aircraft.CooldownProgress,
+            Is.EqualTo(0.5f).Within(0.001f));
+        Assert.That(
+            aircraft.TickCooldown(1f),
+            Is.True);
+        Assert.That(
+            aircraft.IsCoolingDown,
+            Is.False);
+        Assert.That(
+            aircraft.CooldownProgress,
+            Is.EqualTo(1f));
+    }
+
     private static ItemInstance NewItem(
         string id,
         IReadOnlyList<Vector2Int> offsets,

@@ -22,14 +22,14 @@ namespace BackpackPrototypeEditor
                     OpenSceneMode.Single);
 
             BackpackDebugRuntime runtime =
-                Object.FindFirstObjectByType<
+                Object.FindAnyObjectByType<
                     BackpackDebugRuntime>();
 
             Canvas canvas =
-                Object.FindFirstObjectByType<Canvas>();
+                Object.FindAnyObjectByType<Canvas>();
 
             BackpackGridView gridView =
-                Object.FindFirstObjectByType<BackpackGridView>();
+                Object.FindAnyObjectByType<BackpackGridView>();
 
             if (runtime == null ||
                 canvas == null ||
@@ -41,7 +41,7 @@ namespace BackpackPrototypeEditor
             }
 
             BattleFlowController flow =
-                Object.FindFirstObjectByType<
+                Object.FindAnyObjectByType<
                     BattleFlowController>();
 
             if (flow == null)

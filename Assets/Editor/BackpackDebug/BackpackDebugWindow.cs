@@ -132,6 +132,29 @@ namespace BackpackPrototypeEditor
             EditorGUILayout.HelpBox(
                 "Backpack Runtime已连接。",
                 MessageType.None);
+
+            BackpackCombatController controller =
+                runtime.CombatController;
+
+            if (controller != null)
+            {
+                BackpackFighterSpawner spawner =
+                    controller.FighterSpawner;
+
+                EditorGUILayout.LabelField(
+                    "Faction",
+                    controller.Faction.ToString());
+                EditorGUILayout.LabelField(
+                    "Pending Spawns",
+                    spawner != null
+                        ? spawner.PendingCount.ToString()
+                        : "-");
+                EditorGUILayout.LabelField(
+                    "Spawn Interval",
+                    spawner != null
+                        ? $"{spawner.SpawnInterval:0.00}s"
+                        : "-");
+            }
         }
 
         private void DrawActions(

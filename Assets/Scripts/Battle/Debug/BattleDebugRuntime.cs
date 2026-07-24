@@ -64,75 +64,6 @@ namespace BackpackHero.Battle
         [SerializeField, Min(0f)]
         private float spawnInterval = 0.15f;
         
-        [Header("Backpack")]
-        [Tooltip("默认背包物品的冷却时间。")]
-        [SerializeField, Min(0.1f)]
-        private float defaultBackpackCooldown = 3f;
-
-        private readonly BattleBackpack playerBackpack =
-            new BattleBackpack();
-
-        private readonly BattleBackpack enemyBackpack =
-            new BattleBackpack();
-
-        public BattleBackpack PlayerBackpack =>
-            playerBackpack;
-
-        public BattleBackpack EnemyBackpack =>
-            enemyBackpack;
-        
-        public BattleBackpack GetBackpack(
-            BattleBackpackOwner owner)
-        {
-            return owner == BattleBackpackOwner.Player
-                ? playerBackpack
-                : enemyBackpack;
-        }
-
-        public BattleBackpackItem AddBackpackFighter(
-            BattleBackpackOwner owner,
-            FighterDefinition definition,
-            float cooldown)
-        {
-            if (definition == null)
-            {
-                Debug.LogWarning(
-                    "无法添加背包机体：" +
-                    "FighterDefinition为空。",
-                    this);
-
-                return null;
-            }
-
-            float safeCooldown =
-                Mathf.Max(0.1f, cooldown);
-
-            BattleBackpack backpack =
-                GetBackpack(owner);
-
-            // 新添加的物品需要经过一次完整充能，
-            // 因此initialDelay也使用safeCooldown。
-            return backpack.AddFighter(
-                definition,
-                safeCooldown,
-                safeCooldown);
-        }
-
-        public bool RemoveBackpackItem(
-            BattleBackpackOwner owner,
-            BattleBackpackItem item)
-        {
-            if (item == null)
-            {
-                return false;
-            }
-
-            BattleBackpack backpack =
-                GetBackpack(owner);
-
-            return backpack.RemoveItem(item);
-        }
-        
         public static BattleDebugRuntime Instance
         {
             get;
@@ -203,128 +134,11 @@ namespace BackpackHero.Battle
             }
 
             Instance = this;
-
-            InitializeBackpacks();
-
             InstanceAvailable?.Invoke(this);
         }
 
-        private void Update()
-        {
-            if (!IsReady ||
-                !BattleFlowController.IsCombatPhase)
-            {
-                return;
-            }
-
-            playerBackpack.Tick(Time.deltaTime);
-            enemyBackpack.Tick(Time.deltaTime);
-        }
-        
-        private void InitializeBackpacks()
-        {
-            playerBackpack.Clear();
-            enemyBackpack.Clear();
-
-            playerBackpack.ItemCharged -=
-                OnPlayerBackpackItemCharged;
-
-            enemyBackpack.ItemCharged -=
-                OnEnemyBackpackItemCharged;
-
-            playerBackpack.ItemCharged +=
-                OnPlayerBackpackItemCharged;
-
-            enemyBackpack.ItemCharged +=
-                OnEnemyBackpackItemCharged;
-
-            if (playerFighterDefinition == null ||
-                enemyFighterDefinition == null)
-            {
-                Debug.LogWarning(
-                    "无法创建默认背包：" +
-                    "玩家或敌人的FighterDefinition为空。",
-                    this);
-
-                return;
-            }
-
-            AddDefaultItems(
-                playerBackpack,
-                playerFighterDefinition);
-
-            AddDefaultItems(
-                enemyBackpack,
-                enemyFighterDefinition);
-        }
-        
-        private void AddDefaultItems(
-            BattleBackpack backpack,
-            FighterDefinition definition)
-        {
-            if (backpack == null ||
-                definition == null)
-            {
-                return;
-            }
-
-            float cooldown =
-                Mathf.Max(0.1f, defaultBackpackCooldown);
-
-            float interval =
-                cooldown / 3f;
-
-            backpack.AddFighter(
-                definition,
-                cooldown,
-                interval);
-
-            backpack.AddFighter(
-                definition,
-                cooldown,
-                interval * 2f);
-
-            backpack.AddFighter(
-                definition,
-                cooldown,
-                cooldown);
-        }
-        
-        private void OnPlayerBackpackItemCharged(
-            BattleBackpackItem item)
-        {
-            if (item == null ||
-                item.FighterDefinition == null)
-            {
-                return;
-            }
-
-            SpawnPlayerFighter(
-                item.FighterDefinition,
-                curveLine.CurrentCurveValue);
-        }
-
-        private void OnEnemyBackpackItemCharged(
-            BattleBackpackItem item)
-        {
-            if (item == null ||
-                item.FighterDefinition == null)
-            {
-                return;
-            }
-
-            SpawnEnemyFighter(
-                item.FighterDefinition);
-        }
-        
         private void OnDestroy()
         {
-            playerBackpack.ItemCharged -=
-                OnPlayerBackpackItemCharged;
-
-            enemyBackpack.ItemCharged -=
-                OnEnemyBackpackItemCharged;
-
             if (Instance != this)
             {
                 return;
@@ -708,10 +522,6 @@ namespace BackpackHero.Battle
             spawnInterval =
                 Mathf.Max(0f, spawnInterval);
             
-            defaultBackpackCooldown =
-                Mathf.Max(
-                    0.1f,
-                    defaultBackpackCooldown);
         }
 #endif
     }

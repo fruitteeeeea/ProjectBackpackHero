@@ -89,7 +89,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a5fb525df144836a77f59de8e0fa408, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.HurtBox2D
   targetHealth: {fileID: 459404866564605441}
   factionMember: {fileID: 3372129743742441211}
@@ -107,6 +107,8 @@ GameObject:
   - component: {fileID: 3372129743742441211}
   - component: {fileID: 4591703264906433394}
   - component: {fileID: 7858108593418970293}
+  - component: {fileID: 880010000000000001}
+  - component: {fileID: 880010000000000002}
   m_Layer: 0
   m_Name: BattleBackpackBase
   m_TagString: Untagged
@@ -130,6 +132,7 @@ Transform:
   - {fileID: 2304506556574614726}
   - {fileID: 8355630825618232965}
   - {fileID: 5226994172341376492}
+  - {fileID: 880010000000000004}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &459404866564605441
@@ -142,7 +145,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6cf2e1e6fd50145af8c59134f7a472d8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 150
   currentHealth: 150
@@ -185,6 +188,76 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HealthDebug
   targetHealth: {fileID: 459404866564605441}
   changeAmount: 25
+--- !u!114 &880010000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4886905832823404153}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 405f9687fc804ec79fa4f4510dd350ee, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.BackpackFighterSpawner
+  fighterPrefab: {fileID: 1237829907571473707, guid: c6af0336132b14f98a956820dcff3186, type: 3}
+  fighterSpawnPoint: {fileID: 880010000000000004}
+  fighterContainer: {fileID: 0}
+  spawnInterval: 0.1
+  spawnOffset: 1
+  maximumBendDistance: 3
+  playerColor: {r: 0.45, g: 0.85, b: 1, a: 1}
+  enemyColor: {r: 1, g: 0.5, b: 0.5, a: 1}
+--- !u!114 &880010000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4886905832823404153}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f6f95afc30246f59bccfffb32d45d29, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.BackpackCombatController
+  width: 7
+  height: 4
+  defaultPlacements:
+  - data: {fileID: 11400000, guid: 3c987ce4efc394e37a25e866476260a1, type: 2}
+    anchorCell: {x: 1, y: 1}
+  - data: {fileID: 11400000, guid: be3fb60727ecb4e828e4b4174e60ac6f, type: 2}
+    anchorCell: {x: 1, y: 0}
+--- !u!1 &880010000000000003
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 880010000000000004}
+  m_Layer: 0
+  m_Name: FighterSpawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &880010000000000004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880010000000000003}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3907970746525924259}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7161205965442447674
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -26,6 +27,16 @@ namespace BackpackPrototype
         public int Width { get; }
         public int Height { get; }
         public IReadOnlyList<ItemInstance> Items => items;
+
+        public event Action<ItemInstance> ItemAdded;
+        public event Action<ItemInstance> ItemMoved;
+        public event Action<ItemInstance> ItemRemoved;
+        public event Action Cleared;
+
+        public bool Contains(ItemInstance item)
+        {
+            return item != null && items.Contains(item);
+        }
 
         public bool IsInside(Vector2Int cell)
         {
@@ -82,6 +93,7 @@ namespace BackpackPrototype
             }
 
             FillCells(item, anchorCell);
+            ItemAdded?.Invoke(item);
             return true;
         }
 
@@ -95,6 +107,7 @@ namespace BackpackPrototype
             ClearCells(item);
             item.AnchorCell = anchorCell;
             FillCells(item, anchorCell);
+            ItemMoved?.Invoke(item);
             return true;
         }
 
@@ -106,7 +119,34 @@ namespace BackpackPrototype
             }
 
             ClearCells(item);
+            item.ResetCooldown();
+            ItemRemoved?.Invoke(item);
             return true;
+        }
+
+        public void Clear()
+        {
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            ItemInstance[] removedItems =
+                items.ToArray();
+
+            items.Clear();
+            Array.Clear(
+                occupied,
+                0,
+                occupied.Length);
+
+            foreach (ItemInstance item in removedItems)
+            {
+                item?.ResetCooldown();
+                ItemRemoved?.Invoke(item);
+            }
+
+            Cleared?.Invoke();
         }
 
         public List<ItemInstance> GetAdjacentItems(

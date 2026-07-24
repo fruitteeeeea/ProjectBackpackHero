@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using BackpackHero.Battle;
@@ -23,8 +22,6 @@ namespace BackpackPrototype
         private static readonly int FlashAmountId =
             Shader.PropertyToID("_FlashAmount");
 
-        private const float CooldownFlashDuration = 0.12f;
-        
         private RectTransform rectTransform;
         private CanvasGroup canvasGroup;
         private Transform originalParent;
@@ -40,10 +37,14 @@ namespace BackpackPrototype
         private Material originalIconMaterial;
         private Material backgroundCooldownMaterial;
         private Material iconCooldownMaterial;
-        private Coroutine cooldownCoroutine;
 
         public ItemInstance Instance { get; private set; }
         public BackpackController Backpack { get; private set; }
+        public BackpackCombatController CombatController
+        {
+            get;
+            private set;
+        }
         public BackpackGridView GridView { get; private set; }
         public RectTransform BackpackItemLayer { get; private set; }
         public RectTransform DragLayer { get; private set; }
@@ -53,23 +54,19 @@ namespace BackpackPrototype
         public Vector2Int? CandidateAnchorCell { get; private set; }
         public bool IsPlacedInBackpack { get; private set; }
         
-        public bool IsCoolingDown
-        {
-            get;
-            private set;
-        }
+        public bool IsCoolingDown =>
+            Instance != null &&
+            Instance.IsCoolingDown;
 
-        public float CooldownProgress
-        {
-            get;
-            private set;
-        } = 1f;
+        public float CooldownProgress =>
+            Instance != null
+                ? Instance.CooldownProgress
+                : 1f;
 
-        public float RemainingCooldown
-        {
-            get;
-            private set;
-        }
+        public float RemainingCooldown =>
+            Instance != null
+                ? Instance.RemainingCooldown
+                : 0f;
         
         
         public string DisplayName =>
@@ -97,7 +94,6 @@ namespace BackpackPrototype
         public event Action<ItemView> PlacedSuccessfully;
         public event Action<ItemView> DeletedSuccessfully;
         public event Action<ItemView> SelectionRequested;
-        public event Action<ItemView> CooldownCompleted;
 
         private void Awake()
         {
@@ -127,6 +123,13 @@ namespace BackpackPrototype
             }
         }
 
+        private void Update()
+        {
+            SetCooldownFloat(
+                CooldownProgressId,
+                CooldownProgress);
+        }
+
         public void Bind(
             ItemInstance instance,
             BackpackController backpack,
@@ -135,7 +138,8 @@ namespace BackpackPrototype
             RectTransform dragLayer,
             RectTransform trashZone,
             Vector2 cellSize,
-            Vector2 spacing)
+            Vector2 spacing,
+            BackpackCombatController combatController = null)
         {
             Instance = instance;
             Backpack = backpack;
@@ -143,6 +147,7 @@ namespace BackpackPrototype
             BackpackItemLayer = backpackItemLayer;
             DragLayer = dragLayer;
             TrashZone = trashZone;
+            CombatController = combatController;
 
             ResizeToShape(cellSize, spacing);
 
@@ -200,10 +205,6 @@ namespace BackpackPrototype
                     icon,
                     originalIconMaterial);
 
-            CooldownProgress = 1f;
-            RemainingCooldown = 0f;
-            IsCoolingDown = false;
-
             SetCooldownFloat(
                 CooldownProgressId,
                 CooldownProgress);
@@ -254,52 +255,6 @@ namespace BackpackPrototype
             }
         }
         
-        public void EnterCooldown()
-        {
-            if (Instance == null ||
-                Instance.Data == null ||
-                !Instance.Data.CanEnterCooldown ||
-                backgroundCooldownMaterial == null)
-            {
-                return;
-            }
-
-            if (cooldownCoroutine != null)
-            {
-                StopCoroutine(cooldownCoroutine);
-            }
-
-            float duration =
-                Mathf.Max(
-                    0.01f,
-                    Instance.Data.CooldownDuration);
-
-            cooldownCoroutine =
-                StartCoroutine(
-                    PlayCooldown(duration));
-        }
-
-        public void StopCooldown(bool resetVisual = true)
-        {
-            if (cooldownCoroutine != null)
-            {
-                StopCoroutine(cooldownCoroutine);
-                cooldownCoroutine = null;
-            }
-
-            IsCoolingDown = false;
-            RemainingCooldown = 0f;
-
-            if (!resetVisual)
-            {
-                return;
-            }
-
-            CooldownProgress = 1f;
-            SetCooldownFloat(CooldownProgressId, 1f);
-            SetCooldownFloat(FlashAmountId, 0f);
-        }
-
         public void SetInteractionEnabled(bool interactionEnabled)
         {
             if (!interactionEnabled && isDragging)
@@ -313,82 +268,6 @@ namespace BackpackPrototype
                 canvasGroup.interactable = interactionEnabled;
                 canvasGroup.blocksRaycasts = interactionEnabled;
             }
-        }
-        
-        private IEnumerator PlayCooldown(
-            float duration)
-        {
-            IsCoolingDown = true;
-            RemainingCooldown = duration;
-            CooldownProgress = 0f;
-
-            SetCooldownFloat(
-                FlashAmountId,
-                0f);
-
-            SetCooldownFloat(
-                CooldownProgressId,
-                CooldownProgress);
-
-            while (RemainingCooldown > 0f)
-            {
-                yield return null;
-
-                RemainingCooldown =
-                    Mathf.Max(
-                        0f,
-                        RemainingCooldown - Time.deltaTime);
-
-                CooldownProgress =
-                    1f -
-                    RemainingCooldown / duration;
-
-                SetCooldownFloat(
-                    CooldownProgressId,
-                    CooldownProgress);
-            }
-
-            IsCoolingDown = false;
-            RemainingCooldown = 0f;
-            CooldownProgress = 1f;
-
-            SetCooldownFloat(
-                CooldownProgressId,
-                1f);
-
-            yield return PlayCooldownFlash();
-
-            cooldownCoroutine = null;
-            CooldownCompleted?.Invoke(this);
-        }
-        
-        private IEnumerator PlayCooldownFlash()
-        {
-            float elapsed = 0f;
-
-            SetCooldownFloat(
-                FlashAmountId,
-                1f);
-
-            while (elapsed < CooldownFlashDuration)
-            {
-                yield return null;
-
-                elapsed += Time.deltaTime;
-
-                float flashAmount =
-                    1f -
-                    Mathf.Clamp01(
-                        elapsed / CooldownFlashDuration);
-
-                SetCooldownFloat(
-                    FlashAmountId,
-                    flashAmount);
-            }
-
-            SetCooldownFloat(
-                FlashAmountId,
-                0f);
         }
         
         private void ReleaseCooldownMaterials()
@@ -560,9 +439,28 @@ namespace BackpackPrototype
                 return false;
             }
 
-            var moved = IsPlacedInBackpack
-                ? Backpack.MoveItem(Instance, anchorCell)
-                : Backpack.PlaceItem(Instance, anchorCell);
+            bool moved;
+
+            if (CombatController != null)
+            {
+                moved = IsPlacedInBackpack
+                    ? CombatController.MoveItem(
+                        Instance,
+                        anchorCell)
+                    : CombatController.PlaceItem(
+                        Instance,
+                        anchorCell);
+            }
+            else
+            {
+                moved = IsPlacedInBackpack
+                    ? Backpack.MoveItem(
+                        Instance,
+                        anchorCell)
+                    : Backpack.PlaceItem(
+                        Instance,
+                        anchorCell);
+            }
 
             if (!moved)
             {
@@ -586,7 +484,14 @@ namespace BackpackPrototype
         {
             if (IsPlacedInBackpack && Backpack != null)
             {
-                Backpack.RemoveItem(Instance);
+                if (CombatController != null)
+                {
+                    CombatController.RemoveItem(Instance);
+                }
+                else
+                {
+                    Backpack.RemoveItem(Instance);
+                }
             }
 
             DeletedSuccessfully?.Invoke(this);
@@ -616,12 +521,6 @@ namespace BackpackPrototype
 
         private void OnDestroy()
         {
-            if (cooldownCoroutine != null)
-            {
-                StopCoroutine(cooldownCoroutine);
-                cooldownCoroutine = null;
-            }
-
             scaleTween?.Kill();
             feedbackTween?.Kill();
             ReleaseCooldownMaterials();

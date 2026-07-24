@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using BackpackHero.Battle;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BackpackPrototype
 {
@@ -55,6 +57,26 @@ namespace BackpackPrototype
         [SerializeField]
         private List<RectTransform> shopSlots = new();
 
+        [Header("Battle Flow")]
+        [SerializeField]
+        private Text phaseLabel;
+
+        [SerializeField]
+        private GameObject shopRoot;
+
+        [SerializeField]
+        private Transform playerFighterSpawnPoint;
+
+        [SerializeField]
+        private GameObject fighterPrefab;
+
+        [SerializeField]
+        private Transform fighterContainer;
+
+        [SerializeField]
+        private Color playerFighterColor =
+            new Color(0.45f, 0.85f, 1f, 1f);
+
         [Header("Item Catalog")]
         [SerializeField]
         private List<ItemPrefabEntry> itemCatalog = new();
@@ -88,6 +110,8 @@ namespace BackpackPrototype
         }
 
         public BackpackController Backpack => backpack;
+        public BattlePhase CurrentPhase =>
+            BattleFlowController.CurrentPhase;
 
         private void Awake()
         {
@@ -104,6 +128,9 @@ namespace BackpackPrototype
             Instance = this;
             backpack = new BackpackController(width, height);
             IsReady = ValidateReferences();
+
+            BattleFlowController.PhaseChanged +=
+                HandlePhaseChanged;
         }
 
         private void Start()
@@ -114,6 +141,8 @@ namespace BackpackPrototype
             }
 
             RestoreDefaultBackpack();
+            HandlePhaseChanged(
+                BattleFlowController.CurrentPhase);
         }
 
         public void RestoreDefaultBackpack()
@@ -156,7 +185,9 @@ namespace BackpackPrototype
 
         public void RefreshShop()
         {
-            if (!IsReady)
+            if (!IsReady ||
+                BattleFlowController.CurrentPhase !=
+                BattlePhase.Preparation)
             {
                 return;
             }
@@ -196,7 +227,8 @@ namespace BackpackPrototype
 
         public void EnterAllBackpackItemsCooldown()
         {
-            if (!IsReady)
+            if (!IsReady ||
+                !BattleFlowController.IsCombatPhase)
             {
                 return;
             }
@@ -310,7 +342,178 @@ namespace BackpackPrototype
             view.DeletedSuccessfully +=
                 HandleItemDeleted;
 
+            view.CooldownCompleted +=
+                HandleCooldownCompleted;
+
+            view.SetInteractionEnabled(
+                !BattleFlowController.IsCombatPhase);
+
             return view;
+        }
+
+        private void HandlePhaseChanged(BattlePhase phase)
+        {
+            bool isPreparation =
+                phase == BattlePhase.Preparation;
+
+            if (phaseLabel != null)
+            {
+                phaseLabel.text =
+                    $"当前阶段：{GetPhaseDisplayName(phase)}";
+            }
+
+            if (shopRoot != null)
+            {
+                shopRoot.SetActive(isPreparation);
+            }
+
+            foreach (ItemView view in backpackViews)
+            {
+                if (view == null)
+                {
+                    continue;
+                }
+
+                view.SetInteractionEnabled(isPreparation);
+
+                if (isPreparation)
+                {
+                    view.StopCooldown();
+                }
+                else
+                {
+                    view.EnterCooldown();
+                }
+            }
+
+            foreach (ItemView view in shopItems)
+            {
+                if (view != null)
+                {
+                    view.SetInteractionEnabled(isPreparation);
+                }
+            }
+        }
+
+        private static string GetPhaseDisplayName(
+            BattlePhase phase)
+        {
+            return phase == BattlePhase.Combat
+                ? "战斗阶段"
+                : "准备阶段";
+        }
+
+        private void HandleCooldownCompleted(ItemView itemView)
+        {
+            if (!BattleFlowController.IsCombatPhase ||
+                itemView == null ||
+                !itemView.IsPlacedInBackpack ||
+                itemView.Instance == null ||
+                itemView.Instance.Data == null ||
+                itemView.Instance.Data.ItemType !=
+                ItemType.Aircraft)
+            {
+                return;
+            }
+
+            SpawnFighter(itemView.Instance);
+
+            if (BattleFlowController.IsCombatPhase &&
+                itemView != null)
+            {
+                itemView.EnterCooldown();
+            }
+        }
+
+        public GameObject SpawnFighter(ItemInstance aircraftItem)
+        {
+            if (aircraftItem == null ||
+                aircraftItem.Data == null ||
+                fighterPrefab == null ||
+                playerFighterSpawnPoint == null)
+            {
+                return null;
+            }
+
+            FighterDefinition definition =
+                aircraftItem.Data.FighterDefinition;
+
+            if (definition == null)
+            {
+                Debug.LogWarning(
+                    $"{aircraftItem.Data.ItemName} 没有配置飞机种类。",
+                    this);
+                return null;
+            }
+
+            GameObject fighterObject =
+                Instantiate(
+                    fighterPrefab,
+                    playerFighterSpawnPoint.position,
+                    Quaternion.identity,
+                    fighterContainer);
+
+            if (!fighterObject.TryGetComponent(
+                    out Fighter2D fighter) ||
+                !fighterObject.TryGetComponent(
+                    out DirectionalMover2D mover))
+            {
+                Debug.LogError(
+                    "Fighter Prefab缺少Fighter2D或DirectionalMover2D。",
+                    fighterObject);
+                Destroy(fighterObject);
+                return null;
+            }
+
+            fighter.Initialize(
+                definition,
+                BattleFaction.Player,
+                playerFighterColor);
+            mover.Initialize(Vector2.up);
+            fighterObject.name =
+                $"Player - {definition.DisplayName}";
+
+            if (fighterObject.TryGetComponent(
+                    out FighterFlight2D flight))
+            {
+                flight.RestartBurst();
+            }
+
+            AttachAdjacentEquipmentEffects(
+                fighterObject.transform,
+                aircraftItem);
+
+            return fighterObject;
+        }
+
+        private void AttachAdjacentEquipmentEffects(
+            Transform fighter,
+            ItemInstance aircraftItem)
+        {
+            HashSet<GameObject> attachedPrefabs =
+                new HashSet<GameObject>();
+
+            foreach (ItemInstance equipment in
+                     backpack.GetAdjacentEquipmentItems(
+                         aircraftItem))
+            {
+                GameObject effectPrefab =
+                    equipment.Data.EquipmentEffectPrefab;
+
+                if (effectPrefab == null ||
+                    !attachedPrefabs.Add(effectPrefab))
+                {
+                    continue;
+                }
+
+                GameObject effect =
+                    Instantiate(
+                        effectPrefab,
+                        fighter,
+                        false);
+                effect.name =
+                    $"{effectPrefab.name} (Equipment)";
+            }
         }
 
         private void HandleSelectionRequested(
@@ -452,6 +655,9 @@ namespace BackpackPrototype
 
         private void OnDestroy()
         {
+            BattleFlowController.PhaseChanged -=
+                HandlePhaseChanged;
+
             if (Instance == this)
             {
                 Instance = null;

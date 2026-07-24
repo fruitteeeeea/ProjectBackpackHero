@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using BackpackPrototype;
+using BackpackHero.Battle;
 using UnityEditor;
 using UnityEngine;
 
@@ -158,11 +159,21 @@ namespace BackpackPrototypeEditor
                 }
                 
                 if (GUILayout.Button(
-                        "背包飞机进入冷却",
+                        "切换阶段",
                         GUILayout.Height(32f)))
                 {
-                    runtime.EnterAllBackpackItemsCooldown();
+                    if (BattleFlowController.Instance != null)
+                    {
+                        BattleFlowController.Instance.TogglePhase();
+                    }
                 }
+
+                EditorGUILayout.LabelField(
+                    "当前阶段",
+                    runtime.CurrentPhase ==
+                    BattlePhase.Combat
+                        ? "战斗阶段"
+                        : "准备阶段");
             }
         }
         

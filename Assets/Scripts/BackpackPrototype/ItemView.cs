@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using BackpackHero.Battle;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -96,6 +97,7 @@ namespace BackpackPrototype
         public event Action<ItemView> PlacedSuccessfully;
         public event Action<ItemView> DeletedSuccessfully;
         public event Action<ItemView> SelectionRequested;
+        public event Action<ItemView> CooldownCompleted;
 
         private void Awake()
         {
@@ -276,6 +278,42 @@ namespace BackpackPrototype
                 StartCoroutine(
                     PlayCooldown(duration));
         }
+
+        public void StopCooldown(bool resetVisual = true)
+        {
+            if (cooldownCoroutine != null)
+            {
+                StopCoroutine(cooldownCoroutine);
+                cooldownCoroutine = null;
+            }
+
+            IsCoolingDown = false;
+            RemainingCooldown = 0f;
+
+            if (!resetVisual)
+            {
+                return;
+            }
+
+            CooldownProgress = 1f;
+            SetCooldownFloat(CooldownProgressId, 1f);
+            SetCooldownFloat(FlashAmountId, 0f);
+        }
+
+        public void SetInteractionEnabled(bool interactionEnabled)
+        {
+            if (!interactionEnabled && isDragging)
+            {
+                isDragging = false;
+                GridView?.ClearPlacementPreview();
+            }
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.interactable = interactionEnabled;
+                canvasGroup.blocksRaycasts = interactionEnabled;
+            }
+        }
         
         private IEnumerator PlayCooldown(
             float duration)
@@ -321,6 +359,7 @@ namespace BackpackPrototype
             yield return PlayCooldownFlash();
 
             cooldownCoroutine = null;
+            CooldownCompleted?.Invoke(this);
         }
         
         private IEnumerator PlayCooldownFlash()
@@ -407,6 +446,13 @@ namespace BackpackPrototype
 
         public void OnBeginDrag(PointerEventData eventData)
         {
+            if (BattleFlowController.IsCombatPhase ||
+                canvasGroup == null ||
+                !canvasGroup.interactable)
+            {
+                return;
+            }
+
             RequestSelection();
             isDragging = true;
             originalParent = rectTransform.parent;

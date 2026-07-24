@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BackpackHero.Battle;
 using UnityEngine;
 
 namespace BackpackPrototype
@@ -27,12 +28,23 @@ namespace BackpackPrototype
         [SerializeField]
         private ItemShapeData shape;
 
+        [Header("Battle")]
+        [SerializeField]
+        private FighterDefinition fighterDefinition;
+
+        [SerializeField]
+        private GameObject equipmentEffectPrefab;
+
         public string ItemName => itemName;
         public Sprite Icon => icon;
         public Color BackgroundColor => backgroundColor;
         public ItemType ItemType => itemType;
         public float CooldownDuration => cooldownDuration;
         public ItemShapeData Shape => shape;
+        public FighterDefinition FighterDefinition =>
+            fighterDefinition;
+        public GameObject EquipmentEffectPrefab =>
+            equipmentEffectPrefab;
 
         public IReadOnlyList<Vector2Int> ShapeOffsets =>
             shape != null

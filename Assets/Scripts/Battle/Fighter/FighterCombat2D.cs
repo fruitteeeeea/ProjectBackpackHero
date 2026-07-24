@@ -80,6 +80,13 @@ namespace BackpackHero.Battle
         
         private void Update()
         {
+            if (!BattleFlowController.IsCombatPhase)
+            {
+                currentTarget = null;
+                ExitCombat();
+                return;
+            }
+
             if (fighter == null ||
                 !fighter.IsAlive ||
                 fighter.Definition == null)

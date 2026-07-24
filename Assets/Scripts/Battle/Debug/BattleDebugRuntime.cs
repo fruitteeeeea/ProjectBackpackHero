@@ -211,7 +211,8 @@ namespace BackpackHero.Battle
 
         private void Update()
         {
-            if (!IsReady)
+            if (!IsReady ||
+                !BattleFlowController.IsCombatPhase)
             {
                 return;
             }

@@ -68,6 +68,9 @@ namespace BackpackPrototype
         private GameObject shopRoot;
 
         [SerializeField]
+        private GameObject preparationActionsRoot;
+
+        [SerializeField]
         private Transform playerFighterSpawnPoint;
 
         [SerializeField]
@@ -251,6 +254,23 @@ namespace BackpackPrototype
             SelectedItem = null;
         }
 
+        public void TogglePhase()
+        {
+            BattleFlowController flowController =
+                BattleFlowController.EnsureInstance();
+
+            if (flowController == null)
+            {
+                Debug.LogError(
+                    "无法切换阶段：战斗流程控制器未就绪。",
+                    this);
+
+                return;
+            }
+
+            flowController.TogglePhase();
+        }
+
         public IReadOnlyList<ItemInstance>
             GetBackpackItems()
         {
@@ -396,6 +416,12 @@ namespace BackpackPrototype
             if (shopRoot != null)
             {
                 shopRoot.SetActive(isPreparation);
+            }
+
+            if (preparationActionsRoot != null)
+            {
+                preparationActionsRoot.SetActive(
+                    isPreparation);
             }
 
             foreach (ItemView view in backpackViews)

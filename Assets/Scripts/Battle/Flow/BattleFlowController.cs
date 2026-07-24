@@ -32,17 +32,41 @@ namespace BackpackHero.Battle
         public BattlePhase Phase => currentPhase;
 
         [RuntimeInitializeOnLoadMethod(
+            RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            Instance = null;
+            PhaseChanged = null;
+        }
+
+        [RuntimeInitializeOnLoadMethod(
             RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void EnsureGlobalInstance()
         {
+            EnsureInstance();
+        }
+
+        public static BattleFlowController EnsureInstance()
+        {
             if (Instance != null)
             {
-                return;
+                return Instance;
+            }
+
+            BattleFlowController sceneController =
+                FindAnyObjectByType<BattleFlowController>(
+                    FindObjectsInactive.Include);
+
+            if (sceneController != null)
+            {
+                Instance = sceneController;
+                return Instance;
             }
 
             GameObject controller =
                 new GameObject("BattleFlowController");
-            controller.AddComponent<BattleFlowController>();
+            return controller.AddComponent<
+                BattleFlowController>();
         }
 
         private void Awake()

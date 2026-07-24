@@ -74,10 +74,9 @@ namespace BackpackPrototypeEditor
             BackpackDebugRuntime runtime =
                 BackpackDebugRuntime.Instance;
 
-            using (new EditorGUI.DisabledScope(
-                       !EditorApplication.isPlaying ||
-                       runtime == null ||
-                       !runtime.IsReady))
+            if (EditorApplication.isPlaying &&
+                runtime != null &&
+                runtime.IsReady)
             {
                 EditorGUILayout.Space(10f);
                 DrawActions(runtime);

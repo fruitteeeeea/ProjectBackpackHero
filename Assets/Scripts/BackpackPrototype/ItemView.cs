@@ -29,6 +29,7 @@ namespace BackpackPrototype
         private Vector2 originalAnchoredPosition;
         private Tween scaleTween;
         private Tween feedbackTween;
+        private Tween cooldownFlashTween;
         private bool isDragging;
         private Vector2 shapeCellSize;
         private Vector2 shapeSpacing;
@@ -141,6 +142,12 @@ namespace BackpackPrototype
             Vector2 spacing,
             BackpackCombatController combatController = null)
         {
+            if (CombatController != null)
+            {
+                CombatController.CooldownCompleted -=
+                    HandleCooldownCompleted;
+            }
+
             Instance = instance;
             Backpack = backpack;
             GridView = gridView;
@@ -148,6 +155,12 @@ namespace BackpackPrototype
             DragLayer = dragLayer;
             TrashZone = trashZone;
             CombatController = combatController;
+
+            if (CombatController != null)
+            {
+                CombatController.CooldownCompleted +=
+                    HandleCooldownCompleted;
+            }
 
             ResizeToShape(cellSize, spacing);
 
@@ -212,6 +225,39 @@ namespace BackpackPrototype
             SetCooldownFloat(
                 FlashAmountId,
                 0f);
+        }
+
+        private void HandleCooldownCompleted(
+            ItemInstance completedItem)
+        {
+            if (completedItem != Instance)
+            {
+                return;
+            }
+
+            cooldownFlashTween?.Kill();
+            SetCooldownFloat(FlashAmountId, 0f);
+
+            Sequence flashSequence = DOTween.Sequence();
+            flashSequence.Append(
+                DOTween.To(
+                        () => 0f,
+                        value => SetCooldownFloat(
+                            FlashAmountId,
+                            value),
+                        1f,
+                        0.06f)
+                    .SetEase(Ease.OutQuad));
+            flashSequence.Append(
+                DOTween.To(
+                        () => 1f,
+                        value => SetCooldownFloat(
+                            FlashAmountId,
+                            value),
+                        0f,
+                        0.16f)
+                    .SetEase(Ease.InQuad));
+            cooldownFlashTween = flashSequence;
         }
 
         private Material CreateCooldownMaterial(
@@ -521,8 +567,15 @@ namespace BackpackPrototype
 
         private void OnDestroy()
         {
+            if (CombatController != null)
+            {
+                CombatController.CooldownCompleted -=
+                    HandleCooldownCompleted;
+            }
+
             scaleTween?.Kill();
             feedbackTween?.Kill();
+            cooldownFlashTween?.Kill();
             ReleaseCooldownMaterials();
         }
 

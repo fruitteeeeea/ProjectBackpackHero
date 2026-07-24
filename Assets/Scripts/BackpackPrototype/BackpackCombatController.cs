@@ -62,6 +62,8 @@ namespace BackpackPrototype
                 ? backpack.Items
                 : Array.Empty<ItemInstance>();
 
+        public event Action<ItemInstance> CooldownCompleted;
+
         private void Awake()
         {
             factionMember = GetComponent<FactionMember>();
@@ -113,6 +115,7 @@ namespace BackpackPrototype
                     continue;
                 }
 
+                CooldownCompleted?.Invoke(item);
                 FighterSpawner?.RequestSpawn(item);
 
                 if (backpack.Contains(item) &&

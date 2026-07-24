@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using BackpackHero.Battle;
 using UnityEngine;
@@ -77,6 +78,9 @@ namespace BackpackPrototype
         private Color playerFighterColor =
             new Color(0.45f, 0.85f, 1f, 1f);
 
+        [SerializeField, Min(0.1f)]
+        private float fighterSpawnInterval = 0.1f;
+
         [Header("Item Catalog")]
         [SerializeField]
         private List<ItemPrefabEntry> itemCatalog = new();
@@ -87,9 +91,12 @@ namespace BackpackPrototype
 
         private readonly List<ItemView> shopItems = new();
         private readonly List<ItemView> backpackViews = new();
+        private readonly Queue<ItemInstance>
+            pendingFighterSpawns = new();
 
         private BackpackController backpack;
         private int nextItemId;
+        private Coroutine fighterSpawnCoroutine;
 
         public static BackpackDebugRuntime Instance
         {
@@ -367,6 +374,11 @@ namespace BackpackPrototype
                 shopRoot.SetActive(isPreparation);
             }
 
+            if (isPreparation)
+            {
+                ClearPendingFighterSpawns();
+            }
+
             foreach (ItemView view in backpackViews)
             {
                 if (view == null)
@@ -416,13 +428,65 @@ namespace BackpackPrototype
                 return;
             }
 
-            SpawnFighter(itemView.Instance);
+            QueueFighterSpawn(itemView.Instance);
 
             if (BattleFlowController.IsCombatPhase &&
                 itemView != null)
             {
                 itemView.EnterCooldown();
             }
+        }
+
+        private void QueueFighterSpawn(
+            ItemInstance aircraftItem)
+        {
+            if (aircraftItem == null ||
+                !BattleFlowController.IsCombatPhase)
+            {
+                return;
+            }
+
+            pendingFighterSpawns.Enqueue(aircraftItem);
+
+            if (fighterSpawnCoroutine == null)
+            {
+                fighterSpawnCoroutine =
+                    StartCoroutine(
+                        ProcessFighterSpawnQueue());
+            }
+        }
+
+        private IEnumerator ProcessFighterSpawnQueue()
+        {
+            float safeInterval =
+                Mathf.Max(0.1f, fighterSpawnInterval);
+
+            while (pendingFighterSpawns.Count > 0 &&
+                   BattleFlowController.IsCombatPhase)
+            {
+                ItemInstance aircraftItem =
+                    pendingFighterSpawns.Dequeue();
+
+                SpawnFighter(aircraftItem);
+                yield return new WaitForSeconds(
+                    safeInterval);
+            }
+
+            pendingFighterSpawns.Clear();
+            fighterSpawnCoroutine = null;
+        }
+
+        private void ClearPendingFighterSpawns()
+        {
+            pendingFighterSpawns.Clear();
+
+            if (fighterSpawnCoroutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(fighterSpawnCoroutine);
+            fighterSpawnCoroutine = null;
         }
 
         public GameObject SpawnFighter(ItemInstance aircraftItem)
@@ -655,6 +719,8 @@ namespace BackpackPrototype
 
         private void OnDestroy()
         {
+            ClearPendingFighterSpawns();
+
             BattleFlowController.PhaseChanged -=
                 HandlePhaseChanged;
 

@@ -513,6 +513,59 @@ public sealed class BackpackControllerTests
     }
 
     [Test]
+    public void GetAdjacentEquipmentItems_KeepsSeparateItemsWithSameData()
+    {
+        BackpackController backpack =
+            new BackpackController(4, 4);
+
+        ItemShapeData oneCellShape =
+            NewShape(OneCell());
+        ItemData aircraftData =
+            NewData(
+                "aircraft",
+                ItemType.Aircraft,
+                2f,
+                oneCellShape);
+        ItemData sharedEquipmentData =
+            NewData(
+                "shared-equipment",
+                ItemType.Equipment,
+                -1f,
+                oneCellShape);
+
+        ItemInstance aircraft =
+            new ItemInstance(
+                "aircraft",
+                aircraftData,
+                new Vector2Int(1, 1));
+        ItemInstance first =
+            new ItemInstance(
+                "first",
+                sharedEquipmentData,
+                new Vector2Int(1, 0));
+        ItemInstance second =
+            new ItemInstance(
+                "second",
+                sharedEquipmentData,
+                new Vector2Int(2, 1));
+
+        backpack.PlaceItem(
+            aircraft,
+            aircraft.AnchorCell);
+        backpack.PlaceItem(
+            first,
+            first.AnchorCell);
+        backpack.PlaceItem(
+            second,
+            second.AnchorCell);
+
+        CollectionAssert.AreEquivalent(
+            new[] { first, second },
+            backpack.GetAdjacentEquipmentItems(
+                aircraft));
+    }
+
+    [Test]
     public void ItemData_OnlyAircraftCanEnterCooldown()
     {
         ItemShapeData shape =

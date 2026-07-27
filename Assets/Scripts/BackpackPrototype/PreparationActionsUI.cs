@@ -4,36 +4,40 @@ namespace BackpackPrototype
 {
     public sealed class PreparationActionsUI : MonoBehaviour
     {
+        [SerializeField]
+        private PlayerBackpackSystem playerBackpackSystem;
+
+        private PlayerBackpackSystem System =>
+            playerBackpackSystem != null
+                ? playerBackpackSystem
+                : playerBackpackSystem =
+                    GetComponentInParent<
+                        PlayerBackpackSystem>(true);
+
         public void RefreshShop()
         {
-            BackpackDebugRuntime runtime =
-                BackpackDebugRuntime.Instance;
-
-            if (runtime == null)
+            if (System == null)
             {
                 Debug.LogWarning(
-                    "无法刷新商店：BackpackDebugRuntime未就绪。",
+                    "无法刷新商店：PlayerBackpackSystem未就绪。",
                     this);
                 return;
             }
 
-            runtime.RefreshShop();
+            System.RefreshShop();
         }
 
         public void TogglePhase()
         {
-            BackpackDebugRuntime runtime =
-                BackpackDebugRuntime.Instance;
-
-            if (runtime == null)
+            if (System == null)
             {
                 Debug.LogWarning(
-                    "无法切换阶段：BackpackDebugRuntime未就绪。",
+                    "无法进入战斗：PlayerBackpackSystem未就绪。",
                     this);
                 return;
             }
 
-            runtime.TogglePhase();
+            System.EnterCombat();
         }
     }
 }

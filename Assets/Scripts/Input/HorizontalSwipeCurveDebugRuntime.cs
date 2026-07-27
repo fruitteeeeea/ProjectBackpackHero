@@ -1,4 +1,5 @@
 using System;
+using BackpackPrototype;
 using UnityEngine;
 
 namespace BackpackHero.Input
@@ -150,7 +151,14 @@ namespace BackpackHero.Input
         private void OnEnable()
         {
             HorizontalSwipeCurveDebugBridge.Register(this);
-            input?.SetInputEnabled(true);
+
+            // 正式玩家背包存在时，由它按战斗阶段管理输入开关。
+            // 独立曲线调试场景仍保持原来的自动启用行为。
+            if (FindAnyObjectByType<
+                    PlayerBackpackSystem>() == null)
+            {
+                input?.SetInputEnabled(true);
+            }
         }
 
         private void OnDisable()

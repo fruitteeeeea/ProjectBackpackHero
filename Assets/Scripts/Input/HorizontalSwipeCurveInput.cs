@@ -206,7 +206,7 @@ namespace BackpackHero.Input
         }
     }
 
-    internal sealed class HorizontalSwipeValueModel
+    public sealed class HorizontalSwipeValueModel
     {
         public float CurrentValue { get; private set; }
         public bool IsEnabled { get; private set; }

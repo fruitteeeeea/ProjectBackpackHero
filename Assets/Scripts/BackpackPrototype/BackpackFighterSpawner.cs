@@ -65,6 +65,7 @@ namespace BackpackPrototype
             Mathf.Max(0.1f, spawnInterval);
         public float LastSpawnTime { get; private set; } =
             float.NegativeInfinity;
+        public float CurrentCurveValue { get; private set; }
 
         public event Action<GameObject, ItemInstance>
             FighterSpawned;
@@ -115,7 +116,8 @@ namespace BackpackPrototype
             pendingSpawns.Enqueue(
                 new SpawnRequest(
                     aircraftItem,
-                    curveValue));
+                    curveValue ??
+                    CurrentCurveValue));
 
             if (spawnCoroutine == null)
             {
@@ -124,6 +126,12 @@ namespace BackpackPrototype
             }
 
             return true;
+        }
+
+        public void SetCurveValue(float value)
+        {
+            CurrentCurveValue =
+                Mathf.Clamp(value, -1f, 1f);
         }
 
         public void ClearPendingSpawns()
@@ -266,9 +274,6 @@ namespace BackpackPrototype
             Transform fighter,
             ItemInstance aircraftItem)
         {
-            HashSet<GameObject> attachedPrefabs =
-                new();
-
             foreach (ItemInstance equipment in
                      combatController.Backpack
                          .GetAdjacentEquipmentItems(
@@ -277,8 +282,7 @@ namespace BackpackPrototype
                 GameObject effectPrefab =
                     equipment.Data.EquipmentEffectPrefab;
 
-                if (effectPrefab == null ||
-                    !attachedPrefabs.Add(effectPrefab))
+                if (effectPrefab == null)
                 {
                     continue;
                 }
@@ -290,6 +294,20 @@ namespace BackpackPrototype
                         false);
                 effect.name =
                     $"{effectPrefab.name} (Equipment)";
+
+                foreach (MonoBehaviour behaviour in
+                         effect.GetComponentsInChildren<
+                             MonoBehaviour>(true))
+                {
+                    if (behaviour is
+                        IAircraftEquipmentBuff buff)
+                    {
+                        buff.Apply(
+                            fighter.GetComponent<
+                                Fighter2D>(),
+                            equipment);
+                    }
+                }
             }
         }
 

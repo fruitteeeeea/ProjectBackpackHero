@@ -60,17 +60,12 @@ namespace BackpackPrototypeEditor
             Transform spawnPoint =
                 GetOrCreateSpawnPoint();
 
-            GameObject shopRoot =
-                FindSceneObject("ShopPanel");
-
             SerializedObject runtimeObject =
                 new SerializedObject(runtime);
 
             runtimeObject.FindProperty("phaseLabel")
                 .objectReferenceValue = phaseLabel;
-
-            runtimeObject.FindProperty("shopRoot")
-                .objectReferenceValue = shopRoot;
+            
 
             runtimeObject.FindProperty(
                     "playerFighterSpawnPoint")

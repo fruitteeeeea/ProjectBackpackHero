@@ -63,13 +63,7 @@ namespace BackpackPrototype
 
         [SerializeField]
         private Text phaseLabel;
-
-        [SerializeField]
-        private GameObject shopRoot;
-
-        [SerializeField]
-        private GameObject preparationActionsRoot;
-
+        
         [SerializeField]
         private Transform playerFighterSpawnPoint;
 
@@ -412,22 +406,7 @@ namespace BackpackPrototype
                 phaseLabel.text =
                     $"当前阶段：{GetPhaseDisplayName(phase)}";
             }
-
-            if (shopRoot != null)
-            {
-                shopRoot.SetActive(isPreparation);
-            }
-
-            if (preparationActionsRoot != null)
-            {
-                // The bottom action row remains active so its FEEL
-                // feedback can animate it off-screen during combat.
-                if (!preparationActionsRoot.activeSelf)
-                {
-                    preparationActionsRoot.SetActive(true);
-                }
-            }
-
+            
             foreach (ItemView view in backpackViews)
             {
                 if (view == null)

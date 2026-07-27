@@ -95,10 +95,126 @@ public sealed class PlayerBackpackSystemTests
             serialized.FindProperty("itemCatalog")
                 .arraySize,
             Is.EqualTo(4));
+
+        RectTransform aircraftAnchor =
+            FindRectTransform(
+                prefab,
+                "AircraftSpawnAnchor");
+        RectTransform collisionAnchor =
+            FindRectTransform(
+                prefab,
+                "CollisionCenterAnchor");
+
+        Assert.That(aircraftAnchor, Is.Not.Null);
+        Assert.That(collisionAnchor, Is.Not.Null);
+        Assert.That(
+            aircraftAnchor.parent.name,
+            Is.EqualTo("PlayerBackpack"));
+        Assert.That(
+            collisionAnchor.parent,
+            Is.SameAs(aircraftAnchor.parent));
     }
 
     [Test]
-    public void FighterSpawner_ClampsInjectedCurveValue()
+    public void ScreenPointMirror_ReflectsAcrossScreenCenter()
+    {
+        Vector2 mirrored =
+            PlayerBackpackSystem
+                .MirrorScreenPointVertically(
+                    new Vector2(125f, 300f),
+                    1920f);
+
+        Assert.That(mirrored.x, Is.EqualTo(125f));
+        Assert.That(mirrored.y, Is.EqualTo(1620f));
+    }
+
+    [Test]
+    public void ScreenProjection_HitsRequestedWorldPlane()
+    {
+        GameObject cameraObject =
+            new GameObject("Projection Camera");
+        Camera camera =
+            cameraObject.AddComponent<Camera>();
+
+        try
+        {
+            camera.transform.position =
+                new Vector3(0f, 0f, -10f);
+            camera.transform.rotation =
+                Quaternion.identity;
+            camera.orthographic = false;
+
+            bool projected =
+                PlayerBackpackSystem
+                    .TryScreenPointToWorldOnPlane(
+                        camera,
+                        new Vector2(
+                            camera.pixelWidth * 0.5f,
+                            camera.pixelHeight * 0.5f),
+                        0f,
+                        out Vector3 worldPoint);
+
+            Assert.That(projected, Is.True);
+            Assert.That(worldPoint.x, Is.EqualTo(0f)
+                .Within(0.001f));
+            Assert.That(worldPoint.y, Is.EqualTo(0f)
+                .Within(0.001f));
+            Assert.That(worldPoint.z, Is.EqualTo(0f)
+                .Within(0.001f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(cameraObject);
+        }
+    }
+
+    [Test]
+    public void CombatRequest_WaitsForTransitionCompletion()
+    {
+        ResetBattleFlowStatics();
+        GameObject root =
+            new GameObject("Battle Flow Test");
+
+        try
+        {
+            BattleFlowController flow =
+                root.AddComponent<BattleFlowController>();
+            SerializedObject serialized =
+                new SerializedObject(flow);
+            serialized.FindProperty("persistBetweenScenes")
+                .boolValue = false;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            InvokeAwake(flow);
+
+            flow.SetPhase(BattlePhase.Combat);
+
+            Assert.That(
+                BattleFlowController.CurrentPhase,
+                Is.EqualTo(
+                    BattlePhase.CombatTransition));
+            Assert.That(
+                BattleFlowController.IsCombatPhase,
+                Is.False);
+
+            Assert.That(
+                flow.CompleteCombatTransition(),
+                Is.True);
+            Assert.That(
+                BattleFlowController.CurrentPhase,
+                Is.EqualTo(BattlePhase.Combat));
+            Assert.That(
+                BattleFlowController.IsCombatPhase,
+                Is.True);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+            ResetBattleFlowStatics();
+        }
+    }
+
+    [Test]
+    public void FighterSpawner_ClampsInjectedCurveSettings()
     {
         GameObject root =
             new GameObject("Spawner Test");
@@ -124,6 +240,75 @@ public sealed class PlayerBackpackSystemTests
             Assert.That(
                 spawner.CurrentCurveValue,
                 Is.EqualTo(0.35f));
+
+            spawner.SetMaximumBendDistance(-2f);
+            Assert.That(
+                spawner.MaximumBendDistance,
+                Is.EqualTo(0f));
+
+            spawner.SetMaximumBendDistance(3f);
+            Assert.That(
+                spawner.MaximumBendDistance,
+                Is.EqualTo(3f));
+
+            spawner.SetEnemyCurveValueRange(
+                new Vector2(0.65f, -0.4f));
+            Assert.That(
+                spawner.EnemyCurveValueRange,
+                Is.EqualTo(
+                    new Vector2(-0.4f, 0.65f)));
+
+            spawner.SetEnemyCurveValueRange(
+                new Vector2(-3f, 4f));
+            Assert.That(
+                spawner.EnemyCurveValueRange,
+                Is.EqualTo(new Vector2(-1f, 1f)));
+
+            for (int index = 0; index < 32; index++)
+            {
+                Assert.That(
+                    spawner.SampleEnemyCurveValue(),
+                    Is.InRange(-1f, 1f));
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
+    public void EnemyFighterSpawner_UsesConfiguredRandomCurveRange()
+    {
+        GameObject root =
+            new GameObject("Enemy Spawner Test");
+
+        try
+        {
+            FactionMember faction =
+                root.AddComponent<FactionMember>();
+            faction.SetFaction(BattleFaction.Enemy);
+
+            BackpackFighterSpawner spawner =
+                root.AddComponent<
+                    BackpackFighterSpawner>();
+            InvokeAwake(spawner);
+            spawner.SetEnemyCurveValueRange(
+                new Vector2(0.42f, 0.42f));
+
+            MethodInfo resolver =
+                typeof(BackpackFighterSpawner)
+                    .GetMethod(
+                        "ResolveCurveValue",
+                        BindingFlags.Instance |
+                        BindingFlags.NonPublic);
+
+            Assert.That(resolver, Is.Not.Null);
+            Assert.That(
+                (float)resolver.Invoke(
+                    spawner,
+                    new object[] { null }),
+                Is.EqualTo(0.42f).Within(0.0001f));
         }
         finally
         {
@@ -217,6 +402,33 @@ public sealed class PlayerBackpackSystemTests
             ?.Invoke(target, null);
     }
 
+    private static void ResetBattleFlowStatics()
+    {
+        typeof(BattleFlowController)
+            .GetMethod(
+                "ResetStaticState",
+                BindingFlags.Static |
+                BindingFlags.NonPublic)
+            ?.Invoke(null, null);
+    }
+
+    private static RectTransform FindRectTransform(
+        GameObject root,
+        string objectName)
+    {
+        foreach (RectTransform rectTransform in
+                 root.GetComponentsInChildren<
+                     RectTransform>(true))
+        {
+            if (rectTransform.name == objectName)
+            {
+                return rectTransform;
+            }
+        }
+
+        return null;
+    }
+
     [Test]
     public void CompletePrefab_UsesFormalActionsBinding()
     {
@@ -259,6 +471,9 @@ public sealed class PlayerBackpackSystemTests
             sceneText,
             Does.Contain(
                 "value: PlayerBackpackSystem"));
+        Assert.That(
+            sceneText,
+            Does.Contain("maxBendDistance: 3"));
 
         const string debugPath =
             "Assets/Scripts/Battle/Debug/" +

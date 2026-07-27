@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Fighter_01_Normal
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FighterDefinition
   displayName: Normal Fighter
-  sprite: {fileID: 5891586112367536921, guid: 148b2fe3598db4ce99e556a00f75f210, type: 3}
+  sprite: {fileID: 4677714814586562668, guid: 09c84d2fb02194b929bfdf85903d5e5f, type: 3}
   baseColor: {r: 1, g: 1, b: 1, a: 1}
   baseSpeed: 3
   maximumHealth: 10

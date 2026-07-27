@@ -117,7 +117,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3907970746525924259, guid: 24a011552d5284264b2b9c09c513c261, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -5.59
+      value: -9.5
       objectReference: {fileID: 0}
     - target: {fileID: 3907970746525924259, guid: 24a011552d5284264b2b9c09c513c261, type: 3}
       propertyPath: m_LocalPosition.z
@@ -206,6 +206,9 @@ MonoBehaviour:
   - data: {fileID: 11400000, guid: 929801f3993d745089b19529098347d5, type: 2}
     prefab: {fileID: 2060890215293225743, guid: 630443289b5e6450b8833b7c80c18317, type: 3}
   curveInput: {fileID: 0}
+  aircraftSpawnAnchor: {fileID: 0}
+  collisionCenterAnchor: {fileID: 0}
+  battleWorldPlaneZ: 0
 --- !u!1001 &6659706893120404125
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -256,7 +259,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3565506307050142392, guid: a425516da73084bb780a53022ec21caa, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: -31
       objectReference: {fileID: 0}
     - target: {fileID: 3565506307050142392, guid: a425516da73084bb780a53022ec21caa, type: 3}
       propertyPath: m_LocalPosition.x
@@ -292,7 +295,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3565506307050142392, guid: a425516da73084bb780a53022ec21caa, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -323
       objectReference: {fileID: 0}
     - target: {fileID: 3565506307050142392, guid: a425516da73084bb780a53022ec21caa, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

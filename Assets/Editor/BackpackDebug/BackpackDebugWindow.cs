@@ -14,7 +14,8 @@ namespace BackpackPrototypeEditor
         private double nextRepaintTime;
         private Vector2 scrollPosition;
         
-        [MenuItem("Tools/Backpack/Backpack Debug")]
+        [MenuItem(
+            "Tools/Backpack/Legacy Backpack Debug")]
         public static void ShowFromMenu()
         {
             OpenWindow();

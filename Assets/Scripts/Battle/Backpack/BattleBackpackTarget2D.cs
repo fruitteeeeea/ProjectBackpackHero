@@ -19,6 +19,8 @@ namespace BackpackHero.Battle
 
         private WorldSpaceHealthBarFollower2D[]
             healthBarFollowers;
+
+        private Renderer[] visualRenderers;
         
         public Health Health =>
             health;
@@ -55,10 +57,78 @@ namespace BackpackHero.Battle
                 GetComponentsInChildren<
                     WorldSpaceHealthBarFollower2D>(
                     true);
+
+            Transform visualRoot =
+                transform.Find("Visual");
+            visualRenderers =
+                visualRoot != null
+                    ? visualRoot.GetComponentsInChildren<
+                        Renderer>(true)
+                    : System.Array.Empty<Renderer>();
             
             ConfigureHurtBoxLayers();
             
             ConfigureHealthBars();
+            ApplyCombatPresentation(
+                BattleFlowController.IsCombatPhase);
+        }
+
+        private void OnEnable()
+        {
+            BattleFlowController.PhaseChanged +=
+                HandlePhaseChanged;
+        }
+
+        private void Start()
+        {
+            ApplyCombatPresentation(
+                BattleFlowController.IsCombatPhase);
+        }
+
+        private void HandlePhaseChanged(BattlePhase phase)
+        {
+            ApplyCombatPresentation(
+                phase == BattlePhase.Combat);
+        }
+
+        public void ApplyCombatPresentation(bool active)
+        {
+            if (hurtBoxes != null)
+            {
+                foreach (HurtBox2D hurtBox in hurtBoxes)
+                {
+                    if (hurtBox != null &&
+                        hurtBox.TryGetComponent(
+                            out Collider2D hurtCollider))
+                    {
+                        hurtCollider.enabled = active;
+                    }
+                }
+            }
+
+            if (healthBarFollowers != null)
+            {
+                foreach (
+                    WorldSpaceHealthBarFollower2D follower
+                    in healthBarFollowers)
+                {
+                    if (follower != null)
+                    {
+                        follower.gameObject.SetActive(active);
+                    }
+                }
+            }
+
+            if (visualRenderers != null)
+            {
+                foreach (Renderer visual in visualRenderers)
+                {
+                    if (visual != null)
+                    {
+                        visual.enabled = active;
+                    }
+                }
+            }
         }
 
         private void ConfigureHealthBars()
@@ -112,6 +182,12 @@ namespace BackpackHero.Battle
                 hurtBox.ConfigureLayer(
                     factionMember.Faction);
             }
+        }
+
+        private void OnDisable()
+        {
+            BattleFlowController.PhaseChanged -=
+                HandlePhaseChanged;
         }
     }
 }

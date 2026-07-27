@@ -19,6 +19,9 @@ namespace BackpackPrototype
         private PlayerBackpackSystem playerBackpackSystem;
 
         [SerializeField]
+        private EnemyBackpackSystem enemyBackpackSystem;
+
+        [SerializeField]
         private bool debugEnabled = true;
 
         [SerializeField, Min(0.05f)]
@@ -29,6 +32,10 @@ namespace BackpackPrototype
             PlayerBackpackDebugSnapshot.Unavailable(
                 "调试桥尚未初始化。");
 
+        private PlayerBackpackDebugSnapshot enemySnapshot =
+            PlayerBackpackDebugSnapshot.Unavailable(
+                "敌人背包调试桥尚未初始化。");
+
         public static PlayerBackpackDebugBridge Active
         {
             get;
@@ -38,10 +45,16 @@ namespace BackpackPrototype
         public PlayerBackpackSystem Target =>
             playerBackpackSystem;
 
+        public EnemyBackpackSystem EnemyTarget =>
+            enemyBackpackSystem;
+
         public bool DebugEnabled => debugEnabled;
 
         public PlayerBackpackDebugSnapshot Snapshot =>
             snapshot;
+
+        public PlayerBackpackDebugSnapshot EnemySnapshot =>
+            enemySnapshot;
 
         [RuntimeInitializeOnLoadMethod(
             RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -73,6 +86,11 @@ namespace BackpackPrototype
             if (playerBackpackSystem == null)
             {
                 ResolveTarget();
+            }
+
+            if (enemyBackpackSystem == null)
+            {
+                ResolveEnemyTarget();
             }
 
             if (Time.unscaledTime >= nextRefreshTime)
@@ -140,6 +158,32 @@ namespace BackpackPrototype
             return true;
         }
 
+        public bool ApplyEnemyData(
+            EnemyBackpackData data)
+        {
+            if (enemyBackpackSystem == null ||
+                !enemyBackpackSystem.ApplyData(data))
+            {
+                return false;
+            }
+
+            RefreshSnapshot();
+            return true;
+        }
+
+        public bool RestoreEnemyDefaultData()
+        {
+            if (enemyBackpackSystem == null ||
+                !enemyBackpackSystem
+                    .RestoreDefaultData())
+            {
+                return false;
+            }
+
+            RefreshSnapshot();
+            return true;
+        }
+
         public bool BeginAllCooldowns()
         {
             if (playerBackpackSystem?.CombatController ==
@@ -177,6 +221,7 @@ namespace BackpackPrototype
                     PlayerBackpackDebugSnapshot.Unavailable(
                         "未找到PlayerBackpackSystem；" +
                         "场景可能正在切换或目标已销毁。");
+                RefreshEnemySnapshot();
                 return;
             }
 
@@ -190,6 +235,7 @@ namespace BackpackPrototype
                 snapshot =
                     PlayerBackpackDebugSnapshot.Unavailable(
                         "PlayerBackpackSystem尚未完成初始化。");
+                RefreshEnemySnapshot();
                 return;
             }
 
@@ -219,6 +265,64 @@ namespace BackpackPrototype
                 PlayerBackpackDebugSnapshot.Available(
                     BattleFlowController.CurrentPhase,
                     playerBackpackSystem.IsReady,
+                    backpack.Width,
+                    backpack.Height,
+                    spawner?.PendingCount ?? 0,
+                    spawner?.CurrentCurveValue ?? 0f,
+                    items);
+
+            RefreshEnemySnapshot();
+        }
+
+        private void RefreshEnemySnapshot()
+        {
+            if (enemyBackpackSystem == null)
+            {
+                enemySnapshot =
+                    PlayerBackpackDebugSnapshot.Unavailable(
+                        "未找到EnemyBackpackSystem。");
+                return;
+            }
+
+            BackpackController backpack =
+                enemyBackpackSystem.Backpack;
+            BackpackFighterSpawner spawner =
+                enemyBackpackSystem.FighterSpawner;
+
+            if (backpack == null)
+            {
+                enemySnapshot =
+                    PlayerBackpackDebugSnapshot.Unavailable(
+                        "EnemyBackpackSystem尚未初始化。");
+                return;
+            }
+
+            var items =
+                new List<PlayerBackpackDebugItemSnapshot>(
+                    enemyBackpackSystem.Items.Count);
+            int index = 0;
+
+            foreach (ItemInstance item in
+                     enemyBackpackSystem.Items)
+            {
+                index++;
+                items.Add(
+                    new PlayerBackpackDebugItemSnapshot(
+                        item?.Id ?? "<null>",
+                        item?.Data?.ItemName ??
+                        "<无效物品>",
+                        item?.Data?.ItemType ??
+                        ItemType.Equipment,
+                        BuildItemDescription(
+                            backpack,
+                            item,
+                            index)));
+            }
+
+            enemySnapshot =
+                PlayerBackpackDebugSnapshot.Available(
+                    BattleFlowController.CurrentPhase,
+                    enemyBackpackSystem.IsReady,
                     backpack.Width,
                     backpack.Height,
                     spawner?.PendingCount ?? 0,
@@ -372,6 +476,16 @@ namespace BackpackPrototype
                     ? playerBackpackSystem
                     : FindAnyObjectByType<
                         PlayerBackpackSystem>(
+                        FindObjectsInactive.Include);
+        }
+
+        private void ResolveEnemyTarget()
+        {
+            enemyBackpackSystem =
+                enemyBackpackSystem != null
+                    ? enemyBackpackSystem
+                    : FindAnyObjectByType<
+                        EnemyBackpackSystem>(
                         FindObjectsInactive.Include);
         }
 

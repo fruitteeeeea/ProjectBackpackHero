@@ -49,6 +49,15 @@ namespace BackpackHero.Input
             }
         }
 
+        public void SetEndpoints(
+            Transform playerEndpoint,
+            Transform enemyEndpoint)
+        {
+            player = playerEndpoint;
+            enemy = enemyEndpoint;
+            RefreshCurve();
+        }
+
         public void SetCurveValue(float value)
         {
             var clampedValue = Mathf.Clamp(value, -1f, 1f);
@@ -81,6 +90,13 @@ namespace BackpackHero.Input
             EnsureLineRenderer();
             SubscribeToInput();
             HorizontalSwipeCurveDebugBridge.RegisterCurve(this);
+            if (Application.isPlaying)
+            {
+                BattleFlowController.PhaseChanged +=
+                    HandlePhaseChanged;
+                HandlePhaseChanged(
+                    BattleFlowController.CurrentPhase);
+            }
             RefreshCurve();
         }
 
@@ -88,6 +104,11 @@ namespace BackpackHero.Input
         {
             UnsubscribeFromInput();
             HorizontalSwipeCurveDebugBridge.UnregisterCurve(this);
+            if (Application.isPlaying)
+            {
+                BattleFlowController.PhaseChanged -=
+                    HandlePhaseChanged;
+            }
         }
 
         private void OnValidate()
@@ -102,6 +123,17 @@ namespace BackpackHero.Input
         private void LateUpdate()
         {
             RefreshCurve();
+        }
+
+        private void HandlePhaseChanged(BattlePhase phase)
+        {
+            EnsureLineRenderer();
+
+            if (lineRenderer != null)
+            {
+                lineRenderer.enabled =
+                    phase == BattlePhase.Combat;
+            }
         }
 
         private void SubscribeToInput()

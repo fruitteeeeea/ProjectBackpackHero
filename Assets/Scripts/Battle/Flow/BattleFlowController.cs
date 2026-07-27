@@ -78,7 +78,10 @@ namespace BackpackHero.Battle
             }
 
             Instance = this;
-            currentPhase = initialPhase;
+            currentPhase =
+                initialPhase == BattlePhase.Combat
+                    ? BattlePhase.CombatTransition
+                    : initialPhase;
 
             if (persistBetweenScenes)
             {
@@ -93,7 +96,39 @@ namespace BackpackHero.Battle
 
         public void SetPhase(BattlePhase phase)
         {
+            if (phase == BattlePhase.Combat)
+            {
+                BeginCombatTransition();
+                return;
+            }
+
             ApplyPhase(phase, false);
+        }
+
+        public void BeginCombatTransition()
+        {
+            if (currentPhase == BattlePhase.Combat ||
+                currentPhase ==
+                BattlePhase.CombatTransition)
+            {
+                return;
+            }
+
+            ApplyPhase(
+                BattlePhase.CombatTransition,
+                false);
+        }
+
+        public bool CompleteCombatTransition()
+        {
+            if (currentPhase !=
+                BattlePhase.CombatTransition)
+            {
+                return false;
+            }
+
+            ApplyPhase(BattlePhase.Combat, false);
+            return true;
         }
 
         public void TogglePhase()

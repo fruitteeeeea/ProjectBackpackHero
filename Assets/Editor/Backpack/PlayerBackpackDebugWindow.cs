@@ -11,6 +11,15 @@ namespace BackpackHero.EditorTools
         private Vector2 scrollPosition;
         private GUIStyle itemStyle;
         private bool closingFromLifecycle;
+        private int selectedTarget;
+        private EnemyBackpackData enemyDataToApply;
+
+        [MenuItem(
+            "Tools/Backpack/Backpack Debug")]
+        public static void OpenBackpackDebug()
+        {
+            OpenManually();
+        }
 
         [MenuItem(
             "Tools/Backpack/Player Backpack Debug")]
@@ -94,8 +103,12 @@ namespace BackpackHero.EditorTools
                 return;
             }
 
+            DrawTargetSelector(bridge);
+
             PlayerBackpackDebugSnapshot snapshot =
-                bridge.Snapshot;
+                selectedTarget == 0
+                    ? bridge.Snapshot
+                    : bridge.EnemySnapshot;
 
             if (!snapshot.HasTarget)
             {
@@ -115,7 +128,7 @@ namespace BackpackHero.EditorTools
             EditorGUILayout.BeginHorizontal(
                 EditorStyles.toolbar);
             GUILayout.Label(
-                "Player Backpack",
+                "Backpack Debug",
                 EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
 
@@ -142,7 +155,7 @@ namespace BackpackHero.EditorTools
             EditorGUILayout.EndHorizontal();
         }
 
-        private static void DrawActions(
+        private void DrawActions(
             PlayerBackpackDebugBridge bridge,
             PlayerBackpackDebugSnapshot snapshot)
         {
@@ -177,14 +190,22 @@ namespace BackpackHero.EditorTools
             {
                 EditorGUILayout.BeginHorizontal();
 
-                if (GUILayout.Button("刷新商店"))
+                if (selectedTarget == 0 &&
+                    GUILayout.Button("刷新商店"))
                 {
                     bridge.RefreshShop();
                 }
 
-                if (GUILayout.Button("恢复默认布局"))
+                if (selectedTarget == 0 &&
+                    GUILayout.Button("恢复默认布局"))
                 {
                     bridge.RestoreDefaultLayout();
+                }
+
+                if (selectedTarget == 1 &&
+                    GUILayout.Button("恢复默认敌人数据"))
+                {
+                    bridge.RestoreEnemyDefaultData();
                 }
 
                 EditorGUILayout.EndHorizontal();
@@ -194,24 +215,94 @@ namespace BackpackHero.EditorTools
                        snapshot.Phase !=
                        BattlePhase.Combat))
             {
-                if (GUILayout.Button("重新开始全部冷却"))
+                if (selectedTarget == 0 &&
+                    GUILayout.Button("重新开始全部冷却"))
                 {
                     bridge.BeginAllCooldowns();
                 }
             }
 
-            float curve =
-                EditorGUILayout.Slider(
-                    "手动飞行曲线",
-                    snapshot.CurveValue,
-                    -1f,
-                    1f);
-
-            if (!Mathf.Approximately(
-                    curve,
-                    snapshot.CurveValue))
+            if (selectedTarget == 0)
             {
-                bridge.SetCurveValue(curve);
+                float curve =
+                    EditorGUILayout.Slider(
+                        "手动飞行曲线",
+                        snapshot.CurveValue,
+                        -1f,
+                        1f);
+
+                if (!Mathf.Approximately(
+                        curve,
+                        snapshot.CurveValue))
+                {
+                    bridge.SetCurveValue(curve);
+                }
+            }
+            else
+            {
+                DrawEnemyDataActions(
+                    bridge,
+                    snapshot);
+            }
+        }
+
+        private void DrawTargetSelector(
+            PlayerBackpackDebugBridge bridge)
+        {
+            string[] targets =
+            {
+                "Player [Player]",
+                "Enemy [Enemy]",
+            };
+
+            using (new EditorGUI.DisabledScope(
+                       bridge.EnemyTarget == null))
+            {
+                selectedTarget =
+                    EditorGUILayout.Popup(
+                        "目标背包",
+                        selectedTarget,
+                        targets);
+            }
+
+            if (bridge.EnemyTarget == null)
+            {
+                selectedTarget = 0;
+            }
+        }
+
+        private void DrawEnemyDataActions(
+            PlayerBackpackDebugBridge bridge,
+            PlayerBackpackDebugSnapshot snapshot)
+        {
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField(
+                "敌人背包数据",
+                EditorStyles.boldLabel);
+            EditorGUILayout.ObjectField(
+                "当前数据",
+                bridge.EnemyTarget?.CurrentData,
+                typeof(EnemyBackpackData),
+                false);
+            enemyDataToApply =
+                (EnemyBackpackData)
+                EditorGUILayout.ObjectField(
+                    "待应用数据",
+                    enemyDataToApply,
+                    typeof(EnemyBackpackData),
+                    false);
+
+            using (new EditorGUI.DisabledScope(
+                       snapshot.Phase !=
+                       BattlePhase.Preparation ||
+                       !snapshot.SystemReady ||
+                       enemyDataToApply == null))
+            {
+                if (GUILayout.Button("应用敌人背包数据"))
+                {
+                    bridge.ApplyEnemyData(
+                        enemyDataToApply);
+                }
             }
         }
 

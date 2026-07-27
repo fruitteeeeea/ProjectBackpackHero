@@ -16,7 +16,11 @@ namespace BackpackPrototype
         [SerializeField]
         private MMF_Player hideFeedbacks;
 
+        [SerializeField]
+        private bool completesCombatTransition = true;
+
         private BattlePhase? requestedPhase;
+        private PlayerBackpackSystem playerBackpackSystem;
 
         private void OnEnable()
         {
@@ -69,13 +73,37 @@ namespace BackpackPrototype
 
         public void HandleHideCompleted()
         {
-            if (requestedPhase != BattlePhase.Combat ||
+            if (requestedPhase !=
+                BattlePhase.CombatTransition ||
+                BattleFlowController.CurrentPhase !=
+                BattlePhase.CombatTransition ||
                 moduleRoot == null)
             {
                 return;
             }
 
             moduleRoot.SetActive(false);
+
+            if (!completesCombatTransition)
+            {
+                return;
+            }
+
+            playerBackpackSystem ??=
+                GetComponentInParent<
+                    PlayerBackpackSystem>(true);
+
+            if (playerBackpackSystem == null)
+            {
+                Debug.LogError(
+                    "背包FEEL动画完成，但找不到" +
+                    "PlayerBackpackSystem，战斗不会启动。",
+                    this);
+                return;
+            }
+
+            playerBackpackSystem
+                .CompleteCombatTransitionAfterMotion();
         }
 
         private void OnDisable()

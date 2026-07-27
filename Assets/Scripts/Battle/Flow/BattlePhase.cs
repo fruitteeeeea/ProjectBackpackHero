@@ -2,7 +2,8 @@ namespace BackpackHero.Battle
 {
     public enum BattlePhase
     {
-        Preparation,
-        Combat,
+        Preparation = 0,
+        Combat = 1,
+        CombatTransition = 2,
     }
 }

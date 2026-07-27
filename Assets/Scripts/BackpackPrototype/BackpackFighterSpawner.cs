@@ -45,6 +45,11 @@ namespace BackpackPrototype
         [SerializeField, Min(0f)]
         private float maximumBendDistance = 3f;
 
+        [Tooltip("敌机每次生成时随机选择曲线值的范围。")]
+        [SerializeField]
+        private Vector2 enemyCurveValueRange =
+            new(-1f, 1f);
+
         [SerializeField]
         private Color playerColor =
             new(0.45f, 0.85f, 1f, 1f);
@@ -66,6 +71,12 @@ namespace BackpackPrototype
         public float LastSpawnTime { get; private set; } =
             float.NegativeInfinity;
         public float CurrentCurveValue { get; private set; }
+        public float MaximumBendDistance =>
+            maximumBendDistance;
+        public Vector2 EnemyCurveValueRange =>
+            GetNormalizedEnemyCurveValueRange();
+        public Transform SpawnPoint => fighterSpawnPoint;
+        public Vector3 SpawnPosition => GetSpawnPosition();
 
         public event Action<GameObject, ItemInstance>
             FighterSpawned;
@@ -75,6 +86,7 @@ namespace BackpackPrototype
             combatController =
                 GetComponent<BackpackCombatController>();
             factionMember = GetComponent<FactionMember>();
+            ResolveFighterContainer();
             UpdateSpawnPointPosition();
         }
 
@@ -116,8 +128,7 @@ namespace BackpackPrototype
             pendingSpawns.Enqueue(
                 new SpawnRequest(
                     aircraftItem,
-                    curveValue ??
-                    CurrentCurveValue));
+                    ResolveCurveValue(curveValue)));
 
             if (spawnCoroutine == null)
             {
@@ -132,6 +143,40 @@ namespace BackpackPrototype
         {
             CurrentCurveValue =
                 Mathf.Clamp(value, -1f, 1f);
+        }
+
+        public void SetMaximumBendDistance(float distance)
+        {
+            maximumBendDistance =
+                Mathf.Max(0f, distance);
+        }
+
+        public void SetEnemyCurveValueRange(
+            Vector2 range)
+        {
+            enemyCurveValueRange =
+                NormalizeCurveValueRange(range);
+        }
+
+        public float SampleEnemyCurveValue()
+        {
+            Vector2 range =
+                GetNormalizedEnemyCurveValueRange();
+            return UnityEngine.Random.Range(
+                range.x,
+                range.y);
+        }
+
+        public bool SetSpawnPointWorldPosition(
+            Vector3 worldPosition)
+        {
+            if (fighterSpawnPoint == null)
+            {
+                return false;
+            }
+
+            fighterSpawnPoint.position = worldPosition;
+            return true;
         }
 
         public void ClearPendingSpawns()
@@ -254,7 +299,9 @@ namespace BackpackPrototype
             {
                 curveFollower.BeginCurve(
                     start,
-                    enemy.transform.position,
+                    enemy.FighterSpawner != null
+                        ? enemy.FighterSpawner.SpawnPosition
+                        : enemy.transform.position,
                     request.CurveValue ?? 0f,
                     maximumBendDistance);
             }
@@ -352,6 +399,45 @@ namespace BackpackPrototype
                 : Vector2.up;
         }
 
+        private float ResolveCurveValue(
+            float? requestedCurveValue)
+        {
+            if (requestedCurveValue.HasValue)
+            {
+                return Mathf.Clamp(
+                    requestedCurveValue.Value,
+                    -1f,
+                    1f);
+            }
+
+            return factionMember != null &&
+                   factionMember.Faction ==
+                   BattleFaction.Enemy
+                ? SampleEnemyCurveValue()
+                : CurrentCurveValue;
+        }
+
+        private Vector2
+            GetNormalizedEnemyCurveValueRange()
+        {
+            return NormalizeCurveValueRange(
+                enemyCurveValueRange);
+        }
+
+        private static Vector2 NormalizeCurveValueRange(
+            Vector2 range)
+        {
+            float minimum = Mathf.Clamp(
+                Mathf.Min(range.x, range.y),
+                -1f,
+                1f);
+            float maximum = Mathf.Clamp(
+                Mathf.Max(range.x, range.y),
+                -1f,
+                1f);
+            return new Vector2(minimum, maximum);
+        }
+
         private Vector3 GetSpawnPosition()
         {
             return fighterSpawnPoint != null
@@ -384,6 +470,23 @@ namespace BackpackPrototype
                 factionMember =
                     GetComponent<FactionMember>();
             }
+
+            ResolveFighterContainer();
+        }
+
+        private void ResolveFighterContainer()
+        {
+            if (fighterContainer != null)
+            {
+                return;
+            }
+
+            GameObject container =
+                GameObject.Find("Fighters");
+            fighterContainer =
+                container != null
+                    ? container.transform
+                    : null;
         }
 
         private void HandlePhaseChanged(BattlePhase phase)

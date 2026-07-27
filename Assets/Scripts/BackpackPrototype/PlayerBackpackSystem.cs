@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using BackpackHero.Battle;
 using BackpackHero.Input;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BackpackPrototype
 {
@@ -31,6 +32,11 @@ namespace BackpackPrototype
     [DisallowMultipleComponent]
     public sealed class PlayerBackpackSystem : MonoBehaviour
     {
+        private const string AircraftAnchorName =
+            "AircraftSpawnAnchor";
+        private const string CollisionAnchorName =
+            "CollisionCenterAnchor";
+
         [Header("Backpack UI")]
         [SerializeField]
         private BackpackGridView gridView;
@@ -54,6 +60,16 @@ namespace BackpackPrototype
         [Header("Optional Scene Input")]
         [SerializeField]
         private HorizontalSwipeCurveInput curveInput;
+
+        [Header("Battle World Anchors")]
+        [SerializeField]
+        private RectTransform aircraftSpawnAnchor;
+
+        [SerializeField]
+        private RectTransform collisionCenterAnchor;
+
+        [SerializeField]
+        private float battleWorldPlaneZ;
 
         private readonly List<ItemView> shopItems = new();
         private readonly List<ItemView> backpackViews = new();
@@ -81,6 +97,12 @@ namespace BackpackPrototype
         public BackpackFighterSpawner FighterSpawner =>
             fighterSpawner;
 
+        public RectTransform AircraftSpawnAnchor =>
+            aircraftSpawnAnchor;
+
+        public RectTransform CollisionCenterAnchor =>
+            collisionCenterAnchor;
+
         public ItemView SelectedItem { get; private set; }
 
         public bool IsReady => isReady;
@@ -91,6 +113,9 @@ namespace BackpackPrototype
                 GetComponent<BackpackCombatController>();
             fighterSpawner =
                 GetComponent<BackpackFighterSpawner>();
+
+            ResolveBattleAnchors();
+            HideAnchorGraphics();
 
             isReady = ValidateConfiguration();
 
@@ -133,7 +158,8 @@ namespace BackpackPrototype
             IReadOnlyList<BackpackLayoutItem> layout)
         {
             if (!isReady ||
-                BattleFlowController.IsCombatPhase ||
+                BattleFlowController.CurrentPhase !=
+                BattlePhase.Preparation ||
                 layout == null)
             {
                 return false;
@@ -209,7 +235,8 @@ namespace BackpackPrototype
         public void RestoreDefaultLayout()
         {
             if (!isReady ||
-                BattleFlowController.IsCombatPhase)
+                BattleFlowController.CurrentPhase !=
+                BattlePhase.Preparation)
             {
                 return;
             }
@@ -258,6 +285,169 @@ namespace BackpackPrototype
         {
             BattleFlowController.EnsureInstance()
                 ?.SetPhase(BattlePhase.Combat);
+        }
+
+        public bool CompleteCombatTransitionAfterMotion()
+        {
+            if (BattleFlowController.CurrentPhase !=
+                BattlePhase.CombatTransition)
+            {
+                return false;
+            }
+
+            if (!SynchronizeBattleWorldAnchors())
+            {
+                Debug.LogError(
+                    "背包FEEL动画已经结束，但UI锚点无法换算到" +
+                    "战斗世界，战斗保持在过渡阶段。",
+                    this);
+                return false;
+            }
+
+            return BattleFlowController.EnsureInstance()
+                .CompleteCombatTransition();
+        }
+
+        public bool SynchronizeBattleWorldAnchors()
+        {
+            ResolveBattleAnchors();
+
+            Camera worldCamera = Camera.main;
+            EnemyBackpackSystem enemySystem =
+                FindEnemyBackpackSystem();
+            BackpackCombatController enemy =
+                enemySystem != null
+                    ? enemySystem.CombatController
+                    : null;
+            CurvedConnectionRenderer curve =
+                FindAnyObjectByType<
+                    CurvedConnectionRenderer>(
+                    FindObjectsInactive.Include);
+
+            if (aircraftSpawnAnchor == null ||
+                collisionCenterAnchor == null ||
+                worldCamera == null ||
+                combatController == null ||
+                fighterSpawner == null ||
+                enemy == null ||
+                enemy.FighterSpawner == null ||
+                enemySystem.AircraftSpawnAnchor == null ||
+                enemySystem.CollisionCenterAnchor == null ||
+                curve == null)
+            {
+                return false;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            Camera uiCamera =
+                GetCanvasCamera(aircraftSpawnAnchor);
+            Vector2 playerSpawnScreen =
+                RectTransformUtility.WorldToScreenPoint(
+                    uiCamera,
+                    aircraftSpawnAnchor.position);
+            Vector2 playerCenterScreen =
+                RectTransformUtility.WorldToScreenPoint(
+                    GetCanvasCamera(collisionCenterAnchor),
+                    collisionCenterAnchor.position);
+
+            Vector2 enemySpawnScreen =
+                RectTransformUtility.WorldToScreenPoint(
+                    GetCanvasCamera(
+                        enemySystem.AircraftSpawnAnchor),
+                    enemySystem.AircraftSpawnAnchor.position);
+            Vector2 enemyCenterScreen =
+                RectTransformUtility.WorldToScreenPoint(
+                    GetCanvasCamera(
+                        enemySystem.CollisionCenterAnchor),
+                    enemySystem.CollisionCenterAnchor.position);
+
+            if (!TryScreenPointToWorldOnPlane(
+                    worldCamera,
+                    playerSpawnScreen,
+                    battleWorldPlaneZ,
+                    out Vector3 playerSpawnWorld) ||
+                !TryScreenPointToWorldOnPlane(
+                    worldCamera,
+                    playerCenterScreen,
+                    battleWorldPlaneZ,
+                    out Vector3 playerCenterWorld) ||
+                !TryScreenPointToWorldOnPlane(
+                    worldCamera,
+                    enemySpawnScreen,
+                    battleWorldPlaneZ,
+                    out Vector3 enemySpawnWorld) ||
+                !TryScreenPointToWorldOnPlane(
+                    worldCamera,
+                    enemyCenterScreen,
+                    battleWorldPlaneZ,
+                    out Vector3 enemyCenterWorld))
+            {
+                return false;
+            }
+
+            combatController.transform.position =
+                playerCenterWorld;
+            enemy.transform.position = enemyCenterWorld;
+
+            if (!fighterSpawner.SetSpawnPointWorldPosition(
+                    playerSpawnWorld) ||
+                !enemy.FighterSpawner
+                    .SetSpawnPointWorldPosition(
+                        enemySpawnWorld))
+            {
+                return false;
+            }
+
+            fighterSpawner.SetMaximumBendDistance(
+                curve.MaxBendDistance);
+            enemy.FighterSpawner.SetMaximumBendDistance(
+                curve.MaxBendDistance);
+
+            curve.SetEndpoints(
+                fighterSpawner.SpawnPoint,
+                enemy.FighterSpawner.SpawnPoint);
+
+            return true;
+        }
+
+        public static Vector2 MirrorScreenPointVertically(
+            Vector2 screenPoint,
+            float screenHeight)
+        {
+            return new Vector2(
+                screenPoint.x,
+                Mathf.Max(0f, screenHeight) -
+                screenPoint.y);
+        }
+
+        public static bool TryScreenPointToWorldOnPlane(
+            Camera camera,
+            Vector2 screenPoint,
+            float planeZ,
+            out Vector3 worldPoint)
+        {
+            worldPoint = default;
+
+            if (camera == null)
+            {
+                return false;
+            }
+
+            Plane plane =
+                new Plane(
+                    Vector3.forward,
+                    new Vector3(0f, 0f, planeZ));
+            Ray ray = camera.ScreenPointToRay(screenPoint);
+
+            if (!plane.Raycast(ray, out float distance))
+            {
+                return false;
+            }
+
+            worldPoint = ray.GetPoint(distance);
+            worldPoint.z = planeZ;
+            return true;
         }
 
         public void BindCurveInput(
@@ -310,6 +500,108 @@ namespace BackpackPrototype
             }
 
             UpdateCurveInputForPhase(phase);
+        }
+
+        private BackpackCombatController
+            FindEnemyCombatController()
+        {
+            foreach (BackpackCombatController candidate
+                     in BackpackCombatController
+                         .ActiveControllers)
+            {
+                if (candidate != null &&
+                    candidate != combatController &&
+                    candidate.Faction !=
+                    combatController.Faction)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private EnemyBackpackSystem
+            FindEnemyBackpackSystem()
+        {
+            foreach (EnemyBackpackSystem candidate in
+                     FindObjectsByType<EnemyBackpackSystem>(
+                         FindObjectsInactive.Include))
+            {
+                if (candidate != null &&
+                    candidate.CombatController != null &&
+                    candidate.CombatController.Faction !=
+                    combatController.Faction)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private void ResolveBattleAnchors()
+        {
+            if (aircraftSpawnAnchor != null &&
+                collisionCenterAnchor != null)
+            {
+                return;
+            }
+
+            foreach (RectTransform rectTransform in
+                     GetComponentsInChildren<
+                         RectTransform>(true))
+            {
+                if (rectTransform.name ==
+                    AircraftAnchorName)
+                {
+                    aircraftSpawnAnchor = rectTransform;
+                }
+                else if (rectTransform.name ==
+                         CollisionAnchorName)
+                {
+                    collisionCenterAnchor =
+                        rectTransform;
+                }
+            }
+        }
+
+        private void HideAnchorGraphics()
+        {
+            SetAnchorGraphicVisible(
+                aircraftSpawnAnchor,
+                false);
+            SetAnchorGraphicVisible(
+                collisionCenterAnchor,
+                false);
+        }
+
+        private static void SetAnchorGraphicVisible(
+            RectTransform anchor,
+            bool visible)
+        {
+            if (anchor != null &&
+                anchor.TryGetComponent(
+                    out Graphic graphic))
+            {
+                graphic.enabled = visible;
+            }
+        }
+
+        private static Camera GetCanvasCamera(
+            RectTransform anchor)
+        {
+            Canvas canvas =
+                anchor != null
+                    ? anchor.GetComponentInParent<
+                        Canvas>()
+                    : null;
+
+            return canvas != null &&
+                   canvas.renderMode !=
+                   RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera
+                : null;
         }
 
         private void UpdateCurveInputForPhase(

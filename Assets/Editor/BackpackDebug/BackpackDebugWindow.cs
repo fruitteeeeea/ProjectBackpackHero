@@ -83,6 +83,9 @@ namespace BackpackPrototypeEditor
                 DrawActions(runtime);
 
                 EditorGUILayout.Space(12f);
+                DrawFighterVariation(runtime);
+
+                EditorGUILayout.Space(12f);
                 DrawDisplayedItem(runtime);
 
                 EditorGUILayout.Space(12f);
@@ -154,6 +157,63 @@ namespace BackpackPrototypeEditor
                     spawner != null
                         ? $"{spawner.SpawnInterval:0.00}s"
                         : "-");
+            }
+        }
+
+        private static void DrawFighterVariation(
+            BackpackDebugRuntime runtime)
+        {
+            BackpackFighterSpawner spawner =
+                runtime.CombatController
+                    ?.FighterSpawner;
+
+            EditorGUILayout.LabelField(
+                "飞机随机偏移",
+                EditorStyles.boldLabel);
+
+            if (spawner == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "当前运行时没有BackpackFighterSpawner。",
+                    MessageType.Warning);
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(
+                       EditorStyles.helpBox))
+            {
+                Vector2 directionRange =
+                    EditorGUILayout.Vector2Field(
+                        "方向角范围（度）",
+                        spawner
+                            .SpawnDirectionOffsetRange);
+
+                Vector2 attackRange =
+                    EditorGUILayout.Vector2Field(
+                        "索敌距离偏移范围",
+                        spawner
+                            .AttackRangeOffsetRange);
+
+                if (directionRange !=
+                    spawner.SpawnDirectionOffsetRange)
+                {
+                    spawner
+                        .SetSpawnDirectionOffsetRange(
+                            directionRange);
+                }
+
+                if (attackRange !=
+                    spawner.AttackRangeOffsetRange)
+                {
+                    spawner
+                        .SetAttackRangeOffsetRange(
+                            attackRange);
+                }
+
+                EditorGUILayout.HelpBox(
+                    "范围的X/Y分别是最小值和最大值。" +
+                    "每架新飞机会独立抽样。",
+                    MessageType.Info);
             }
         }
 

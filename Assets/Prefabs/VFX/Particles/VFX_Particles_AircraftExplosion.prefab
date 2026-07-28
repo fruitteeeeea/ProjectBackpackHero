@@ -12,10 +12,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: VFX_Particles_AircraftExplosion
       objectReference: {fileID: 0}
-    - target: {fileID: 2951555436927541747, guid: 6d151622cd6de4df79b18cda53fc9820, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: ea480a12a2a6842f3aad4ab7361ad686, type: 2}
     - target: {fileID: 5633808831945511567, guid: 6d151622cd6de4df79b18cda53fc9820, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

@@ -91,31 +91,95 @@ namespace BackpackPrototype
 
         public bool ApplyData(EnemyBackpackData data)
         {
-            if (!isReady ||
-                BattleFlowController.CurrentPhase !=
-                BattlePhase.Preparation ||
-                data == null ||
+            if (data == null ||
                 data.Placements.Count == 0)
             {
                 return false;
             }
 
+            var layout =
+                new List<BackpackLayoutItem>(
+                    data.Placements.Count);
+
+            foreach (BackpackLayoutEntry placement
+                     in data.Placements)
+            {
+                layout.Add(
+                    new BackpackLayoutItem(
+                        placement?.Data,
+                        placement?.AnchorCell ??
+                        Vector2Int.zero));
+            }
+
+            return ApplyLayoutInternal(
+                layout,
+                data);
+        }
+
+        /// <summary>
+        /// 用另一个运行时背包的当前物品与格子位置覆盖敌人背包。
+        /// 复制结果不依赖EnemyBackpackData资产。
+        /// </summary>
+        public bool CopyLayoutFrom(
+            BackpackController source)
+        {
+            if (source == null)
+            {
+                return false;
+            }
+
+            var layout =
+                new List<BackpackLayoutItem>(
+                    source.Items.Count);
+
+            foreach (ItemInstance item in source.Items)
+            {
+                if (item?.Data == null)
+                {
+                    return false;
+                }
+
+                layout.Add(
+                    new BackpackLayoutItem(
+                        item.Data,
+                        item.AnchorCell));
+            }
+
+            return ApplyLayoutInternal(
+                layout,
+                null);
+        }
+
+        private bool ApplyLayoutInternal(
+            IReadOnlyList<BackpackLayoutItem> layout,
+            EnemyBackpackData sourceData)
+        {
+            if (!isReady ||
+                BattleFlowController.CurrentPhase !=
+                BattlePhase.Preparation ||
+                layout == null ||
+                Backpack == null)
+            {
+                return false;
+            }
+
             BackpackController validation =
-                new BackpackController(7, 4);
+                new BackpackController(
+                    Backpack.Width,
+                    Backpack.Height);
 
             for (int index = 0;
-                 index < data.Placements.Count;
+                 index < layout.Count;
                  index++)
             {
-                BackpackLayoutEntry placement =
-                    data.Placements[index];
+                BackpackLayoutItem placement =
+                    layout[index];
 
-                if (placement == null ||
-                    placement.Data == null ||
+                if (placement.Data == null ||
                     FindCatalogEntry(placement.Data) == null)
                 {
                     Debug.LogError(
-                        $"敌人背包数据 {data.name} 的条目 " +
+                        $"敌人背包布局条目 " +
                         $"{index} 缺少物品或UI Prefab。",
                         this);
                     return false;
@@ -132,7 +196,7 @@ namespace BackpackPrototype
                         placement.AnchorCell))
                 {
                     Debug.LogError(
-                        $"敌人背包数据 {data.name} 的条目 " +
+                        $"敌人背包布局条目 " +
                         $"{index} 无法放置在 " +
                         $"{placement.AnchorCell}。",
                         this);
@@ -147,11 +211,11 @@ namespace BackpackPrototype
                 combatController.Clear();
 
                 for (int index = 0;
-                     index < data.Placements.Count;
+                     index < layout.Count;
                      index++)
                 {
-                    BackpackLayoutEntry placement =
-                        data.Placements[index];
+                    BackpackLayoutItem placement =
+                        layout[index];
                     ItemInstance item =
                         new ItemInstance(
                             $"enemy-item-{index + 1}",
@@ -174,7 +238,7 @@ namespace BackpackPrototype
                 isApplyingData = false;
             }
 
-            currentData = data;
+            currentData = sourceData;
             if (Application.isPlaying)
             {
                 RebuildViews();

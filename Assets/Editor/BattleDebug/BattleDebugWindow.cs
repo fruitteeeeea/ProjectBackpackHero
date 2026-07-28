@@ -71,6 +71,15 @@ namespace BackpackHero.EditorTools
                 return;
             }
 
+            BattleDebugRuntime debugRuntime =
+                BattleDebugRuntime.Instance;
+
+            if (debugRuntime != null)
+            {
+                DrawDebugRuntimeVariation(
+                    debugRuntime);
+            }
+
             BackpackCombatController[] controllers =
                 FindObjectsByType<
                     BackpackCombatController>(
@@ -114,10 +123,49 @@ namespace BackpackHero.EditorTools
 
             DrawStatus(controller);
             DrawActions(controller);
+            DrawFighterVariation(controller);
             DrawItems(controller);
             DrawModifier(controller);
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private static void DrawDebugRuntimeVariation(
+            BattleDebugRuntime runtime)
+        {
+            EditorGUILayout.LabelField(
+                "调试场景飞机随机偏移",
+                EditorStyles.boldLabel);
+
+            using (new EditorGUILayout.VerticalScope(
+                       EditorStyles.helpBox))
+            {
+                Vector2 directionRange =
+                    EditorGUILayout.Vector2Field(
+                        "方向角范围（度）",
+                        runtime.SpawnDirectionOffsetRange);
+
+                Vector2 attackRange =
+                    EditorGUILayout.Vector2Field(
+                        "索敌距离偏移范围",
+                        runtime.AttackRangeOffsetRange);
+
+                if (directionRange !=
+                    runtime.SpawnDirectionOffsetRange)
+                {
+                    runtime
+                        .SetSpawnDirectionOffsetRange(
+                            directionRange);
+                }
+
+                if (attackRange !=
+                    runtime.AttackRangeOffsetRange)
+                {
+                    runtime
+                        .SetAttackRangeOffsetRange(
+                            attackRange);
+                }
+            }
         }
 
         private static void DrawStatus(
@@ -185,6 +233,89 @@ namespace BackpackHero.EditorTools
                     GUILayout.Height(30f)))
             {
                 controller.RestoreDefaultLayout();
+            }
+
+            PlayerBackpackSystem player =
+                Object.FindAnyObjectByType<
+                    PlayerBackpackSystem>(
+                    FindObjectsInactive.Include);
+            EnemyBackpackSystem enemy =
+                Object.FindAnyObjectByType<
+                    EnemyBackpackSystem>(
+                    FindObjectsInactive.Include);
+
+            using (new EditorGUI.DisabledScope(
+                       BattleFlowController.CurrentPhase !=
+                       BattlePhase.Preparation ||
+                       player == null ||
+                       !player.IsReady ||
+                       enemy == null ||
+                       !enemy.IsReady))
+            {
+                if (GUILayout.Button(
+                        "敌人复制当前玩家背包",
+                        GUILayout.Height(30f)))
+                {
+                    enemy.CopyLayoutFrom(
+                        player.Backpack);
+                }
+            }
+        }
+
+        private static void DrawFighterVariation(
+            BackpackCombatController controller)
+        {
+            EditorGUILayout.Space(8f);
+            EditorGUILayout.LabelField(
+                "飞机随机偏移",
+                EditorStyles.boldLabel);
+
+            BackpackFighterSpawner spawner =
+                controller.FighterSpawner;
+
+            if (spawner == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "当前背包没有BackpackFighterSpawner。",
+                    MessageType.Warning);
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(
+                       EditorStyles.helpBox))
+            {
+                Vector2 directionRange =
+                    EditorGUILayout.Vector2Field(
+                        "方向角范围（度）",
+                        spawner
+                            .SpawnDirectionOffsetRange);
+
+                Vector2 attackRange =
+                    EditorGUILayout.Vector2Field(
+                        "索敌距离偏移范围",
+                        spawner
+                            .AttackRangeOffsetRange);
+
+                if (directionRange !=
+                    spawner.SpawnDirectionOffsetRange)
+                {
+                    spawner
+                        .SetSpawnDirectionOffsetRange(
+                            directionRange);
+                }
+
+                if (attackRange !=
+                    spawner.AttackRangeOffsetRange)
+                {
+                    spawner
+                        .SetAttackRangeOffsetRange(
+                            attackRange);
+                }
+
+                EditorGUILayout.HelpBox(
+                    "每架新飞机会分别从两个范围内抽样。" +
+                    "已生成飞机保留生成时的偏移值。",
+                    MessageType.Info);
             }
         }
 

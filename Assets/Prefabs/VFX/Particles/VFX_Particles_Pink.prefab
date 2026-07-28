@@ -70,7 +70,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8794371698579689949, guid: 6d151622cd6de4df79b18cda53fc9820, type: 3}
       propertyPath: EmissionModule.rateOverTime.scalar
-      value: 25
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 8794371698579689949, guid: 6d151622cd6de4df79b18cda53fc9820, type: 3}
       propertyPath: InitialModule.startColor.maxColor.b

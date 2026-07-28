@@ -45,6 +45,17 @@ namespace BackpackPrototype
         [SerializeField, Min(0f)]
         private float maximumBendDistance = 3f;
 
+        [Header("Per-Fighter Variation")]
+        [Tooltip("每架飞机生成时随机抽取的方向角偏移范围（度）。会旋转该飞机的整条飞行曲线。")]
+        [SerializeField]
+        private Vector2 spawnDirectionOffsetRange =
+            new(-3f, 3f);
+
+        [Tooltip("每架飞机生成时随机抽取的索敌距离偏移范围（世界单位）。")]
+        [SerializeField]
+        private Vector2 attackRangeOffsetRange =
+            new(-0.15f, 0.15f);
+
         [Tooltip("敌机每次生成时随机选择曲线值的范围。")]
         [SerializeField]
         private Vector2 enemyCurveValueRange =
@@ -75,6 +86,10 @@ namespace BackpackPrototype
             maximumBendDistance;
         public Vector2 EnemyCurveValueRange =>
             GetNormalizedEnemyCurveValueRange();
+        public Vector2 SpawnDirectionOffsetRange =>
+            NormalizeRange(spawnDirectionOffsetRange);
+        public Vector2 AttackRangeOffsetRange =>
+            NormalizeRange(attackRangeOffsetRange);
         public Transform SpawnPoint => fighterSpawnPoint;
         public Vector3 SpawnPosition => GetSpawnPosition();
 
@@ -156,6 +171,20 @@ namespace BackpackPrototype
         {
             enemyCurveValueRange =
                 NormalizeCurveValueRange(range);
+        }
+
+        public void SetSpawnDirectionOffsetRange(
+            Vector2 range)
+        {
+            spawnDirectionOffsetRange =
+                NormalizeRange(range);
+        }
+
+        public void SetAttackRangeOffsetRange(
+            Vector2 range)
+        {
+            attackRangeOffsetRange =
+                NormalizeRange(range);
         }
 
         public float SampleEnemyCurveValue()
@@ -246,8 +275,15 @@ namespace BackpackPrototype
                 return null;
             }
 
-            Vector2 direction = GetDefaultDirection();
             Vector3 start = GetSpawnPosition();
+            float directionOffset =
+                SampleRange(spawnDirectionOffsetRange);
+            float attackRangeOffset =
+                SampleRange(attackRangeOffsetRange);
+            Vector2 direction =
+                RotateDirection(
+                    GetDefaultDirection(),
+                    directionOffset);
 
             GameObject fighterObject =
                 Instantiate(
@@ -285,6 +321,13 @@ namespace BackpackPrototype
             mover.Initialize(direction);
 
             if (fighterObject.TryGetComponent(
+                    out FighterCombat2D fighterCombat))
+            {
+                fighterCombat.SetAttackRangeOffset(
+                    attackRangeOffset);
+            }
+
+            if (fighterObject.TryGetComponent(
                     out FighterFlight2D flight))
             {
                 flight.RestartBurst();
@@ -297,11 +340,17 @@ namespace BackpackPrototype
                 fighterObject.TryGetComponent(
                     out BattleCurveFollower2D curveFollower))
             {
-                curveFollower.BeginCurve(
-                    start,
+                Vector3 curveEnd =
                     enemy.FighterSpawner != null
                         ? enemy.FighterSpawner.SpawnPosition
-                        : enemy.transform.position,
+                        : enemy.transform.position;
+
+                curveFollower.BeginCurve(
+                    start,
+                    RotateEndAroundStart(
+                        start,
+                        curveEnd,
+                        directionOffset),
                     request.CurveValue ?? 0f,
                     maximumBendDistance);
             }
@@ -438,6 +487,45 @@ namespace BackpackPrototype
             return new Vector2(minimum, maximum);
         }
 
+        private static Vector2 NormalizeRange(
+            Vector2 range)
+        {
+            return new Vector2(
+                Mathf.Min(range.x, range.y),
+                Mathf.Max(range.x, range.y));
+        }
+
+        private static float SampleRange(Vector2 range)
+        {
+            Vector2 normalized = NormalizeRange(range);
+            return UnityEngine.Random.Range(
+                normalized.x,
+                normalized.y);
+        }
+
+        private static Vector2 RotateDirection(
+            Vector2 direction,
+            float angleDegrees)
+        {
+            return Quaternion.Euler(
+                0f,
+                0f,
+                angleDegrees) * direction;
+        }
+
+        private static Vector3 RotateEndAroundStart(
+            Vector3 start,
+            Vector3 end,
+            float angleDegrees)
+        {
+            Vector3 offset = end - start;
+            return start +
+                   Quaternion.Euler(
+                       0f,
+                       0f,
+                       angleDegrees) * offset;
+        }
+
         private Vector3 GetSpawnPosition()
         {
             return fighterSpawnPoint != null
@@ -512,6 +600,12 @@ namespace BackpackPrototype
             spawnOffset = Mathf.Max(0f, spawnOffset);
             maximumBendDistance =
                 Mathf.Max(0f, maximumBendDistance);
+            spawnDirectionOffsetRange =
+                NormalizeRange(
+                    spawnDirectionOffsetRange);
+            attackRangeOffsetRange =
+                NormalizeRange(
+                    attackRangeOffsetRange);
         }
 #endif
     }

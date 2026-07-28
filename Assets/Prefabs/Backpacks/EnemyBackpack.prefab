@@ -72,7 +72,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -184,7 +184,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d9b39082eb1b4bb6b3d60d22200aba3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.EnemyBackpackSystem
   defaultData: {fileID: 11400000, guid: 18c5dee73e9024014be908bd74015fee, type: 2}
   itemCatalog:
@@ -195,6 +195,10 @@ MonoBehaviour:
   - data: {fileID: 11400000, guid: 6007433df60c04aecab6ba619a64cb26, type: 2}
     prefab: {fileID: 2060890215293225743, guid: 363c75cb744224d4fae2fbf1f53d6564, type: 3}
   - data: {fileID: 11400000, guid: 929801f3993d745089b19529098347d5, type: 2}
+    prefab: {fileID: 2060890215293225743, guid: 630443289b5e6450b8833b7c80c18317, type: 3}
+  - data: {fileID: 11400000, guid: ee27c5917c4254171a17b0f020f2332c, type: 2}
+    prefab: {fileID: 2060890215293225743, guid: c121e83b2900141048a3a271eeae4953, type: 3}
+  - data: {fileID: 11400000, guid: 77720dbcc67ba409d8cce5c77a86ec51, type: 2}
     prefab: {fileID: 2060890215293225743, guid: 630443289b5e6450b8833b7c80c18317, type: 3}
   gridView: {fileID: 1426098986981314096}
   itemLayer: {fileID: 6326140039351865684}
@@ -306,7 +310,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 32f710844023c46308faf4c452587801, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.BackpackGridView
 --- !u!224 &3933323345712596738 stripped
 RectTransform:

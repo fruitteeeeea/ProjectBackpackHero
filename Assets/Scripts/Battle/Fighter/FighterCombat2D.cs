@@ -15,6 +15,10 @@ namespace BackpackHero.Battle
         [Tooltip("重新搜索目标的时间间隔。")]
         [SerializeField, Min(0.02f)]
         private float targetScanInterval = 0.1f;
+
+        [Tooltip("当前飞机实例的索敌距离偏移。由生成器在生成时设置。")]
+        [SerializeField]
+        private float attackRangeOffset;
         
         [Header("Shooting")]
         [SerializeField]
@@ -51,6 +55,18 @@ namespace BackpackHero.Battle
         public bool IsInCombat =>
             isInCombat;
 
+        public float AttackRangeOffset =>
+            attackRangeOffset;
+
+        public float EffectiveAttackRange =>
+            fighter != null &&
+            fighter.Definition != null
+                ? Mathf.Max(
+                    0.1f,
+                    fighter.Definition.AttackRange +
+                    attackRangeOffset)
+                : 0.1f;
+
         private void Awake()
         {
             fighter =
@@ -76,6 +92,15 @@ namespace BackpackHero.Battle
         {
             currentTarget = null;
             ExitCombat();
+        }
+
+        /// <summary>
+        /// 设置当前飞机实例独立的索敌距离偏移。
+        /// 不会修改所有飞机共享的FighterDefinition。
+        /// </summary>
+        public void SetAttackRangeOffset(float offset)
+        {
+            attackRangeOffset = offset;
         }
         
         private void Update()
@@ -128,7 +153,7 @@ namespace BackpackHero.Battle
             ).sqrMagnitude;
 
             float attackRange =
-                fighter.Definition.AttackRange;
+                EffectiveAttackRange;
 
             if (distanceSquared >
                 attackRange * attackRange)
@@ -345,7 +370,7 @@ namespace BackpackHero.Battle
         private void FindBestTarget()
         {
             float attackRange =
-                fighter.Definition.AttackRange;
+                EffectiveAttackRange;
 
             int enemyHurtBoxLayer =
                 BattlePhysicsLayers.GetHurtBoxLayer(
@@ -553,7 +578,13 @@ namespace BackpackHero.Battle
             }
 
             float attackRange =
-                fighterComponent.Definition.AttackRange;
+                Application.isPlaying &&
+                fighterComponent == fighter
+                    ? EffectiveAttackRange
+                    : Mathf.Max(
+                        0.1f,
+                        fighterComponent.Definition.AttackRange +
+                        attackRangeOffset);
 
             Gizmos.color =
                 new Color(1f, 0.8f, 0.1f, 0.8f);

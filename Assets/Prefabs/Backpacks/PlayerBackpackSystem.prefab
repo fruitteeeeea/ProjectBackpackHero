@@ -205,6 +205,10 @@ MonoBehaviour:
     prefab: {fileID: 2060890215293225743, guid: 363c75cb744224d4fae2fbf1f53d6564, type: 3}
   - data: {fileID: 11400000, guid: 929801f3993d745089b19529098347d5, type: 2}
     prefab: {fileID: 2060890215293225743, guid: 630443289b5e6450b8833b7c80c18317, type: 3}
+  - data: {fileID: 11400000, guid: ee27c5917c4254171a17b0f020f2332c, type: 2}
+    prefab: {fileID: 2060890215293225743, guid: c121e83b2900141048a3a271eeae4953, type: 3}
+  - data: {fileID: 11400000, guid: 77720dbcc67ba409d8cce5c77a86ec51, type: 2}
+    prefab: {fileID: 2060890215293225743, guid: 630443289b5e6450b8833b7c80c18317, type: 3}
   curveInput: {fileID: 0}
   aircraftSpawnAnchor: {fileID: 0}
   collisionCenterAnchor: {fileID: 0}

@@ -186,6 +186,23 @@ namespace BackpackHero.EditorTools
             using (new EditorGUI.DisabledScope(
                        snapshot.Phase !=
                        BattlePhase.Preparation ||
+                       !snapshot.SystemReady ||
+                       bridge.Target == null ||
+                       !bridge.Target.IsReady ||
+                       bridge.EnemyTarget == null ||
+                       !bridge.EnemyTarget.IsReady))
+            {
+                if (GUILayout.Button(
+                        "敌人复制当前玩家背包",
+                        GUILayout.Height(28f)))
+                {
+                    bridge.CopyPlayerLayoutToEnemy();
+                }
+            }
+
+            using (new EditorGUI.DisabledScope(
+                       snapshot.Phase !=
+                       BattlePhase.Preparation ||
                        !snapshot.SystemReady))
             {
                 EditorGUILayout.BeginHorizontal();

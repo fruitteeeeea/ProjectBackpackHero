@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
+  m_Name: Aircraft_Charge
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  itemName: "\u51B2\u950B\u98DE\u673A"
+  icon: {fileID: 5743120003231325584, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
+  backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
+  itemType: 0
+  cooldownDuration: 1.5
+  shape: {fileID: 11400000, guid: 9cb7d1e77bbeb4d2e8bc5751c1d239a7, type: 2}
+  fighterDefinition: {fileID: 11400000, guid: bc8e24684bab14f7c8fb5cefd9c00d9b, type: 2}
+  equipmentEffectPrefab: {fileID: 0}

@@ -59,6 +59,17 @@ namespace BackpackHero.Battle
         private Vector2 enemyCurveValueRange =
             new Vector2(-1f, 1f);
 
+        [Header("Per-Fighter Variation")]
+        [Tooltip("每架飞机生成时随机抽取的方向角偏移范围（度）。会旋转该飞机的整条飞行曲线。")]
+        [SerializeField]
+        private Vector2 spawnDirectionOffsetRange =
+            new Vector2(-3f, 3f);
+
+        [Tooltip("每架飞机生成时随机抽取的索敌距离偏移范围（世界单位）。")]
+        [SerializeField]
+        private Vector2 attackRangeOffsetRange =
+            new Vector2(-0.15f, 0.15f);
+
         [Header("Batch Spawn")]
         [Tooltip("批量生成时，每架飞机之间的间隔。")]
         [SerializeField, Min(0f)]
@@ -87,6 +98,12 @@ namespace BackpackHero.Battle
 
         public FighterDefinition EnemyFighterDefinition =>
             enemyFighterDefinition;
+
+        public Vector2 SpawnDirectionOffsetRange =>
+            NormalizeRange(spawnDirectionOffsetRange);
+
+        public Vector2 AttackRangeOffsetRange =>
+            NormalizeRange(attackRangeOffsetRange);
         
         
         public void SetPlayerFighterDefinition(
@@ -117,6 +134,20 @@ namespace BackpackHero.Battle
             }
 
             enemyFighterDefinition = definition;
+        }
+
+        public void SetSpawnDirectionOffsetRange(
+            Vector2 range)
+        {
+            spawnDirectionOffsetRange =
+                NormalizeRange(range);
+        }
+
+        public void SetAttackRangeOffsetRange(
+            Vector2 range)
+        {
+            attackRangeOffsetRange =
+                NormalizeRange(range);
         }
         
         
@@ -419,6 +450,20 @@ namespace BackpackHero.Battle
                 return null;
             }
 
+            float directionOffset =
+                SampleRange(spawnDirectionOffsetRange);
+            float attackRangeOffset =
+                SampleRange(attackRangeOffsetRange);
+            Vector2 variedDirection =
+                RotateDirection(
+                    defaultDirection,
+                    directionOffset);
+            Vector3 variedEnd =
+                RotateEndAroundStart(
+                    start,
+                    end,
+                    directionOffset);
+
             GameObject fighter = Instantiate(
                 fighterPrefab,
                 start,
@@ -467,7 +512,14 @@ namespace BackpackHero.Battle
             fighter.name =
                 $"{factionName} - {definition.DisplayName}";
 
-            mover.Initialize(defaultDirection);
+            mover.Initialize(variedDirection);
+
+            if (fighter.TryGetComponent(
+                    out FighterCombat2D fighterCombat))
+            {
+                fighterCombat.SetAttackRangeOffset(
+                    attackRangeOffset);
+            }
 
             if (fighter.TryGetComponent(
                     out FighterFlight2D flight))
@@ -477,7 +529,7 @@ namespace BackpackHero.Battle
 
             curveFollower.BeginCurve(
                 start,
-                end,
+                variedEnd,
                 curveValue,
                 curveLine.MaxBendDistance);
 
@@ -497,6 +549,45 @@ namespace BackpackHero.Battle
                 this);
 
             return false;
+        }
+
+        private static Vector2 NormalizeRange(
+            Vector2 range)
+        {
+            return new Vector2(
+                Mathf.Min(range.x, range.y),
+                Mathf.Max(range.x, range.y));
+        }
+
+        private static float SampleRange(Vector2 range)
+        {
+            Vector2 normalized = NormalizeRange(range);
+            return Random.Range(
+                normalized.x,
+                normalized.y);
+        }
+
+        private static Vector2 RotateDirection(
+            Vector2 direction,
+            float angleDegrees)
+        {
+            return Quaternion.Euler(
+                0f,
+                0f,
+                angleDegrees) * direction;
+        }
+
+        private static Vector3 RotateEndAroundStart(
+            Vector3 start,
+            Vector3 end,
+            float angleDegrees)
+        {
+            Vector3 offset = end - start;
+            return start +
+                   Quaternion.Euler(
+                       0f,
+                       0f,
+                       angleDegrees) * offset;
         }
 
 #if UNITY_EDITOR
@@ -521,6 +612,14 @@ namespace BackpackHero.Battle
 
             spawnInterval =
                 Mathf.Max(0f, spawnInterval);
+
+            spawnDirectionOffsetRange =
+                NormalizeRange(
+                    spawnDirectionOffsetRange);
+
+            attackRangeOffsetRange =
+                NormalizeRange(
+                    attackRangeOffsetRange);
             
         }
 #endif

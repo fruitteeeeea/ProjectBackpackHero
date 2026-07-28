@@ -184,6 +184,21 @@ namespace BackpackPrototype
             return true;
         }
 
+        public bool CopyPlayerLayoutToEnemy()
+        {
+            if (!CanModifyPreparation() ||
+                enemyBackpackSystem == null ||
+                !enemyBackpackSystem.IsReady ||
+                !enemyBackpackSystem.CopyLayoutFrom(
+                    playerBackpackSystem.Backpack))
+            {
+                return false;
+            }
+
+            RefreshSnapshot();
+            return true;
+        }
+
         public bool BeginAllCooldowns()
         {
             if (playerBackpackSystem?.CombatController ==

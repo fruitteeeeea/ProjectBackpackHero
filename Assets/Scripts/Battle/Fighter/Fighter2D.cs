@@ -133,6 +133,15 @@ namespace BackpackHero.Battle
             health.Initialize(
                 fighterDefinition.MaximumHealth);
 
+            FighterCombat2D combat =
+                GetComponent<FighterCombat2D>();
+
+            if (combat != null)
+            {
+                combat.ConfigureDefaultFireMode(
+                    fighterDefinition.AttackInterval);
+            }
+
             ConfigureHealthBars();
             
             gameObject.name =

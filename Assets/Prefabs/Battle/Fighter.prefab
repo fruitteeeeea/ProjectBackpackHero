@@ -151,6 +151,7 @@ GameObject:
   - component: {fileID: 447076560340367828}
   - component: {fileID: 1487857089303099693}
   - component: {fileID: 4239548375826173620}
+  - component: {fileID: 7294134601146802531}
   m_Layer: 0
   m_Name: Fighter
   m_TagString: Untagged
@@ -384,8 +385,25 @@ MonoBehaviour:
   targetScanInterval: 0.1
   projectilePrefab: {fileID: 9181062788350396426, guid: 6931d63d73f334a0e9b4ee30938152ad, type: 3}
   firePoint: {fileID: 6531377608020499410}
+  fireModeController: {fileID: 7294134601146802531}
+  defaultFirePattern: {fileID: 11400000, guid: f153d3da6f524da7b50b0582a278524b, type: 2}
   currentTarget: {fileID: 0}
   isInCombat: 0
+--- !u!114 &7294134601146802531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1237829907571473707}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 713cdb6eeb994b5b9f94e6027420ff69, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.ProjectileFireModeController2D
+  fireModes:
+  - pattern: {fileID: 11400000, guid: f153d3da6f524da7b50b0582a278524b, type: 2}
+    interval: 0.5
 --- !u!1 &4106948598304298612
 GameObject:
   m_ObjectHideFlags: 0

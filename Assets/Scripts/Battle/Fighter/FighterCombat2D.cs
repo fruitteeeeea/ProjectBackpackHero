@@ -8,6 +8,8 @@ namespace BackpackHero.Battle
     [RequireComponent(typeof(Fighter2D))]
     [RequireComponent(typeof(DirectionalMover2D))]
     [RequireComponent(typeof(BattleCurveFollower2D))]
+    [RequireComponent(
+        typeof(ProjectileFireModeController2D))]
     public sealed class FighterCombat2D :
         MonoBehaviour
     {
@@ -27,6 +29,13 @@ namespace BackpackHero.Battle
         [SerializeField]
         private Transform firePoint;
 
+        [SerializeField]
+        private ProjectileFireModeController2D
+            fireModeController;
+
+        [SerializeField]
+        private ProjectileFirePattern defaultFirePattern;
+
         [Header("Runtime Debug")]
         [SerializeField]
         private HurtBox2D currentTarget;
@@ -39,7 +48,6 @@ namespace BackpackHero.Battle
         private BattleCurveFollower2D curveFollower;
 
         private float targetScanTimer;
-        private float attackTimer;
         private Vector2 directionBeforeCombat =
             Vector2.up;
 
@@ -57,6 +65,9 @@ namespace BackpackHero.Battle
 
         public float AttackRangeOffset =>
             attackRangeOffset;
+
+        public ProjectileFireModeController2D
+            FireModeController => fireModeController;
 
         public float EffectiveAttackRange =>
             fighter != null &&
@@ -77,19 +88,39 @@ namespace BackpackHero.Battle
 
             curveFollower =
                 GetComponent<BattleCurveFollower2D>();
+
+            fireModeController =
+                GetComponent<
+                    ProjectileFireModeController2D>();
         }
 
         private void OnEnable()
         {
             targetScanTimer = 0f;
-            attackTimer = 0f;
             currentTarget = null;
             isInCombat = false;
             hasReportedMissingShootingConfiguration = false;
+
+            if (fireModeController != null)
+            {
+                fireModeController.ShotRequested -=
+                    HandleShotRequested;
+
+                fireModeController.ShotRequested +=
+                    HandleShotRequested;
+
+                fireModeController.ResetCooldowns();
+            }
         }
 
         private void OnDisable()
         {
+            if (fireModeController != null)
+            {
+                fireModeController.ShotRequested -=
+                    HandleShotRequested;
+            }
+
             currentTarget = null;
             ExitCombat();
         }
@@ -101,6 +132,31 @@ namespace BackpackHero.Battle
         public void SetAttackRangeOffset(float offset)
         {
             attackRangeOffset = offset;
+        }
+
+        /// <summary>
+        /// 飞机生成后用自身Definition的射击间隔配置默认朝前单发模式。
+        /// </summary>
+        public void ConfigureDefaultFireMode(
+            float attackInterval)
+        {
+            if (fireModeController == null)
+            {
+                fireModeController =
+                    GetComponent<
+                        ProjectileFireModeController2D>();
+            }
+
+            if (fireModeController == null ||
+                defaultFirePattern == null)
+            {
+                ReportMissingShootingConfiguration();
+                return;
+            }
+
+            fireModeController.ReplaceWithSingleMode(
+                defaultFirePattern,
+                attackInterval);
         }
         
         private void Update()
@@ -209,7 +265,8 @@ namespace BackpackHero.Battle
             }
 
             isInCombat = true;
-            attackTimer = 0f;
+
+            fireModeController?.ResetCooldowns();
 
             if (mover != null)
             {
@@ -233,7 +290,8 @@ namespace BackpackHero.Battle
             }
 
             isInCombat = false;
-            attackTimer = 0f;
+
+            fireModeController?.ResetCooldowns();
 
             if (mover != null)
             {
@@ -282,57 +340,28 @@ namespace BackpackHero.Battle
         {
             if (fighter == null ||
                 fighter.Definition == null ||
-                currentTarget == null)
+                currentTarget == null ||
+                fireModeController == null)
             {
                 return;
             }
 
-            attackTimer -= deltaTime;
-
-            if (attackTimer > 0f)
-            {
-                return;
-            }
-
-            FireProjectile();
-
-            attackTimer =
-                Mathf.Max(
-                    0.1f,
-                    fighter.Definition.AttackInterval);
+            fireModeController.Tick(
+                deltaTime,
+                transform.up);
         }
 
-        private void FireProjectile()
+        private void HandleShotRequested(
+            Vector2 fireDirection)
         {
-            if (projectilePrefab == null ||
+            if (fighter == null ||
+                fighter.Definition == null ||
+                projectilePrefab == null ||
                 firePoint == null)
             {
-                if (!hasReportedMissingShootingConfiguration)
-                {
-                    Debug.LogWarning(
-                        $"{name}无法发射：" +
-                        "请检查Projectile Prefab和Fire Point。",
-                        this);
-
-                    hasReportedMissingShootingConfiguration =
-                        true;
-                }
-
+                ReportMissingShootingConfiguration();
                 return;
             }
-
-            if (currentTarget == null)
-            {
-                return;
-            }
-
-            Vector3 targetPosition =
-                GetTargetPosition(
-                    currentTarget);
-
-            Vector2 fireDirection =
-                targetPosition -
-                firePoint.position;
 
             if (fireDirection.sqrMagnitude <=
                 Mathf.Epsilon)
@@ -344,13 +373,31 @@ namespace BackpackHero.Battle
                 Instantiate(
                     projectilePrefab,
                     firePoint.position,
-                    Quaternion.identity);
+                    Quaternion.FromToRotation(
+                        Vector2.up,
+                        fireDirection));
 
             projectile.Initialize(
                 fighter.Faction,
                 fighter.Definition.ProjectileDamage,
                 fighter.Definition.ProjectileSpeed,
                 fireDirection);
+        }
+
+        private void ReportMissingShootingConfiguration()
+        {
+            if (hasReportedMissingShootingConfiguration)
+            {
+                return;
+            }
+
+            hasReportedMissingShootingConfiguration = true;
+
+            Debug.LogWarning(
+                $"{name}无法发射：请检查Projectile Prefab、" +
+                "Fire Point、Fire Mode Controller和" +
+                "Default Fire Pattern。",
+                this);
         }
 
         private static Vector3 GetTargetPosition(

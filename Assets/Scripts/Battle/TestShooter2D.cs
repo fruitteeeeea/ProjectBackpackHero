@@ -48,6 +48,8 @@ namespace BackpackHero.Battle
         private bool hasReportedMissingFirePoint;
         private bool hasReportedMissingProjectilePrefab;
         private bool hasReportedMissingLifetime;
+        private bool hasAimTarget;
+        private Vector2 aimWorldPosition;
 
         private readonly TestShooterManualTriggerTimer
             manualTriggerTimer = new();
@@ -63,6 +65,8 @@ namespace BackpackHero.Battle
 
         public bool IsFiring => isFiring;
         public Vector2 AimDirection => transform.up;
+        public bool HasAimTarget => hasAimTarget;
+        public Vector2 AimWorldPosition => aimWorldPosition;
         public ProjectileFireModeController2D
             FireModeController => fireModeController;
 
@@ -85,6 +89,7 @@ namespace BackpackHero.Battle
             }
 
             isFiring = false;
+            hasAimTarget = false;
             manualTriggerTimer.Reset();
             TestShooterDebugRuntimeBridge.Register(this);
         }
@@ -157,6 +162,8 @@ namespace BackpackHero.Battle
             }
 
             transform.up = direction.normalized;
+            aimWorldPosition = worldPosition;
+            hasAimTarget = true;
             return true;
         }
 
@@ -236,11 +243,29 @@ namespace BackpackHero.Battle
                         Vector2.up,
                         fireDirection));
 
+            ProjectileTrajectoryLaunchContext
+                trajectoryContext =
+                    hasAimTarget
+                        ? ProjectileTrajectoryLaunchContext
+                            .WithTarget(
+                                firePoint.position,
+                                fireDirection,
+                                transform.position,
+                                transform.up,
+                                aimWorldPosition)
+                        : ProjectileTrajectoryLaunchContext
+                            .WithoutTarget(
+                                firePoint.position,
+                                fireDirection,
+                                transform.position,
+                                transform.up);
+
             projectile.Initialize(
                 faction,
                 projectileDamage,
                 projectileSpeed,
-                fireDirection);
+                fireDirection,
+                trajectoryContext);
 
             LifetimeAndScreenBounds2D lifetime =
                 projectile.GetComponent<

@@ -108,12 +108,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 6542516442177575068}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1fea1dc492c1b4ffb8016c1cd79d52d2, type: 3}
+  m_Script: {fileID: 11500000, guid: 5644ce681b544878b7fee6a116c8cebb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.DirectionalMover2D
-  baseSpeed: 8
-  speedMultiplier: 1
-  direction: {x: 0, y: 1}
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.ProjectileTrajectoryController2D
+  trajectoryProfile: {fileID: 11400000, guid: 16008417f9684ba8b3c2463f77b2c1f2, type: 2}
+  speed: 0
+  travelledDistance: 0
 --- !u!114 &5838654865445315785
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -240,5 +240,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9292be0b95ae949cdb752be5c5cf12c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.Projectile2D
-  mover: {fileID: 5745927299982747908}
+  trajectoryController: {fileID: 5745927299982747908}
   hitBox: {fileID: 1163074887673446638}

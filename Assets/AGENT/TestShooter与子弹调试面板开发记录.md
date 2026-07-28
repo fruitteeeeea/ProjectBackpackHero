@@ -41,8 +41,9 @@ Spread30Three.asset     在30度扇形中均匀发射3颗
 
 ## 子弹 Prefab 接入约定
 
-- 根对象必须带有 `Projectile2D`；该组件会确保同时存在 `DirectionalMover2D` 和 `HitBox2D`。
+- 根对象必须带有 `Projectile2D`、`ProjectileTrajectoryController2D` 和 `HitBox2D`。
 - 子弹图像的默认前方为本地 Y 轴正方向。
+- 轨迹控制器引用 `Straight`、`Sine` 或 `Bezier` Profile；没有有效 Profile 时会警告并回退直线。
 - 若需要调试寿命，Prefab 应带有 `LifetimeAndScreenBounds2D`；没有该组件时子弹仍能发射，但面板中的寿命不会生效。
 - 不同弹道和特殊命中行为可由后续子弹 Prefab 上的独立运行时组件实现，不需要改变 TestShooter 的瞄准与生成职责。
 

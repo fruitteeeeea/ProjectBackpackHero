@@ -377,11 +377,25 @@ namespace BackpackHero.Battle
                         Vector2.up,
                         fireDirection));
 
+            Vector2 targetPosition =
+                GetTargetPosition(currentTarget);
+
+            ProjectileTrajectoryLaunchContext
+                trajectoryContext =
+                    ProjectileTrajectoryLaunchContext
+                        .WithTarget(
+                            firePoint.position,
+                            fireDirection,
+                            transform.position,
+                            transform.up,
+                            targetPosition);
+
             projectile.Initialize(
                 fighter.Faction,
                 fighter.Definition.ProjectileDamage,
                 fighter.Definition.ProjectileSpeed,
-                fireDirection);
+                fireDirection,
+                trajectoryContext);
         }
 
         private void ReportMissingShootingConfiguration()

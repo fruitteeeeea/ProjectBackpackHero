@@ -8,7 +8,6 @@ namespace BackpackHero.Battle
     /// FighterDefinition保存静态配置，
     /// Health保存运行时生命值。
     /// </summary>
-    [RequireComponent(typeof(SpriteRenderer))]
     [RequireComponent(typeof(DirectionalMover2D))]
     [RequireComponent(typeof(Health))]
     
@@ -19,6 +18,7 @@ namespace BackpackHero.Battle
         private SpriteRenderer spriteRenderer;
         private DirectionalMover2D mover;
         private Health health;
+        private FighterFeedbacks feedbacks;
         
         private FactionMember factionMember;
         
@@ -30,6 +30,8 @@ namespace BackpackHero.Battle
             healthBarFollowers;
         
         private FighterDefinition definition;
+        private float previousNormalizedHealth;
+        private bool isDying;
 
         public FighterDefinition Definition =>
             definition;
@@ -62,13 +64,17 @@ namespace BackpackHero.Battle
         private void Awake()
         {
             spriteRenderer =
-                GetComponent<SpriteRenderer>();
+                GetComponentInChildren<SpriteRenderer>(
+                    true);
 
             mover =
                 GetComponent<DirectionalMover2D>();
 
             health =
                 GetComponent<Health>();
+
+            feedbacks =
+                GetComponent<FighterFeedbacks>();
             
             factionMember =
                 GetComponent<FactionMember>();
@@ -86,13 +92,18 @@ namespace BackpackHero.Battle
                     WorldSpaceHealthBarFollower2D>(
                     true);
             
+            health.HealthChanged += HandleHealthChanged;
             health.Died += HandleDied;
+            previousNormalizedHealth =
+                health.NormalizedHealth;
         }
 
         private void OnDestroy()
         {
             if (health != null)
             {
+                health.HealthChanged -=
+                    HandleHealthChanged;
                 health.Died -= HandleDied;
             }
         }
@@ -128,6 +139,7 @@ namespace BackpackHero.Battle
             }
 
             definition = fighterDefinition;
+            isDying = false;
             
             factionMember.SetFaction(faction);
             
@@ -144,6 +156,8 @@ namespace BackpackHero.Battle
                 fighterDefinition.BaseSpeed);
 
             ApplyPacingHealth();
+            previousNormalizedHealth =
+                health.NormalizedHealth;
 
             FighterCombat2D combat =
                 GetComponent<FighterCombat2D>();
@@ -254,7 +268,69 @@ namespace BackpackHero.Battle
         
         private void HandleDied()
         {
-            Destroy(gameObject);
+            if (isDying)
+            {
+                return;
+            }
+
+            isDying = true;
+
+            DisableCombatInteractions();
+            feedbacks?.PlayDeath();
+
+            float cleanupDelay =
+                feedbacks != null
+                    ? feedbacks.DeathCleanupDelay
+                    : 0f;
+
+            Destroy(gameObject, cleanupDelay);
+        }
+
+        private void HandleHealthChanged(
+            float normalizedHealth)
+        {
+            if (!isDying &&
+                !health.IsDead &&
+                normalizedHealth < previousNormalizedHealth)
+            {
+                feedbacks?.PlayHit();
+            }
+
+            previousNormalizedHealth = normalizedHealth;
+        }
+
+        private void DisableCombatInteractions()
+        {
+            mover?.SetPaused(true);
+
+            FighterCombat2D combat =
+                GetComponent<FighterCombat2D>();
+
+            if (combat != null)
+            {
+                combat.enabled = false;
+            }
+
+            BattleCurveFollower2D curveFollower =
+                GetComponent<BattleCurveFollower2D>();
+
+            if (curveFollower != null)
+            {
+                curveFollower.enabled = false;
+            }
+
+            if (hurtBoxes == null)
+            {
+                return;
+            }
+
+            foreach (HurtBox2D hurtBox in hurtBoxes)
+            {
+                if (hurtBox != null)
+                {
+                    hurtBox.gameObject.SetActive(false);
+                }
+            }
         }
     }
 }

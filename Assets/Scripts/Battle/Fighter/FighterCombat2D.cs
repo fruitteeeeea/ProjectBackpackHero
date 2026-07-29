@@ -416,6 +416,11 @@ namespace BackpackHero.Battle
                             targetPosition);
 
             attack.Initialize(launchContext);
+
+            FighterFeedbacks feedbacks =
+                GetComponent<FighterFeedbacks>();
+
+            feedbacks?.PlayAttack();
         }
 
         private void ReportMissingShootingConfiguration()

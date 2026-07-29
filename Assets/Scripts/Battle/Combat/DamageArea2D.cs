@@ -12,7 +12,7 @@ namespace BackpackHero.Battle
         public abstract Vector2 WorldSize { get; }
         public abstract float WorldAngle { get; }
 
-        public int CollectOverlaps(
+        public virtual int CollectOverlaps(
             int layerMask,
             List<Collider2D> results)
         {

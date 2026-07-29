@@ -15,6 +15,7 @@ namespace BackpackHero.Battle
         private float damage = 1f;
 
         private FactionMember factionMember;
+        private ProjectileImpactEffect2D impactEffect;
         private bool hasHitTarget;
 
         public float Damage =>
@@ -29,6 +30,9 @@ namespace BackpackHero.Battle
         {
             factionMember =
                 GetComponent<FactionMember>();
+
+            impactEffect =
+                GetComponent<ProjectileImpactEffect2D>();
         }
 
         private void OnEnable()
@@ -85,10 +89,32 @@ namespace BackpackHero.Battle
                 return;
             }
 
-            bool causedDamage =
-                hurtBox.ReceiveHit(
+            FactionMember targetFaction =
+                hurtBox.FactionMember;
+
+            if (!hurtBox.IsAlive ||
+                targetFaction == null ||
+                !targetFaction.IsEnemyFaction(Faction))
+            {
+                return;
+            }
+
+            bool causedDamage;
+
+            if (impactEffect != null)
+            {
+                causedDamage = impactEffect.ResolveImpact(
+                    hurtBox,
+                    transform.position,
+                    Faction,
+                    damage);
+            }
+            else
+            {
+                causedDamage = hurtBox.ReceiveHit(
                     damage,
                     Faction);
+            }
 
             if (!causedDamage)
             {

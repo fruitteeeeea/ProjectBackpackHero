@@ -339,6 +339,47 @@ public sealed class LaserAttack2DTests
     }
 
     [Test]
+    public void HurtBox_RefreshesLayerFromSceneFaction()
+    {
+        GameObject owner =
+            CreateObject("Scene Enemy");
+
+        owner.AddComponent<Health>()
+            .Initialize(10f);
+
+        FactionMember factionMember =
+            owner.AddComponent<FactionMember>();
+
+        factionMember.SetFaction(
+            BattleFaction.Enemy);
+
+        GameObject hurtBoxObject =
+            new GameObject("HurtBox");
+
+        hurtBoxObject.transform.SetParent(
+            owner.transform,
+            false);
+
+        createdObjects.Add(hurtBoxObject);
+
+        hurtBoxObject.AddComponent<
+            BoxCollider2D>();
+
+        HurtBox2D hurtBox =
+            hurtBoxObject.AddComponent<
+                HurtBox2D>();
+
+        hurtBox.RefreshOwnerConfiguration();
+
+        Assert.That(
+            hurtBoxObject.layer,
+            Is.EqualTo(
+                BattlePhysicsLayers
+                    .GetHurtBoxLayer(
+                        BattleFaction.Enemy)));
+    }
+
+    [Test]
     public void SeparateLaserAreas_CanDamageSameUnitTwice()
     {
         AreaDamageResolver2D resolver =

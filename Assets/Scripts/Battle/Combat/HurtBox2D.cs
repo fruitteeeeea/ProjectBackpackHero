@@ -53,7 +53,12 @@ namespace BackpackHero.Battle
 
         private void Awake()
         {
-            FindOwnerReferences();
+            RefreshOwnerConfiguration();
+        }
+
+        private void OnEnable()
+        {
+            RefreshOwnerConfiguration();
         }
 
         /// <summary>
@@ -69,6 +74,22 @@ namespace BackpackHero.Battle
             if (layer >= 0)
             {
                 gameObject.layer = layer;
+            }
+        }
+
+        /// <summary>
+        /// 从所属对象刷新Health、阵营引用和物理Layer。
+        /// 让直接放在场景中的敌方Prefab无需经过Fighter.Initialize
+        /// 也能被范围查询正确识别。
+        /// </summary>
+        public void RefreshOwnerConfiguration()
+        {
+            FindOwnerReferences();
+
+            if (factionMember != null)
+            {
+                ConfigureLayer(
+                    factionMember.Faction);
             }
         }
         

@@ -27,45 +27,17 @@ namespace BackpackHero.Battle
                 return 0;
             }
 
-            int hurtBoxLayer =
-                BattlePhysicsLayers.GetHurtBoxLayer(
-                    GetEnemyFaction(
-                        attackerFaction));
-
-            if (hurtBoxLayer < 0)
-            {
-                return 0;
-            }
-
-            overlapBuffer.Clear();
             damagedHealth.Clear();
 
-            damageArea.CollectOverlaps(
-                1 << hurtBoxLayer,
-                overlapBuffer);
+            CollectTargets(
+                damageArea,
+                attackerFaction,
+                candidateHurtBoxes);
 
             int damagedUnitCount = 0;
 
-            foreach (Collider2D candidate
-                     in overlapBuffer)
+            foreach (HurtBox2D hurtBox in candidateHurtBoxes)
             {
-                if (candidate == null)
-                {
-                    continue;
-                }
-
-                HurtBox2D hurtBox =
-                    candidate.GetComponent<
-                        HurtBox2D>();
-
-                if (hurtBox == null ||
-                    hurtBox.TargetHealth == null ||
-                    damagedHealth.Contains(
-                        hurtBox.TargetHealth))
-                {
-                    continue;
-                }
-
                 if (!hurtBox.ReceiveHit(
                         damage,
                         attackerFaction))
@@ -80,6 +52,73 @@ namespace BackpackHero.Battle
             }
 
             return damagedUnitCount;
+        }
+
+        private readonly List<HurtBox2D>
+            candidateHurtBoxes = new();
+
+        /// <summary>
+        /// 收集范围内可受攻击的敌方单位，每个Health仅保留一个HurtBox。
+        /// 供连锁等需要自行决定命中顺序的攻击复用。
+        /// </summary>
+        public int CollectTargets(
+            DamageArea2D damageArea,
+            BattleFaction attackerFaction,
+            List<HurtBox2D> results)
+        {
+            if (damageArea == null || results == null)
+            {
+                return 0;
+            }
+
+            int hurtBoxLayer =
+                BattlePhysicsLayers.GetHurtBoxLayer(
+                    GetEnemyFaction(attackerFaction));
+
+            if (hurtBoxLayer < 0)
+            {
+                results.Clear();
+                return 0;
+            }
+
+            overlapBuffer.Clear();
+            damagedHealth.Clear();
+            results.Clear();
+
+            damageArea.CollectOverlaps(
+                1 << hurtBoxLayer,
+                overlapBuffer);
+
+            foreach (Collider2D candidate in overlapBuffer)
+            {
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                HurtBox2D hurtBox =
+                    candidate.GetComponent<HurtBox2D>();
+
+                Health health = hurtBox != null
+                    ? hurtBox.TargetHealth
+                    : null;
+
+                FactionMember factionMember = hurtBox != null
+                    ? hurtBox.FactionMember
+                    : null;
+
+                if (hurtBox == null || health == null ||
+                    factionMember == null || health.IsDead ||
+                    !factionMember.IsEnemyFaction(attackerFaction) ||
+                    !damagedHealth.Add(health))
+                {
+                    continue;
+                }
+
+                results.Add(hurtBox);
+            }
+
+            return results.Count;
         }
 
         private static BattleFaction GetEnemyFaction(

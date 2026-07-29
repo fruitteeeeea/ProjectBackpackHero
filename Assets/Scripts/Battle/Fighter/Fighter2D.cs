@@ -1,3 +1,4 @@
+using BackpackHero.Debugging;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -96,6 +97,18 @@ namespace BackpackHero.Battle
             }
         }
 
+        private void OnEnable()
+        {
+            GamePacingDebugRuntime.MultipliersChanged +=
+                HandlePacingChanged;
+        }
+
+        private void OnDisable()
+        {
+            GamePacingDebugRuntime.MultipliersChanged -=
+                HandlePacingChanged;
+        }
+
         /// <summary>
         /// 生成飞机后调用。
         /// factionColor用于区分玩家和敌人阵营。
@@ -130,8 +143,7 @@ namespace BackpackHero.Battle
             mover.SetBaseSpeed(
                 fighterDefinition.BaseSpeed);
 
-            health.Initialize(
-                fighterDefinition.MaximumHealth);
+            ApplyPacingHealth();
 
             FighterCombat2D combat =
                 GetComponent<FighterCombat2D>();
@@ -170,6 +182,24 @@ namespace BackpackHero.Battle
             }
 
             health.IncreaseHealth(amount);
+        }
+
+        private void HandlePacingChanged(
+            GamePacingMultipliers _)
+        {
+            ApplyPacingHealth();
+        }
+
+        private void ApplyPacingHealth()
+        {
+            if (health == null || definition == null)
+            {
+                return;
+            }
+
+            health.SetMaximumHealthAndFill(
+                definition.MaximumHealth *
+                GamePacingDebugRuntime.AircraftHealthMultiplier);
         }
 
         private void ConfigureHealthBars()

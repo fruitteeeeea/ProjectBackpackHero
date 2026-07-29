@@ -1,3 +1,4 @@
+using BackpackHero.Debugging;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -402,7 +403,9 @@ namespace BackpackHero.Battle
                         .WithAimPoint(
                             fighter.Faction,
                             fighter.Definition
-                                .ProjectileDamage,
+                                .ProjectileDamage *
+                            GamePacingDebugRuntime
+                                .ProjectileDamageMultiplier,
                             fighter.Definition
                                 .ProjectileSpeed,
                             -1f,

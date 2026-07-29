@@ -65,6 +65,14 @@ public sealed class Health : MonoBehaviour
         HealthChanged?.Invoke(NormalizedHealth);
     }
 
+    /// <summary>
+    /// 更新最大生命并恢复满血。全局节奏调试修改生命倍率时使用。
+    /// </summary>
+    public void SetMaximumHealthAndFill(float newMaxHealth)
+    {
+        Initialize(newMaxHealth);
+    }
+
     public void DecreaseHealth(float amount)
     {
         if (amount <= 0f || IsDead)

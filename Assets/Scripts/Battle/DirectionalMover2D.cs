@@ -1,3 +1,4 @@
+using BackpackHero.Debugging;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -31,7 +32,9 @@ namespace BackpackHero.Battle
         /// <summary>
         /// 当前实际移动速度。
         /// </summary>
-        public float CurrentSpeed => baseSpeed * speedMultiplier;
+        public float CurrentSpeed =>
+            baseSpeed * speedMultiplier *
+            GamePacingDebugRuntime.AircraftSpeedMultiplier;
 
         /// <summary>
         /// 当前速度倍率。

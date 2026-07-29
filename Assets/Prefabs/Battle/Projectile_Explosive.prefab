@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5838654865445315785, guid: 6931d63d73f334a0e9b4ee30938152ad, type: 3}
+      propertyPath: viewportMargin
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6542516442177575068, guid: 6931d63d73f334a0e9b4ee30938152ad, type: 3}
       propertyPath: m_Name
       value: Projectile_Explosive
@@ -26,7 +30,7 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 781200205}
   m_SourcePrefab: {fileID: 100100000, guid: 6931d63d73f334a0e9b4ee30938152ad, type: 3}
---- !u!1 &781200202 stripped
+--- !u!1 &6542516442690335701 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6542516442177575068, guid: 6931d63d73f334a0e9b4ee30938152ad, type: 3}
   m_PrefabInstance: {fileID: 781200201}
@@ -37,11 +41,11 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 781200202}
+  m_GameObject: {fileID: 6542516442690335701}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4277e522684746b7a54f56a2dff5158c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.CircleDamageArea2D
   radius: 1.5
 --- !u!114 &781200204
@@ -50,11 +54,11 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 781200202}
+  m_GameObject: {fileID: 6542516442690335701}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 52790555e2aec4bbbb2dfcbeb6c2d136, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.AreaDamageResolver2D
 --- !u!114 &781200205
 MonoBehaviour:
@@ -62,13 +66,14 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 781200202}
+  m_GameObject: {fileID: 6542516442690335701}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4726cb74d392474f9fac2b2e271b509b, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.ExplosiveProjectileImpact2D
-  radius: 1.5
-  impactVfxPrefab: {fileID: 781200004, guid: 3842b6f81cc8458399d985cb0d00943e, type: 3}
+  radius: 5
+  impactVfxPrefab: {fileID: 5192055911387193802, guid: 19ea9c5a862e447978441279b310aa46, type: 3}
+  impactVfxScale: 1
   damageResolver: {fileID: 781200204}
   damageArea: {fileID: 781200203}

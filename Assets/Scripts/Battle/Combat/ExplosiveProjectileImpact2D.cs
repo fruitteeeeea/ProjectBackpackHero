@@ -7,7 +7,9 @@ namespace BackpackHero.Battle
     public sealed class ExplosiveProjectileImpact2D : ProjectileImpactEffect2D
     {
         [SerializeField, Min(0f)] private float radius = 1.5f;
-        [SerializeField] private ExplosionImpactVfx2D impactVfxPrefab;
+        [Header("Visual")]
+        [SerializeField] private ParticleSystem impactVfxPrefab;
+        [SerializeField, Min(0.01f)] private float impactVfxScale = 1f;
         [SerializeField] private AreaDamageResolver2D damageResolver;
         [SerializeField] private CircleDamageArea2D damageArea;
 
@@ -32,7 +34,13 @@ namespace BackpackHero.Battle
 
             if (impactVfxPrefab != null)
             {
-                Instantiate(impactVfxPrefab, impactPosition, Quaternion.identity);
+                ParticleSystem impactVfx = Instantiate(
+                    impactVfxPrefab,
+                    impactPosition,
+                    impactVfxPrefab.transform.rotation);
+
+                impactVfx.transform.localScale =
+                    Vector3.one * impactVfxScale;
             }
 
             return true;

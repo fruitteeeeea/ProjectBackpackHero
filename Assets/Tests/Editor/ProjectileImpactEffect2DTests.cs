@@ -143,13 +143,14 @@ public sealed class ProjectileImpactEffect2DTests
 
         GameObject explosionVfx =
             AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/Prefabs/Battle/ExplosionImpactVfx.prefab");
+                "Assets/Prefabs/VFX/Particles/" +
+                "PS_ExplosionRing.prefab");
         GameObject lightningVfx =
             AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/Prefabs/Battle/LightningLinkVfx.prefab");
 
         Assert.That(
-            explosionVfx.GetComponent<ExplosionImpactVfx2D>(),
+            explosionVfx.GetComponent<ParticleSystem>(),
             Is.Not.Null);
         Assert.That(
             lightningVfx.GetComponent<LightningLinkVfx2D>(),

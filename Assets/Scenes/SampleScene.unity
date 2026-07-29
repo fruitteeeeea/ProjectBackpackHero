@@ -119,67 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &21161370
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 21161371}
-  - component: {fileID: 21161372}
-  - component: {fileID: 21161373}
-  m_Layer: 0
-  m_Name: EnemyAircraft
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &21161371
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21161370}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 803.7282, y: 2297.8323, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &21161372
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21161370}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6cf2e1e6fd50145af8c59134f7a472d8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 150
-  currentHealth: 150
---- !u!114 &21161373
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21161370}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 367126be81014ce085456b1a0f49db40, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HealthDebug
-  targetHealth: {fileID: 21161372}
-  changeAmount: 2
 --- !u!1 &232898352
 GameObject:
   m_ObjectHideFlags: 0
@@ -732,7 +671,7 @@ PrefabInstance:
     - target: {fileID: 341032625106704957, guid: 028281cb0720c41788615b875d4c6f64, type: 3}
       propertyPath: targetHealth
       value: 
-      objectReference: {fileID: 21161372}
+      objectReference: {fileID: 0}
     - target: {fileID: 3907330788745476876, guid: 028281cb0720c41788615b875d4c6f64, type: 3}
       propertyPath: m_Name
       value: EnemyAircraftHealthBar
@@ -850,7 +789,7 @@ PrefabInstance:
     - target: {fileID: 341032625106704957, guid: 028281cb0720c41788615b875d4c6f64, type: 3}
       propertyPath: targetHealth
       value: 
-      objectReference: {fileID: 1723867598}
+      objectReference: {fileID: 0}
     - target: {fileID: 3907330788745476876, guid: 028281cb0720c41788615b875d4c6f64, type: 3}
       propertyPath: m_Name
       value: PlayerAircraftHealthBar
@@ -2444,67 +2383,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1723867596
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1723867597}
-  - component: {fileID: 1723867598}
-  - component: {fileID: 1723867599}
-  m_Layer: 0
-  m_Name: PlayerAircraft
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1723867597
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1723867596}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 803.7282, y: 2297.8323, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1723867598
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1723867596}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6cf2e1e6fd50145af8c59134f7a472d8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 150
-  currentHealth: 150
---- !u!114 &1723867599
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1723867596}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 367126be81014ce085456b1a0f49db40, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HealthDebug
-  targetHealth: {fileID: 1723867598}
-  changeAmount: 2
 --- !u!1 &1800000001
 GameObject:
   m_ObjectHideFlags: 0
@@ -3015,7 +2893,5 @@ SceneRoots:
   - {fileID: 1800000002}
   - {fileID: 232898356}
   - {fileID: 418651855}
-  - {fileID: 21161371}
-  - {fileID: 1723867597}
   - {fileID: 1203375965}
   - {fileID: 1481743114}

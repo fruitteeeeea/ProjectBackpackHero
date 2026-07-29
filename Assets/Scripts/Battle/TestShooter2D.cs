@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace BackpackHero.Battle
 {
@@ -19,7 +20,8 @@ namespace BackpackHero.Battle
         private Transform firePoint;
 
         [SerializeField]
-        private Projectile2D projectilePrefab;
+        [FormerlySerializedAs("projectilePrefab")]
+        private BattleAttack2D defaultAttackPrefab;
 
         [SerializeField]
         private ProjectileFireModeController2D
@@ -46,8 +48,7 @@ namespace BackpackHero.Battle
         private bool isFiring;
         private bool hasReportedMissingCamera;
         private bool hasReportedMissingFirePoint;
-        private bool hasReportedMissingProjectilePrefab;
-        private bool hasReportedMissingLifetime;
+        private bool hasReportedMissingAttackPrefab;
         private bool hasAimTarget;
         private Vector2 aimWorldPosition;
 
@@ -55,7 +56,9 @@ namespace BackpackHero.Battle
             manualTriggerTimer = new();
 
         public Transform FirePoint => firePoint;
-        public Projectile2D ProjectilePrefab => projectilePrefab;
+        public BattleAttack2D DefaultAttackPrefab =>
+            defaultAttackPrefab;
+
         public BattleFaction Faction => faction;
         public float ProjectileDamage => projectileDamage;
         public float ProjectileSpeed => projectileSpeed;
@@ -82,10 +85,14 @@ namespace BackpackHero.Battle
             if (fireModeController != null)
             {
                 fireModeController.ShotRequested -=
-                    SpawnProjectile;
+                    SpawnAttack;
 
                 fireModeController.ShotRequested +=
-                    SpawnProjectile;
+                    SpawnAttack;
+
+                fireModeController
+                    .AssignMissingAttackPrefabs(
+                        defaultAttackPrefab);
             }
 
             isFiring = false;
@@ -99,7 +106,7 @@ namespace BackpackHero.Battle
             if (fireModeController != null)
             {
                 fireModeController.ShotRequested -=
-                    SpawnProjectile;
+                    SpawnAttack;
             }
 
             isFiring = false;
@@ -113,11 +120,19 @@ namespace BackpackHero.Battle
             UpdateShooting(Time.deltaTime);
         }
 
+        public void SetDefaultAttackPrefab(
+            BattleAttack2D prefab)
+        {
+            defaultAttackPrefab = prefab;
+            hasReportedMissingAttackPrefab = false;
+
+            fireModeController?
+                .AssignMissingAttackPrefabs(prefab);
+        }
+
         public void SetProjectilePrefab(Projectile2D prefab)
         {
-            projectilePrefab = prefab;
-            hasReportedMissingProjectilePrefab = false;
-            hasReportedMissingLifetime = false;
+            SetDefaultAttackPrefab(prefab);
         }
 
         public void SetFaction(BattleFaction newFaction)
@@ -194,6 +209,22 @@ namespace BackpackHero.Battle
 
             return fireModeController != null
                 ? fireModeController.AddMode(
+                    defaultAttackPrefab,
+                    pattern,
+                    ProjectileFireModeController2D
+                        .ManualInterval)
+                : -1;
+        }
+
+        public int AddManualFireMode(
+            BattleAttack2D attackPrefab,
+            ProjectileFirePattern pattern)
+        {
+            FindReferences();
+
+            return fireModeController != null
+                ? fireModeController.AddMode(
+                    attackPrefab,
                     pattern,
                     ProjectileFireModeController2D
                         .ManualInterval)
@@ -220,8 +251,21 @@ namespace BackpackHero.Battle
                        pattern);
         }
 
-        private void SpawnProjectile(
-            Vector2 fireDirection)
+        public bool SetFireModeAttackPrefab(
+            int index,
+            BattleAttack2D attackPrefab)
+        {
+            FindReferences();
+
+            return fireModeController != null &&
+                   fireModeController
+                       .SetModeAttackPrefab(
+                           index,
+                           attackPrefab);
+        }
+
+        private void SpawnAttack(
+            BattleShotRequest request)
         {
             if (firePoint == null)
             {
@@ -229,63 +273,54 @@ namespace BackpackHero.Battle
                 return;
             }
 
-            if (projectilePrefab == null)
+            BattleAttack2D attackPrefab =
+                request.AttackPrefab != null
+                    ? request.AttackPrefab
+                    : defaultAttackPrefab;
+
+            if (attackPrefab == null)
             {
-                ReportMissingProjectilePrefab();
+                ReportMissingAttackPrefab();
                 return;
             }
 
-            Projectile2D projectile =
+            Vector2 fireDirection =
+                request.Direction;
+
+            BattleAttack2D attack =
                 Instantiate(
-                    projectilePrefab,
+                    attackPrefab,
                     firePoint.position,
                     Quaternion.FromToRotation(
                         Vector2.up,
                         fireDirection));
 
-            ProjectileTrajectoryLaunchContext
-                trajectoryContext =
+            BattleAttackLaunchContext
+                launchContext =
                     hasAimTarget
-                        ? ProjectileTrajectoryLaunchContext
-                            .WithTarget(
+                        ? BattleAttackLaunchContext
+                            .WithAimPoint(
+                                faction,
+                                projectileDamage,
+                                projectileSpeed,
+                                projectileLifetime,
                                 firePoint.position,
                                 fireDirection,
                                 transform.position,
                                 transform.up,
                                 aimWorldPosition)
-                        : ProjectileTrajectoryLaunchContext
-                            .WithoutTarget(
+                        : BattleAttackLaunchContext
+                            .WithoutAimPoint(
+                                faction,
+                                projectileDamage,
+                                projectileSpeed,
+                                projectileLifetime,
                                 firePoint.position,
                                 fireDirection,
                                 transform.position,
                                 transform.up);
 
-            projectile.Initialize(
-                faction,
-                projectileDamage,
-                projectileSpeed,
-                fireDirection,
-                trajectoryContext);
-
-            LifetimeAndScreenBounds2D lifetime =
-                projectile.GetComponent<
-                    LifetimeAndScreenBounds2D>();
-
-            if (lifetime != null)
-            {
-                lifetime.SetLifetime(
-                    projectileLifetime);
-            }
-            else if (!hasReportedMissingLifetime)
-            {
-                hasReportedMissingLifetime = true;
-
-                Debug.LogWarning(
-                    $"{projectilePrefab.name}没有" +
-                    $"{nameof(LifetimeAndScreenBounds2D)}，" +
-                    "调试面板中的子弹寿命不会生效。",
-                    projectilePrefab);
-            }
+            attack.Initialize(launchContext);
         }
 
         private void UpdateAim()
@@ -379,16 +414,16 @@ namespace BackpackHero.Battle
                 this);
         }
 
-        private void ReportMissingProjectilePrefab()
+        private void ReportMissingAttackPrefab()
         {
-            if (hasReportedMissingProjectilePrefab)
+            if (hasReportedMissingAttackPrefab)
             {
                 return;
             }
 
-            hasReportedMissingProjectilePrefab = true;
+            hasReportedMissingAttackPrefab = true;
             Debug.LogWarning(
-                $"{name}无法发射：没有选择Projectile Prefab。",
+                $"{name}无法发射：当前模式没有选择Attack Prefab。",
                 this);
         }
 

@@ -21,11 +21,23 @@ namespace BackpackHero.Battle
         private BattleTargetType targetType =
             BattleTargetType.Fighter;
 
-        public Health TargetHealth =>
-            targetHealth;
+        public Health TargetHealth
+        {
+            get
+            {
+                FindOwnerReferences();
+                return targetHealth;
+            }
+        }
 
-        public FactionMember FactionMember =>
-            factionMember;
+        public FactionMember FactionMember
+        {
+            get
+            {
+                FindOwnerReferences();
+                return factionMember;
+            }
+        }
 
         public BattleFaction Faction =>
             factionMember != null
@@ -72,6 +84,8 @@ namespace BackpackHero.Battle
             {
                 return false;
             }
+
+            FindOwnerReferences();
 
             if (targetHealth == null ||
                 factionMember == null)

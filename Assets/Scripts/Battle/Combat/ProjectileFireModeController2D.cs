@@ -4,6 +4,26 @@ using UnityEngine;
 
 namespace BackpackHero.Battle
 {
+    public readonly struct BattleShotRequest
+    {
+        public BattleAttack2D AttackPrefab { get; }
+        public Vector2 Direction { get; }
+        public int ModeIndex { get; }
+
+        public BattleShotRequest(
+            BattleAttack2D attackPrefab,
+            Vector2 direction,
+            int modeIndex)
+        {
+            AttackPrefab = attackPrefab;
+            Direction =
+                direction.sqrMagnitude > Mathf.Epsilon
+                    ? direction.normalized
+                    : Vector2.up;
+            ModeIndex = modeIndex;
+        }
+    }
+
     /// <summary>
     /// 一个发射模式及其独立冷却。
     /// interval小于0表示只能被主动触发。
@@ -11,6 +31,9 @@ namespace BackpackHero.Battle
     [Serializable]
     public sealed class ProjectileFireMode
     {
+        [SerializeField]
+        private BattleAttack2D attackPrefab;
+
         [SerializeField]
         private ProjectileFirePattern pattern;
 
@@ -20,18 +43,29 @@ namespace BackpackHero.Battle
         [NonSerialized]
         private float remainingCooldown;
 
+        public BattleAttack2D AttackPrefab =>
+            attackPrefab;
+
         public ProjectileFirePattern Pattern => pattern;
         public float Interval => interval;
         public float RemainingCooldown => remainingCooldown;
         public bool IsManual => interval < 0f;
 
         public ProjectileFireMode(
+            BattleAttack2D newAttackPrefab,
             ProjectileFirePattern firePattern,
             float fireInterval)
         {
+            attackPrefab = newAttackPrefab;
             pattern = firePattern;
             SetInterval(fireInterval);
             ResetCooldown();
+        }
+
+        public void SetAttackPrefab(
+            BattleAttack2D newAttackPrefab)
+        {
+            attackPrefab = newAttackPrefab;
         }
 
         public void SetPattern(
@@ -92,7 +126,8 @@ namespace BackpackHero.Battle
 
         private readonly List<Vector2> directionBuffer = new();
 
-        public event Action<Vector2> ShotRequested;
+        public event Action<BattleShotRequest>
+            ShotRequested;
 
         public IReadOnlyList<ProjectileFireMode> FireModes
         {
@@ -122,12 +157,20 @@ namespace BackpackHero.Battle
                 return;
             }
 
-            foreach (ProjectileFireMode mode in fireModes)
+            for (int index = 0;
+                 index < fireModes.Count;
+                 index++)
             {
+                ProjectileFireMode mode =
+                    fireModes[index];
+
                 if (mode != null &&
                     mode.Tick(deltaTime))
                 {
-                    TriggerMode(mode, forward);
+                    TriggerMode(
+                        mode,
+                        index,
+                        forward);
                 }
             }
         }
@@ -141,16 +184,25 @@ namespace BackpackHero.Battle
 
             int shotCount = 0;
 
-            foreach (ProjectileFireMode mode in fireModes)
+            for (int index = 0;
+                 index < fireModes.Count;
+                 index++)
             {
+                ProjectileFireMode mode =
+                    fireModes[index];
+
                 shotCount +=
-                    TriggerMode(mode, forward);
+                    TriggerMode(
+                        mode,
+                        index,
+                        forward);
             }
 
             return shotCount;
         }
 
         public int AddMode(
+            BattleAttack2D attackPrefab,
             ProjectileFirePattern pattern,
             float interval)
         {
@@ -158,10 +210,25 @@ namespace BackpackHero.Battle
 
             fireModes.Add(
                 new ProjectileFireMode(
+                    attackPrefab,
                     pattern,
                     interval));
 
             return fireModes.Count - 1;
+        }
+
+        /// <summary>
+        /// 兼容只验证Pattern与冷却的旧调用。
+        /// 实际生成攻击时应使用带AttackPrefab的重载。
+        /// </summary>
+        public int AddMode(
+            ProjectileFirePattern pattern,
+            float interval)
+        {
+            return AddMode(
+                null,
+                pattern,
+                interval);
         }
 
         public bool RemoveModeAt(int index)
@@ -193,6 +260,22 @@ namespace BackpackHero.Battle
             return true;
         }
 
+        public bool SetModeAttackPrefab(
+            int index,
+            BattleAttack2D attackPrefab)
+        {
+            ProjectileFireMode mode =
+                GetMode(index);
+
+            if (mode == null)
+            {
+                return false;
+            }
+
+            mode.SetAttackPrefab(attackPrefab);
+            return true;
+        }
+
         public bool SetModeInterval(
             int index,
             float interval)
@@ -211,12 +294,47 @@ namespace BackpackHero.Battle
         }
 
         public void ReplaceWithSingleMode(
+            BattleAttack2D attackPrefab,
             ProjectileFirePattern pattern,
             float interval)
         {
             EnsureModeList();
             fireModes.Clear();
-            AddMode(pattern, interval);
+            AddMode(
+                attackPrefab,
+                pattern,
+                interval);
+        }
+
+        public void ReplaceWithSingleMode(
+            ProjectileFirePattern pattern,
+            float interval)
+        {
+            ReplaceWithSingleMode(
+                null,
+                pattern,
+                interval);
+        }
+
+        public void AssignMissingAttackPrefabs(
+            BattleAttack2D fallbackPrefab)
+        {
+            if (fallbackPrefab == null ||
+                fireModes == null)
+            {
+                return;
+            }
+
+            foreach (ProjectileFireMode mode
+                     in fireModes)
+            {
+                if (mode != null &&
+                    mode.AttackPrefab == null)
+                {
+                    mode.SetAttackPrefab(
+                        fallbackPrefab);
+                }
+            }
         }
 
         public void ResetCooldowns()
@@ -234,6 +352,7 @@ namespace BackpackHero.Battle
 
         private int TriggerMode(
             ProjectileFireMode mode,
+            int modeIndex,
             Vector2 forward)
         {
             if (mode == null ||
@@ -250,7 +369,11 @@ namespace BackpackHero.Battle
 
             foreach (Vector2 direction in directionBuffer)
             {
-                ShotRequested?.Invoke(direction);
+                ShotRequested?.Invoke(
+                    new BattleShotRequest(
+                        mode.AttackPrefab,
+                        direction,
+                        modeIndex));
             }
 
             return directionBuffer.Count;

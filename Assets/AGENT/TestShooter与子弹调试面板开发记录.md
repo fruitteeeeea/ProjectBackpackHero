@@ -20,7 +20,7 @@ Assets/Scenes/BattlePrototype.unity
 3. 在 Game View 中移动鼠标可改变 TestShooter 朝向。
 4. 单击鼠标左键会立即触发一次；按住左键会按照 `Hold Trigger Interval` 持续触发 TestShooter 当前挂载的全部发射模式。
 5. TestShooter 的模式间隔固定为 `-1`，表示不会自动计时发射。
-6. 调试窗口可以实时修改 Projectile Prefab、阵营、伤害、速度和寿命，也可以选择 Pattern 资源增删发射模式。修改只影响本次 Play Mode。
+6. 调试窗口可以为每个模式独立选择 Attack Prefab 和 Pattern，并实时修改阵营、伤害、速度和寿命。速度与寿命仅在存在飞行子弹模式时显示；修改只影响本次 Play Mode。
 
 ## 发射模式
 
@@ -49,6 +49,6 @@ Spread30Three.asset     在30度扇形中均匀发射3颗
 
 ## 默认配置
 
-`BattlePrototype/TestShooter` 默认发射现有 `Assets/Prefabs/Battle/Projectile.prefab`，阵营为 Player，伤害为 1，速度为 8，寿命为 5 秒，并挂载一个间隔为 `-1` 的 `ForwardSingle` 模式。
+`BattlePrototype/TestShooter` 默认发射 `Assets/Prefabs/Battle/LaserBeamAttack.prefab`，阵营为 Player，伤害为 1，并挂载一个间隔为 `-1` 的 `ForwardSingle` 模式。把该模式的Pattern替换为`Spread30Three`后，一次触发会生成三束等长扇形激光。
 
 TestShooter 默认按住触发间隔为 `0.2` 秒。该间隔属于输入层，不会改变发射模式自身的 `-1` 手动间隔。

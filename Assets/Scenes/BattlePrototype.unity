@@ -227,7 +227,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.TestShooter2D
   firePoint: {fileID: 519999679}
-  projectilePrefab: {fileID: 9181062788350396426, guid: 6931d63d73f334a0e9b4ee30938152ad, type: 3}
+  defaultAttackPrefab: {fileID: 1000000000000000004, guid: c42b9321adc84edca9697e69ce3a6282, type: 3}
   fireModeController: {fileID: 519999680}
   manualTriggerInterval: 0.2
   faction: 0
@@ -278,7 +278,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.ProjectileFireModeController2D
   fireModes:
-  - pattern: {fileID: 11400000, guid: f153d3da6f524da7b50b0582a278524b, type: 2}
+  - attackPrefab: {fileID: 1000000000000000004, guid: c42b9321adc84edca9697e69ce3a6282, type: 3}
+    pattern: {fileID: 11400000, guid: f153d3da6f524da7b50b0582a278524b, type: 2}
     interval: -1
 --- !u!1 &955732171
 GameObject:

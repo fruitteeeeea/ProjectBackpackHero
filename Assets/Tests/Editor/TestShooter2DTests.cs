@@ -289,6 +289,9 @@ public sealed class TestShooter2DTests
             controller.FireModes[0].Pattern,
             Is.TypeOf<ForwardProjectileFirePattern>());
         Assert.That(
+            controller.FireModes[0].AttackPrefab,
+            Is.TypeOf<Projectile2D>());
+        Assert.That(
             controller.FireModes[0].Interval,
             Is.EqualTo(definition.AttackInterval));
 

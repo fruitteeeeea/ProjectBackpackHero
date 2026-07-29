@@ -10,7 +10,7 @@ namespace BackpackHero.Battle
     [RequireComponent(
         typeof(ProjectileTrajectoryController2D))]
     [RequireComponent(typeof(HitBox2D))]
-    public sealed class Projectile2D : MonoBehaviour
+    public sealed class Projectile2D : BattleAttack2D
     {
         [Header("References")]
         [SerializeField]
@@ -28,6 +28,44 @@ namespace BackpackHero.Battle
         private void Awake()
         {
             FindReferences();
+        }
+
+        public override void Initialize(
+            BattleAttackLaunchContext context)
+        {
+            ProjectileTrajectoryLaunchContext
+                trajectoryContext =
+                    context.HasAimPoint
+                        ? ProjectileTrajectoryLaunchContext
+                            .WithTarget(
+                                context.Origin,
+                                context.FireDirection,
+                                context.ShooterPosition,
+                                context.ShooterForward,
+                                context.AimPoint)
+                        : ProjectileTrajectoryLaunchContext
+                            .WithoutTarget(
+                                context.Origin,
+                                context.FireDirection,
+                                context.ShooterPosition,
+                                context.ShooterForward);
+
+            Initialize(
+                context.Faction,
+                context.Damage,
+                context.Speed,
+                context.FireDirection,
+                trajectoryContext);
+
+            if (context.Lifetime >= 0f)
+            {
+                LifetimeAndScreenBounds2D lifetime =
+                    GetComponent<
+                        LifetimeAndScreenBounds2D>();
+
+                lifetime?.SetLifetime(
+                    context.Lifetime);
+            }
         }
 
         /// <summary>

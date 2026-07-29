@@ -67,10 +67,10 @@ namespace BackpackHero.Battle
             TargetUnavailable?.Invoke();
         }
 
-        public static void SetProjectilePrefab(
-            Projectile2D prefab)
+        public static void SetDefaultAttackPrefab(
+            BattleAttack2D prefab)
         {
-            Current?.SetProjectilePrefab(prefab);
+            Current?.SetDefaultAttackPrefab(prefab);
         }
 
         public static void SetFaction(
@@ -108,6 +108,17 @@ namespace BackpackHero.Battle
                 : -1;
         }
 
+        public static int AddManualFireMode(
+            BattleAttack2D attackPrefab,
+            ProjectileFirePattern pattern)
+        {
+            return Current != null
+                ? Current.AddManualFireMode(
+                    attackPrefab,
+                    pattern)
+                : -1;
+        }
+
         public static bool RemoveFireModeAt(int index)
         {
             return Current != null &&
@@ -122,6 +133,16 @@ namespace BackpackHero.Battle
                    Current.SetFireModePattern(
                        index,
                        pattern);
+        }
+
+        public static bool SetFireModeAttackPrefab(
+            int index,
+            BattleAttack2D attackPrefab)
+        {
+            return Current != null &&
+                   Current.SetFireModeAttackPrefab(
+                       index,
+                       attackPrefab);
         }
 
         public static int TriggerAllFireModes()

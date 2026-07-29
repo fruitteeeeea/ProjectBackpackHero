@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace BackpackHero.Battle
 {
@@ -24,7 +25,8 @@ namespace BackpackHero.Battle
         
         [Header("Shooting")]
         [SerializeField]
-        private Projectile2D projectilePrefab;
+        [FormerlySerializedAs("projectilePrefab")]
+        private BattleAttack2D defaultAttackPrefab;
 
         [SerializeField]
         private Transform firePoint;
@@ -109,6 +111,10 @@ namespace BackpackHero.Battle
                 fireModeController.ShotRequested +=
                     HandleShotRequested;
 
+                fireModeController
+                    .AssignMissingAttackPrefabs(
+                        defaultAttackPrefab);
+
                 fireModeController.ResetCooldowns();
             }
         }
@@ -155,6 +161,7 @@ namespace BackpackHero.Battle
             }
 
             fireModeController.ReplaceWithSingleMode(
+                defaultAttackPrefab,
                 defaultFirePattern,
                 attackInterval);
         }
@@ -352,16 +359,25 @@ namespace BackpackHero.Battle
         }
 
         private void HandleShotRequested(
-            Vector2 fireDirection)
+            BattleShotRequest request)
         {
+            BattleAttack2D attackPrefab =
+                request.AttackPrefab != null
+                    ? request.AttackPrefab
+                    : defaultAttackPrefab;
+
             if (fighter == null ||
                 fighter.Definition == null ||
-                projectilePrefab == null ||
-                firePoint == null)
+                attackPrefab == null ||
+                firePoint == null ||
+                currentTarget == null)
             {
                 ReportMissingShootingConfiguration();
                 return;
             }
+
+            Vector2 fireDirection =
+                request.Direction;
 
             if (fireDirection.sqrMagnitude <=
                 Mathf.Epsilon)
@@ -369,9 +385,9 @@ namespace BackpackHero.Battle
                 return;
             }
 
-            Projectile2D projectile =
+            BattleAttack2D attack =
                 Instantiate(
-                    projectilePrefab,
+                    attackPrefab,
                     firePoint.position,
                     Quaternion.FromToRotation(
                         Vector2.up,
@@ -380,22 +396,23 @@ namespace BackpackHero.Battle
             Vector2 targetPosition =
                 GetTargetPosition(currentTarget);
 
-            ProjectileTrajectoryLaunchContext
-                trajectoryContext =
-                    ProjectileTrajectoryLaunchContext
-                        .WithTarget(
+            BattleAttackLaunchContext
+                launchContext =
+                    BattleAttackLaunchContext
+                        .WithAimPoint(
+                            fighter.Faction,
+                            fighter.Definition
+                                .ProjectileDamage,
+                            fighter.Definition
+                                .ProjectileSpeed,
+                            -1f,
                             firePoint.position,
                             fireDirection,
                             transform.position,
                             transform.up,
                             targetPosition);
 
-            projectile.Initialize(
-                fighter.Faction,
-                fighter.Definition.ProjectileDamage,
-                fighter.Definition.ProjectileSpeed,
-                fireDirection,
-                trajectoryContext);
+            attack.Initialize(launchContext);
         }
 
         private void ReportMissingShootingConfiguration()
@@ -408,7 +425,7 @@ namespace BackpackHero.Battle
             hasReportedMissingShootingConfiguration = true;
 
             Debug.LogWarning(
-                $"{name}无法发射：请检查Projectile Prefab、" +
+                $"{name}无法发射：请检查Attack Prefab、" +
                 "Fire Point、Fire Mode Controller和" +
                 "Default Fire Pattern。",
                 this);

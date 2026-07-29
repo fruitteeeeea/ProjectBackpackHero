@@ -12,6 +12,7 @@ namespace BackpackHero.EditorTools
         private Vector2 scrollPosition;
         private double nextRepaintTime;
         private ProjectileFirePattern patternToAdd;
+        private BattleAttack2D attackToAdd;
 
         [MenuItem("Tools/Battle/Test Shooter Debug")]
         public static void ShowFromMenu()
@@ -100,7 +101,7 @@ namespace BackpackHero.EditorTools
             }
 
             DrawRuntimeStatus(shooter);
-            DrawProjectileSettings(shooter);
+            DrawAttackSettings(shooter);
             DrawFireModes(shooter);
             DrawActions();
         }
@@ -130,30 +131,17 @@ namespace BackpackHero.EditorTools
             }
         }
 
-        private static void DrawProjectileSettings(
+        private static void DrawAttackSettings(
             TestShooter2D shooter)
         {
             EditorGUILayout.Space(8f);
             EditorGUILayout.LabelField(
-                "Projectile Settings",
+                "Attack Settings",
                 EditorStyles.boldLabel);
 
             using (new EditorGUILayout.VerticalScope(
                        EditorStyles.helpBox))
             {
-                Projectile2D prefab =
-                    (Projectile2D)EditorGUILayout.ObjectField(
-                        "Projectile Prefab",
-                        shooter.ProjectilePrefab,
-                        typeof(Projectile2D),
-                        false);
-
-                if (prefab != shooter.ProjectilePrefab)
-                {
-                    TestShooterDebugRuntimeBridge
-                        .SetProjectilePrefab(prefab);
-                }
-
                 BattleFaction faction =
                     (BattleFaction)EditorGUILayout.EnumPopup(
                         "Faction",
@@ -178,30 +166,34 @@ namespace BackpackHero.EditorTools
                         .SetProjectileDamage(damage);
                 }
 
-                float speed =
-                    EditorGUILayout.FloatField(
-                        "Speed",
-                        shooter.ProjectileSpeed);
-
-                if (!Mathf.Approximately(
-                        speed,
-                        shooter.ProjectileSpeed))
+                if (HasProjectileMode(shooter))
                 {
-                    TestShooterDebugRuntimeBridge
-                        .SetProjectileSpeed(speed);
-                }
+                    float speed =
+                        EditorGUILayout.FloatField(
+                            "Speed",
+                            shooter.ProjectileSpeed);
 
-                float lifetime =
-                    EditorGUILayout.FloatField(
-                        "Lifetime",
-                        shooter.ProjectileLifetime);
+                    if (!Mathf.Approximately(
+                            speed,
+                            shooter.ProjectileSpeed))
+                    {
+                        TestShooterDebugRuntimeBridge
+                            .SetProjectileSpeed(speed);
+                    }
 
-                if (!Mathf.Approximately(
-                        lifetime,
-                        shooter.ProjectileLifetime))
-                {
-                    TestShooterDebugRuntimeBridge
-                        .SetProjectileLifetime(lifetime);
+                    float lifetime =
+                        EditorGUILayout.FloatField(
+                            "Lifetime",
+                            shooter.ProjectileLifetime);
+
+                    if (!Mathf.Approximately(
+                            lifetime,
+                            shooter.ProjectileLifetime))
+                    {
+                        TestShooterDebugRuntimeBridge
+                            .SetProjectileLifetime(
+                                lifetime);
+                    }
                 }
 
                 float triggerInterval =
@@ -218,6 +210,31 @@ namespace BackpackHero.EditorTools
                             triggerInterval);
                 }
             }
+        }
+
+        private static bool HasProjectileMode(
+            TestShooter2D shooter)
+        {
+            ProjectileFireModeController2D controller =
+                shooter.FireModeController;
+
+            if (controller == null)
+            {
+                return shooter.DefaultAttackPrefab
+                       is Projectile2D;
+            }
+
+            foreach (ProjectileFireMode mode
+                     in controller.FireModes)
+            {
+                if (mode?.AttackPrefab
+                    is Projectile2D)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void DrawFireModes(
@@ -258,6 +275,24 @@ namespace BackpackHero.EditorTools
                         $"Mode {index + 1}",
                         EditorStyles.boldLabel);
 
+                    BattleAttack2D attackPrefab =
+                        (BattleAttack2D)
+                        EditorGUILayout.ObjectField(
+                            "Attack Prefab",
+                            mode?.AttackPrefab,
+                            typeof(BattleAttack2D),
+                            false);
+
+                    if (mode != null &&
+                        attackPrefab !=
+                        mode.AttackPrefab)
+                    {
+                        TestShooterDebugRuntimeBridge
+                            .SetFireModeAttackPrefab(
+                                index,
+                                attackPrefab);
+                    }
+
                     ProjectileFirePattern pattern =
                         (ProjectileFirePattern)
                         EditorGUILayout.ObjectField(
@@ -295,6 +330,14 @@ namespace BackpackHero.EditorTools
             using (new EditorGUILayout.VerticalScope(
                        EditorStyles.helpBox))
             {
+                attackToAdd =
+                    (BattleAttack2D)
+                    EditorGUILayout.ObjectField(
+                        "New Attack",
+                        attackToAdd,
+                        typeof(BattleAttack2D),
+                        false);
+
                 patternToAdd =
                     (ProjectileFirePattern)
                     EditorGUILayout.ObjectField(
@@ -304,12 +347,14 @@ namespace BackpackHero.EditorTools
                         false);
 
                 using (new EditorGUI.DisabledScope(
+                           attackToAdd == null ||
                            patternToAdd == null))
                 {
                     if (GUILayout.Button("添加发射模式"))
                     {
                         TestShooterDebugRuntimeBridge
                             .AddManualFireMode(
+                                attackToAdd,
                                 patternToAdd);
                     }
                 }

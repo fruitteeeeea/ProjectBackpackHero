@@ -39,6 +39,12 @@ public sealed class Health : MonoBehaviour
     public event Action<float> HealthChanged;
 
     /// <summary>
+    /// 受到伤害且实际扣除了生命值时触发。
+    /// 参数是攻击结算传入的原始伤害值，不会因目标剩余生命而截断。
+    /// </summary>
+    public event Action<float> Damaged;
+
+    /// <summary>
     /// 血量第一次从大于0降到0时触发。
     /// </summary>
     public event Action Died;
@@ -80,7 +86,15 @@ public sealed class Health : MonoBehaviour
             return;
         }
 
+        float healthBeforeDamage = currentHealth;
         SetHealth(currentHealth - amount);
+
+        if (!Mathf.Approximately(
+                healthBeforeDamage,
+                currentHealth))
+        {
+            Damaged?.Invoke(amount);
+        }
     }
 
     public void IncreaseHealth(float amount)

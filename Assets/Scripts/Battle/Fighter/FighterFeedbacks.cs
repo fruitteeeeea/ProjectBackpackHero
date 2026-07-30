@@ -19,6 +19,8 @@ namespace BackpackHero.Battle
         [SerializeField]
         private MMF_Player deathFeedback;
 
+        private FighterDamageFloatingText floatingDamageText;
+
         [Header("Death")]
         [SerializeField, Min(0f)]
         private float deathCleanupDelay = 0.55f;
@@ -30,9 +32,15 @@ namespace BackpackHero.Battle
             attackFeedback?.PlayFeedbacks();
         }
 
-        public void PlayHit()
+        public void PlayHit(
+            float damage,
+            BattleFaction faction)
         {
-            hitFeedback?.PlayFeedbacks();
+            hitFeedback?.PlayFeedbacks(
+                transform.position,
+                damage);
+
+            floatingDamageText?.Play(damage, faction);
         }
 
         public void PlayDeath()
@@ -46,5 +54,11 @@ namespace BackpackHero.Battle
             deathCleanupDelay = Mathf.Max(0f, deathCleanupDelay);
         }
 #endif
+
+        private void Awake()
+        {
+            floatingDamageText =
+                GetComponent<FighterDamageFloatingText>();
+        }
     }
 }

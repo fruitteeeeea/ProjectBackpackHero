@@ -30,7 +30,6 @@ namespace BackpackHero.Battle
             healthBarFollowers;
         
         private FighterDefinition definition;
-        private float previousNormalizedHealth;
         private bool isDying;
 
         public FighterDefinition Definition =>
@@ -92,18 +91,15 @@ namespace BackpackHero.Battle
                     WorldSpaceHealthBarFollower2D>(
                     true);
             
-            health.HealthChanged += HandleHealthChanged;
+            health.Damaged += HandleDamaged;
             health.Died += HandleDied;
-            previousNormalizedHealth =
-                health.NormalizedHealth;
         }
 
         private void OnDestroy()
         {
             if (health != null)
             {
-                health.HealthChanged -=
-                    HandleHealthChanged;
+                health.Damaged -= HandleDamaged;
                 health.Died -= HandleDied;
             }
         }
@@ -156,9 +152,6 @@ namespace BackpackHero.Battle
                 fighterDefinition.BaseSpeed);
 
             ApplyPacingHealth();
-            previousNormalizedHealth =
-                health.NormalizedHealth;
-
             FighterCombat2D combat =
                 GetComponent<FighterCombat2D>();
 
@@ -286,17 +279,9 @@ namespace BackpackHero.Battle
             Destroy(gameObject, cleanupDelay);
         }
 
-        private void HandleHealthChanged(
-            float normalizedHealth)
+        private void HandleDamaged(float damage)
         {
-            if (!isDying &&
-                !health.IsDead &&
-                normalizedHealth < previousNormalizedHealth)
-            {
-                feedbacks?.PlayHit();
-            }
-
-            previousNormalizedHealth = normalizedHealth;
+            feedbacks?.PlayHit(damage, Faction);
         }
 
         private void DisableCombatInteractions()

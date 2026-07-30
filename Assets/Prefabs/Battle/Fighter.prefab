@@ -152,6 +152,8 @@ GameObject:
   - component: {fileID: 4239548375826173620}
   - component: {fileID: 7294134601146802531}
   - component: {fileID: 7597761932700272001}
+  - component: {fileID: 644388059356196384}
+  - component: {fileID: 1141063183201766595}
   m_Layer: 0
   m_Name: Fighter
   m_TagString: Untagged
@@ -364,6 +366,33 @@ MonoBehaviour:
   hitFeedback: {fileID: 6910629136836392210}
   deathFeedback: {fileID: 646850191882242123}
   deathCleanupDelay: 0.55
+--- !u!114 &644388059356196384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1237829907571473707}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c4e5fd798ea451e86286d3c7c501d59, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FighterDamageFloatingText
+  playerChannel: 41
+  enemyChannel: 42
+--- !u!114 &1141063183201766595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1237829907571473707}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8aa193b4079347feab0ac2be2d5568af, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FloatingTextSpawnerBootstrap
+  settings: {fileID: 11400000, guid: c9317d9e0a4b41218bc409beaeb2a5c4, type: 2}
 --- !u!1 &1739202294125678001
 GameObject:
   m_ObjectHideFlags: 0

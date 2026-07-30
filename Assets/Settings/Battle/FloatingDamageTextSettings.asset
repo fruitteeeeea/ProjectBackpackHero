@@ -1,0 +1,140 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 192cbd4d036b422593fd6f9f7e89b10a, type: 3}
+  m_Name: FloatingDamageTextSettings
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FloatingDamageTextSettings
+  playerFloatingTextPrefab: {fileID: 7682393104525680823, guid: 0d174b9955854f3bb4c4f45048be2f1e, type: 3}
+  enemyFloatingTextPrefab: {fileID: 7682393104525680823, guid: c4e7b1cceca448d4ba2ba9957c2ee590, type: 3}
+  poolSize: 30
+  poolCanExpand: 1
+  lifetime: {x: 1, y: 1.08}
+  spawnOffsetMin: {x: -0.12, y: -0.05, z: 0}
+  spawnOffsetMax: {x: 0.12, y: 0.08, z: 0}
+  horizontalEndOffset: {x: -1, y: 1}
+  verticalPeakHeight: {x: 1, y: 1.2}
+  verticalMotion:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.28
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: -0.08
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  scaleAtStart: {x: 0.75, y: 0.75}
+  scaleAtPeak: {x: 1.1, y: 1.1}
+  scaleMotion:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.78
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.14
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0.85
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  opacityMotion:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.55
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.86
+      value: 0.28
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  fontSize: 5
+  outlineWidth: 0.289
+  sortingOrder: 200
+  playerFaceColor: {r: 0.28, g: 0.78, b: 1, a: 1}
+  playerOutlineColor: {r: 0.015, g: 0.04, b: 0.09, a: 0.9}
+  enemyFaceColor: {r: 1, g: 0.34, b: 0.12, a: 1}
+  enemyOutlineColor: {r: 0.12, g: 0.015, b: 0.005, a: 0.9}

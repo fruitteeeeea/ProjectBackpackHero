@@ -1,4 +1,6 @@
 using BackpackHero.Debugging;
+using BackpackPrototype;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -36,6 +38,9 @@ namespace BackpackHero.Battle
         private ProjectileFireModeController2D
             fireModeController;
 
+        private FighterEquipmentEffects2D
+            equipmentEffectsController;
+
         [SerializeField]
         private ProjectileFirePattern defaultFirePattern;
 
@@ -72,6 +77,10 @@ namespace BackpackHero.Battle
         public ProjectileFireModeController2D
             FireModeController => fireModeController;
 
+        public FighterEquipmentEffects2D
+            EquipmentEffectsController =>
+            equipmentEffectsController;
+
         public float EffectiveAttackRange =>
             fighter != null &&
             fighter.Definition != null
@@ -95,6 +104,16 @@ namespace BackpackHero.Battle
             fireModeController =
                 GetComponent<
                     ProjectileFireModeController2D>();
+
+            equipmentEffectsController =
+                GetComponent<FighterEquipmentEffects2D>();
+
+            if (equipmentEffectsController == null)
+            {
+                equipmentEffectsController =
+                    gameObject.AddComponent<
+                        FighterEquipmentEffects2D>();
+            }
         }
 
         private void OnEnable()
@@ -118,6 +137,17 @@ namespace BackpackHero.Battle
 
                 fireModeController.ResetCooldowns();
             }
+
+            if (equipmentEffectsController != null)
+            {
+                equipmentEffectsController
+                    .ProjectileShotRequested -=
+                    HandleEquipmentProjectileShotRequested;
+                equipmentEffectsController
+                    .ProjectileShotRequested +=
+                    HandleEquipmentProjectileShotRequested;
+                equipmentEffectsController.ResetCooldowns();
+            }
         }
 
         private void OnDisable()
@@ -126,6 +156,13 @@ namespace BackpackHero.Battle
             {
                 fireModeController.ShotRequested -=
                     HandleShotRequested;
+            }
+
+            if (equipmentEffectsController != null)
+            {
+                equipmentEffectsController
+                    .ProjectileShotRequested -=
+                    HandleEquipmentProjectileShotRequested;
             }
 
             currentTarget = null;
@@ -165,6 +202,18 @@ namespace BackpackHero.Battle
                 defaultAttackPrefab,
                 defaultFirePattern,
                 attackInterval);
+        }
+
+        public void ConfigureEquipmentEffects(
+            IEnumerable<EquipmentEffectDefinition> effects)
+        {
+            if (equipmentEffectsController == null)
+            {
+                equipmentEffectsController =
+                    GetComponent<FighterEquipmentEffects2D>();
+            }
+
+            equipmentEffectsController?.Configure(effects);
         }
         
         private void Update()
@@ -275,6 +324,7 @@ namespace BackpackHero.Battle
             isInCombat = true;
 
             fireModeController?.ResetCooldowns();
+            equipmentEffectsController?.ResetCooldowns();
 
             if (mover != null)
             {
@@ -300,6 +350,7 @@ namespace BackpackHero.Battle
             isInCombat = false;
 
             fireModeController?.ResetCooldowns();
+            equipmentEffectsController?.ResetCooldowns();
 
             if (mover != null)
             {
@@ -348,15 +399,16 @@ namespace BackpackHero.Battle
         {
             if (fighter == null ||
                 fighter.Definition == null ||
-                currentTarget == null ||
-                fireModeController == null)
+                currentTarget == null)
             {
                 return;
             }
 
-            fireModeController.Tick(
+            fireModeController?.Tick(
                 deltaTime,
                 transform.up);
+
+            equipmentEffectsController?.Tick(deltaTime);
         }
 
         private void HandleShotRequested(
@@ -367,8 +419,30 @@ namespace BackpackHero.Battle
                     ? request.AttackPrefab
                     : defaultAttackPrefab;
 
+            FireAttack(
+                defaultPrefab,
+                request.Direction,
+                true);
+        }
+
+        private void HandleEquipmentProjectileShotRequested(
+            BattleAttack2D projectilePrefab)
+        {
+            FireAttack(
+                projectilePrefab,
+                transform.up,
+                false);
+        }
+
+        private void FireAttack(
+            BattleAttack2D requestedPrefab,
+            Vector2 fireDirection,
+            bool allowRandomProjectileOverride)
+        {
             BattleAttack2D attackPrefab =
-                ResolveAttackPrefab(defaultPrefab);
+                allowRandomProjectileOverride
+                    ? ResolveAttackPrefab(requestedPrefab)
+                    : requestedPrefab;
 
             if (fighter == null ||
                 fighter.Definition == null ||
@@ -379,9 +453,6 @@ namespace BackpackHero.Battle
                 ReportMissingShootingConfiguration();
                 return;
             }
-
-            Vector2 fireDirection =
-                request.Direction;
 
             if (fireDirection.sqrMagnitude <=
                 Mathf.Epsilon)

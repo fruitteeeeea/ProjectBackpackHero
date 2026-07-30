@@ -359,6 +359,10 @@ namespace BackpackPrototype
                 fighterObject.transform,
                 request.Item);
 
+            ConfigureAdjacentEquipmentEffects(
+                fighterObject.transform,
+                request.Item);
+
             FighterSpawned?.Invoke(
                 fighterObject,
                 request.Item);
@@ -402,6 +406,42 @@ namespace BackpackPrototype
             }
 
             display.SetColors(colors);
+        }
+
+        private void ConfigureAdjacentEquipmentEffects(
+            Transform fighter,
+            ItemInstance aircraftItem)
+        {
+            if (fighter == null || combatController == null ||
+                !fighter.TryGetComponent(
+                    out FighterCombat2D fighterCombat))
+            {
+                return;
+            }
+
+            var effects = new List<EquipmentEffectDefinition>();
+
+            foreach (ItemInstance equipment in
+                     combatController.Backpack
+                         .GetAdjacentEquipmentItems(
+                             aircraftItem))
+            {
+                if (equipment?.Data == null)
+                {
+                    continue;
+                }
+
+                foreach (EquipmentEffectDefinition effect in
+                         equipment.Data.EquipmentEffects)
+                {
+                    if (effect != null)
+                    {
+                        effects.Add(effect);
+                    }
+                }
+            }
+
+            fighterCombat.ConfigureEquipmentEffects(effects);
         }
 
         private BackpackCombatController FindNearestEnemy()

@@ -25,6 +25,11 @@ namespace BackpackPrototype
         [SerializeField]
         private Color equipmentColor = Color.white;
 
+        [Header("Equipment Effects")]
+        [SerializeField]
+        private List<EquipmentEffectDefinition> equipmentEffects =
+            new();
+
         [SerializeField]
         private float cooldownDuration = -1f;
 
@@ -40,6 +45,12 @@ namespace BackpackPrototype
         public Color BackgroundColor => backgroundColor;
         public ItemType ItemType => itemType;
         public Color EquipmentColor => equipmentColor;
+        public IReadOnlyList<EquipmentEffectDefinition>
+            EquipmentEffects =>
+            itemType == ItemType.Equipment &&
+            equipmentEffects != null
+                ? equipmentEffects
+                : Array.Empty<EquipmentEffectDefinition>();
         public float CooldownDuration => cooldownDuration;
         public ItemShapeData Shape => shape;
         public FighterDefinition FighterDefinition =>
@@ -66,6 +77,25 @@ namespace BackpackPrototype
             shape = testShape;
 
             OnValidate();
+        }
+
+        public void SetEquipmentEffectsForTests(
+            params EquipmentEffectDefinition[] effects)
+        {
+            equipmentEffects ??=
+                new List<EquipmentEffectDefinition>();
+            equipmentEffects.Clear();
+
+            if (effects != null)
+            {
+                foreach (EquipmentEffectDefinition effect in effects)
+                {
+                    if (effect != null)
+                    {
+                        equipmentEffects.Add(effect);
+                    }
+                }
+            }
         }
         
         private void OnValidate()

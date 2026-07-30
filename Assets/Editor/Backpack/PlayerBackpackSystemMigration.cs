@@ -294,8 +294,7 @@ namespace BackpackHero.EditorTools
                         BackpackCombatController>()
                     : Object.FindObjectsByType<
                         BackpackCombatController>(
-                        FindObjectsInactive.Include,
-                        FindObjectsSortMode.None)
+                        FindObjectsInactive.Include)
                     .FirstOrDefault(
                         controller =>
                             controller.Faction ==
@@ -370,8 +369,7 @@ namespace BackpackHero.EditorTools
             foreach (BattleDebugRuntime debugRuntime in
                      Object.FindObjectsByType<
                          BattleDebugRuntime>(
-                         FindObjectsInactive.Include,
-                         FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 Object.DestroyImmediate(
                     debugRuntime.gameObject);
@@ -440,8 +438,7 @@ namespace BackpackHero.EditorTools
             string objectName)
         {
             return Object.FindObjectsByType<Transform>(
-                    FindObjectsInactive.Include,
-                    FindObjectsSortMode.None)
+                    FindObjectsInactive.Include)
                 .FirstOrDefault(
                     item => item.name == objectName);
         }

@@ -362,10 +362,13 @@ namespace BackpackHero.Battle
         private void HandleShotRequested(
             BattleShotRequest request)
         {
-            BattleAttack2D attackPrefab =
+            BattleAttack2D defaultPrefab =
                 request.AttackPrefab != null
                     ? request.AttackPrefab
                     : defaultAttackPrefab;
+
+            BattleAttack2D attackPrefab =
+                ResolveAttackPrefab(defaultPrefab);
 
             if (fighter == null ||
                 fighter.Definition == null ||
@@ -421,6 +424,18 @@ namespace BackpackHero.Battle
                 GetComponent<FighterFeedbacks>();
 
             feedbacks?.PlayAttack();
+        }
+
+        private static BattleAttack2D ResolveAttackPrefab(
+            BattleAttack2D defaultPrefab)
+        {
+            BattleAttack2D randomPrefab =
+                BattleRandomProjectilePool.Instance
+                    ?.SelectProjectilePrefab();
+
+            return randomPrefab != null
+                ? randomPrefab
+                : defaultPrefab;
         }
 
         private void ReportMissingShootingConfiguration()

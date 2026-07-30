@@ -140,6 +140,8 @@ namespace BackpackHero.EditorTools
             using (new EditorGUILayout.VerticalScope(
                        EditorStyles.helpBox))
             {
+                DrawRandomProjectileToggle();
+
                 Vector2 directionRange =
                     EditorGUILayout.Vector2Field(
                         "方向角范围（度）",
@@ -165,6 +167,34 @@ namespace BackpackHero.EditorTools
                         .SetAttackRangeOffsetRange(
                             attackRange);
                 }
+            }
+        }
+
+        private static void DrawRandomProjectileToggle()
+        {
+            BattleRandomProjectilePool pool =
+                BattleRandomProjectilePool.Instance;
+
+            if (pool == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "场景中没有随机子弹池。",
+                    MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.LabelField(
+                $"随机子弹池：{pool.ProjectilePrefabCount} 种");
+
+            string label = pool.RandomProjectilesEnabled
+                ? "随机子弹：开启"
+                : "随机子弹：关闭";
+
+            if (GUILayout.Button(label,
+                    GUILayout.Height(28f)))
+            {
+                pool.SetRandomProjectilesEnabled(
+                    !pool.RandomProjectilesEnabled);
             }
         }
 

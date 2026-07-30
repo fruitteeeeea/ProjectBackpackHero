@@ -235,16 +235,17 @@ public sealed class ProjectileTrajectory2DTests
 
         AssertPrefabProfile<
             StraightProjectileTrajectoryProfile>(
-                "Assets/Prefabs/Battle/Projectile.prefab");
+                "Assets/Prefabs/Battle/Projectiles/" +
+                "Projectile.prefab");
 
         AssertPrefabProfile<
             SineProjectileTrajectoryProfile>(
-                "Assets/Prefabs/Battle/" +
+                "Assets/Prefabs/Battle/Projectiles/" +
                 "Projectile_Sine.prefab");
 
         AssertPrefabProfile<
             BezierProjectileTrajectoryProfile>(
-                "Assets/Prefabs/Battle/" +
+                "Assets/Prefabs/Battle/Projectiles/" +
                 "Projectile_Bezier.prefab");
     }
 

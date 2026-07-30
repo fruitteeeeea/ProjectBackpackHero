@@ -105,6 +105,8 @@ namespace BackpackHero.EditorTools
 
             DrawTargetSelector(bridge);
 
+            DrawRandomProjectileToggle();
+
             PlayerBackpackDebugSnapshot snapshot =
                 selectedTarget == 0
                     ? bridge.Snapshot
@@ -121,6 +123,53 @@ namespace BackpackHero.EditorTools
             DrawActions(bridge, snapshot);
             DrawSummary(snapshot);
             DrawItems(snapshot);
+        }
+
+        private static void DrawRandomProjectileToggle()
+        {
+            BattleRandomProjectilePool pool =
+                BattleRandomProjectilePool.Instance;
+
+            if (pool == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "场景中没有BattleRandomProjectilePool，" +
+                    "飞机将使用默认子弹。",
+                    MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField(
+                "随机子弹",
+                EditorStyles.boldLabel);
+
+            using (new EditorGUILayout.VerticalScope(
+                       EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(
+                    "可用子弹",
+                    pool.ProjectilePrefabCount.ToString());
+
+                string label = pool.RandomProjectilesEnabled
+                    ? "随机子弹：开启"
+                    : "随机子弹：关闭";
+
+                if (GUILayout.Button(label,
+                        GUILayout.Height(28f)))
+                {
+                    pool.SetRandomProjectilesEnabled(
+                        !pool.RandomProjectilesEnabled);
+                }
+
+                if (pool.RandomProjectilesEnabled &&
+                    pool.ProjectilePrefabCount == 0)
+                {
+                    EditorGUILayout.HelpBox(
+                        "随机池为空，发射时会回退到默认子弹。",
+                        MessageType.Warning);
+                }
+            }
         }
 
         private void DrawToolbar()

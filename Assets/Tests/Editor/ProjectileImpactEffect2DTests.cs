@@ -123,9 +123,11 @@ public sealed class ProjectileImpactEffect2DTests
     public void SpecialProjectilePrefabs_HaveRequiredImpactConfiguration()
     {
         GameObject explosive = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/Prefabs/Battle/Projectile_Explosive.prefab");
+            "Assets/Prefabs/Battle/Projectiles/" +
+            "Projectile_Explosive.prefab");
         GameObject lightning = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/Prefabs/Battle/Projectile_Lightning.prefab");
+            "Assets/Prefabs/Battle/Projectiles/" +
+            "Projectile_Lightning.prefab");
 
         Assert.That(explosive.GetComponent<Projectile2D>(), Is.Not.Null);
         Assert.That(explosive.GetComponent<HitBox2D>(), Is.Not.Null);

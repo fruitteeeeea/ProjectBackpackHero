@@ -497,8 +497,7 @@ namespace BackpackHero.EditorTools
         {
             return UnityEngine.Object
                 .FindObjectsByType<Transform>(
-                    FindObjectsInactive.Include,
-                    FindObjectsSortMode.None)
+                    FindObjectsInactive.Include)
                 .FirstOrDefault(
                     item => item.name == objectName);
         }

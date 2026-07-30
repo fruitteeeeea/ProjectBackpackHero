@@ -367,15 +367,9 @@ namespace BackpackPrototype
             if (item.Data.ItemType !=
                 ItemType.Aircraft)
             {
-                if (item.Data.EquipmentEffectPrefab !=
-                    null)
-                {
-                    text.Append("\n   效果：")
-                        .Append(
-                            item.Data
-                                .EquipmentEffectPrefab
-                                .name);
-                }
+                text.Append("\n   标识颜色：#")
+                    .Append(ColorUtility.ToHtmlStringRGB(
+                        item.Data.EquipmentColor));
 
                 return text.ToString();
             }
@@ -404,7 +398,7 @@ namespace BackpackPrototype
                         .GetAdjacentEquipmentItems(item)
                     : new List<ItemInstance>();
 
-            text.Append("\n   临近增益：")
+            text.Append("\n   临近装备颜色：")
                 .Append(equipment.Count);
 
             if (equipment.Count == 0)
@@ -420,35 +414,9 @@ namespace BackpackPrototype
                     .Append(" @ ")
                     .Append(source.AnchorCell);
 
-                GameObject effectPrefab =
-                    source.Data.EquipmentEffectPrefab;
-
-                if (effectPrefab == null)
-                {
-                    text.Append(
-                        "：未配置效果 Prefab");
-                    continue;
-                }
-
-                text.Append("：")
-                    .Append(effectPrefab.name);
-
-                List<string> buffTypes =
-                    GetBuffTypeNames(effectPrefab);
-
-                if (buffTypes.Count > 0)
-                {
-                    text.Append(" [")
-                        .Append(
-                            string.Join(
-                                ", ",
-                                buffTypes))
-                        .Append(']');
-                }
-                else
-                {
-                    text.Append(" [表现效果]");
-                }
+                text.Append("：#")
+                    .Append(ColorUtility.ToHtmlStringRGB(
+                        source.Data.EquipmentColor));
             }
 
             return text.ToString();
@@ -460,28 +428,6 @@ namespace BackpackPrototype
                    playerBackpackSystem.IsReady &&
                    BattleFlowController.CurrentPhase ==
                    BattlePhase.Preparation;
-        }
-
-        private static List<string> GetBuffTypeNames(
-            GameObject effectPrefab)
-        {
-            var names = new List<string>();
-
-            foreach (MonoBehaviour behaviour in
-                     effectPrefab.GetComponentsInChildren<
-                         MonoBehaviour>(true))
-            {
-                if (behaviour is
-                    IAircraftEquipmentBuff &&
-                    !names.Contains(
-                        behaviour.GetType().Name))
-                {
-                    names.Add(
-                        behaviour.GetType().Name);
-                }
-            }
-
-            return names;
         }
 
         private void ResolveTarget()

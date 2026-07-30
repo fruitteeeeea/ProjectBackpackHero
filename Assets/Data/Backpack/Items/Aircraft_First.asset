@@ -19,4 +19,3 @@ MonoBehaviour:
   cooldownDuration: 2
   shape: {fileID: 11400000, guid: 779de2dbf4b6144469f76b3c6dc34fda, type: 2}
   fighterDefinition: {fileID: 11400000, guid: 33a511e51c88b4d1987a9accec00659b, type: 2}
-  equipmentEffectPrefab: {fileID: 0}

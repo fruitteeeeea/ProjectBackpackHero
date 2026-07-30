@@ -16,7 +16,7 @@ MonoBehaviour:
   icon: {fileID: 6671908658173119883, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 1
+  equipmentColor: {r: 1, g: 0.75686276, b: 0.02745098, a: 1}
   cooldownDuration: -1
   shape: {fileID: 11400000, guid: 70bef0369e3574ab2af4034accad292e, type: 2}
   fighterDefinition: {fileID: 0}
-  equipmentEffectPrefab: {fileID: 2832922089596973377, guid: 524cb1bd9485f4defa7a6a9751db8fbb, type: 3}

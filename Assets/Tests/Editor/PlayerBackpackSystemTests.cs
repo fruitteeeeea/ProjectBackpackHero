@@ -2,6 +2,7 @@ using BackpackHero.Battle;
 using BackpackPrototype;
 using MoreMountains.Feedbacks;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEditor;
@@ -487,7 +488,7 @@ public sealed class PlayerBackpackSystemTests
     }
 
     [Test]
-    public void DebugBridge_DescribesAircraftCooldownAndEveryAdjacentBuff()
+    public void DebugBridge_DescribesAircraftCooldownAndEveryAdjacentEquipmentColor()
     {
         ItemShapeData shape =
             ScriptableObject.CreateInstance<
@@ -513,6 +514,9 @@ public sealed class PlayerBackpackSystemTests
                 ItemType.Equipment,
                 -1f,
                 shape);
+
+            Assert.That(equipmentData.EquipmentColor,
+                Is.EqualTo(Color.white));
 
             var backpack = new BackpackController(4, 4);
             var aircraft =
@@ -563,18 +567,74 @@ public sealed class PlayerBackpackSystemTests
                 Does.Contain("冷却：4.00s"));
             Assert.That(
                 description,
-                Does.Contain("临近增益：2"));
+                Does.Contain("临近装备颜色：2"));
             Assert.That(
                 CountOccurrences(
                     description,
                     "Debug Equipment"),
                 Is.EqualTo(2));
+            Assert.That(description, Does.Contain("#FFFFFF"));
         }
         finally
         {
             Object.DestroyImmediate(shape);
             Object.DestroyImmediate(aircraftData);
             Object.DestroyImmediate(equipmentData);
+        }
+    }
+
+    [Test]
+    public void EquipmentAssets_UseConfiguredMarkerColors()
+    {
+        ItemData first =
+            AssetDatabase.LoadAssetAtPath<ItemData>(
+                "Assets/Data/Backpack/Items/" +
+                "Equipment_First.asset");
+        ItemData vertical =
+            AssetDatabase.LoadAssetAtPath<ItemData>(
+                "Assets/Data/Backpack/Items/" +
+                "Equipment_1x2.asset");
+
+        Assert.That(first.EquipmentColor,
+            Is.EqualTo(new Color32(255, 193, 7, 255)));
+        Assert.That(vertical.EquipmentColor,
+            Is.EqualTo(new Color32(244, 67, 54, 255)));
+    }
+
+    [Test]
+    public void EquipmentMarkerDisplay_ShowsAndHidesConfiguredColors()
+    {
+        var fighter = new GameObject("Fighter");
+        var canvasObject = new GameObject(
+            "Aircraft Health Bar Canvas",
+            typeof(RectTransform),
+            typeof(Canvas));
+        canvasObject.transform.SetParent(fighter.transform);
+
+        try
+        {
+            AircraftEquipmentMarkerDisplay display =
+                fighter.AddComponent<
+                    AircraftEquipmentMarkerDisplay>();
+            display.SetColors(new List<Color>
+            {
+                Color.yellow,
+                Color.red,
+            });
+
+            Transform container = canvasObject.transform.Find(
+                "Equipment Color Markers");
+            Assert.That(container, Is.Not.Null);
+            Assert.That(container.gameObject.activeSelf, Is.True);
+            Assert.That(container.childCount, Is.EqualTo(2));
+
+            display.SetColors(new List<Color>());
+
+            Assert.That(container.gameObject.activeSelf, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(fighter);
         }
     }
 

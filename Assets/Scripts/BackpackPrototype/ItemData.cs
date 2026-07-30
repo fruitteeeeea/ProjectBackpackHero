@@ -23,6 +23,9 @@ namespace BackpackPrototype
         private ItemType itemType = ItemType.Equipment;
 
         [SerializeField]
+        private Color equipmentColor = Color.white;
+
+        [SerializeField]
         private float cooldownDuration = -1f;
 
         [SerializeField]
@@ -32,19 +35,15 @@ namespace BackpackPrototype
         [SerializeField]
         private FighterDefinition fighterDefinition;
 
-        [SerializeField]
-        private GameObject equipmentEffectPrefab;
-
         public string ItemName => itemName;
         public Sprite Icon => icon;
         public Color BackgroundColor => backgroundColor;
         public ItemType ItemType => itemType;
+        public Color EquipmentColor => equipmentColor;
         public float CooldownDuration => cooldownDuration;
         public ItemShapeData Shape => shape;
         public FighterDefinition FighterDefinition =>
             fighterDefinition;
-        public GameObject EquipmentEffectPrefab =>
-            equipmentEffectPrefab;
 
         public IReadOnlyList<Vector2Int> ShapeOffsets =>
             shape != null

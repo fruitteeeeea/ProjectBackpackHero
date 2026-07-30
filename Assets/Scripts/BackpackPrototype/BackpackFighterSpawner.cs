@@ -355,7 +355,7 @@ namespace BackpackPrototype
                     maximumBendDistance);
             }
 
-            AttachAdjacentEquipmentEffects(
+            ConfigureAdjacentEquipmentMarkers(
                 fighterObject.transform,
                 request.Item);
 
@@ -366,45 +366,42 @@ namespace BackpackPrototype
             return fighterObject;
         }
 
-        private void AttachAdjacentEquipmentEffects(
+        private void ConfigureAdjacentEquipmentMarkers(
             Transform fighter,
             ItemInstance aircraftItem)
         {
+            if (fighter == null || combatController == null)
+            {
+                return;
+            }
+
+            var colors = new List<Color>();
+            var uniqueColors = new HashSet<Color>();
+
             foreach (ItemInstance equipment in
                      combatController.Backpack
                          .GetAdjacentEquipmentItems(
                              aircraftItem))
             {
-                GameObject effectPrefab =
-                    equipment.Data.EquipmentEffectPrefab;
-
-                if (effectPrefab == null)
+                if (equipment?.Data != null &&
+                    uniqueColors.Add(
+                        equipment.Data.EquipmentColor))
                 {
-                    continue;
-                }
-
-                GameObject effect =
-                    Instantiate(
-                        effectPrefab,
-                        fighter,
-                        false);
-                effect.name =
-                    $"{effectPrefab.name} (Equipment)";
-
-                foreach (MonoBehaviour behaviour in
-                         effect.GetComponentsInChildren<
-                             MonoBehaviour>(true))
-                {
-                    if (behaviour is
-                        IAircraftEquipmentBuff buff)
-                    {
-                        buff.Apply(
-                            fighter.GetComponent<
-                                Fighter2D>(),
-                            equipment);
-                    }
+                    colors.Add(equipment.Data.EquipmentColor);
                 }
             }
+
+            AircraftEquipmentMarkerDisplay display =
+                fighter.GetComponent<
+                    AircraftEquipmentMarkerDisplay>();
+
+            if (display == null)
+            {
+                display = fighter.gameObject.AddComponent<
+                    AircraftEquipmentMarkerDisplay>();
+            }
+
+            display.SetColors(colors);
         }
 
         private BackpackCombatController FindNearestEnemy()

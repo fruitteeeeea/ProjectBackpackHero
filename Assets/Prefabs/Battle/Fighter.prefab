@@ -376,7 +376,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8c4e5fd798ea451e86286d3c7c501d59, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FighterDamageFloatingText
   playerChannel: 41
   enemyChannel: 42
@@ -390,7 +390,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8aa193b4079347feab0ac2be2d5568af, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FloatingTextSpawnerBootstrap
   settings: {fileID: 11400000, guid: c9317d9e0a4b41218bc409beaeb2a5c4, type: 2}
 --- !u!1 &1739202294125678001
@@ -1210,7 +1210,7 @@ MonoBehaviour:
   PerformanceMode: 0
   RestoreInitialValuesOnDisable: 0
   StopFeedbacksOnDisable: 0
-  PlayCount: 0
+  PlayCount: 4
   InPreviewMode: 0
   MMF_ChannelMode: 0
   MMF_Channel: 0
@@ -1239,7 +1239,7 @@ MonoBehaviour:
           NumberOfRepeats: 0
           RepeatForever: 0
           DelayBetweenRepeats: 1
-          PlayCount: 0
+          PlayCount: 11
           LimitPlayCount: 0
           MaxPlayCount: 3
           SetPlayCountToZeroOnReset: 0
@@ -1292,7 +1292,7 @@ MonoBehaviour:
           ButtonText: 
         Owner: {fileID: 6910629136836392210}
         DebugActive: 0
-        TargetShaker: {fileID: 0}
+        TargetShaker: {fileID: 8645791555271697011}
         Duration: 0.22
         ResetShakerValuesAfterShake: 1
         ResetTargetValuesAfterShake: 1
@@ -1362,7 +1362,7 @@ MonoBehaviour:
           NumberOfRepeats: 0
           RepeatForever: 0
           DelayBetweenRepeats: 1
-          PlayCount: 0
+          PlayCount: 4
           LimitPlayCount: 0
           MaxPlayCount: 3
           SetPlayCountToZeroOnReset: 0

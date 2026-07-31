@@ -15,19 +15,36 @@ namespace BackpackHero.Background
 
     public sealed class BackgroundPlanet : MonoBehaviour
     {
-        [SerializeField, Min(0f)] private float driftRadius = 0.22f;
-        [SerializeField, Min(0f)] private float driftSpeed = 0.12f;
-        [SerializeField, Min(0f)] private float springStrength = 7f;
-        [SerializeField, Min(0f)] private float damping = 5f;
-        [SerializeField, Min(0f)] private float maxDistance = 0.6f;
-        [SerializeField, Min(0f)] private float maxSpeed = 2f;
+        private const float DefaultDriftRadius = .8f;
+        private const float DefaultDriftSpeed = .6f;
+        private const float DefaultSpringStrength = 8f;
+        private const float DefaultDamping = 3.2f;
+        private const float DefaultMaxDistance = .8f;
+        private const float DefaultMaxSpeed = 8f;
+
+        [SerializeField, Min(0f)] private float driftRadius = DefaultDriftRadius;
+        [SerializeField, Min(0f)] private float driftSpeed = DefaultDriftSpeed;
+        [SerializeField, Min(0f)] private float springStrength = DefaultSpringStrength;
+        [SerializeField, Min(0f)] private float damping = DefaultDamping;
+        [SerializeField, Min(0f)] private float maxDistance = DefaultMaxDistance;
+        [SerializeField, Min(0f)] private float maxSpeed = DefaultMaxSpeed;
 
         private Vector3 anchorPosition;
         private Vector2 velocity;
         private float noiseSeed;
+        private float nextInteractionTime;
 
         public Vector2 WorldPosition => transform.position;
         public Vector3 AnchorPosition => anchorPosition;
+        public static BackgroundPlanetPhysicsSettings DefaultPhysicsSettings => new()
+        {
+            DriftRadius = DefaultDriftRadius,
+            DriftSpeed = DefaultDriftSpeed,
+            SpringStrength = DefaultSpringStrength,
+            Damping = DefaultDamping,
+            MaxDistance = DefaultMaxDistance,
+            MaxSpeed = DefaultMaxSpeed,
+        };
         public BackgroundPlanetPhysicsSettings PhysicsSettings => new()
         {
             DriftRadius = driftRadius,
@@ -57,18 +74,30 @@ namespace BackpackHero.Background
             transform.position = anchor;
         }
 
-        public void ApplyPointerDrag(Vector2 worldDelta, float weight, float followStrength, float impulseStrength)
+        public bool TryTriggerRandomMotion(
+            float minimumImpulse,
+            float maximumImpulse,
+            float cooldown,
+            float rearmSpeed)
         {
-            if (weight <= 0f || worldDelta.sqrMagnitude <= 0f)
+            if (Time.time < nextInteractionTime || velocity.magnitude > Mathf.Max(0f, rearmSpeed))
             {
-                return;
+                return false;
             }
 
-            var appliedDelta = worldDelta * Mathf.Clamp01(weight);
-            transform.position += (Vector3)(appliedDelta * Mathf.Max(0f, followStrength));
-            velocity += appliedDelta * Mathf.Max(0f, impulseStrength);
+            var direction = Random.insideUnitCircle.normalized;
+            if (direction.sqrMagnitude <= Mathf.Epsilon)
+            {
+                direction = Vector2.right;
+            }
+
+            var impulse = Random.Range(
+                Mathf.Max(0f, minimumImpulse),
+                Mathf.Max(minimumImpulse, maximumImpulse));
+            velocity += direction * impulse;
             velocity = Vector2.ClampMagnitude(velocity, maxSpeed);
-            ClampToActivityRange();
+            nextInteractionTime = Time.time + Mathf.Max(0f, cooldown);
+            return true;
         }
 
         private void Awake()

@@ -77,12 +77,13 @@ namespace BackpackHero.EditorTools
 
         private static void DrawTouchSettings(BackgroundPhysicsDebugRuntime runtime)
         {
-            EditorGUILayout.LabelField("划动反馈", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("点击扰动", EditorStyles.boldLabel);
             var settings = runtime.TouchSettings;
             settings.InfluenceRadius = EditorGUILayout.Slider("影响半径", settings.InfluenceRadius, .1f, 5f);
-            settings.FollowStrength = EditorGUILayout.Slider("跟随强度", settings.FollowStrength, 0f, 2f);
-            settings.ImpulseStrength = EditorGUILayout.Slider("惯性冲量", settings.ImpulseStrength, 0f, 8f);
-            settings.MaxAppliedDelta = EditorGUILayout.Slider("单帧最大位移", settings.MaxAppliedDelta, .01f, 2f);
+            settings.MinimumRandomImpulse = EditorGUILayout.Slider("最小随机冲量", settings.MinimumRandomImpulse, 0f, 5f);
+            settings.MaximumRandomImpulse = EditorGUILayout.Slider("最大随机冲量", settings.MaximumRandomImpulse, 0f, 5f);
+            settings.InteractionCooldown = EditorGUILayout.Slider("触发冷却", settings.InteractionCooldown, 0f, 3f);
+            settings.RearmSpeed = EditorGUILayout.Slider("再次触发速度阈值", settings.RearmSpeed, 0f, 1f);
             runtime.SetTouchSettings(settings);
         }
     }

@@ -11,16 +11,11 @@ namespace BackpackHero.Background
         public static event Action InstanceUnavailable;
 
         private ConstellationBackgroundBootstrap background;
+        private BackgroundPlanetPhysicsSettings planetSettings;
+        private BackgroundTouchPhysicsSettings touchSettings;
 
-        public BackgroundPlanetPhysicsSettings PlanetSettings =>
-            background != null && background.Planets.Count > 0
-                ? background.Planets[0].PhysicsSettings
-                : default;
-
-        public BackgroundTouchPhysicsSettings TouchSettings =>
-            background != null && background.TouchInteractor != null
-                ? background.TouchInteractor.PhysicsSettings
-                : default;
+        public BackgroundPlanetPhysicsSettings PlanetSettings => planetSettings;
+        public BackgroundTouchPhysicsSettings TouchSettings => touchSettings;
 
         public int PlanetCount => background?.Planets.Count ?? 0;
 
@@ -39,6 +34,11 @@ namespace BackpackHero.Background
                 return;
             }
 
+            // 调试器的初始状态只读取脚本默认配置，不读取场景遗留的序列化值。
+            planetSettings = BackgroundPlanet.DefaultPhysicsSettings;
+            touchSettings = BackgroundTouchInteractor.DefaultPhysicsSettings;
+            ApplyPlanetSettings();
+            ApplyTouchSettings();
             Instance = this;
             InstanceAvailable?.Invoke(this);
         }
@@ -56,23 +56,34 @@ namespace BackpackHero.Background
 
         public void SetPlanetSettings(BackgroundPlanetPhysicsSettings settings)
         {
-            if (background == null)
-            {
-                return;
-            }
-
-            foreach (var planet in background.Planets)
-            {
-                if (planet != null)
-                {
-                    planet.SetPhysicsSettings(settings);
-                }
-            }
+            planetSettings = settings;
+            ApplyPlanetSettings();
         }
 
         public void SetTouchSettings(BackgroundTouchPhysicsSettings settings)
         {
-            background?.TouchInteractor?.SetPhysicsSettings(settings);
+            touchSettings = settings;
+            ApplyTouchSettings();
+        }
+
+        private void ApplyPlanetSettings()
+        {
+            if (background == null)
+            {
+                return;
+            }
+            foreach (var planet in background.Planets)
+            {
+                if (planet != null)
+                {
+                    planet.SetPhysicsSettings(planetSettings);
+                }
+            }
+        }
+
+        private void ApplyTouchSettings()
+        {
+            background?.TouchInteractor?.SetPhysicsSettings(touchSettings);
         }
     }
 }

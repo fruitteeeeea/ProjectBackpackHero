@@ -7,19 +7,27 @@ namespace BackpackHero.Background
     public struct BackgroundTouchPhysicsSettings
     {
         public float InfluenceRadius;
-        public float FollowStrength;
-        public float ImpulseStrength;
-        public float MaxAppliedDelta;
+        public float MinimumRandomImpulse;
+        public float MaximumRandomImpulse;
+        public float InteractionCooldown;
+        public float RearmSpeed;
     }
 
     public sealed class BackgroundTouchInteractor : MonoBehaviour
     {
+        private const float DefaultInfluenceRadius = 3f;
+        private const float DefaultMinimumRandomImpulse = 3.5f;
+        private const float DefaultMaximumRandomImpulse = 4f;
+        private const float DefaultInteractionCooldown = .35f;
+        private const float DefaultRearmSpeed = .12f;
+
         [SerializeField] private Camera targetCamera;
         [SerializeField] private BackgroundPlanet[] planets;
-        [SerializeField, Min(0f)] private float influenceRadius = 1.4f;
-        [SerializeField, Min(0f)] private float followStrength = .65f;
-        [SerializeField, Min(0f)] private float impulseStrength = 2f;
-        [SerializeField, Min(0f)] private float maxAppliedDelta = .4f;
+        [SerializeField, Min(0f)] private float influenceRadius = DefaultInfluenceRadius;
+        [SerializeField, Min(0f)] private float minimumRandomImpulse = DefaultMinimumRandomImpulse;
+        [SerializeField, Min(0f)] private float maximumRandomImpulse = DefaultMaximumRandomImpulse;
+        [SerializeField, Min(0f)] private float interactionCooldown = DefaultInteractionCooldown;
+        [SerializeField, Min(0f)] private float rearmSpeed = DefaultRearmSpeed;
         [SerializeField] private float interactionPlaneZ = 2f;
 
         public void Configure(Camera camera, BackgroundPlanet[] configuredPlanets, float planeZ)
@@ -29,20 +37,31 @@ namespace BackpackHero.Background
             interactionPlaneZ = planeZ;
         }
 
+        public static BackgroundTouchPhysicsSettings DefaultPhysicsSettings => new()
+        {
+            InfluenceRadius = DefaultInfluenceRadius,
+            MinimumRandomImpulse = DefaultMinimumRandomImpulse,
+            MaximumRandomImpulse = DefaultMaximumRandomImpulse,
+            InteractionCooldown = DefaultInteractionCooldown,
+            RearmSpeed = DefaultRearmSpeed,
+        };
+
         public BackgroundTouchPhysicsSettings PhysicsSettings => new()
         {
             InfluenceRadius = influenceRadius,
-            FollowStrength = followStrength,
-            ImpulseStrength = impulseStrength,
-            MaxAppliedDelta = maxAppliedDelta,
+            MinimumRandomImpulse = minimumRandomImpulse,
+            MaximumRandomImpulse = maximumRandomImpulse,
+            InteractionCooldown = interactionCooldown,
+            RearmSpeed = rearmSpeed,
         };
 
         public void SetPhysicsSettings(BackgroundTouchPhysicsSettings settings)
         {
             influenceRadius = Mathf.Max(0f, settings.InfluenceRadius);
-            followStrength = Mathf.Max(0f, settings.FollowStrength);
-            impulseStrength = Mathf.Max(0f, settings.ImpulseStrength);
-            maxAppliedDelta = Mathf.Max(0f, settings.MaxAppliedDelta);
+            minimumRandomImpulse = Mathf.Max(0f, settings.MinimumRandomImpulse);
+            maximumRandomImpulse = Mathf.Max(minimumRandomImpulse, settings.MaximumRandomImpulse);
+            interactionCooldown = Mathf.Max(0f, settings.InteractionCooldown);
+            rearmSpeed = Mathf.Max(0f, settings.RearmSpeed);
         }
 
         private void Update()
@@ -58,32 +77,26 @@ namespace BackpackHero.Background
             {
                 foreach (var touch in touchscreen.touches)
                 {
-                    if (!touch.press.isPressed)
+                    if (!touch.press.wasPressedThisFrame)
                     {
                         continue;
                     }
 
                     hasTouch = true;
-                    ApplyScreenSegment(touch.position.ReadValue() - touch.delta.ReadValue(), touch.position.ReadValue());
+                    TryTriggerAtScreenPoint(touch.position.ReadValue());
                 }
             }
 
             var mouse = Mouse.current;
-            if (!hasTouch && mouse != null && mouse.leftButton.isPressed)
+            if (!hasTouch && mouse != null && mouse.leftButton.wasPressedThisFrame)
             {
-                ApplyScreenSegment(mouse.position.ReadValue() - mouse.delta.ReadValue(), mouse.position.ReadValue());
+                TryTriggerAtScreenPoint(mouse.position.ReadValue());
             }
         }
 
-        private void ApplyScreenSegment(Vector2 previousScreenPosition, Vector2 currentScreenPosition)
+        private void TryTriggerAtScreenPoint(Vector2 screenPosition)
         {
-            var previous = ScreenToWorld(previousScreenPosition);
-            var current = ScreenToWorld(currentScreenPosition);
-            var delta = Vector2.ClampMagnitude(current - previous, maxAppliedDelta);
-            if (delta.sqrMagnitude <= 0f)
-            {
-                return;
-            }
+            var worldPosition = ScreenToWorld(screenPosition);
 
             foreach (var planet in planets)
             {
@@ -92,14 +105,16 @@ namespace BackpackHero.Background
                     continue;
                 }
 
-                var distance = DistanceToSegment(planet.WorldPosition, previous, current);
-                if (distance >= influenceRadius)
+                if (Vector2.Distance(planet.WorldPosition, worldPosition) > influenceRadius)
                 {
                     continue;
                 }
 
-                var weight = Mathf.SmoothStep(0f, 1f, 1f - distance / influenceRadius);
-                planet.ApplyPointerDrag(delta, weight, followStrength, impulseStrength);
+                planet.TryTriggerRandomMotion(
+                    minimumRandomImpulse,
+                    maximumRandomImpulse,
+                    interactionCooldown,
+                    rearmSpeed);
             }
         }
 
@@ -109,17 +124,5 @@ namespace BackpackHero.Background
             return targetCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, distance));
         }
 
-        public static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end)
-        {
-            var segment = end - start;
-            var lengthSquared = segment.sqrMagnitude;
-            if (lengthSquared <= Mathf.Epsilon)
-            {
-                return Vector2.Distance(point, start);
-            }
-
-            var t = Mathf.Clamp01(Vector2.Dot(point - start, segment) / lengthSquared);
-            return Vector2.Distance(point, start + segment * t);
-        }
     }
 }

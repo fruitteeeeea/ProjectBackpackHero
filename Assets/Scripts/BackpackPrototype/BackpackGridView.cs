@@ -147,7 +147,8 @@ namespace BackpackPrototype
             ItemInstance ignoreItem = null)
         {
             var visibleCells = new List<Vector2Int>();
-            var isLegal = backpack.CanPlace(item, anchorCell, ignoreItem);
+            var isLegal = backpack.CanPlace(item, anchorCell, ignoreItem) ||
+                backpack.CanMergeAt(item, anchorCell);
 
             foreach (var cell in backpack.GetOccupiedCells(item, anchorCell))
             {

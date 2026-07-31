@@ -739,6 +739,10 @@ namespace BackpackPrototype
 
             view.SelectionRequested +=
                 HandleSelectionRequested;
+            view.MergedSuccessfully +=
+                HandleItemMerged;
+            view.DragStateChanged +=
+                HandleItemDragStateChanged;
             view.PlacedSuccessfully +=
                 HandleItemPlaced;
             view.DeletedSuccessfully +=
@@ -747,6 +751,39 @@ namespace BackpackPrototype
                 !BattleFlowController.IsCombatPhase);
 
             return view;
+        }
+
+        private void HandleItemMerged(
+            ItemView source,
+            ItemInstance target)
+        {
+            ItemView targetView = FindView(target);
+            if (targetView == null)
+            {
+                return;
+            }
+
+            targetView.PlayMergeFeedback();
+            PlacementEffectPlayer.Play(
+                targetView.GetComponent<RectTransform>());
+        }
+
+        private void HandleItemDragStateChanged(
+            ItemView source,
+            bool isDragging)
+        {
+            foreach (ItemView view in backpackViews)
+            {
+                if (view == null || view == source)
+                {
+                    continue;
+                }
+
+                bool canMerge = isDragging &&
+                    Backpack != null &&
+                    Backpack.CanMerge(source.Instance, view.Instance);
+                view.SetMergeHighlight(canMerge);
+            }
         }
 
         private void HandleModelItemAdded(

@@ -688,6 +688,89 @@ public sealed class BackpackControllerTests
             Is.EqualTo(1f));
     }
 
+    [Test]
+    public void ItemInstance_StartsAtLevelOne_AndCanUpgradeOnlyOnce()
+    {
+        ItemInstance item = NewItem("level", OneCell());
+
+        Assert.That(item.Level, Is.EqualTo(ItemInstance.DefaultLevel));
+        Assert.That(item.CanUpgrade, Is.True);
+        Assert.That(item.TryUpgrade(), Is.True);
+        Assert.That(item.Level, Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(item.CanUpgrade, Is.False);
+        Assert.That(item.TryUpgrade(), Is.False);
+    }
+
+    [Test]
+    public void TryMerge_ConsumesSourceAndUpgradesMatchingTarget()
+    {
+        BackpackController backpack = new BackpackController(4, 4);
+        ItemData data = NewData("matching", ItemType.Equipment, -1f, NewShape(OneCell()));
+        ItemInstance source = new ItemInstance("source", data, Vector2Int.zero);
+        ItemInstance target = new ItemInstance("target", data, new Vector2Int(1, 0));
+
+        Assert.That(backpack.PlaceItem(source, Vector2Int.zero), Is.True);
+        Assert.That(backpack.PlaceItem(target, new Vector2Int(1, 0)), Is.True);
+        Assert.That(backpack.CanMergeAt(source, new Vector2Int(1, 0)), Is.True);
+        Assert.That(backpack.TryMerge(source, target), Is.True);
+        Assert.That(backpack.Contains(source), Is.False);
+        Assert.That(backpack.Contains(target), Is.True);
+        Assert.That(backpack.Items.Count, Is.EqualTo(1));
+        Assert.That(target.Level, Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(target.AnchorCell, Is.EqualTo(new Vector2Int(1, 0)));
+    }
+
+    [Test]
+    public void TryMerge_AllowsAnUnplacedShopSource()
+    {
+        BackpackController backpack = new BackpackController(4, 4);
+        ItemData data = NewData("matching", ItemType.Equipment, -1f, NewShape(OneCell()));
+        ItemInstance shopSource = new ItemInstance("shop", data, Vector2Int.zero);
+        ItemInstance target = new ItemInstance("target", data, new Vector2Int(2, 1));
+
+        Assert.That(backpack.PlaceItem(target, new Vector2Int(2, 1)), Is.True);
+        Assert.That(backpack.CanMergeAt(shopSource, new Vector2Int(2, 1)), Is.True);
+        Assert.That(backpack.TryMerge(shopSource, target), Is.True);
+        Assert.That(backpack.Items.Count, Is.EqualTo(1));
+        Assert.That(target.Level, Is.EqualTo(ItemInstance.MaximumLevel));
+    }
+
+    [Test]
+    public void CanMergeAt_RejectsPartialOrMultiItemOverlap()
+    {
+        BackpackController backpack = new BackpackController(4, 4);
+        ItemData data = NewData(
+            "bar",
+            ItemType.Equipment,
+            -1f,
+            NewShape(new[] { Vector2Int.zero, Vector2Int.right }));
+        ItemInstance source = new ItemInstance("source", data, Vector2Int.zero);
+        ItemInstance first = new ItemInstance("first", data, Vector2Int.zero);
+        ItemInstance second = new ItemInstance("second", data, new Vector2Int(1, 0));
+
+        Assert.That(backpack.PlaceItem(first, Vector2Int.zero), Is.True);
+        Assert.That(backpack.PlaceItem(second, new Vector2Int(2, 0)), Is.True);
+        Assert.That(backpack.CanMergeAt(source, new Vector2Int(1, 0)), Is.False);
+    }
+
+    [Test]
+    public void Merge_RejectsDifferentDataOrLevelTwoItems()
+    {
+        BackpackController backpack = new BackpackController(4, 4);
+        ItemInstance source = NewItem("source", OneCell());
+        ItemInstance different = NewItem("different", OneCell());
+
+        Assert.That(backpack.PlaceItem(different, Vector2Int.zero), Is.True);
+        Assert.That(backpack.CanMerge(source, different), Is.False);
+
+        ItemData data = NewData("matching", ItemType.Equipment, -1f, NewShape(OneCell()));
+        ItemInstance levelOne = new ItemInstance("one", data, Vector2Int.zero);
+        ItemInstance levelTwo = new ItemInstance("two", data, new Vector2Int(1, 0));
+        Assert.That(backpack.PlaceItem(levelTwo, new Vector2Int(1, 0)), Is.True);
+        Assert.That(levelTwo.TryUpgrade(), Is.True);
+        Assert.That(backpack.CanMerge(levelOne, levelTwo), Is.False);
+    }
+
     private static ItemInstance NewItem(
         string id,
         IReadOnlyList<Vector2Int> offsets,

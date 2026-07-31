@@ -31,6 +31,7 @@ namespace BackpackPrototype
         public event Action<ItemInstance> ItemAdded;
         public event Action<ItemInstance> ItemMoved;
         public event Action<ItemInstance> ItemRemoved;
+        public event Action<ItemInstance> ItemLevelChanged;
         public event Action Cleared;
 
         public bool Contains(ItemInstance item)
@@ -94,6 +95,86 @@ namespace BackpackPrototype
 
             FillCells(item, anchorCell);
             ItemAdded?.Invoke(item);
+            return true;
+        }
+
+        public bool CanMerge(ItemInstance source, ItemInstance target)
+        {
+            return source != null &&
+                target != null &&
+                source != target &&
+                source.Data != null &&
+                source.Data == target.Data &&
+                source.Level == ItemInstance.DefaultLevel &&
+                target.Level == ItemInstance.DefaultLevel &&
+                items.Contains(target);
+        }
+
+        public bool TryGetMergeTarget(
+            ItemInstance source,
+            Vector2Int anchorCell,
+            out ItemInstance target)
+        {
+            target = null;
+
+            if (source?.Data == null)
+            {
+                return false;
+            }
+
+            foreach (Vector2Int cell in GetOccupiedCells(source, anchorCell))
+            {
+                if (!IsInside(cell))
+                {
+                    return false;
+                }
+
+                ItemInstance occupyingItem = GetItemAt(cell);
+                if (occupyingItem == null)
+                {
+                    return false;
+                }
+
+                if (target == null)
+                {
+                    target = occupyingItem;
+                }
+                else if (target != occupyingItem)
+                {
+                    target = null;
+                    return false;
+                }
+            }
+
+            return CanMerge(source, target);
+        }
+
+        public bool CanMergeAt(
+            ItemInstance source,
+            Vector2Int anchorCell)
+        {
+            return TryGetMergeTarget(source, anchorCell, out _);
+        }
+
+        public bool TryMerge(
+            ItemInstance source,
+            ItemInstance target)
+        {
+            if (!CanMerge(source, target) || !target.TryUpgrade())
+            {
+                return false;
+            }
+
+            if (items.Contains(source))
+            {
+                RemoveItem(source);
+            }
+            else
+            {
+                source.ResetCooldown();
+            }
+
+            ItemLevelChanged?.Invoke(target);
             return true;
         }
 

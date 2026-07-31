@@ -4,6 +4,9 @@ namespace BackpackPrototype
 {
     public sealed class ItemInstance
     {
+        public const int DefaultLevel = 1;
+        public const int MaximumLevel = 2;
+
         public ItemInstance(
             string id,
             ItemData data,
@@ -12,11 +15,14 @@ namespace BackpackPrototype
             Id = id;
             Data = data;
             AnchorCell = anchorCell;
+            Level = DefaultLevel;
         }
 
         public string Id { get; }
         public ItemData Data { get; }
         public Vector2Int AnchorCell { get; set; }
+        public int Level { get; private set; }
+        public bool CanUpgrade => Level < MaximumLevel;
 
         public bool IsCoolingDown { get; private set; }
         public float RemainingCooldown { get; private set; }
@@ -81,6 +87,17 @@ namespace BackpackPrototype
         {
             IsCoolingDown = false;
             RemainingCooldown = 0f;
+        }
+
+        public bool TryUpgrade()
+        {
+            if (!CanUpgrade)
+            {
+                return false;
+            }
+
+            Level++;
+            return true;
         }
     }
 }

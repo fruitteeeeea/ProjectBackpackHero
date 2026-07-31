@@ -93,9 +93,14 @@ namespace BackpackHero.Battle
         }
 
         public void ApplyTextStyle(
-            TextMeshPro text,
+            TMP_Text text,
             BattleFaction faction)
         {
+            if (text == null)
+            {
+                return;
+            }
+
             bool isPlayer = faction == BattleFaction.Player;
             text.color = isPlayer ? playerFaceColor : enemyFaceColor;
             text.fontSize = fontSize;
@@ -104,7 +109,11 @@ namespace BackpackHero.Battle
                 ? playerOutlineColor
                 : enemyOutlineColor;
             text.outlineWidth = outlineWidth;
-            text.sortingOrder = sortingOrder;
+
+            if (text is TextMeshPro worldText)
+            {
+                worldText.sortingOrder = sortingOrder;
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using BackpackHero.Battle;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -15,6 +16,7 @@ namespace BackpackPrototype
         [SerializeField] private Image background;
         [SerializeField] private Image icon;
         [SerializeField] private Text label;
+        [SerializeField] private TextMeshProUGUI levelLabel;
 
         private static readonly int CooldownProgressId =
             Shader.PropertyToID("_CooldownProgress");
@@ -30,6 +32,9 @@ namespace BackpackPrototype
         private Tween scaleTween;
         private Tween feedbackTween;
         private Tween cooldownFlashTween;
+        private Tween mergeFlashTween;
+        private float cooldownFlashAmount;
+        private float mergeFlashAmount;
         private bool isDragging;
         private Vector2 shapeCellSize;
         private Vector2 shapeSpacing;
@@ -95,6 +100,8 @@ namespace BackpackPrototype
         public event Action<ItemView> PlacedSuccessfully;
         public event Action<ItemView> DeletedSuccessfully;
         public event Action<ItemView> SelectionRequested;
+        public event Action<ItemView, ItemInstance> MergedSuccessfully;
+        public event Action<ItemView, bool> DragStateChanged;
 
         private void Awake()
         {
@@ -122,6 +129,8 @@ namespace BackpackPrototype
                         iconTransform.GetComponent<Image>();
                 }
             }
+
+            EnsureLevelLabel();
         }
 
         private void Update()
@@ -142,6 +151,11 @@ namespace BackpackPrototype
             Vector2 spacing,
             BackpackCombatController combatController = null)
         {
+            if (Backpack != null)
+            {
+                Backpack.ItemLevelChanged -= HandleItemLevelChanged;
+            }
+
             if (CombatController != null)
             {
                 CombatController.CooldownCompleted -=
@@ -155,6 +169,11 @@ namespace BackpackPrototype
             DragLayer = dragLayer;
             TrashZone = trashZone;
             CombatController = combatController;
+
+            if (Backpack != null)
+            {
+                Backpack.ItemLevelChanged += HandleItemLevelChanged;
+            }
 
             if (CombatController != null)
             {
@@ -192,6 +211,39 @@ namespace BackpackPrototype
             {
                 label.text = instance.Data.ItemName;
             }
+
+            RefreshLevelLabel();
+        }
+
+        public void SetMergeHighlight(bool highlighted)
+        {
+            mergeFlashTween?.Kill();
+
+            if (!highlighted)
+            {
+                mergeFlashAmount = 0f;
+                ApplyFlashAmount();
+                return;
+            }
+
+            mergeFlashAmount = 0.18f;
+            ApplyFlashAmount();
+            mergeFlashTween = DOTween.To(
+                    () => mergeFlashAmount,
+                    value =>
+                    {
+                        mergeFlashAmount = value;
+                        ApplyFlashAmount();
+                    },
+                    0.62f,
+                    0.7f)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo);
+        }
+
+        public void PlayMergeFeedback()
+        {
+            PlayPlacedFeedback();
         }
 
         private void InitializeCooldownMaterials()
@@ -222,9 +274,9 @@ namespace BackpackPrototype
                 CooldownProgressId,
                 CooldownProgress);
 
-            SetCooldownFloat(
-                FlashAmountId,
-                0f);
+            cooldownFlashAmount = 0f;
+            mergeFlashAmount = 0f;
+            ApplyFlashAmount();
         }
 
         private void HandleCooldownCompleted(
@@ -236,28 +288,46 @@ namespace BackpackPrototype
             }
 
             cooldownFlashTween?.Kill();
-            SetCooldownFloat(FlashAmountId, 0f);
+            cooldownFlashAmount = 0f;
+            ApplyFlashAmount();
 
             Sequence flashSequence = DOTween.Sequence();
             flashSequence.Append(
                 DOTween.To(
                         () => 0f,
-                        value => SetCooldownFloat(
-                            FlashAmountId,
-                            value),
+                        value => SetCooldownFlashAmount(value),
                         1f,
                         0.06f)
                     .SetEase(Ease.OutQuad));
             flashSequence.Append(
                 DOTween.To(
                         () => 1f,
-                        value => SetCooldownFloat(
-                            FlashAmountId,
-                            value),
+                        value => SetCooldownFlashAmount(value),
                         0f,
                         0.16f)
                     .SetEase(Ease.InQuad));
             cooldownFlashTween = flashSequence;
+        }
+
+        private void SetCooldownFlashAmount(float value)
+        {
+            cooldownFlashAmount = value;
+            ApplyFlashAmount();
+        }
+
+        private void ApplyFlashAmount()
+        {
+            SetCooldownFloat(
+                FlashAmountId,
+                Mathf.Max(cooldownFlashAmount, mergeFlashAmount));
+        }
+
+        private void HandleItemLevelChanged(ItemInstance item)
+        {
+            if (item == Instance)
+            {
+                RefreshLevelLabel();
+            }
         }
 
         private Material CreateCooldownMaterial(
@@ -307,6 +377,7 @@ namespace BackpackPrototype
             {
                 isDragging = false;
                 GridView?.ClearPlacementPreview();
+                DragStateChanged?.Invoke(this, false);
             }
 
             if (canvasGroup != null)
@@ -399,6 +470,7 @@ namespace BackpackPrototype
             canvasGroup.blocksRaycasts = false;
             canvasGroup.alpha = 0.86f;
             TweenScale(1.05f);
+            DragStateChanged?.Invoke(this, true);
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -426,6 +498,7 @@ namespace BackpackPrototype
         public void OnEndDrag(PointerEventData eventData)
         {
             isDragging = false;
+            DragStateChanged?.Invoke(this, false);
             canvasGroup.blocksRaycasts = true;
             canvasGroup.alpha = 1f;
             GridView?.ClearPlacementPreview();
@@ -483,6 +556,24 @@ namespace BackpackPrototype
             if (Backpack == null)
             {
                 return false;
+            }
+
+            if (Backpack.TryGetMergeTarget(
+                    Instance,
+                    anchorCell,
+                    out ItemInstance mergeTarget) &&
+                Backpack.TryMerge(Instance, mergeTarget))
+            {
+                CandidateAnchorCell = null;
+
+                if (!IsPlacedInBackpack)
+                {
+                    DeletedSuccessfully?.Invoke(this);
+                    Destroy(gameObject);
+                }
+
+                MergedSuccessfully?.Invoke(this, mergeTarget);
+                return true;
             }
 
             bool moved;
@@ -567,6 +658,10 @@ namespace BackpackPrototype
 
         private void OnDestroy()
         {
+            if (Backpack != null)
+            {
+                Backpack.ItemLevelChanged -= HandleItemLevelChanged;
+            }
             if (CombatController != null)
             {
                 CombatController.CooldownCompleted -=
@@ -576,7 +671,68 @@ namespace BackpackPrototype
             scaleTween?.Kill();
             feedbackTween?.Kill();
             cooldownFlashTween?.Kill();
+            mergeFlashTween?.Kill();
             ReleaseCooldownMaterials();
+        }
+
+        private void EnsureLevelLabel()
+        {
+            if (levelLabel == null)
+            {
+                Transform existing = transform.Find("LevelLabel");
+                levelLabel = existing != null
+                    ? existing.GetComponent<TextMeshProUGUI>()
+                    : null;
+            }
+
+            if (levelLabel != null)
+            {
+                return;
+            }
+
+            var labelObject = new GameObject(
+                "LevelLabel",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(transform, false);
+            levelLabel = labelObject.GetComponent<TextMeshProUGUI>();
+
+            RectTransform labelRect = levelLabel.rectTransform;
+            labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            labelRect.pivot = new Vector2(0.5f, 0.5f);
+            labelRect.anchoredPosition = new Vector2(0f, -34f);
+            labelRect.sizeDelta = new Vector2(80f, 22f);
+
+            levelLabel.raycastTarget = false;
+            levelLabel.alignment = TextAlignmentOptions.Center;
+            levelLabel.enableWordWrapping = false;
+            levelLabel.overflowMode = TextOverflowModes.Overflow;
+            levelLabel.font = TMP_Settings.defaultFontAsset;
+            levelLabel.fontSize = 16f;
+            levelLabel.fontStyle = FontStyles.Bold;
+            levelLabel.outlineWidth = 0.18f;
+        }
+
+        private void RefreshLevelLabel()
+        {
+            EnsureLevelLabel();
+
+            if (levelLabel == null || Instance == null)
+            {
+                return;
+            }
+
+            bool isPlayer = CombatController == null ||
+                CombatController.Faction == BattleFaction.Player;
+            levelLabel.text = $"lv.{Instance.Level}";
+            levelLabel.color = isPlayer
+                ? new Color(0.28f, 0.78f, 1f, 1f)
+                : new Color(1f, 0.34f, 0.12f, 1f);
+            levelLabel.outlineColor = isPlayer
+                ? new Color(0.015f, 0.04f, 0.09f, 0.9f)
+                : new Color(0.12f, 0.015f, 0.005f, 0.9f);
         }
 
         private void ResizeToShape(Vector2 cellSize, Vector2 spacing)

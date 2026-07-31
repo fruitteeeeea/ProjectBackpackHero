@@ -17,3 +17,5 @@ MonoBehaviour:
   aircraftHealthMultiplier: 1
   playerBackpackHealthMultiplier: 1
   enemyBackpackHealthMultiplier: 1
+  playerOverallStrengthMultiplier: 1
+  enemyOverallStrengthMultiplier: 1

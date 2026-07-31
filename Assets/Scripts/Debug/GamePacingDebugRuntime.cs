@@ -24,14 +24,42 @@ namespace BackpackHero.Debugging
         public static event Action InstanceUnavailable;
         public static event Action<GamePacingMultipliers> MultipliersChanged;
 
-        public static float AircraftSpeedMultiplier =>
-            Instance != null ? Instance.multipliers.AircraftSpeed : 1f;
+        public static float GetOverallStrengthMultiplier(
+            BackpackHero.Battle.BattleFaction faction)
+        {
+            if (Instance == null)
+            {
+                return 1f;
+            }
 
-        public static float ProjectileDamageMultiplier =>
-            Instance != null ? Instance.multipliers.ProjectileDamage : 1f;
+            return faction == BackpackHero.Battle.BattleFaction.Enemy
+                ? Instance.multipliers.EnemyOverallStrength
+                : Instance.multipliers.PlayerOverallStrength;
+        }
 
-        public static float AircraftHealthMultiplier =>
-            Instance != null ? Instance.multipliers.AircraftHealth : 1f;
+        public static float GetAircraftSpeedMultiplier(
+            BackpackHero.Battle.BattleFaction faction)
+        {
+            return (Instance != null
+                    ? Instance.multipliers.AircraftSpeed
+                    : 1f) * GetOverallStrengthMultiplier(faction);
+        }
+
+        public static float GetProjectileDamageMultiplier(
+            BackpackHero.Battle.BattleFaction faction)
+        {
+            return (Instance != null
+                    ? Instance.multipliers.ProjectileDamage
+                    : 1f) * GetOverallStrengthMultiplier(faction);
+        }
+
+        public static float GetAircraftHealthMultiplier(
+            BackpackHero.Battle.BattleFaction faction)
+        {
+            return (Instance != null
+                    ? Instance.multipliers.AircraftHealth
+                    : 1f) * GetOverallStrengthMultiplier(faction);
+        }
 
         public static float GetBackpackHealthMultiplier(
             BackpackHero.Battle.BattleFaction faction)
@@ -41,9 +69,13 @@ namespace BackpackHero.Debugging
                 return 1f;
             }
 
-            return faction == BackpackHero.Battle.BattleFaction.Enemy
+            float backpackHealth =
+                faction == BackpackHero.Battle.BattleFaction.Enemy
                 ? Instance.multipliers.EnemyBackpackHealth
                 : Instance.multipliers.PlayerBackpackHealth;
+
+            return backpackHealth *
+                GetOverallStrengthMultiplier(faction);
         }
 
         /// <summary>游戏启动和“恢复默认”使用的配置资产。</summary>

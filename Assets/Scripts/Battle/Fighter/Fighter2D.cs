@@ -206,7 +206,8 @@ namespace BackpackHero.Battle
 
             health.SetMaximumHealthAndFill(
                 definition.MaximumHealth *
-                GamePacingDebugRuntime.AircraftHealthMultiplier);
+                GamePacingDebugRuntime.GetAircraftHealthMultiplier(
+                    Faction));
         }
 
         private void ConfigureHealthBars()

@@ -27,7 +27,7 @@ namespace BackpackHero.EditorTools
                 GetWindow<GamePacingDebugWindow>();
             window.titleContent =
                 new GUIContent("Game Pacing Debug");
-            window.minSize = new Vector2(380f, 430f);
+            window.minSize = new Vector2(380f, 470f);
             window.Show();
             return window;
         }
@@ -153,6 +153,13 @@ namespace BackpackHero.EditorTools
             float enemyBackpackHealth = DrawMultiplier(
                 "敌人背包血量",
                 current.EnemyBackpackHealth);
+            EditorGUILayout.Space(4f);
+            float playerOverallStrength = DrawMultiplier(
+                "玩家整体强度",
+                current.PlayerOverallStrength);
+            float enemyOverallStrength = DrawMultiplier(
+                "敌人整体强度",
+                current.EnemyOverallStrength);
 
             GamePacingMultipliers changed =
                 new(
@@ -160,7 +167,9 @@ namespace BackpackHero.EditorTools
                     projectileDamage,
                     aircraftHealth,
                     playerBackpackHealth,
-                    enemyBackpackHealth);
+                    enemyBackpackHealth,
+                    playerOverallStrength,
+                    enemyOverallStrength);
 
             if (!AreEqual(current, changed))
             {
@@ -274,7 +283,13 @@ namespace BackpackHero.EditorTools
                        right.PlayerBackpackHealth) &&
                    Mathf.Approximately(
                        left.EnemyBackpackHealth,
-                       right.EnemyBackpackHealth);
+                       right.EnemyBackpackHealth) &&
+                   Mathf.Approximately(
+                       left.PlayerOverallStrength,
+                       right.PlayerOverallStrength) &&
+                   Mathf.Approximately(
+                       left.EnemyOverallStrength,
+                       right.EnemyOverallStrength);
         }
     }
 }

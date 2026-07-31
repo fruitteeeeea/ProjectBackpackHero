@@ -27,11 +27,21 @@ namespace BackpackHero.Debugging
         [SerializeField, Min(0f)]
         private float enemyBackpackHealthMultiplier = 1f;
 
+        [SerializeField, Min(0f)]
+        private float playerOverallStrengthMultiplier = 1f;
+
+        [SerializeField, Min(0f)]
+        private float enemyOverallStrengthMultiplier = 1f;
+
         public float AircraftSpeedMultiplier => aircraftSpeedMultiplier;
         public float ProjectileDamageMultiplier => projectileDamageMultiplier;
         public float AircraftHealthMultiplier => aircraftHealthMultiplier;
         public float PlayerBackpackHealthMultiplier => playerBackpackHealthMultiplier;
         public float EnemyBackpackHealthMultiplier => enemyBackpackHealthMultiplier;
+        public float PlayerOverallStrengthMultiplier =>
+            playerOverallStrengthMultiplier;
+        public float EnemyOverallStrengthMultiplier =>
+            enemyOverallStrengthMultiplier;
 
         public void SetValues(GamePacingMultipliers values)
         {
@@ -40,6 +50,8 @@ namespace BackpackHero.Debugging
             aircraftHealthMultiplier = values.AircraftHealth;
             playerBackpackHealthMultiplier = values.PlayerBackpackHealth;
             enemyBackpackHealthMultiplier = values.EnemyBackpackHealth;
+            playerOverallStrengthMultiplier = values.PlayerOverallStrength;
+            enemyOverallStrengthMultiplier = values.EnemyOverallStrength;
         }
 
         public GamePacingMultipliers GetValues()
@@ -49,7 +61,9 @@ namespace BackpackHero.Debugging
                 projectileDamageMultiplier,
                 aircraftHealthMultiplier,
                 playerBackpackHealthMultiplier,
-                enemyBackpackHealthMultiplier);
+                enemyBackpackHealthMultiplier,
+                playerOverallStrengthMultiplier,
+                enemyOverallStrengthMultiplier);
         }
 
 #if UNITY_EDITOR

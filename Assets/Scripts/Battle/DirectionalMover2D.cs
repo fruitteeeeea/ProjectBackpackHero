@@ -19,6 +19,7 @@ namespace BackpackHero.Battle
         
         [SerializeField]
         private Vector2 direction = Vector2.up;
+        private FactionMember factionMember;
         private bool isPaused;
         
         /// <summary>
@@ -34,7 +35,10 @@ namespace BackpackHero.Battle
         /// </summary>
         public float CurrentSpeed =>
             baseSpeed * speedMultiplier *
-            GamePacingDebugRuntime.AircraftSpeedMultiplier;
+            GamePacingDebugRuntime.GetAircraftSpeedMultiplier(
+                factionMember != null
+                    ? factionMember.Faction
+                    : BattleFaction.Player);
 
         /// <summary>
         /// 当前速度倍率。
@@ -48,6 +52,7 @@ namespace BackpackHero.Battle
 
         private void Awake()
         {
+            factionMember = GetComponent<FactionMember>();
             SetDirection(direction);
         }
 

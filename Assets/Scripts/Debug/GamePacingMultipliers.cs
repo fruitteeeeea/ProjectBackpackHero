@@ -13,13 +13,17 @@ namespace BackpackHero.Debugging
             float projectileDamage,
             float aircraftHealth,
             float playerBackpackHealth,
-            float enemyBackpackHealth)
+            float enemyBackpackHealth,
+            float playerOverallStrength,
+            float enemyOverallStrength)
         {
             AircraftSpeed = Clamp(aircraftSpeed);
             ProjectileDamage = Clamp(projectileDamage);
             AircraftHealth = Clamp(aircraftHealth);
             PlayerBackpackHealth = Clamp(playerBackpackHealth);
             EnemyBackpackHealth = Clamp(enemyBackpackHealth);
+            PlayerOverallStrength = Clamp(playerOverallStrength);
+            EnemyOverallStrength = Clamp(enemyOverallStrength);
         }
 
         public float AircraftSpeed { get; }
@@ -27,9 +31,11 @@ namespace BackpackHero.Debugging
         public float AircraftHealth { get; }
         public float PlayerBackpackHealth { get; }
         public float EnemyBackpackHealth { get; }
+        public float PlayerOverallStrength { get; }
+        public float EnemyOverallStrength { get; }
 
         public static GamePacingMultipliers Default =>
-            new(1f, 1f, 1f, 1f, 1f);
+            new(1f, 1f, 1f, 1f, 1f, 1f, 1f);
 
         private static float Clamp(float value)
         {

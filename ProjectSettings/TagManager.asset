@@ -38,6 +38,12 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: BackgroundLines
+    uniqueID: 1624330111
+    locked: 0
+  - name: BackgroundPlanets
+    uniqueID: 1624330112
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0

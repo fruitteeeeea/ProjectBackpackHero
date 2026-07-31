@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
+  m_Name: Equipment_RapidCannon
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  itemName: "\u901F\u5C04\u673A\u70AE"
+  icon: {fileID: 6671908658173119883, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
+  backgroundColor: {r: 0.15686275, g: 0.7176471, b: 0.9098039, a: 1}
+  itemType: 1
+  equipmentColor: {r: 0.07058824, g: 0.23137255, b: 0.3019608, a: 1}
+  equipmentEffects:
+  - {fileID: 11400000, guid: 3f2fe1d09cbdc41bab1957a17541cc37, type: 2}
+  cooldownDuration: -1
+  shape: {fileID: 11400000, guid: 70bef0369e3574ab2af4034accad292e, type: 2}
+  fighterDefinition: {fileID: 0}

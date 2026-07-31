@@ -17,7 +17,7 @@ namespace BackpackHero.Background
             lineRenderer.sharedMaterial = material;
             lineRenderer.useWorldSpace = true;
             lineRenderer.positionCount = 2;
-            lineRenderer.widthMultiplier = .035f;
+            lineRenderer.widthMultiplier = .35f;
             lineRenderer.numCapVertices = 6;
             lineRenderer.sortingLayerName = "BackgroundLines";
             lineRenderer.startColor = new Color(.66f, .7f, .75f, .22f);

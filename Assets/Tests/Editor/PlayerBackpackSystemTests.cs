@@ -95,7 +95,7 @@ public sealed class PlayerBackpackSystemTests
         Assert.That(
             serialized.FindProperty("itemCatalog")
                 .arraySize,
-            Is.EqualTo(4));
+            Is.EqualTo(6));
 
         RectTransform aircraftAnchor =
             FindRectTransform(
@@ -391,6 +391,75 @@ public sealed class PlayerBackpackSystemTests
         {
             Object.DestroyImmediate(instance);
         }
+    }
+
+    [Test]
+    public void DefaultLayout_ContainsAllAircraftAndEquipmentWithoutOverlap()
+    {
+        GameObject prefab =
+            AssetDatabase.LoadAssetAtPath<GameObject>(
+                PrefabPath);
+        GameObject instance = Object.Instantiate(prefab);
+
+        try
+        {
+            BackpackCombatController controller =
+                instance.GetComponent<BackpackCombatController>();
+            InvokeAwake(controller);
+            controller.RestoreDefaultLayout();
+
+            Assert.That(controller.Items.Count, Is.EqualTo(5));
+            AssertLayoutItem(
+                controller.Items[0],
+                "Aircraft_Shield.asset",
+                Vector2Int.zero);
+            AssertLayoutItem(
+                controller.Items[1],
+                "Equipment_First.asset",
+                new Vector2Int(1, 0));
+            AssertLayoutItem(
+                controller.Items[2],
+                "Aircraft_First.asset",
+                new Vector2Int(1, 1));
+            AssertLayoutItem(
+                controller.Items[3],
+                "Equipment_WaveEmitter.asset",
+                new Vector2Int(3, 1));
+            AssertLayoutItem(
+                controller.Items[4],
+                "Aircraft_Charge.asset",
+                new Vector2Int(4, 1));
+
+            Assert.That(
+                controller.Backpack.GetAdjacentEquipmentItems(
+                    controller.Items[0]).Count,
+                Is.EqualTo(1));
+            Assert.That(
+                controller.Backpack.GetAdjacentEquipmentItems(
+                    controller.Items[2]).Count,
+                Is.EqualTo(2));
+            Assert.That(
+                controller.Backpack.GetAdjacentEquipmentItems(
+                    controller.Items[4]).Count,
+                Is.EqualTo(1));
+        }
+        finally
+        {
+            Object.DestroyImmediate(instance);
+        }
+    }
+
+    private static void AssertLayoutItem(
+        ItemInstance item,
+        string itemAssetName,
+        Vector2Int anchorCell)
+    {
+        ItemData expected =
+            AssetDatabase.LoadAssetAtPath<ItemData>(
+                "Assets/Data/Backpack/Items/" + itemAssetName);
+
+        Assert.That(item.Data, Is.SameAs(expected));
+        Assert.That(item.AnchorCell, Is.EqualTo(anchorCell));
     }
 
     private static void InvokeAwake(object target)

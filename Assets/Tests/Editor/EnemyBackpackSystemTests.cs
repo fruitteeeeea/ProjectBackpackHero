@@ -26,29 +26,59 @@ public sealed class EnemyBackpackSystemTests
         EnemyBackpackData data =
             AssetDatabase.LoadAssetAtPath<
                 EnemyBackpackData>(DefaultDataPath);
-        ItemData aircraft =
+        ItemData shieldAircraft =
             AssetDatabase.LoadAssetAtPath<ItemData>(
                 "Assets/Data/Backpack/Items/" +
-                "Aircraft_First.asset");
+                "Aircraft_Shield.asset");
         ItemData equipment =
             AssetDatabase.LoadAssetAtPath<ItemData>(
                 "Assets/Data/Backpack/Items/" +
                 "Equipment_First.asset");
+        ItemData aircraft =
+            AssetDatabase.LoadAssetAtPath<ItemData>(
+                "Assets/Data/Backpack/Items/" +
+                "Aircraft_First.asset");
+        ItemData sineEquipment =
+            AssetDatabase.LoadAssetAtPath<ItemData>(
+                "Assets/Data/Backpack/Items/" +
+                "Equipment_WaveEmitter.asset");
+        ItemData chargeAircraft =
+            AssetDatabase.LoadAssetAtPath<ItemData>(
+                "Assets/Data/Backpack/Items/" +
+                "Aircraft_Charge.asset");
 
         Assert.That(data, Is.Not.Null);
-        Assert.That(data.Placements.Count, Is.EqualTo(2));
+        Assert.That(data.Placements.Count, Is.EqualTo(5));
         Assert.That(
             data.Placements[0].Data,
-            Is.SameAs(aircraft));
+            Is.SameAs(shieldAircraft));
         Assert.That(
             data.Placements[0].AnchorCell,
-            Is.EqualTo(new Vector2Int(1, 1)));
+            Is.EqualTo(Vector2Int.zero));
         Assert.That(
             data.Placements[1].Data,
             Is.SameAs(equipment));
         Assert.That(
             data.Placements[1].AnchorCell,
             Is.EqualTo(new Vector2Int(1, 0)));
+        Assert.That(
+            data.Placements[2].Data,
+            Is.SameAs(aircraft));
+        Assert.That(
+            data.Placements[2].AnchorCell,
+            Is.EqualTo(new Vector2Int(1, 1)));
+        Assert.That(
+            data.Placements[3].Data,
+            Is.SameAs(sineEquipment));
+        Assert.That(
+            data.Placements[3].AnchorCell,
+            Is.EqualTo(new Vector2Int(3, 1)));
+        Assert.That(
+            data.Placements[4].Data,
+            Is.SameAs(chargeAircraft));
+        Assert.That(
+            data.Placements[4].AnchorCell,
+            Is.EqualTo(new Vector2Int(4, 1)));
     }
 
     [Test]

@@ -5,6 +5,21 @@ public sealed class HorizontalSwipeCurveInputTests
 {
     private HorizontalSwipeValueModel model;
 
+    [Test]
+    public void DefaultSwipeSensitivity_IsFive()
+    {
+        var gameObject = new UnityEngine.GameObject("Swipe Input Test");
+        try
+        {
+            var input = gameObject.AddComponent<HorizontalSwipeCurveInput>();
+            Assert.That(input.SwipeSensitivity, Is.EqualTo(5f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(gameObject);
+        }
+    }
+
     [SetUp]
     public void SetUp()
     {

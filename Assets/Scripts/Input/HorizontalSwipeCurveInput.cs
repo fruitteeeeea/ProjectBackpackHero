@@ -11,7 +11,7 @@ namespace BackpackHero.Input
     /// </summary>
     public sealed class HorizontalSwipeCurveInput : MonoBehaviour
     {
-        [SerializeField, Min(0f)] private float swipeSensitivity = 25f;
+        [SerializeField, Min(0f)] private float swipeSensitivity = 5f;
 
         private readonly HorizontalSwipeValueModel model = new();
         private PointerKind activePointerKind;

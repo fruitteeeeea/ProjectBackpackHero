@@ -6,6 +6,7 @@ Shader "BackpackHero/Graphics/Neon Sprite Outline"
         [HDR] _OutlineColor ("Outline Color", Color) = (0.32, 0.78, 1.0, 1.0)
         _OutlineIntensity ("Outline Intensity", Range(0.0, 8.0)) = 3.0
         _OutlineWidth ("Outline Width (Pixels)", Range(0.0, 6.0)) = 1.5
+        [Toggle] _OuterOutlineOnly ("仅外轮廓", Float) = 1.0
         _CoreColor ("Core Color", Color) = (0.72, 0.78, 0.86, 1.0)
         _CoreIntensity ("Core Intensity", Range(0.0, 1.0)) = 0.35
         [HideInInspector] _Color ("Tint", Color) = (1, 1, 1, 1)
@@ -60,6 +61,7 @@ Shader "BackpackHero/Graphics/Neon Sprite Outline"
                 float4 _OutlineColor;
                 float _OutlineIntensity;
                 float _OutlineWidth;
+                float _OuterOutlineOnly;
                 float4 _CoreColor;
                 float _CoreIntensity;
                 float4 _Color;
@@ -111,9 +113,23 @@ Shader "BackpackHero/Graphics/Neon Sprite Outline"
                 float outlineMask = saturate(neighbourAlpha - sourceAlpha);
                 float alpha = max(sourceAlpha, outlineMask) * input.color.a;
 
-                float3 core = source.rgb * _CoreColor.rgb * _CoreIntensity;
                 float3 outline = _OutlineColor.rgb * _OutlineIntensity;
-                float3 color = lerp(core, outline, outlineMask) * input.color.rgb;
+                float3 core = source.rgb * _CoreColor.rgb * _CoreIntensity;
+
+                // 开启时，只有外扩轮廓使用 HDR，机身保留暗冷白色调。
+                float3 outerOutlineOnlyColor = lerp(core, outline, outlineMask);
+
+                // 关闭时，跳过 Core Color / Core Intensity；实体本身和外扩
+                // 轮廓均使用 HDR 发光色，适用于子弹及其拖尾。
+                float3 fullGlowColor = lerp(
+                    source.rgb * outline,
+                    outline,
+                    outlineMask);
+
+                float3 color = lerp(
+                    fullGlowColor,
+                    outerOutlineOnlyColor,
+                    saturate(_OuterOutlineOnly)) * input.color.rgb;
 
                 return half4(color, alpha);
             }

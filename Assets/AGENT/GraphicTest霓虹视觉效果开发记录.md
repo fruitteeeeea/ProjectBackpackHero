@@ -16,8 +16,10 @@
 ## 飞机 Shader
 
 - Shader：`Assets/Shaders/Graphics/NeonSpriteOutline.shader`
-- Material：`Assets/Shaders/Graphics/MAT_TestFlightNeon.mat`
-- 使用位置：`GraphicTest` 场景中的 `TestFlight` Sprite Renderer。
+- 飞机 Material：`Assets/Shaders/Graphics/MAT_TestFlightNeon.mat`
+- 子弹 Material：`Assets/Shaders/Graphics/MAT_ProjectileNeon.mat`
+- `MAT_TestFlightNeon` 用于 `GraphicTest` 场景的 `TestFlight` Sprite Renderer，启用 `Outer Outline Only`，保留暗冷白机身与 HDR 外轮廓。
+- `MAT_ProjectileNeon` 用于 `Projectile.prefab` 的子弹 Sprite Renderer 与 Trail Renderer，关闭 `Outer Outline Only`，让子弹整体使用 HDR 发光色；所有弹道变体继承该设置。
 
 Shader 使用飞机贴图的 Alpha 进行八方向采样，扩张出轮廓遮罩：
 
@@ -34,6 +36,7 @@ Shader 使用飞机贴图的 Alpha 进行八方向采样，扩张出轮廓遮罩
 | Outline Color | 外轮廓的发光色 | 淡蓝色 |
 | Outline Intensity | HDR 发光强度 | `3`；更强可设 `4–5` |
 | Outline Width (Pixels) | 清晰轮廓厚度 | `1.5`；更粗可设 `2–3` |
+| Outer Outline Only | 开启：暗冷白内部 + 仅外圈 HDR；关闭：整体 HDR 发光 | 飞机开启，子弹关闭 |
 
 ## 后续视觉迭代
 

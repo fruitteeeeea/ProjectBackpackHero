@@ -6828,9 +6828,12 @@ MonoBehaviour:
   lineRenderer: {fileID: 1800000034}
   maxBendDistance: 3
   segmentCount: 32
-  lineMaterial: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
-  lineWidth: 0.12
-  lineColor: {r: 1, g: 0.85, b: 0.25, a: 0.38431373}
+  lineMaterial: {fileID: 2100000, guid: 2d32fcae9b3a4be68114fcaf05d9c082, type: 2}
+  lineWidth: 0.48
+  lineColor: {r: 0.24519402, g: 0.46520498, b: 0.5471698, a: 1}
+  lineOpacity: 0.05
+  textureTiling: 1
+  flowSpeed: 0.7
 --- !u!120 &1800000034
 LineRenderer:
   serializedVersion: 3
@@ -6857,7 +6860,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  - {fileID: 2100000, guid: 2d32fcae9b3a4be68114fcaf05d9c082, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6922,7 +6925,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.12
+        value: 0.48
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -6931,7 +6934,7 @@ LineRenderer:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 1
-        value: 0.12
+        value: 0.48
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -6943,8 +6946,8 @@ LineRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 1, g: 0.8509804, b: 0.2509804, a: 0.38431373}
-      key1: {r: 1, g: 0.8509804, b: 0.2509804, a: 0.38431373}
+      key0: {r: 0.24705882, g: 0.46666667, b: 0.54901963, a: 0.050980393}
+      key1: {r: 0.24705882, g: 0.46666667, b: 0.54901963, a: 0.050980393}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
@@ -6974,7 +6977,7 @@ LineRenderer:
     numCornerVertices: 2
     numCapVertices: 4
     alignment: 0
-    textureMode: 0
+    textureMode: 1
     textureScale: {x: 1, y: 1}
     shadowBias: 0.5
     generateLightingData: 0
@@ -7025,7 +7028,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aeb18b854a5d4fb4818374bb3b55009f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  swipeSensitivity: 25
+  swipeSensitivity: 5
 --- !u!1 &1809787529
 GameObject:
   m_ObjectHideFlags: 0
@@ -7774,7 +7777,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
   m_IsGlobal: 1
   priority: 0

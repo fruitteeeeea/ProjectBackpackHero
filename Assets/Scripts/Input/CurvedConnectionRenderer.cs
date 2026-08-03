@@ -23,11 +23,39 @@ namespace BackpackHero.Input
         [Header("Line Visual")]
         [SerializeField] private Material lineMaterial;
         [SerializeField, Min(0.001f)] private float lineWidth = 0.12f;
-        [SerializeField] private Color lineColor = new(1f, 0.85f, 0.25f, 1f);
+        [SerializeField] private Color lineColor = new(0.451f, 0.851f, 1f, 1f);
+        [SerializeField, Range(0f, 1f)] private float lineOpacity = 0.38f;
+        [SerializeField, Min(0.01f)] private float textureTiling = 1f;
+        [SerializeField, Min(0f)] private float flowSpeed = 0.7f;
 
         private float currentCurveValue;
+        private float flowOffset;
+        private MaterialPropertyBlock materialProperties;
+
+        private static readonly int FlowOffsetId =
+            Shader.PropertyToID("_FlowOffset");
 
         public float CurrentCurveValue => currentCurveValue;
+
+        public float LineWidth
+        {
+            get => lineWidth;
+            set
+            {
+                lineWidth = Mathf.Max(0.001f, value);
+                RefreshCurve();
+            }
+        }
+
+        public float LineOpacity
+        {
+            get => lineOpacity;
+            set
+            {
+                lineOpacity = Mathf.Clamp01(value);
+                RefreshCurve();
+            }
+        }
 
         public float MaxBendDistance
         {
@@ -55,6 +83,31 @@ namespace BackpackHero.Input
         {
             player = playerEndpoint;
             enemy = enemyEndpoint;
+            RefreshCurve();
+        }
+
+        public void SetInput(HorizontalSwipeCurveInput curveInput)
+        {
+            UnsubscribeFromInput();
+            input = curveInput;
+            SubscribeToInput();
+        }
+
+        public void ConfigureVisual(
+            Material material,
+            float width,
+            Color color,
+            float opacity,
+            float tiling,
+            float speed)
+        {
+            lineMaterial = material;
+            lineWidth = Mathf.Max(0.001f, width);
+            lineColor = color;
+            lineOpacity = Mathf.Clamp01(opacity);
+            textureTiling = Mathf.Max(0.01f, tiling);
+            flowSpeed = Mathf.Max(0f, speed);
+            EnsureLineRenderer();
             RefreshCurve();
         }
 
@@ -116,12 +169,22 @@ namespace BackpackHero.Input
             maxBendDistance = Mathf.Max(0f, maxBendDistance);
             segmentCount = Mathf.Clamp(segmentCount, MinSegmentCount, MaxSegmentCount);
             lineWidth = Mathf.Max(0.001f, lineWidth);
+            lineOpacity = Mathf.Clamp01(lineOpacity);
+            textureTiling = Mathf.Max(0.01f, textureTiling);
+            flowSpeed = Mathf.Max(0f, flowSpeed);
             EnsureLineRenderer();
             RefreshCurve();
         }
 
         private void LateUpdate()
         {
+            if (Application.isPlaying && flowSpeed > 0f)
+            {
+                flowOffset = Mathf.Repeat(
+                    flowOffset + Time.deltaTime * flowSpeed,
+                    1f);
+            }
+
             RefreshCurve();
         }
 
@@ -173,6 +236,7 @@ namespace BackpackHero.Input
             lineRenderer.numCapVertices = 4;
             lineRenderer.numCornerVertices = 2;
             lineRenderer.sortingOrder = 0;
+            lineRenderer.textureMode = LineTextureMode.Tile;
 
             if (lineMaterial != null)
             {
@@ -189,8 +253,12 @@ namespace BackpackHero.Input
 
             lineRenderer.startWidth = lineWidth;
             lineRenderer.endWidth = lineWidth;
-            lineRenderer.startColor = lineColor;
-            lineRenderer.endColor = lineColor;
+            var visibleColor = lineColor;
+            visibleColor.a = lineOpacity;
+            lineRenderer.startColor = visibleColor;
+            lineRenderer.endColor = visibleColor;
+            lineRenderer.textureScale = new Vector2(textureTiling, 1f);
+            ApplyMaterialProperties();
             lineRenderer.positionCount = segmentCount + 1;
 
             for (var index = 0; index <= segmentCount; index++)
@@ -203,6 +271,19 @@ namespace BackpackHero.Input
                     maxBendDistance,
                     t));
             }
+        }
+
+        private void ApplyMaterialProperties()
+        {
+            if (lineRenderer == null || lineRenderer.sharedMaterial == null)
+            {
+                return;
+            }
+
+            materialProperties ??= new MaterialPropertyBlock();
+            lineRenderer.GetPropertyBlock(materialProperties);
+            materialProperties.SetFloat(FlowOffsetId, flowOffset);
+            lineRenderer.SetPropertyBlock(materialProperties);
         }
     }
 }

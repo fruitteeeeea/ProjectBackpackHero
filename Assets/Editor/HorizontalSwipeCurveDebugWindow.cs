@@ -2,49 +2,9 @@ using BackpackHero.Input;
 using UnityEditor;
 using UnityEngine;
 
-public sealed class HorizontalSwipeCurveDebugWindow : EditorWindow
+internal sealed class HorizontalSwipeCurveDebugWindow : ScriptableObject
 {
-    private const float RepaintInterval = 1f / 30f;
-    private double nextRepaintTime;
-
-    [MenuItem("Tools/Debug/Horizontal Swipe Curve")]
-    public static void OpenWindow()
-    {
-        var window = GetWindow<HorizontalSwipeCurveDebugWindow>("Swipe Curve");
-        window.minSize = new Vector2(360f, 300f);
-        window.Show();
-    }
-
-    internal static void CloseWindow()
-    {
-        if (HasOpenInstances<HorizontalSwipeCurveDebugWindow>())
-        {
-            GetWindow<HorizontalSwipeCurveDebugWindow>().Close();
-        }
-    }
-
-    private void OnEnable()
-    {
-        EditorApplication.update += OnEditorUpdate;
-    }
-
-    private void OnDisable()
-    {
-        EditorApplication.update -= OnEditorUpdate;
-    }
-
-    private void OnEditorUpdate()
-    {
-        if (EditorApplication.timeSinceStartup < nextRepaintTime)
-        {
-            return;
-        }
-
-        nextRepaintTime = EditorApplication.timeSinceStartup + RepaintInterval;
-        Repaint();
-    }
-
-    private void OnGUI()
+    internal void DrawTab()
     {
         EditorGUILayout.Space(8f);
         EditorGUILayout.LabelField("左右滑动曲线调试", EditorStyles.boldLabel);

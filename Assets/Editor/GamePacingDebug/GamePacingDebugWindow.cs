@@ -5,38 +5,19 @@ using UnityEngine;
 namespace BackpackHero.EditorTools
 {
     /// <summary>全局游戏节奏的 Play Mode 调试面板。</summary>
-    public sealed class GamePacingDebugWindow : EditorWindow
+    internal sealed class GamePacingDebugWindow : ScriptableObject
     {
         private const string DefaultSettingsAssetPath =
             "Assets/Resources/GamePacingDebugSettings.asset";
 
         private bool showSaveDefaultButton;
-        private double nextRepaintTime;
+        private GamePacingDebugRuntime boundRuntime;
 
-        [MenuItem("Tools/Debug/Game Pacing")]
-        public static void ShowFromMenu()
-        {
-            OpenWindow();
-        }
-
-        internal static GamePacingDebugWindow OpenWindow()
-        {
-            BindDefaultSettingsAsset();
-
-            GamePacingDebugWindow window =
-                GetWindow<GamePacingDebugWindow>();
-            window.titleContent =
-                new GUIContent("Game Pacing Debug");
-            window.minSize = new Vector2(380f, 470f);
-            window.Show();
-            return window;
-        }
-
-        private static void BindDefaultSettingsAsset()
+        private void BindDefaultSettingsAsset()
         {
             GamePacingDebugRuntime runtime =
                 GamePacingDebugRuntime.Instance;
-            if (runtime == null)
+            if (runtime == null || runtime == boundRuntime)
             {
                 return;
             }
@@ -62,38 +43,12 @@ namespace BackpackHero.EditorTools
             }
 
             runtime.SetDefaultSettings(defaultSettings);
+            boundRuntime = runtime;
         }
 
-        internal static void CloseAllWindows()
+        internal void DrawTab()
         {
-            foreach (GamePacingDebugWindow window in
-                     Resources.FindObjectsOfTypeAll<
-                         GamePacingDebugWindow>())
-            {
-                window.Close();
-            }
-        }
-
-        private void Update()
-        {
-            if (EditorApplication.timeSinceStartup <
-                nextRepaintTime)
-            {
-                return;
-            }
-
-            nextRepaintTime =
-                EditorApplication.timeSinceStartup + 0.1d;
-            Repaint();
-        }
-
-        private void OnDisable()
-        {
-            GamePacingDebugRuntime.Instance?.ResetGameSpeed();
-        }
-
-        private void OnGUI()
-        {
+            BindDefaultSettingsAsset();
             EditorGUILayout.Space(8f);
             EditorGUILayout.LabelField(
                 "全局游戏节奏调试",

@@ -4,42 +4,9 @@ using UnityEngine;
 
 namespace BackpackHero.EditorTools
 {
-    public sealed class BackgroundPhysicsDebugWindow : EditorWindow
+    internal sealed class BackgroundPhysicsDebugWindow : ScriptableObject
     {
-        private double nextRepaintTime;
-
-        [MenuItem("Tools/Debug/Constellation Physics")]
-        public static void ShowFromMenu() => OpenWindow();
-
-        internal static BackgroundPhysicsDebugWindow OpenWindow()
-        {
-            var window = GetWindow<BackgroundPhysicsDebugWindow>();
-            window.titleContent = new GUIContent("Constellation Physics");
-            window.minSize = new Vector2(360f, 410f);
-            window.Show();
-            return window;
-        }
-
-        internal static void CloseAllWindows()
-        {
-            foreach (var window in Resources.FindObjectsOfTypeAll<BackgroundPhysicsDebugWindow>())
-            {
-                window.Close();
-            }
-        }
-
-        private void Update()
-        {
-            if (EditorApplication.timeSinceStartup < nextRepaintTime)
-            {
-                return;
-            }
-
-            nextRepaintTime = EditorApplication.timeSinceStartup + .1d;
-            Repaint();
-        }
-
-        private void OnGUI()
+        internal void DrawTab()
         {
             EditorGUILayout.Space(8f);
             EditorGUILayout.LabelField("星球互动物理调试", EditorStyles.boldLabel);

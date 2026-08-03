@@ -5,80 +5,14 @@ using UnityEngine;
 
 namespace BackpackHero.EditorTools
 {
-    public sealed class PlayerBackpackDebugWindow :
-        EditorWindow
+    internal sealed class PlayerBackpackDebugWindow :
+        ScriptableObject
     {
         private Vector2 scrollPosition;
         private GUIStyle itemStyle;
-        private bool closingFromLifecycle;
         private int selectedTarget;
         private EnemyBackpackData enemyDataToApply;
-
-        [MenuItem(
-            "Tools/Backpack/Backpack Debug")]
-        public static void OpenBackpackDebug()
-        {
-            OpenManually();
-        }
-
-        [MenuItem(
-            "Tools/Backpack/Player Backpack Debug")]
-        public static void OpenManually()
-        {
-            PlayerBackpackDebugBridge bridge =
-                PlayerBackpackDebugBridge.Active;
-
-            if (bridge != null)
-            {
-                bridge.SetDebugEnabled(true);
-            }
-
-            ShowSingleWindow();
-        }
-
-        internal static PlayerBackpackDebugWindow
-            ShowSingleWindow()
-        {
-            PlayerBackpackDebugWindow[] windows =
-                Resources.FindObjectsOfTypeAll<
-                    PlayerBackpackDebugWindow>();
-            bool created = windows.Length == 0;
-            PlayerBackpackDebugWindow window =
-                !created
-                    ? windows[0]
-                    : GetWindow<
-                        PlayerBackpackDebugWindow>();
-
-            for (int index = 1;
-                 index < windows.Length;
-                 index++)
-            {
-                windows[index].CloseFromLifecycle();
-            }
-
-            window.titleContent =
-                new GUIContent("Backpack Debug");
-            window.minSize = new Vector2(440f, 360f);
-
-            if (created)
-            {
-                window.Show();
-            }
-
-            return window;
-        }
-
-        internal static void CloseAllFromLifecycle()
-        {
-            foreach (PlayerBackpackDebugWindow window in
-                     Resources.FindObjectsOfTypeAll<
-                         PlayerBackpackDebugWindow>())
-            {
-                window.CloseFromLifecycle();
-            }
-        }
-
-        private void OnGUI()
+        internal void DrawTab()
         {
             DrawToolbar();
 
@@ -188,7 +122,6 @@ namespace BackpackHero.EditorTools
             {
                 PlayerBackpackDebugBridge.Active
                     ?.RefreshSnapshot();
-                Repaint();
             }
 
             if (GUILayout.Button(
@@ -198,7 +131,6 @@ namespace BackpackHero.EditorTools
             {
                 PlayerBackpackDebugBridge.Active
                     ?.SetDebugEnabled(false);
-                Close();
             }
 
             EditorGUILayout.EndHorizontal();
@@ -459,61 +391,5 @@ namespace BackpackHero.EditorTools
             EditorGUILayout.EndScrollView();
         }
 
-        private void CloseFromLifecycle()
-        {
-            closingFromLifecycle = true;
-            Close();
-        }
-
-        private void OnDisable()
-        {
-            if (!closingFromLifecycle &&
-                EditorApplication.isPlaying)
-            {
-                PlayerBackpackDebugBridge.Active
-                    ?.SetDebugEnabled(false);
-            }
-        }
-    }
-
-    [InitializeOnLoad]
-    internal static class
-        PlayerBackpackDebugWindowLifecycle
-    {
-        private static bool wasPlaying;
-
-        static PlayerBackpackDebugWindowLifecycle()
-        {
-            wasPlaying = EditorApplication.isPlaying;
-            EditorApplication.update -= Update;
-            EditorApplication.update += Update;
-        }
-
-        private static void Update()
-        {
-            bool isPlaying =
-                EditorApplication.isPlaying;
-            PlayerBackpackDebugBridge bridge =
-                PlayerBackpackDebugBridge.Active;
-
-            if (isPlaying &&
-                bridge != null &&
-                bridge.DebugEnabled)
-            {
-                PlayerBackpackDebugWindow
-                    .ShowSingleWindow()
-                    .Repaint();
-            }
-            else if ((wasPlaying && !isPlaying) ||
-                     (isPlaying &&
-                      (bridge == null ||
-                       !bridge.DebugEnabled)))
-            {
-                PlayerBackpackDebugWindow
-                    .CloseAllFromLifecycle();
-            }
-
-            wasPlaying = isPlaying;
-        }
     }
 }

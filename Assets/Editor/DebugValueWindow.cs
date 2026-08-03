@@ -1,45 +1,12 @@
 using UnityEditor;
 using UnityEngine;
 
-public sealed class DebugValueWindow : EditorWindow
+internal sealed class DebugValueWindow : ScriptableObject
 {
     private int speedInput;
     private int healthInput;
     private int damageInput;
     private DebugValueController lastTarget;
-
-    [MenuItem("Tools/Debug/Value Controller")]
-    public static void OpenWindow()
-    {
-        var window = GetWindow<DebugValueWindow>("Debug Values");
-        window.minSize = new Vector2(320f, 300f);
-        window.Show();
-    }
-
-    internal static void CloseWindow()
-    {
-        if (HasOpenInstances<DebugValueWindow>())
-        {
-            GetWindow<DebugValueWindow>().Close();
-        }
-    }
-
-    private void OnEnable()
-    {
-        EditorApplication.update += OnEditorUpdate;
-        SyncInputsIfTargetChanged();
-    }
-
-    private void OnDisable()
-    {
-        EditorApplication.update -= OnEditorUpdate;
-    }
-
-    private void OnEditorUpdate()
-    {
-        SyncInputsIfTargetChanged();
-        Repaint();
-    }
 
     private void SyncInputsIfTargetChanged()
     {
@@ -65,8 +32,9 @@ public sealed class DebugValueWindow : EditorWindow
         damageInput = target.Damage;
     }
 
-    private void OnGUI()
+    internal void DrawTab()
     {
+        SyncInputsIfTargetChanged();
         EditorGUILayout.Space(8f);
         EditorGUILayout.LabelField("运行时数据调试", EditorStyles.boldLabel);
         EditorGUILayout.Space(4f);

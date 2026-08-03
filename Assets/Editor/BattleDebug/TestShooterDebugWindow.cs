@@ -5,62 +5,12 @@ using UnityEngine;
 
 namespace BackpackHero.EditorTools
 {
-    public sealed class TestShooterDebugWindow : EditorWindow
+    internal sealed class TestShooterDebugWindow : ScriptableObject
     {
-        private const double RepaintInterval = 0.1;
-
         private Vector2 scrollPosition;
-        private double nextRepaintTime;
         private ProjectileFirePattern patternToAdd;
         private BattleAttack2D attackToAdd;
-
-        [MenuItem("Tools/Battle/Test Shooter Debug")]
-        public static void ShowFromMenu()
-        {
-            OpenWindow();
-        }
-
-        internal static TestShooterDebugWindow OpenWindow()
-        {
-            TestShooterDebugWindow window =
-                GetWindow<TestShooterDebugWindow>();
-
-            window.titleContent =
-                new GUIContent("Test Shooter Debug");
-
-            window.minSize =
-                new Vector2(360f, 420f);
-
-            window.Show();
-            return window;
-        }
-
-        internal static void CloseAllWindows()
-        {
-            foreach (TestShooterDebugWindow window in
-                     Resources.FindObjectsOfTypeAll<
-                         TestShooterDebugWindow>())
-            {
-                window.Close();
-            }
-        }
-
-        private void Update()
-        {
-            if (EditorApplication.timeSinceStartup <
-                nextRepaintTime)
-            {
-                return;
-            }
-
-            nextRepaintTime =
-                EditorApplication.timeSinceStartup +
-                RepaintInterval;
-
-            Repaint();
-        }
-
-        private void OnGUI()
+        internal void DrawTab()
         {
             scrollPosition =
                 EditorGUILayout.BeginScrollView(

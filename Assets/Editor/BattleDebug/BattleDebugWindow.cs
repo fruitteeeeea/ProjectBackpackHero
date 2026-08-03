@@ -6,56 +6,13 @@ using UnityEngine;
 
 namespace BackpackHero.EditorTools
 {
-    public sealed class BattleDebugWindow : EditorWindow
+    internal sealed class BattleDebugWindow : ScriptableObject
     {
         private int selectedBackpackIndex;
         private ItemData modifierItem;
         private Vector2Int modifierCell;
         private Vector2 scrollPosition;
-        private double nextRepaintTime;
-
-        [MenuItem("Tools/Battle/Battle Debug")]
-        public static void ShowFromMenu()
-        {
-            OpenWindow();
-        }
-
-        internal static BattleDebugWindow OpenWindow()
-        {
-            BattleDebugWindow window =
-                GetWindow<BattleDebugWindow>();
-            window.titleContent =
-                new GUIContent("Battle Debug");
-            window.minSize =
-                new Vector2(520f, 620f);
-            window.Show();
-            return window;
-        }
-
-        internal static void CloseAllWindows()
-        {
-            foreach (BattleDebugWindow window in
-                     Resources.FindObjectsOfTypeAll<
-                         BattleDebugWindow>())
-            {
-                window.Close();
-            }
-        }
-
-        private void Update()
-        {
-            if (EditorApplication.timeSinceStartup <
-                nextRepaintTime)
-            {
-                return;
-            }
-
-            nextRepaintTime =
-                EditorApplication.timeSinceStartup + 0.1;
-            Repaint();
-        }
-
-        private void OnGUI()
+        internal void DrawTab()
         {
             scrollPosition =
                 EditorGUILayout.BeginScrollView(

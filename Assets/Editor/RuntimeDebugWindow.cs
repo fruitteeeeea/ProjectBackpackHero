@@ -1,39 +1,10 @@
 using UnityEditor;
 using UnityEngine;
 
-public class RuntimeDebugWindow : EditorWindow
+internal sealed class RuntimeDebugWindow : ScriptableObject
 {
-    private Vector2 scrollPosition;
     private bool autoRepaint = true;
-
-    [MenuItem("Tools/Runtime Debug Window")]
-    private static void Open()
-    {
-        var window = GetWindow<RuntimeDebugWindow>();
-        window.titleContent = new GUIContent("Runtime Debug");
-        window.minSize = new Vector2(320, 300);
-        window.Show();
-    }
-
-    private void OnEnable()
-    {
-        EditorApplication.update += OnEditorUpdate;
-    }
-
-    private void OnDisable()
-    {
-        EditorApplication.update -= OnEditorUpdate;
-    }
-
-    private void OnEditorUpdate()
-    {
-        if (autoRepaint && EditorApplication.isPlaying)
-        {
-            Repaint();
-        }
-    }
-
-    private void OnGUI()
+    internal void DrawTab()
     {
         EditorGUILayout.LabelField(
             "运行状态",

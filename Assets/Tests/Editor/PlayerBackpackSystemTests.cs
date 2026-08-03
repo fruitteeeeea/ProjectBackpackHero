@@ -658,7 +658,7 @@ public sealed class PlayerBackpackSystemTests
     }
 
     [Test]
-    public void DebugWindow_IsEditorOnlyAndHasMenuEntry()
+    public void DebugWindow_IsEditorOnlyAndHostedByDebugCenter()
     {
         const string windowPath =
             "Assets/Editor/Backpack/" +
@@ -671,9 +671,8 @@ public sealed class PlayerBackpackSystemTests
             Does.Contain(
                 "class PlayerBackpackDebugWindow"));
         Assert.That(
-            windowSource,
-            Does.Contain(
-                "Tools/Backpack/Player Backpack Debug"));
+            File.ReadAllText("Assets/Editor/DebugCenterWindow.cs"),
+            Does.Contain("Tools/Debug/Debug Center"));
         Assert.That(
             File.ReadAllText(
                 "Assets/Scripts/BackpackPrototype/" +

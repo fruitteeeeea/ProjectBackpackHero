@@ -29,13 +29,13 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Brightness: 0.58
+    - _Brightness: 0.4
     - _FlowStrength: 0.65
-    - _NoiseScale: 1.25
-    - _Speed: 0.35
-    - _TileCount: 1
+    - _NoiseScale: 0.67
+    - _Speed: 0.05
     - _StarDensity: 0.55
     - _StarIntensity: 0.45
+    - _TileCount: 0.5
     m_Colors:
     - _ColorA: {r: 0.008, g: 0.016, b: 0.075, a: 1}
     - _ColorB: {r: 0.075, g: 0.025, b: 0.18, a: 1}

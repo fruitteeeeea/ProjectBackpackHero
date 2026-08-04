@@ -13,6 +13,9 @@ Shader "BackpackHero/Graphics/Nebula Starfield URP 2D"
         _StarDensity("Star Density", Range(0, 2)) = 0.55
         [HDR] _StarColor("Star Color", Color) = (0.4, 0.7, 1.2, 1)
         _StarIntensity("Star Intensity", Range(0, 2)) = 0.45
+        _StarTwinkleMin("Star Twinkle Min", Range(0, 2)) = 0.35
+        _StarTwinkleMax("Star Twinkle Max", Range(0, 3)) = 1.15
+        _StarTwinkleSpeed("Star Twinkle Speed", Range(0, 5)) = 1.5
         _Brightness("Background Brightness", Range(0, 1)) = 0.58
     }
 
@@ -57,6 +60,9 @@ Shader "BackpackHero/Graphics/Nebula Starfield URP 2D"
                 float _TileCount;
                 float _StarDensity;
                 float _StarIntensity;
+                float _StarTwinkleMin;
+                float _StarTwinkleMax;
+                float _StarTwinkleSpeed;
                 float _Brightness;
             CBUFFER_END
 
@@ -134,7 +140,15 @@ Shader "BackpackHero/Graphics/Nebula Starfield URP 2D"
                 float distanceToStar = length(local - offset * 0.55);
                 float radius = lerp(0.025, 0.075, Hash21(cell + 3.17));
                 float core = 1.0 - smoothstep(radius, radius * 2.2, distanceToStar);
-                float twinkle = 0.72 + 0.28 * sin(time * (1.2 + random * 1.6) + random * TWO_PI);
+                // Reuse the per-cell offset seed: every star receives a stable,
+                // distinct phase and frequency without additional hash work.
+                float phase = (offset.x + 0.5) * TWO_PI;
+                float frequency = lerp(0.65, 2.4, offset.y + 0.5);
+                float pulse = sin(time * frequency + phase) * 0.5 + 0.5;
+                float twinkle = lerp(
+                    min(_StarTwinkleMin, _StarTwinkleMax),
+                    max(_StarTwinkleMin, _StarTwinkleMax),
+                    smoothstep(0.08, 0.92, pulse));
                 return enabled * core * twinkle;
             }
 
@@ -165,7 +179,7 @@ Shader "BackpackHero/Graphics/Nebula Starfield URP 2D"
 
                 // Compress high values before Bloom so the background cannot dominate foreground UI.
                 color *= lerp(0.45, 0.85, nebula) * _Brightness;
-                float stars = StarField(tiledUv, time);
+                float stars = StarField(tiledUv, _Time.y * _StarTwinkleSpeed);
                 color += _StarColor.rgb * stars * _StarIntensity;
                 return half4(color, 1.0);
             }

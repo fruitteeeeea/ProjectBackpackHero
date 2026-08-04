@@ -35,6 +35,9 @@ Material:
     - _Speed: 0.05
     - _StarDensity: 0.55
     - _StarIntensity: 0.45
+    - _StarTwinkleMax: 1.15
+    - _StarTwinkleMin: 0.35
+    - _StarTwinkleSpeed: 1.5
     - _TileCount: 0.5
     m_Colors:
     - _ColorA: {r: 0.008, g: 0.016, b: 0.075, a: 1}

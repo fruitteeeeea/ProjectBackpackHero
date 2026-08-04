@@ -48,6 +48,7 @@ namespace BackpackHero.Battle
             new Keyframe(1f, 0f));
 
         [Header("TMP Style")]
+        [SerializeField] private TMP_FontAsset floatingTextFont;
         [SerializeField, Min(0.1f)] private float fontSize = 2.2f;
         [SerializeField, Range(0f, 1f)] private float outlineWidth = 0.18f;
         [SerializeField] private int sortingOrder = 200;
@@ -102,6 +103,11 @@ namespace BackpackHero.Battle
             }
 
             bool isPlayer = faction == BattleFaction.Player;
+            if (floatingTextFont != null)
+            {
+                text.font = floatingTextFont;
+            }
+
             text.color = isPlayer ? playerFaceColor : enemyFaceColor;
             text.fontSize = fontSize;
             text.fontStyle = FontStyles.Bold;

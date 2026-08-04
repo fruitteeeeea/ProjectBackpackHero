@@ -56,6 +56,22 @@ PrefabInstance:
       propertyPath: InitialModule.startSize.scalar
       value: 2.5
       objectReference: {fileID: 0}
+    - target: {fileID: 8794371698579689949, guid: 6d151622cd6de4df79b18cda53fc9820, type: 3}
+      propertyPath: InitialModule.startRotation.scalar
+      value: 6.283185
+      objectReference: {fileID: 0}
+    - target: {fileID: 8794371698579689949, guid: 6d151622cd6de4df79b18cda53fc9820, type: 3}
+      propertyPath: InitialModule.startRotation.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8794371698579689949, guid: 6d151622cd6de4df79b18cda53fc9820, type: 3}
+      propertyPath: InitialModule.startRotationX.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8794371698579689949, guid: 6d151622cd6de4df79b18cda53fc9820, type: 3}
+      propertyPath: InitialModule.startRotationY.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

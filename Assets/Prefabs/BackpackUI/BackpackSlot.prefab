@@ -66,7 +66,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -7031311460645690602, guid: fa5feabc0cafe4d048b58b1150b5190b, type: 3}
+  m_Sprite: {fileID: 497867324840490231, guid: 4ecdad51875104ea69eb1e3c4d0413cc, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -89,4 +89,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.BackpackSlotView
   cell: {x: 0, y: 0}
+  background: {fileID: 0}
   label: {fileID: 0}
+  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
+  illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}

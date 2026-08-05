@@ -36,6 +36,10 @@ namespace BackpackHero.Battle
             "30表示左右各15度。")]
         [SerializeField, Range(1f, 360f)]
         private float targetingArcAngle = 30f;
+
+        [Tooltip("索敌时的目标优先级；数值越高越会被其他飞机优先锁定。")]
+        [SerializeField, Min(0)]
+        private int targetingPriority;
         
         [Tooltip("两次发射之间的时间间隔，单位为秒。")]
         [SerializeField, Min(0.1f)]
@@ -60,6 +64,9 @@ namespace BackpackHero.Battle
 
         public float TargetingArcAngle =>
             targetingArcAngle;
+
+        public int TargetingPriority =>
+            targetingPriority;
         
         public float AttackInterval =>
             attackInterval;
@@ -87,6 +94,9 @@ namespace BackpackHero.Battle
                     targetingArcAngle,
                     1f,
                     360f);
+
+            targetingPriority =
+                Mathf.Max(0, targetingPriority);
             
             attackInterval =
                 Mathf.Max(0.1f, attackInterval);

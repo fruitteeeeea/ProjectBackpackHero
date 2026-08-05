@@ -19,6 +19,7 @@ namespace BackpackHero.Battle
 
         public float JumpRadius => jumpRadius;
         public int MaximumExtraTargets => maximumExtraTargets;
+        public float ChainDamageMultiplier => chainDamageMultiplier;
 
         private void Awake() => FindReferences();
 

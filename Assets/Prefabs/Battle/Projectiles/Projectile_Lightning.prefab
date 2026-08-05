@@ -70,7 +70,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.ChainLightningProjectileImpact2D
   jumpRadius: 2.5
   maximumExtraTargets: 3
-  chainDamageMultiplier: 1
+  chainDamageMultiplier: 0.5
   lightningLinkVfxPrefab: {fileID: 781200104, guid: fa145340110f40e2978ed396bad63a94, type: 3}
   damageResolver: {fileID: 781200304}
   damageArea: {fileID: 781200303}

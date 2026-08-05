@@ -19,6 +19,7 @@ MonoBehaviour:
   maximumHealth: 20
   attackRange: 2.5
   targetingArcAngle: 45
+  targetingPriority: 1
   attackInterval: 1
   projectileDamage: 2
   projectileSpeed: 8

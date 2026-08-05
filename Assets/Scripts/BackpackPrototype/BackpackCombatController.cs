@@ -116,7 +116,14 @@ namespace BackpackPrototype
                 }
 
                 CooldownCompleted?.Invoke(item);
-                FighterSpawner?.RequestSpawn(item);
+
+                int spawnCount = item.Data.SpawnCount;
+                for (int spawnIndex = 0;
+                     spawnIndex < spawnCount;
+                     spawnIndex++)
+                {
+                    FighterSpawner?.RequestSpawn(item);
+                }
 
                 if (backpack.Contains(item) &&
                     BattleFlowController.IsCombatPhase)

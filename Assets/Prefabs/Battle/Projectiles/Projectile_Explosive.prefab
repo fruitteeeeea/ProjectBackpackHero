@@ -47,7 +47,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4277e522684746b7a54f56a2dff5158c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.CircleDamageArea2D
-  radius: 1.5
+  radius: 0.8
 --- !u!114 &781200204
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -72,7 +72,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4726cb74d392474f9fac2b2e271b509b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.ExplosiveProjectileImpact2D
-  radius: 5
+  radius: 0.8
   impactVfxPrefab: {fileID: 5192055911387193802, guid: 19ea9c5a862e447978441279b310aa46, type: 3}
   impactVfxScale: 1
   damageResolver: {fileID: 781200204}

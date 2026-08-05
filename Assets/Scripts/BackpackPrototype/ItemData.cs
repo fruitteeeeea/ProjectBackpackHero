@@ -33,6 +33,11 @@ namespace BackpackPrototype
         [SerializeField]
         private float cooldownDuration = -1f;
 
+        [Header("Aircraft Spawn")]
+        [Tooltip("每次物品冷却完成时生成的飞机数量。")]
+        [SerializeField, Min(1)]
+        private int spawnCount = 1;
+
         [SerializeField]
         private ItemShapeData shape;
 
@@ -52,6 +57,7 @@ namespace BackpackPrototype
                 ? equipmentEffects
                 : Array.Empty<EquipmentEffectDefinition>();
         public float CooldownDuration => cooldownDuration;
+        public int SpawnCount => Mathf.Max(1, spawnCount);
         public ItemShapeData Shape => shape;
         public FighterDefinition FighterDefinition =>
             fighterDefinition;
@@ -103,11 +109,13 @@ namespace BackpackPrototype
             if (itemType == ItemType.Equipment)
             {
                 cooldownDuration = -1f;
+                spawnCount = 1;
                 return;
             }
 
             cooldownDuration =
                 Mathf.Max(0.01f, cooldownDuration);
+            spawnCount = Mathf.Max(1, spawnCount);
         }
     }
 }

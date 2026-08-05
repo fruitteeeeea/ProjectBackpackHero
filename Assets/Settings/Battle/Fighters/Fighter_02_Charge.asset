@@ -20,5 +20,5 @@ MonoBehaviour:
   attackRange: 1.5
   targetingArcAngle: 30
   attackInterval: 0.25
-  projectileDamage: 1
+  projectileDamage: 0.8
   projectileSpeed: 8

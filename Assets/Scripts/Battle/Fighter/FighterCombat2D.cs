@@ -567,6 +567,8 @@ namespace BackpackHero.Battle
             HurtBox2D nearestFighter = null;
             HurtBox2D nearestBackpack = null;
 
+            int bestFighterPriority = int.MinValue;
+
             float bestFighterAlignment =
                 float.NegativeInfinity;
 
@@ -609,25 +611,22 @@ namespace BackpackHero.Battle
                         continue;
                     }
 
-                    bool isBetterAligned =
-                        alignment >
-                        bestFighterAlignment + 0.0001f;
+                    int targetingPriority =
+                        GetTargetingPriority(candidate);
 
-                    bool hasSameAlignment =
-                        Mathf.Abs(
-                            alignment -
-                            bestFighterAlignment) <= 0.0001f;
-
-                    bool isCloserAtSameAlignment =
-                        hasSameAlignment &&
-                        distanceSquared <
-                        bestFighterDistanceSquared;
-
-                    if (isBetterAligned ||
-                        isCloserAtSameAlignment)
+                    if (IsPreferredFighterCandidate(
+                            targetingPriority,
+                            alignment,
+                            distanceSquared,
+                            bestFighterPriority,
+                            bestFighterAlignment,
+                            bestFighterDistanceSquared))
                     {
                         nearestFighter =
                             candidate;
+
+                        bestFighterPriority =
+                            targetingPriority;
 
                         bestFighterAlignment =
                             alignment;
@@ -656,6 +655,46 @@ namespace BackpackHero.Battle
                 nearestFighter != null
                     ? nearestFighter
                     : nearestBackpack;
+        }
+
+        private static int GetTargetingPriority(
+            HurtBox2D candidate)
+        {
+            Fighter2D targetFighter =
+                candidate != null
+                    ? candidate.GetComponentInParent<Fighter2D>()
+                    : null;
+
+            return targetFighter != null &&
+                   targetFighter.Definition != null
+                ? targetFighter.Definition.TargetingPriority
+                : 0;
+        }
+
+        private static bool IsPreferredFighterCandidate(
+            int candidatePriority,
+            float candidateAlignment,
+            float candidateDistanceSquared,
+            int currentPriority,
+            float currentAlignment,
+            float currentDistanceSquared)
+        {
+            if (candidatePriority != currentPriority)
+            {
+                return candidatePriority > currentPriority;
+            }
+
+            if (candidateAlignment >
+                currentAlignment + 0.0001f)
+            {
+                return true;
+            }
+
+            return Mathf.Abs(
+                       candidateAlignment -
+                       currentAlignment) <= 0.0001f &&
+                   candidateDistanceSquared <
+                   currentDistanceSquared;
         }
 
         private bool TryGetFighterAlignment(

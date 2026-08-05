@@ -24,6 +24,12 @@ namespace BackpackPrototype
         private static readonly int FlashAmountId =
             Shader.PropertyToID("_FlashAmount");
 
+        private static readonly int ItemVisualStyleId =
+            Shader.PropertyToID("_ItemVisualStyle");
+
+        private static readonly int PatternTilingId =
+            Shader.PropertyToID("_PatternTiling");
+
         private RectTransform rectTransform;
         private CanvasGroup canvasGroup;
         private Transform originalParent;
@@ -270,6 +276,8 @@ namespace BackpackPrototype
                     icon,
                     originalIconMaterial);
 
+            ApplyItemVisualStyle();
+
             SetCooldownFloat(
                 CooldownProgressId,
                 CooldownProgress);
@@ -320,6 +328,57 @@ namespace BackpackPrototype
             SetCooldownFloat(
                 FlashAmountId,
                 Mathf.Max(cooldownFlashAmount, mergeFlashAmount));
+        }
+
+        private void ApplyItemVisualStyle()
+        {
+            if (backgroundCooldownMaterial != null)
+            {
+                float visualStyle = 0f;
+
+                // if (Instance != null &&
+                //     Instance.Data != null)
+                // {
+                //     visualStyle =
+                //         Instance.Data.ItemType == ItemType.Aircraft
+                //             ? 1f
+                //             : 2f;
+                // }
+
+                backgroundCooldownMaterial.SetFloat(
+                    ItemVisualStyleId,
+                    visualStyle);
+
+                backgroundCooldownMaterial.SetVector(
+                    PatternTilingId,
+                    GetPatternTiling());
+            }
+
+            if (iconCooldownMaterial != null)
+            {
+                iconCooldownMaterial.SetFloat(
+                    ItemVisualStyleId,
+                    0f);
+            }
+        }
+
+        private Vector4 GetPatternTiling()
+        {
+            if (background == null ||
+                shapeCellSize.x <= 0f ||
+                shapeCellSize.y <= 0f)
+            {
+                return new Vector4(1f, 1f, 0f, 0f);
+            }
+
+            Vector2 backgroundSize =
+                background.rectTransform.rect.size;
+
+            return new Vector4(
+                Mathf.Max(1f, backgroundSize.x / shapeCellSize.x),
+                Mathf.Max(1f, backgroundSize.y / shapeCellSize.y),
+                0f,
+                0f);
         }
 
         private void HandleItemLevelChanged(ItemInstance item)

@@ -24,6 +24,36 @@ Shader "Backpack/UI/Item Cooldown"
             Range(0, 1)
         ) = 0
 
+        _AircraftPatternTex (
+            "Aircraft Pattern",
+            2D
+        ) = "white" {}
+
+        _EquipmentPatternTex (
+            "Equipment Pattern",
+            2D
+        ) = "white" {}
+
+        _ItemVisualStyle (
+            "Item Visual Style (0 None, 1 Aircraft, 2 Equipment)",
+            Range(0, 2)
+        ) = 0
+
+        _GrayOverlayStrength (
+            "Gray Overlay Strength",
+            Range(0, 1)
+        ) = 0.45
+
+        _PatternOverlayStrength (
+            "Pattern Overlay Strength",
+            Range(0, 1)
+        ) = 0.25
+
+        _PatternTiling (
+            "Pattern Tiling",
+            Vector
+        ) = (1, 1, 0, 0)
+
         _StencilComp (
             "Stencil Comparison",
             Float
@@ -119,12 +149,18 @@ Shader "Backpack/UI/Item Cooldown"
             };
 
             sampler2D _MainTex;
+            sampler2D _AircraftPatternTex;
+            sampler2D _EquipmentPatternTex;
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             fixed4 _ShadowColor;
 
             float _CooldownProgress;
             float _FlashAmount;
+            float _ItemVisualStyle;
+            float _GrayOverlayStrength;
+            float _PatternOverlayStrength;
+            float4 _PatternTiling;
             float4 _ClipRect;
 
             Varyings Vert(Attributes input)
@@ -174,6 +210,46 @@ Shader "Backpack/UI/Item Cooldown"
                         spriteColor.rgb,
                         _ShadowColor.rgb,
                         shadowStrength);
+
+                // 物品分类视觉只应用在背景层：
+                // 飞机从底部向顶部渐隐，装备从顶部向底部渐隐。
+                if (_ItemVisualStyle > 0.5)
+                {
+                    float isEquipment =
+                        step(1.5, _ItemVisualStyle);
+
+                    float gradientMask =
+                        lerp(
+                            1.0 - input.uv.y,
+                            input.uv.y,
+                            isEquipment);
+
+                    fixed3 patternColor =
+                        lerp(
+                            tex2D(
+                                _AircraftPatternTex,
+                                input.uv *
+                                _PatternTiling.xy).rgb,
+                            tex2D(
+                                _EquipmentPatternTex,
+                                input.uv *
+                                _PatternTiling.xy).rgb,
+                            isEquipment);
+
+                    spriteColor.rgb =
+                        lerp(
+                            spriteColor.rgb,
+                            fixed3(0.5, 0.5, 0.5),
+                            gradientMask *
+                            saturate(_GrayOverlayStrength));
+
+                    spriteColor.rgb =
+                        lerp(
+                            spriteColor.rgb,
+                            patternColor,
+                            gradientMask *
+                            saturate(_PatternOverlayStrength));
+                }
 
                 spriteColor.rgb =
                     lerp(

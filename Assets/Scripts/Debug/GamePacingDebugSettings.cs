@@ -33,6 +33,11 @@ namespace BackpackHero.Debugging
         [SerializeField, Min(0f)]
         private float enemyOverallStrengthMultiplier = 1f;
 
+        [Header("Presentation")]
+        [Tooltip("仅影响伤害飘字显示数值，不参与实际伤害结算。")]
+        [SerializeField, Min(0f)]
+        private float damageFloatingTextMagicNumber = 16f;
+
         public float AircraftSpeedMultiplier => aircraftSpeedMultiplier;
         public float ProjectileDamageMultiplier => projectileDamageMultiplier;
         public float AircraftHealthMultiplier => aircraftHealthMultiplier;
@@ -42,6 +47,8 @@ namespace BackpackHero.Debugging
             playerOverallStrengthMultiplier;
         public float EnemyOverallStrengthMultiplier =>
             enemyOverallStrengthMultiplier;
+        public float DamageFloatingTextMagicNumber =>
+            damageFloatingTextMagicNumber;
 
         public void SetValues(GamePacingMultipliers values)
         {
@@ -66,10 +73,19 @@ namespace BackpackHero.Debugging
                 enemyOverallStrengthMultiplier);
         }
 
+        public void SetDamageFloatingTextMagicNumber(
+            float value)
+        {
+            damageFloatingTextMagicNumber =
+                Mathf.Max(0f, value);
+        }
+
 #if UNITY_EDITOR
         private void OnValidate()
         {
             SetValues(GetValues());
+            SetDamageFloatingTextMagicNumber(
+                damageFloatingTextMagicNumber);
         }
 #endif
     }

@@ -10,6 +10,8 @@ namespace BackpackHero.EditorTools
         private readonly DebugDraft<GamePacingMultipliers> draft = new();
         private GamePacingDebugSettings settingsTarget;
         private GamePacingDebugRuntime lastRuntime;
+        private float damageFloatingTextMagicNumber;
+        private bool isDamageFloatingTextMagicNumberDirty;
         private string validationMessage;
 
         internal void DrawTab()
@@ -48,6 +50,9 @@ namespace BackpackHero.EditorTools
             lastRuntime = runtime;
             settingsTarget = runtime.DefaultSettings;
             draft.Load(settingsTarget != null ? settingsTarget.GetValues() : runtime.Multipliers);
+            damageFloatingTextMagicNumber =
+                runtime.DamageFloatingTextMagicNumber;
+            isDamageFloatingTextMagicNumberDirty = false;
         }
 
         private void DrawSettingsTarget(GamePacingDebugRuntime runtime)
@@ -59,6 +64,11 @@ namespace BackpackHero.EditorTools
             {
                 settingsTarget = nextTarget;
                 draft.Load(settingsTarget != null ? settingsTarget.GetValues() : runtime.Multipliers);
+                damageFloatingTextMagicNumber =
+                    settingsTarget != null
+                        ? settingsTarget.DamageFloatingTextMagicNumber
+                        : runtime.DamageFloatingTextMagicNumber;
+                isDamageFloatingTextMagicNumberDirty = false;
                 validationMessage = null;
             }
 
@@ -66,7 +76,7 @@ namespace BackpackHero.EditorTools
                 "资产路径",
                 settingsTarget != null ? AssetDatabase.GetAssetPath(settingsTarget) : "未选择（请使用“另存为”创建配置）",
                 EditorStyles.miniLabel);
-            EditorGUILayout.LabelField("未保存修改", draft.IsDirty ? "是" : "否", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("未保存修改", HasUnsavedChanges ? "是" : "否", EditorStyles.miniLabel);
         }
 
         private void DrawMultipliers()
@@ -85,6 +95,24 @@ namespace BackpackHero.EditorTools
             if (!AreEqual(current, changed))
             {
                 draft.Value = changed;
+                validationMessage = null;
+            }
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("视觉显示", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "伤害飘字显示倍率只影响文字，不参与实际伤害结算。",
+                MessageType.None);
+            float nextMagicNumber = EditorGUILayout.FloatField(
+                "伤害飘字魔法数字",
+                damageFloatingTextMagicNumber);
+            nextMagicNumber = Mathf.Max(0f, nextMagicNumber);
+            if (!Mathf.Approximately(
+                    nextMagicNumber,
+                    damageFloatingTextMagicNumber))
+            {
+                damageFloatingTextMagicNumber = nextMagicNumber;
+                isDamageFloatingTextMagicNumberDirty = true;
                 validationMessage = null;
             }
         }
@@ -117,10 +145,12 @@ namespace BackpackHero.EditorTools
                         }
 
                         runtime.SetMultipliers(draft.Value);
+                        runtime.SetDamageFloatingTextMagicNumber(
+                            damageFloatingTextMagicNumber);
                     }
                 }
 
-                using (new EditorGUI.DisabledScope(settingsTarget == null || !draft.IsDirty))
+                using (new EditorGUI.DisabledScope(settingsTarget == null || !HasUnsavedChanges))
                 {
                     if (GUILayout.Button("保存"))
                     {
@@ -139,6 +169,11 @@ namespace BackpackHero.EditorTools
                 if (GUILayout.Button("还原"))
                 {
                     draft.Load(settingsTarget != null ? settingsTarget.GetValues() : runtime.Multipliers);
+                    damageFloatingTextMagicNumber =
+                        settingsTarget != null
+                            ? settingsTarget.DamageFloatingTextMagicNumber
+                            : runtime.DamageFloatingTextMagicNumber;
+                    isDamageFloatingTextMagicNumberDirty = false;
                     validationMessage = null;
                 }
             }
@@ -183,6 +218,9 @@ namespace BackpackHero.EditorTools
         private static bool IsInRange(float value) => value >= GamePacingMultipliers.MinimumMultiplier &&
             value <= GamePacingMultipliers.MaximumMultiplier;
 
+        private bool HasUnsavedChanges =>
+            draft.IsDirty || isDamageFloatingTextMagicNumberDirty;
+
         private void SaveAs()
         {
             if (!ValidateDraft())
@@ -199,6 +237,8 @@ namespace BackpackHero.EditorTools
 
             GamePacingDebugSettings newSettings = CreateInstance<GamePacingDebugSettings>();
             newSettings.SetValues(draft.Value);
+            newSettings.SetDamageFloatingTextMagicNumber(
+                damageFloatingTextMagicNumber);
             AssetDatabase.CreateAsset(newSettings, path);
             AssetDatabase.SaveAssets();
             settingsTarget = newSettings;
@@ -215,9 +255,12 @@ namespace BackpackHero.EditorTools
 
             Undo.RecordObject(target, "保存游戏节奏配置");
             target.SetValues(draft.Value);
+            target.SetDamageFloatingTextMagicNumber(
+                damageFloatingTextMagicNumber);
             EditorUtility.SetDirty(target);
             AssetDatabase.SaveAssets();
             draft.Load(target.GetValues());
+            isDamageFloatingTextMagicNumberDirty = false;
         }
 
         private static bool AreEqual(GamePacingMultipliers left, GamePacingMultipliers right) =>

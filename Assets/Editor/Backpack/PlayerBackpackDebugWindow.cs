@@ -164,6 +164,14 @@ namespace BackpackHero.EditorTools
 
             EditorGUILayout.EndHorizontal();
 
+            bool autoCopy = EditorGUILayout.Toggle(
+                "自动复制开启",
+                bridge.AutoCopyPlayerLayoutToEnemy);
+            if (autoCopy != bridge.AutoCopyPlayerLayoutToEnemy)
+            {
+                bridge.SetAutoCopyPlayerLayoutToEnemy(autoCopy);
+            }
+
             using (new EditorGUI.DisabledScope(
                        snapshot.Phase !=
                        BattlePhase.Preparation ||

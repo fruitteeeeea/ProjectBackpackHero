@@ -142,7 +142,8 @@ namespace BackpackPrototype
                 layout.Add(
                     new BackpackLayoutItem(
                         item.Data,
-                        item.AnchorCell));
+                        item.AnchorCell,
+                        item.Level));
             }
 
             return ApplyLayoutInternal(
@@ -189,7 +190,8 @@ namespace BackpackPrototype
                     new ItemInstance(
                         $"enemy-validation-{index}",
                         placement.Data,
-                        placement.AnchorCell);
+                        placement.AnchorCell,
+                        placement.Level);
 
                 if (!validation.PlaceItem(
                         candidate,
@@ -220,7 +222,8 @@ namespace BackpackPrototype
                         new ItemInstance(
                             $"enemy-item-{index + 1}",
                             placement.Data,
-                            placement.AnchorCell);
+                            placement.AnchorCell,
+                            placement.Level);
 
                     if (!combatController.PlaceItem(
                             item,

@@ -62,6 +62,28 @@ public sealed class GamePacingMultipliersTests
     }
 
     [Test]
+    public void Settings_DamageFloatingTextMagicNumberDefaultsToSixteen()
+    {
+        GamePacingDebugSettings settings =
+            ScriptableObject.CreateInstance<GamePacingDebugSettings>();
+        try
+        {
+            Assert.That(
+                settings.DamageFloatingTextMagicNumber,
+                Is.EqualTo(16f));
+
+            settings.SetDamageFloatingTextMagicNumber(24f);
+            Assert.That(
+                settings.DamageFloatingTextMagicNumber,
+                Is.EqualTo(24f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(settings);
+        }
+    }
+
+    [Test]
     public void Runtime_CombinesGlobalAndFactionStrengths()
     {
         GamePacingDebugRuntime runtime =
@@ -105,6 +127,41 @@ public sealed class GamePacingMultipliersTests
         finally
         {
             runtime.SetMultipliers(original);
+        }
+    }
+
+    [Test]
+    public void Runtime_DamageFloatingTextMagicNumberDoesNotChangeDamageMultipliers()
+    {
+        GamePacingDebugRuntime runtime =
+            GamePacingDebugRuntime.Instance;
+        if (runtime == null)
+        {
+            runtimeObject = new GameObject(
+                "Game Pacing Display Runtime Test");
+            runtime = runtimeObject.AddComponent<
+                GamePacingDebugRuntime>();
+            runtime.SendMessage("Awake");
+        }
+
+        float originalMagicNumber =
+            runtime.DamageFloatingTextMagicNumber;
+        GamePacingMultipliers original = runtime.Multipliers;
+        try
+        {
+            runtime.SetDamageFloatingTextMagicNumber(16f);
+
+            Assert.That(
+                GamePacingDebugRuntime
+                    .GetDamageFloatingTextMagicNumber(),
+                Is.EqualTo(16f));
+            Assert.That(runtime.Multipliers,
+                Is.EqualTo(original));
+        }
+        finally
+        {
+            runtime.SetDamageFloatingTextMagicNumber(
+                originalMagicNumber);
         }
     }
 }

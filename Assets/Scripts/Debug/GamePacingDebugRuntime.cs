@@ -17,6 +17,7 @@ namespace BackpackHero.Debugging
         private GamePacingDebugSettings defaultSettings;
         private GamePacingMultipliers multipliers =
             GamePacingMultipliers.Default;
+        private float damageFloatingTextMagicNumber = 16f;
         private float gameSpeed = 1f;
 
         public static GamePacingDebugRuntime Instance { get; private set; }
@@ -78,11 +79,23 @@ namespace BackpackHero.Debugging
                 GetOverallStrengthMultiplier(faction);
         }
 
+        /// <summary>
+        /// 伤害飘字的纯显示倍率；绝不参与伤害或生命值结算。
+        /// </summary>
+        public static float GetDamageFloatingTextMagicNumber()
+        {
+            return Instance != null
+                ? Instance.damageFloatingTextMagicNumber
+                : 16f;
+        }
+
         /// <summary>游戏启动和“恢复默认”使用的配置资产。</summary>
         public GamePacingDebugSettings DefaultSettings =>
             defaultSettings;
         public GamePacingMultipliers Multipliers => multipliers;
         public float GameSpeed => gameSpeed;
+        public float DamageFloatingTextMagicNumber =>
+            damageFloatingTextMagicNumber;
 
         [RuntimeInitializeOnLoadMethod(
             RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -137,6 +150,10 @@ namespace BackpackHero.Debugging
             SetMultipliers(defaultSettings != null
                 ? defaultSettings.GetValues()
                 : GamePacingMultipliers.Default);
+            SetDamageFloatingTextMagicNumber(
+                defaultSettings != null
+                    ? defaultSettings.DamageFloatingTextMagicNumber
+                    : 16f);
         }
 
         /// <summary>
@@ -160,9 +177,14 @@ namespace BackpackHero.Debugging
         {
             // “默认”是调试面板通过“保存至默认”写入的配置资产。
             // 只有配置资产缺失时，才使用项目的初始全 1 值。
-            SetMultipliers(defaultSettings != null
-                ? defaultSettings.GetValues()
-                : GamePacingMultipliers.Default);
+            LoadSavedValues();
+        }
+
+        public void SetDamageFloatingTextMagicNumber(
+            float value)
+        {
+            damageFloatingTextMagicNumber =
+                Mathf.Max(0f, value);
         }
 
         public void SetGameSpeed(float value)

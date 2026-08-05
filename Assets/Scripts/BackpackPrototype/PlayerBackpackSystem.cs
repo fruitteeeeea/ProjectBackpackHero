@@ -12,14 +12,20 @@ namespace BackpackPrototype
     {
         public BackpackLayoutItem(
             ItemData data,
-            Vector2Int anchorCell)
+            Vector2Int anchorCell,
+            int level = ItemInstance.DefaultLevel)
         {
             Data = data;
             AnchorCell = anchorCell;
+            Level = Mathf.Clamp(
+                level,
+                ItemInstance.DefaultLevel,
+                ItemInstance.MaximumLevel);
         }
 
         public ItemData Data { get; }
         public Vector2Int AnchorCell { get; }
+        public int Level { get; }
     }
 
     /// <summary>
@@ -283,8 +289,8 @@ namespace BackpackPrototype
 
         public void EnterCombat()
         {
-            BattleFlowController.EnsureInstance()
-                ?.SetPhase(BattlePhase.Combat);
+            LevelFlowController.EnsureInstance()
+                ?.RequestStartRound();
         }
 
         public bool CompleteCombatTransitionAfterMotion()

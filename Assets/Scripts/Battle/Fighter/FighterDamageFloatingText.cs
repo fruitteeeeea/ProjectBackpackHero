@@ -1,4 +1,5 @@
 using MoreMountains.Feedbacks;
+using BackpackHero.Debugging;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -27,13 +28,17 @@ namespace BackpackHero.Battle
                 ? playerChannel
                 : enemyChannel;
 
+            float displayedDamage = damage *
+                GamePacingDebugRuntime
+                    .GetDamageFloatingTextMagicNumber();
+
             MMFloatingTextSpawnEvent.Trigger(
                 new MMChannelData(
                     MMChannelModes.Int,
                     channel,
                     null),
                 transform.position,
-                damage.ToString("0.##"),
+                displayedDamage.ToString("0.##"),
                 Vector3.up,
                 1f);
         }

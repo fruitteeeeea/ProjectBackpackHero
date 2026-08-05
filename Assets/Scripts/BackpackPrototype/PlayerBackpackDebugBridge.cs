@@ -24,10 +24,15 @@ namespace BackpackPrototype
         [SerializeField]
         private bool debugEnabled = true;
 
+        [SerializeField]
+        private bool autoCopyPlayerLayoutToEnemy = true;
+
         [SerializeField, Min(0.05f)]
         private float refreshInterval = 0.1f;
 
         private float nextRefreshTime;
+        private BackpackController subscribedPlayerBackpack;
+        private bool pendingAutomaticCopy;
         private PlayerBackpackDebugSnapshot snapshot =
             PlayerBackpackDebugSnapshot.Unavailable(
                 "调试桥尚未初始化。");
@@ -50,6 +55,9 @@ namespace BackpackPrototype
 
         public bool DebugEnabled => debugEnabled;
 
+        public bool AutoCopyPlayerLayoutToEnemy =>
+            autoCopyPlayerLayoutToEnemy;
+
         public PlayerBackpackDebugSnapshot Snapshot =>
             snapshot;
 
@@ -66,6 +74,7 @@ namespace BackpackPrototype
         private void Awake()
         {
             ResolveTarget();
+            RefreshAutoCopySubscription();
             RefreshSnapshot();
         }
 
@@ -93,6 +102,9 @@ namespace BackpackPrototype
                 ResolveEnemyTarget();
             }
 
+            RefreshAutoCopySubscription();
+            TryAutomaticCopy();
+
             if (Time.unscaledTime >= nextRefreshTime)
             {
                 RefreshSnapshot();
@@ -105,6 +117,7 @@ namespace BackpackPrototype
         public void Bind(PlayerBackpackSystem target)
         {
             playerBackpackSystem = target;
+            RefreshAutoCopySubscription();
             RefreshSnapshot();
         }
 
@@ -115,8 +128,15 @@ namespace BackpackPrototype
 
         public void TogglePhase()
         {
-            BattleFlowController.EnsureInstance()
-                ?.TogglePhase();
+            if (BattleFlowController.CurrentPhase ==
+                BattlePhase.Preparation)
+            {
+                EnterCombat();
+            }
+            else
+            {
+                EnterPreparation();
+            }
             RefreshSnapshot();
         }
 
@@ -129,9 +149,19 @@ namespace BackpackPrototype
 
         public void EnterCombat()
         {
-            BattleFlowController.EnsureInstance()
-                ?.SetPhase(BattlePhase.Combat);
+            LevelFlowController.EnsureInstance()
+                ?.RequestStartRound();
             RefreshSnapshot();
+        }
+
+        public void SetAutoCopyPlayerLayoutToEnemy(bool enabled)
+        {
+            autoCopyPlayerLayoutToEnemy = enabled;
+            if (enabled)
+            {
+                pendingAutomaticCopy = true;
+                TryAutomaticCopy();
+            }
         }
 
         public bool RefreshShop()
@@ -450,8 +480,97 @@ namespace BackpackPrototype
                         FindObjectsInactive.Include);
         }
 
+        private void RefreshAutoCopySubscription()
+        {
+            BackpackController next =
+                playerBackpackSystem != null
+                    ? playerBackpackSystem.Backpack
+                    : null;
+            if (subscribedPlayerBackpack == next)
+            {
+                return;
+            }
+
+            if (subscribedPlayerBackpack != null)
+            {
+                subscribedPlayerBackpack.ItemAdded -=
+                    HandlePlayerBackpackChanged;
+                subscribedPlayerBackpack.ItemMoved -=
+                    HandlePlayerBackpackChanged;
+                subscribedPlayerBackpack.ItemRemoved -=
+                    HandlePlayerBackpackChanged;
+                subscribedPlayerBackpack.ItemLevelChanged -=
+                    HandlePlayerBackpackChanged;
+                subscribedPlayerBackpack.Cleared -=
+                    HandlePlayerBackpackCleared;
+            }
+
+            subscribedPlayerBackpack = next;
+            if (subscribedPlayerBackpack == null)
+            {
+                return;
+            }
+
+            subscribedPlayerBackpack.ItemAdded +=
+                HandlePlayerBackpackChanged;
+            subscribedPlayerBackpack.ItemMoved +=
+                HandlePlayerBackpackChanged;
+            subscribedPlayerBackpack.ItemRemoved +=
+                HandlePlayerBackpackChanged;
+            subscribedPlayerBackpack.ItemLevelChanged +=
+                HandlePlayerBackpackChanged;
+            subscribedPlayerBackpack.Cleared +=
+                HandlePlayerBackpackCleared;
+            pendingAutomaticCopy = autoCopyPlayerLayoutToEnemy;
+        }
+
+        private void HandlePlayerBackpackChanged(ItemInstance _)
+        {
+            pendingAutomaticCopy = true;
+        }
+
+        private void HandlePlayerBackpackCleared()
+        {
+            pendingAutomaticCopy = true;
+        }
+
+        private void TryAutomaticCopy()
+        {
+            if (!autoCopyPlayerLayoutToEnemy ||
+                !pendingAutomaticCopy ||
+                !CanModifyPreparation() ||
+                enemyBackpackSystem == null ||
+                !enemyBackpackSystem.IsReady ||
+                playerBackpackSystem.Backpack == null)
+            {
+                return;
+            }
+
+            if (enemyBackpackSystem.CopyLayoutFrom(
+                    playerBackpackSystem.Backpack))
+            {
+                pendingAutomaticCopy = false;
+                RefreshSnapshot();
+            }
+        }
+
         private void OnDisable()
         {
+            if (subscribedPlayerBackpack != null)
+            {
+                subscribedPlayerBackpack.ItemAdded -=
+                    HandlePlayerBackpackChanged;
+                subscribedPlayerBackpack.ItemMoved -=
+                    HandlePlayerBackpackChanged;
+                subscribedPlayerBackpack.ItemRemoved -=
+                    HandlePlayerBackpackChanged;
+                subscribedPlayerBackpack.ItemLevelChanged -=
+                    HandlePlayerBackpackChanged;
+                subscribedPlayerBackpack.Cleared -=
+                    HandlePlayerBackpackCleared;
+                subscribedPlayerBackpack = null;
+            }
+
             if (Active == this)
             {
                 Active = null;

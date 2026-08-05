@@ -702,6 +702,24 @@ public sealed class BackpackControllerTests
     }
 
     [Test]
+    public void ItemInstance_ConstructorPreservesRequestedLevel()
+    {
+        ItemInstance source = NewItem(
+            "copy-source",
+            OneCell());
+        ItemInstance item = new ItemInstance(
+            "copied-level-two",
+            source.Data,
+            Vector2Int.zero,
+            ItemInstance.MaximumLevel);
+
+        Assert.That(
+            item.Level,
+            Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(item.IsCoolingDown, Is.False);
+    }
+
+    [Test]
     public void TryMerge_ConsumesSourceAndUpgradesMatchingTarget()
     {
         BackpackController backpack = new BackpackController(4, 4);

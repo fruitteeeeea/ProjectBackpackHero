@@ -10,12 +10,16 @@ namespace BackpackPrototype
         public ItemInstance(
             string id,
             ItemData data,
-            Vector2Int anchorCell)
+            Vector2Int anchorCell,
+            int level = DefaultLevel)
         {
             Id = id;
             Data = data;
             AnchorCell = anchorCell;
-            Level = DefaultLevel;
+            Level = Mathf.Clamp(
+                level,
+                DefaultLevel,
+                MaximumLevel);
         }
 
         public string Id { get; }

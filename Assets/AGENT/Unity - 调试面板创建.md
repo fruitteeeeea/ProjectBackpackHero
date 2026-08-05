@@ -11,6 +11,13 @@
 
 - 两个 `EditorWindow` 应优先停靠在同一个 Unity Dock Area 中，作为两个并列的**停靠窗口标签页**显示。
 
+### Play Mode 自动停靠
+
+- 进入 Play Mode 前关闭已打开的两个 Center 面板，避免沿用旧布局。
+- Runtime 启动后先创建程序测试面板，再创建玩法设计面板，并尝试将后者停靠到前者所在的 Dock Area。
+- 自动停靠失败时，两个面板仍应可用，并允许用户手动停靠。
+- 此行为仅在 Unity Editor 的 Play Mode 生效，不影响导出后的 Player。
+
 - 所有具体功能的调试界面不再单独创建 `EditorWindow`，而是作为所属 Center 面板中的**窗口内部功能标签页**。
 
 - 本文中的标签页分为两类：

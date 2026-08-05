@@ -30,6 +30,7 @@ namespace BackpackPrototype
         private int originalSiblingIndex;
         private Vector2 originalAnchoredPosition;
         private Tween scaleTween;
+        private Tween dragPositionTween;
         private Tween feedbackTween;
         private Tween cooldownFlashTween;
         private Tween mergeFlashTween;
@@ -55,7 +56,6 @@ namespace BackpackPrototype
         public RectTransform BackpackItemLayer { get; private set; }
         public RectTransform DragLayer { get; private set; }
         public RectTransform TrashZone { get; private set; }
-        public Vector2 DragVisualOffset { get; private set; }
         public Vector2Int GrabCellOffset { get; private set; }
         public Vector2Int? CandidateAnchorCell { get; private set; }
         public bool IsPlacedInBackpack { get; private set; }
@@ -376,6 +376,8 @@ namespace BackpackPrototype
             if (!interactionEnabled && isDragging)
             {
                 isDragging = false;
+                dragPositionTween?.Kill();
+                dragPositionTween = null;
                 GridView?.ClearPlacementPreview();
                 DragStateChanged?.Invoke(this, false);
             }
@@ -384,6 +386,7 @@ namespace BackpackPrototype
             {
                 canvasGroup.interactable = interactionEnabled;
                 canvasGroup.blocksRaycasts = interactionEnabled;
+                canvasGroup.alpha = 1f;
             }
         }
         
@@ -457,9 +460,8 @@ namespace BackpackPrototype
             CandidateAnchorCell = null;
             GridView?.ClearPlacementPreview();
 
-            var itemScreenPosition = RectTransformUtility.WorldToScreenPoint(eventData.pressEventCamera, rectTransform.position);
-            DragVisualOffset = eventData.position - itemScreenPosition;
-            GrabCellOffset = CalculateGrabCellOffset(eventData.position, eventData.pressEventCamera);
+            GrabCellOffset = ItemGrabOffsetCalculator.Calculate(
+                Instance?.Data?.ShapeOffsets);
 
             if (DragLayer != null)
             {
@@ -467,21 +469,21 @@ namespace BackpackPrototype
                 rectTransform.SetAsLastSibling();
             }
 
+            TweenDragVisualToPointer(
+                eventData.position,
+                eventData.pressEventCamera);
+
             canvasGroup.blocksRaycasts = false;
-            canvasGroup.alpha = 0.86f;
+            canvasGroup.alpha = 0.5f;
             TweenScale(1.05f);
             DragStateChanged?.Invoke(this, true);
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            var targetScreenPosition = eventData.position - DragVisualOffset;
-
-            if (rectTransform.parent is RectTransform parentRect &&
-                RectTransformUtility.ScreenPointToWorldPointInRectangle(parentRect, targetScreenPosition, eventData.pressEventCamera, out var worldPoint))
-            {
-                rectTransform.position = worldPoint;
-            }
+            TweenDragVisualToPointer(
+                eventData.position,
+                eventData.pressEventCamera);
 
             if (GridView != null && GridView.TryGetCellAtScreenPosition(eventData.position, eventData.pressEventCamera, out var pointerCell))
             {
@@ -498,6 +500,8 @@ namespace BackpackPrototype
         public void OnEndDrag(PointerEventData eventData)
         {
             isDragging = false;
+            dragPositionTween?.Kill();
+            dragPositionTween = null;
             DragStateChanged?.Invoke(this, false);
             canvasGroup.blocksRaycasts = true;
             canvasGroup.alpha = 1f;
@@ -669,6 +673,7 @@ namespace BackpackPrototype
             }
 
             scaleTween?.Kill();
+            dragPositionTween?.Kill();
             feedbackTween?.Kill();
             cooldownFlashTween?.Kill();
             mergeFlashTween?.Kill();
@@ -789,31 +794,40 @@ namespace BackpackPrototype
             return false;
         }
 
-        private Vector2Int CalculateGrabCellOffset(Vector2 screenPosition, Camera eventCamera)
+        private void TweenDragVisualToPointer(
+            Vector2 screenPosition,
+            Camera eventCamera)
         {
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, screenPosition, eventCamera, out var localPoint))
+            if (!(rectTransform.parent is RectTransform parentRect) ||
+                !RectTransformUtility.ScreenPointToWorldPointInRectangle(
+                    parentRect,
+                    screenPosition,
+                    eventCamera,
+                    out Vector3 pointerWorldPosition))
             {
-                return Vector2Int.zero;
+                return;
             }
 
-            var rect = rectTransform.rect;
-            var fromTopLeft = new Vector2(localPoint.x - rect.xMin, rect.yMax - localPoint.y);
-            var grid = GridView != null ? GridView : null;
-            var cellSize = grid != null ? grid.CellSize : new Vector2(80f, 80f);
-            var spacing = grid != null ? grid.Spacing : new Vector2(8f, 8f);
-            var x = Mathf.FloorToInt(fromTopLeft.x / (cellSize.x + spacing.x));
-            var y = Mathf.FloorToInt(fromTopLeft.y / (cellSize.y + spacing.y));
-            var candidate = new Vector2Int(Mathf.Max(0, x), Mathf.Max(0, y));
+            Vector3 targetPosition = pointerWorldPosition -
+                GetGrabCellCenterWorldOffset();
+            dragPositionTween?.Kill();
+            dragPositionTween = rectTransform.DOMove(
+                    targetPosition,
+                    0.12f)
+                .SetEase(Ease.OutQuad);
+        }
 
-            foreach (var offset in Instance.Data.ShapeOffsets)
-            {
-                if (offset == candidate)
-                {
-                    return candidate;
-                }
-            }
+        private Vector3 GetGrabCellCenterWorldOffset()
+        {
+            Vector2 pitch = shapeCellSize + shapeSpacing;
+            Rect rect = rectTransform.rect;
+            Vector3 localCellCenter = new Vector3(
+                rect.xMin + GrabCellOffset.x * pitch.x +
+                    shapeCellSize.x * 0.5f,
+                rect.yMax - GrabCellOffset.y * pitch.y -
+                    shapeCellSize.y * 0.5f);
 
-            return FindNearestShapeOffset(candidate, Instance.Data.ShapeOffsets);
+            return rectTransform.TransformVector(localCellCenter);
         }
 
         private static Vector2Int GetShapeBounds(IReadOnlyList<Vector2Int> offsets)
@@ -827,24 +841,6 @@ namespace BackpackPrototype
             }
 
             return max;
-        }
-
-        private static Vector2Int FindNearestShapeOffset(Vector2Int candidate, IReadOnlyList<Vector2Int> offsets)
-        {
-            var nearest = offsets.Count > 0 ? offsets[0] : Vector2Int.zero;
-            var nearestDistance = int.MaxValue;
-
-            foreach (var offset in offsets)
-            {
-                var distance = Mathf.Abs(offset.x - candidate.x) + Mathf.Abs(offset.y - candidate.y);
-                if (distance < nearestDistance)
-                {
-                    nearest = offset;
-                    nearestDistance = distance;
-                }
-            }
-
-            return nearest;
         }
     }
 }

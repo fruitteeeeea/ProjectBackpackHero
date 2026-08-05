@@ -4,210 +4,154 @@ using UnityEngine;
 
 namespace BackpackHero.EditorTools
 {
-    /// <summary>全局游戏节奏的 Play Mode 调试面板。</summary>
+    /// <summary>玩法设计页：草稿编辑、运行时应用和资产持久化明确分离。</summary>
     internal sealed class GamePacingDebugWindow : ScriptableObject
     {
-        private const string DefaultSettingsAssetPath =
-            "Assets/Resources/GamePacingDebugSettings.asset";
-
-        private bool showSaveDefaultButton;
-        private GamePacingDebugRuntime boundRuntime;
-
-        private void BindDefaultSettingsAsset()
-        {
-            GamePacingDebugRuntime runtime =
-                GamePacingDebugRuntime.Instance;
-            if (runtime == null || runtime == boundRuntime)
-            {
-                return;
-            }
-
-            // 该资产可能由版本控制新同步到项目中；先强制导入，
-            // 再通过AssetDatabase取得真实对象引用。
-            AssetDatabase.ImportAsset(
-                DefaultSettingsAssetPath,
-                ImportAssetOptions.ForceUpdate |
-                ImportAssetOptions.ForceSynchronousImport);
-
-            GamePacingDebugSettings defaultSettings =
-                AssetDatabase.LoadAssetAtPath<
-                    GamePacingDebugSettings>(
-                    DefaultSettingsAssetPath);
-
-            if (defaultSettings == null)
-            {
-                Debug.LogError(
-                    "无法加载全局节奏默认配置资产：" +
-                    DefaultSettingsAssetPath);
-                return;
-            }
-
-            runtime.SetDefaultSettings(defaultSettings);
-            boundRuntime = runtime;
-        }
+        private readonly DebugDraft<GamePacingMultipliers> draft = new();
+        private GamePacingDebugSettings settingsTarget;
+        private GamePacingDebugRuntime lastRuntime;
+        private string validationMessage;
 
         internal void DrawTab()
         {
-            BindDefaultSettingsAsset();
             EditorGUILayout.Space(8f);
-            EditorGUILayout.LabelField(
-                "全局游戏节奏调试",
-                EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("全局游戏节奏调试", EditorStyles.boldLabel);
 
             if (!EditorApplication.isPlaying)
             {
-                EditorGUILayout.HelpBox(
-                    "进入 Play Mode 后，面板会自动连接全局调试运行时。",
-                    MessageType.Info);
+                EditorGUILayout.HelpBox("进入 Play Mode 后，面板会自动连接全局调试运行时。", MessageType.Info);
                 return;
             }
 
-            GamePacingDebugRuntime runtime =
-                GamePacingDebugRuntime.Instance;
+            GamePacingDebugRuntime runtime = GamePacingDebugRuntime.Instance;
             if (runtime == null)
             {
-                EditorGUILayout.HelpBox(
-                    "正在等待全局节奏调试运行时启动。",
-                    MessageType.Warning);
+                EditorGUILayout.HelpBox("正在等待全局节奏调试运行时启动。", MessageType.Warning);
                 return;
             }
 
-            if (runtime.DefaultSettings == null)
-            {
-                BindDefaultSettingsAsset();
-            }
-
-            DrawMultipliers(runtime);
-            EditorGUILayout.Space(10f);
+            SyncRuntime(runtime);
+            DrawSettingsTarget(runtime);
+            DrawMultipliers();
+            DrawValidation();
             DrawPersistence(runtime);
-            EditorGUILayout.Space(10f);
             DrawGameSpeed(runtime);
         }
 
-        private static void DrawMultipliers(
-            GamePacingDebugRuntime runtime)
+        private void SyncRuntime(GamePacingDebugRuntime runtime)
         {
+            if (runtime == lastRuntime)
+            {
+                return;
+            }
+
+            lastRuntime = runtime;
+            settingsTarget = runtime.DefaultSettings;
+            draft.Load(settingsTarget != null ? settingsTarget.GetValues() : runtime.Multipliers);
+        }
+
+        private void DrawSettingsTarget(GamePacingDebugRuntime runtime)
+        {
+            EditorGUILayout.Space(6f);
+            GamePacingDebugSettings nextTarget = (GamePacingDebugSettings)EditorGUILayout.ObjectField(
+                "保存目标", settingsTarget, typeof(GamePacingDebugSettings), false);
+            if (nextTarget != settingsTarget)
+            {
+                settingsTarget = nextTarget;
+                draft.Load(settingsTarget != null ? settingsTarget.GetValues() : runtime.Multipliers);
+                validationMessage = null;
+            }
+
             EditorGUILayout.LabelField(
-                "战斗倍率",
-                EditorStyles.boldLabel);
+                "资产路径",
+                settingsTarget != null ? AssetDatabase.GetAssetPath(settingsTarget) : "未选择（请使用“另存为”创建配置）",
+                EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("未保存修改", draft.IsDirty ? "是" : "否", EditorStyles.miniLabel);
+        }
 
-            GamePacingMultipliers current =
-                runtime.Multipliers;
-            float aircraftSpeed = DrawMultiplier(
-                "飞机飞行速度",
-                current.AircraftSpeed);
-            float projectileDamage = DrawMultiplier(
-                "子弹伤害",
-                current.ProjectileDamage);
-            float aircraftHealth = DrawMultiplier(
-                "飞机血量",
-                current.AircraftHealth);
-            float playerBackpackHealth = DrawMultiplier(
-                "玩家背包血量",
-                current.PlayerBackpackHealth);
-            float enemyBackpackHealth = DrawMultiplier(
-                "敌人背包血量",
-                current.EnemyBackpackHealth);
-            EditorGUILayout.Space(4f);
-            float playerOverallStrength = DrawMultiplier(
-                "玩家整体强度",
-                current.PlayerOverallStrength);
-            float enemyOverallStrength = DrawMultiplier(
-                "敌人整体强度",
-                current.EnemyOverallStrength);
-
-            GamePacingMultipliers changed =
-                new(
-                    aircraftSpeed,
-                    projectileDamage,
-                    aircraftHealth,
-                    playerBackpackHealth,
-                    enemyBackpackHealth,
-                    playerOverallStrength,
-                    enemyOverallStrength);
-
+        private void DrawMultipliers()
+        {
+            EditorGUILayout.Space(8f);
+            EditorGUILayout.LabelField("编辑草稿", EditorStyles.boldLabel);
+            GamePacingMultipliers current = draft.Value;
+            GamePacingMultipliers changed = new(
+                DrawMultiplier("飞机飞行速度", current.AircraftSpeed),
+                DrawMultiplier("子弹伤害", current.ProjectileDamage),
+                DrawMultiplier("飞机血量", current.AircraftHealth),
+                DrawMultiplier("玩家背包血量", current.PlayerBackpackHealth),
+                DrawMultiplier("敌人背包血量", current.EnemyBackpackHealth),
+                DrawMultiplier("玩家整体强度", current.PlayerOverallStrength),
+                DrawMultiplier("敌人整体强度", current.EnemyOverallStrength));
             if (!AreEqual(current, changed))
             {
-                runtime.SetMultipliers(changed);
+                draft.Value = changed;
+                validationMessage = null;
             }
         }
 
-        private static float DrawMultiplier(
-            string label,
-            float value)
-        {
-            return EditorGUILayout.Slider(
-                label,
-                value,
-                GamePacingMultipliers.MinimumMultiplier,
+        private static float DrawMultiplier(string label, float value) =>
+            EditorGUILayout.Slider(label, value, GamePacingMultipliers.MinimumMultiplier,
                 GamePacingMultipliers.MaximumMultiplier);
+
+        private void DrawValidation()
+        {
+            if (!string.IsNullOrEmpty(validationMessage))
+            {
+                EditorGUILayout.HelpBox(validationMessage, MessageType.Error);
+            }
         }
 
-        private void DrawPersistence(
-            GamePacingDebugRuntime runtime)
+        private void DrawPersistence(GamePacingDebugRuntime runtime)
         {
-            EditorGUILayout.LabelField(
-                "配置资产",
-                EditorStyles.boldLabel);
-
-            using (new EditorGUILayout.VerticalScope(
-                       EditorStyles.helpBox))
+            EditorGUILayout.Space(10f);
+            EditorGUILayout.LabelField("配置操作", EditorStyles.boldLabel);
+            using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.ObjectField(
-                    "默认配置资产",
-                    runtime.DefaultSettings,
-                    typeof(GamePacingDebugSettings),
-                    false);
-
-                using (new EditorGUILayout.HorizontalScope())
+                if (GUILayout.Button("应用到运行时"))
                 {
-                    if (GUILayout.Button("加载"))
+                    if (ValidateDraft())
                     {
-                        runtime.LoadSavedValues();
-                    }
+                        if (settingsTarget != null)
+                        {
+                            runtime.SetDefaultSettings(settingsTarget);
+                        }
 
-                    if (GUILayout.Button("恢复默认"))
-                    {
-                        runtime.RestoreRuntimeDefaults();
+                        runtime.SetMultipliers(draft.Value);
                     }
                 }
 
-                showSaveDefaultButton =
-                    EditorGUILayout.ToggleLeft(
-                        "显示默认按钮",
-                        showSaveDefaultButton);
-
-                if (showSaveDefaultButton &&
-                    GUILayout.Button("保存至默认"))
+                using (new EditorGUI.DisabledScope(settingsTarget == null || !draft.IsDirty))
                 {
-                    if (runtime.SaveCurrentValuesAsDefault())
+                    if (GUILayout.Button("保存"))
                     {
-                        EditorUtility.SetDirty(
-                            runtime.DefaultSettings);
-                        AssetDatabase.SaveAssets();
+                        SaveToTarget(settingsTarget);
                     }
+                }
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("另存为"))
+                {
+                    SaveAs();
+                }
+
+                if (GUILayout.Button("还原"))
+                {
+                    draft.Load(settingsTarget != null ? settingsTarget.GetValues() : runtime.Multipliers);
+                    validationMessage = null;
                 }
             }
         }
 
-        private static void DrawGameSpeed(
-            GamePacingDebugRuntime runtime)
+        private void DrawGameSpeed(GamePacingDebugRuntime runtime)
         {
-            EditorGUILayout.LabelField(
-                "临时调试控制",
-                EditorStyles.boldLabel);
-            using (new EditorGUILayout.VerticalScope(
-                       EditorStyles.helpBox))
+            EditorGUILayout.Space(10f);
+            EditorGUILayout.LabelField("临时调试控制", EditorStyles.boldLabel);
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.HelpBox(
-                    "游戏速度只在当前 Play Mode 生效，退出或关闭面板后恢复为 1。",
-                    MessageType.None);
-
-                float speed = EditorGUILayout.Slider(
-                    "游戏速度",
-                    runtime.GameSpeed,
-                    0.5f,
-                    2f);
+                EditorGUILayout.HelpBox("游戏速度只在当前 Play Mode 生效，不会保存到玩法配置。", MessageType.None);
+                float speed = EditorGUILayout.Slider("游戏速度", runtime.GameSpeed, 0.5f, 2f);
                 if (!Mathf.Approximately(speed, runtime.GameSpeed))
                 {
                     runtime.SetGameSpeed(speed);
@@ -220,31 +164,69 @@ namespace BackpackHero.EditorTools
             }
         }
 
-        private static bool AreEqual(
-            GamePacingMultipliers left,
-            GamePacingMultipliers right)
+        private bool ValidateDraft()
         {
-            return Mathf.Approximately(
-                       left.AircraftSpeed,
-                       right.AircraftSpeed) &&
-                   Mathf.Approximately(
-                       left.ProjectileDamage,
-                       right.ProjectileDamage) &&
-                   Mathf.Approximately(
-                       left.AircraftHealth,
-                       right.AircraftHealth) &&
-                   Mathf.Approximately(
-                       left.PlayerBackpackHealth,
-                       right.PlayerBackpackHealth) &&
-                   Mathf.Approximately(
-                       left.EnemyBackpackHealth,
-                       right.EnemyBackpackHealth) &&
-                   Mathf.Approximately(
-                       left.PlayerOverallStrength,
-                       right.PlayerOverallStrength) &&
-                   Mathf.Approximately(
-                       left.EnemyOverallStrength,
-                       right.EnemyOverallStrength);
+            GamePacingMultipliers values = draft.Value;
+            if (!IsInRange(values.AircraftSpeed) || !IsInRange(values.ProjectileDamage) ||
+                !IsInRange(values.AircraftHealth) || !IsInRange(values.PlayerBackpackHealth) ||
+                !IsInRange(values.EnemyBackpackHealth) || !IsInRange(values.PlayerOverallStrength) ||
+                !IsInRange(values.EnemyOverallStrength))
+            {
+                validationMessage = "所有节奏倍率必须在允许范围内。";
+                return false;
+            }
+
+            validationMessage = null;
+            return true;
         }
+
+        private static bool IsInRange(float value) => value >= GamePacingMultipliers.MinimumMultiplier &&
+            value <= GamePacingMultipliers.MaximumMultiplier;
+
+        private void SaveAs()
+        {
+            if (!ValidateDraft())
+            {
+                return;
+            }
+
+            string path = EditorUtility.SaveFilePanelInProject(
+                "另存为游戏节奏配置", "GamePacingDebugSettings", "asset", "选择玩法配置位置");
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            GamePacingDebugSettings newSettings = CreateInstance<GamePacingDebugSettings>();
+            newSettings.SetValues(draft.Value);
+            AssetDatabase.CreateAsset(newSettings, path);
+            AssetDatabase.SaveAssets();
+            settingsTarget = newSettings;
+            draft.Load(newSettings.GetValues());
+            GamePacingDebugRuntime.Instance?.SetDefaultSettings(newSettings);
+        }
+
+        private void SaveToTarget(GamePacingDebugSettings target)
+        {
+            if (target == null || !ValidateDraft())
+            {
+                return;
+            }
+
+            Undo.RecordObject(target, "保存游戏节奏配置");
+            target.SetValues(draft.Value);
+            EditorUtility.SetDirty(target);
+            AssetDatabase.SaveAssets();
+            draft.Load(target.GetValues());
+        }
+
+        private static bool AreEqual(GamePacingMultipliers left, GamePacingMultipliers right) =>
+            Mathf.Approximately(left.AircraftSpeed, right.AircraftSpeed) &&
+            Mathf.Approximately(left.ProjectileDamage, right.ProjectileDamage) &&
+            Mathf.Approximately(left.AircraftHealth, right.AircraftHealth) &&
+            Mathf.Approximately(left.PlayerBackpackHealth, right.PlayerBackpackHealth) &&
+            Mathf.Approximately(left.EnemyBackpackHealth, right.EnemyBackpackHealth) &&
+            Mathf.Approximately(left.PlayerOverallStrength, right.PlayerOverallStrength) &&
+            Mathf.Approximately(left.EnemyOverallStrength, right.EnemyOverallStrength);
     }
 }

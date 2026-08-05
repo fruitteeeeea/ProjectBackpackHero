@@ -741,7 +741,10 @@ public sealed class PlayerBackpackSystemTests
                 "class PlayerBackpackDebugWindow"));
         Assert.That(
             File.ReadAllText("Assets/Editor/DebugCenterWindow.cs"),
-            Does.Contain("Tools/Debug/Debug Center"));
+            Does.Contain("Tools/Debug/程序测试面板"));
+        Assert.That(
+            File.ReadAllText("Assets/Editor/DebugCenterWindow.cs"),
+            Does.Contain("typeof(ProgramTestDebugCenterWindow)"));
         Assert.That(
             File.ReadAllText(
                 "Assets/Scripts/BackpackPrototype/" +

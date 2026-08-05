@@ -1,43 +1,38 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
+internal readonly struct DebugValueDraft : IEquatable<DebugValueDraft>
+{
+    public DebugValueDraft(int speed, int health, int damage)
+    {
+        Speed = speed;
+        Health = health;
+        Damage = damage;
+    }
+
+    public int Speed { get; }
+    public int Health { get; }
+    public int Damage { get; }
+
+    public bool Equals(DebugValueDraft other) =>
+        Speed == other.Speed && Health == other.Health && Damage == other.Damage;
+}
+
+/// <summary>程序测试参数页：草稿与运行时、资产保存明确分离。</summary>
 internal sealed class DebugValueWindow : ScriptableObject
 {
-    private int speedInput;
-    private int healthInput;
-    private int damageInput;
+    private const string PresetDirectory = "Assets/DebugPresets";
+
+    private readonly DebugDraft<DebugValueDraft> draft = new();
+    private DebugValueTestPreset preset;
     private DebugValueController lastTarget;
-
-    private void SyncInputsIfTargetChanged()
-    {
-        var target = DebugValueRuntimeBridge.Current;
-        if (target == lastTarget)
-        {
-            return;
-        }
-
-        lastTarget = target;
-        CopyValuesFromTarget(target);
-    }
-
-    private void CopyValuesFromTarget(DebugValueController target)
-    {
-        if (target == null)
-        {
-            return;
-        }
-
-        speedInput = target.Speed;
-        healthInput = target.Health;
-        damageInput = target.Damage;
-    }
+    private string validationMessage;
 
     internal void DrawTab()
     {
-        SyncInputsIfTargetChanged();
         EditorGUILayout.Space(8f);
-        EditorGUILayout.LabelField("运行时数据调试", EditorStyles.boldLabel);
-        EditorGUILayout.Space(4f);
+        EditorGUILayout.LabelField("运行时数值调试", EditorStyles.boldLabel);
 
         if (!EditorApplication.isPlaying)
         {
@@ -45,59 +40,187 @@ internal sealed class DebugValueWindow : ScriptableObject
             return;
         }
 
-        var target = DebugValueRuntimeBridge.Current;
+        DebugValueController target = DebugValueRuntimeBridge.Current;
         if (target == null)
         {
             EditorGUILayout.HelpBox("DebugValueController 尚未启动，或目标已因场景切换而丢失。", MessageType.Warning);
             return;
         }
 
-        EditorGUILayout.ObjectField("Target", target, typeof(DebugValueController), true);
-        EditorGUILayout.Space(8f);
-
-        DrawValueControl("Speed", target.Speed, ref speedInput, 1, DebugValueRuntimeBridge.SetSpeed);
-        DrawValueControl("Health", target.Health, ref healthInput, 10, DebugValueRuntimeBridge.SetHealth);
-        DrawValueControl("Damage", target.Damage, ref damageInput, 1, DebugValueRuntimeBridge.SetDamage);
-
-        EditorGUILayout.Space(12f);
-        if (GUILayout.Button("Reset Values", GUILayout.Height(30f)))
-        {
-            DebugValueRuntimeBridge.ResetValues();
-            CopyValuesFromTarget(DebugValueRuntimeBridge.Current);
-        }
+        SyncTarget(target);
+        DrawPresetTarget(target);
+        DrawDraftFields();
+        DrawValidation();
+        DrawActions(target);
     }
 
-    private static void DrawValueControl(
-        string label,
-        int currentValue,
-        ref int input,
-        int step,
-        System.Action<int> setter)
+    private void SyncTarget(DebugValueController target)
     {
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField($"当前 {label}：{currentValue}");
-        input = EditorGUILayout.IntField("新数值", input);
-
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button($"-{step}"))
+        if (target == lastTarget)
         {
-            setter(currentValue - step);
-            input = Mathf.Max(0, currentValue - step);
+            return;
         }
 
-        if (GUILayout.Button("应用"))
+        lastTarget = target;
+        if (!draft.HasValue)
         {
-            setter(input);
-            input = Mathf.Max(0, input);
+            draft.Load(ReadTarget(target));
         }
-
-        if (GUILayout.Button($"+{step}"))
-        {
-            setter(currentValue + step);
-            input = currentValue + step;
-        }
-
-        EditorGUILayout.EndHorizontal();
-        EditorGUILayout.EndVertical();
     }
+
+    private void DrawPresetTarget(DebugValueController target)
+    {
+        EditorGUILayout.Space(6f);
+        DebugValueTestPreset nextPreset = (DebugValueTestPreset)EditorGUILayout.ObjectField(
+            "测试预设", preset, typeof(DebugValueTestPreset), false);
+        if (nextPreset != preset)
+        {
+            preset = nextPreset;
+            draft.Load(preset != null ? ReadPreset(preset) : ReadTarget(target));
+            validationMessage = null;
+        }
+
+        EditorGUILayout.LabelField(
+            "保存目标",
+            preset != null ? AssetDatabase.GetAssetPath(preset) : "未选择（请使用“另存为”创建预设）",
+            EditorStyles.miniLabel);
+        EditorGUILayout.LabelField("未保存修改", draft.IsDirty ? "是" : "否", EditorStyles.miniLabel);
+    }
+
+    private void DrawDraftFields()
+    {
+        EditorGUILayout.Space(8f);
+        EditorGUILayout.LabelField("编辑草稿", EditorStyles.boldLabel);
+        DebugValueDraft value = draft.Value;
+        int speed = EditorGUILayout.IntField("Speed", value.Speed);
+        int health = EditorGUILayout.IntField("Health", value.Health);
+        int damage = EditorGUILayout.IntField("Damage", value.Damage);
+        if (speed != value.Speed || health != value.Health || damage != value.Damage)
+        {
+            draft.Value = new DebugValueDraft(speed, health, damage);
+            validationMessage = null;
+        }
+    }
+
+    private void DrawValidation()
+    {
+        if (!string.IsNullOrEmpty(validationMessage))
+        {
+            EditorGUILayout.HelpBox(validationMessage, MessageType.Error);
+        }
+    }
+
+    private void DrawActions(DebugValueController target)
+    {
+        EditorGUILayout.Space(10f);
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("应用到运行时"))
+            {
+                if (ValidateDraft())
+                {
+                    ApplyToRuntime(draft.Value);
+                }
+            }
+
+            using (new EditorGUI.DisabledScope(preset == null || !draft.IsDirty))
+            {
+                if (GUILayout.Button("保存"))
+                {
+                    SaveToPreset(preset);
+                }
+            }
+        }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("另存为"))
+            {
+                SaveAs();
+            }
+
+            if (GUILayout.Button("还原"))
+            {
+                draft.Load(preset != null ? ReadPreset(preset) : ReadTarget(target));
+                validationMessage = null;
+            }
+        }
+
+        EditorGUILayout.Space(8f);
+        EditorGUILayout.LabelField("运行时当前值", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Speed", target.Speed.ToString());
+        EditorGUILayout.LabelField("Health", target.Health.ToString());
+        EditorGUILayout.LabelField("Damage", target.Damage.ToString());
+    }
+
+    private bool ValidateDraft()
+    {
+        DebugValueDraft value = draft.Value;
+        if (value.Speed < 0 || value.Health < 0 || value.Damage < 0)
+        {
+            validationMessage = "Speed、Health 和 Damage 必须为非负整数。";
+            return false;
+        }
+
+        validationMessage = null;
+        return true;
+    }
+
+    private void ApplyToRuntime(DebugValueDraft value)
+    {
+        DebugValueRuntimeBridge.SetSpeed(value.Speed);
+        DebugValueRuntimeBridge.SetHealth(value.Health);
+        DebugValueRuntimeBridge.SetDamage(value.Damage);
+    }
+
+    private void SaveAs()
+    {
+        if (!ValidateDraft())
+        {
+            return;
+        }
+
+        EnsurePresetDirectory();
+        string path = EditorUtility.SaveFilePanelInProject(
+            "保存数值测试预设", "DebugValueTestPreset", "asset", "选择测试预设位置", PresetDirectory);
+        if (string.IsNullOrEmpty(path))
+        {
+            return;
+        }
+
+        DebugValueTestPreset newPreset = CreateInstance<DebugValueTestPreset>();
+        newPreset.SetValues(draft.Value.Speed, draft.Value.Health, draft.Value.Damage);
+        AssetDatabase.CreateAsset(newPreset, path);
+        AssetDatabase.SaveAssets();
+        preset = newPreset;
+        draft.Load(ReadPreset(preset));
+    }
+
+    private void SaveToPreset(DebugValueTestPreset targetPreset)
+    {
+        if (targetPreset == null || !ValidateDraft())
+        {
+            return;
+        }
+
+        Undo.RecordObject(targetPreset, "保存数值测试预设");
+        targetPreset.SetValues(draft.Value.Speed, draft.Value.Health, draft.Value.Damage);
+        EditorUtility.SetDirty(targetPreset);
+        AssetDatabase.SaveAssets();
+        draft.Load(ReadPreset(targetPreset));
+    }
+
+    private static void EnsurePresetDirectory()
+    {
+        if (!AssetDatabase.IsValidFolder(PresetDirectory))
+        {
+            AssetDatabase.CreateFolder("Assets", "DebugPresets");
+        }
+    }
+
+    private static DebugValueDraft ReadTarget(DebugValueController target) =>
+        new(target.Speed, target.Health, target.Damage);
+
+    private static DebugValueDraft ReadPreset(DebugValueTestPreset source) =>
+        new(source.Speed, source.Health, source.Damage);
 }

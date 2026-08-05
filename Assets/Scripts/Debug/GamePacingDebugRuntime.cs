@@ -165,20 +165,6 @@ namespace BackpackHero.Debugging
                 : GamePacingMultipliers.Default);
         }
 
-        public bool SaveCurrentValuesAsDefault()
-        {
-            if (defaultSettings == null)
-            {
-                Debug.LogWarning(
-                    "找不到 Resources/GamePacingDebugSettings 配置资产。",
-                    this);
-                return false;
-            }
-
-            defaultSettings.SetValues(multipliers);
-            return true;
-        }
-
         public void SetGameSpeed(float value)
         {
 #if UNITY_EDITOR

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using BackpackHero.Background;
 using BackpackHero.Battle;
 using BackpackHero.Debugging;
@@ -8,6 +10,12 @@ using UnityEngine;
 
 namespace BackpackHero.EditorTools
 {
+    internal enum DebugCenterKind
+    {
+        ProgramTest,
+        GameplayDesign
+    }
+
     internal enum DebugCenterTab
     {
         Runtime,
@@ -16,219 +24,358 @@ namespace BackpackHero.EditorTools
         PlayerBackpack,
         Battle,
         TestShooter,
-        GamePacing,
-        BackgroundPhysics
+        BackgroundPhysics,
+        GamePacing
     }
 
-    /// <summary>唯一的 Play Mode 调试工具宿主窗口。</summary>
-    public sealed class DebugCenterWindow : EditorWindow
+    internal sealed class DebugCenterTabDefinition
     {
-        private const string LastTabPreferenceKey =
-            "BackpackHero.DebugCenter.LastTab";
-
-        private static readonly string[] TabLabels =
+        public DebugCenterTabDefinition(
+            DebugCenterTab tab,
+            DebugCenterKind center,
+            string label,
+            Func<bool> isAvailable,
+            Func<ScriptableObject> createContent,
+            bool isDefault = false)
         {
-            "Runtime", "数值", "滑动曲线", "玩家背包",
-            "战斗", "Test Shooter", "游戏节奏", "星图物理"
+            Tab = tab;
+            Center = center;
+            Label = label;
+            IsAvailable = isAvailable;
+            CreateContent = createContent;
+            IsDefault = isDefault;
+        }
+
+        public DebugCenterTab Tab { get; }
+        public DebugCenterKind Center { get; }
+        public string Label { get; }
+        public Func<bool> IsAvailable { get; }
+        public Func<ScriptableObject> CreateContent { get; }
+        public bool IsDefault { get; }
+    }
+
+    /// <summary>集中注册所有 Editor 调试页，业务代码不依赖具体窗口类型。</summary>
+    internal static class DebugCenterRegistry
+    {
+        private static readonly DebugCenterTabDefinition[] Definitions =
+        {
+            new(DebugCenterTab.Runtime, DebugCenterKind.ProgramTest, "Runtime",
+                () => EditorApplication.isPlaying,
+                () => ScriptableObject.CreateInstance<RuntimeDebugWindow>()),
+            new(DebugCenterTab.Values, DebugCenterKind.ProgramTest, "数值",
+                () => DebugValueRuntimeBridge.HasTarget,
+                () => ScriptableObject.CreateInstance<DebugValueWindow>()),
+            new(DebugCenterTab.SwipeCurve, DebugCenterKind.ProgramTest, "滑动曲线",
+                () => HorizontalSwipeCurveDebugBridge.HasTarget,
+                () => ScriptableObject.CreateInstance<HorizontalSwipeCurveDebugWindow>()),
+            new(DebugCenterTab.PlayerBackpack, DebugCenterKind.ProgramTest, "玩家背包",
+                () => PlayerBackpackDebugBridge.Active != null && PlayerBackpackDebugBridge.Active.DebugEnabled,
+                () => ScriptableObject.CreateInstance<PlayerBackpackDebugWindow>()),
+            new(DebugCenterTab.Battle, DebugCenterKind.ProgramTest, "战斗",
+                () => BattleDebugRuntime.Instance != null,
+                () => ScriptableObject.CreateInstance<BattleDebugWindow>()),
+            new(DebugCenterTab.TestShooter, DebugCenterKind.ProgramTest, "Test Shooter",
+                () => TestShooterDebugRuntimeBridge.HasTarget,
+                () => ScriptableObject.CreateInstance<TestShooterDebugWindow>()),
+            new(DebugCenterTab.BackgroundPhysics, DebugCenterKind.ProgramTest, "星图物理",
+                () => BackgroundPhysicsDebugRuntime.Instance != null,
+                () => ScriptableObject.CreateInstance<BackgroundPhysicsDebugWindow>(), true),
+            new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
+                () => GamePacingDebugRuntime.Instance != null,
+                () => ScriptableObject.CreateInstance<GamePacingDebugWindow>(), true)
         };
 
+        internal static IEnumerable<DebugCenterTabDefinition> GetTabs(DebugCenterKind center)
+        {
+            foreach (DebugCenterTabDefinition definition in Definitions)
+            {
+                if (definition.Center == center)
+                {
+                    yield return definition;
+                }
+            }
+        }
+
+        internal static DebugCenterTabDefinition Get(DebugCenterTab tab)
+        {
+            foreach (DebugCenterTabDefinition definition in Definitions)
+            {
+                if (definition.Tab == tab)
+                {
+                    return definition;
+                }
+            }
+
+            return null;
+        }
+
+        internal static bool HasAvailableRuntime(DebugCenterKind center)
+        {
+            foreach (DebugCenterTabDefinition definition in GetTabs(center))
+            {
+                if (definition.IsAvailable())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    internal abstract class DebugCenterWindowBase : EditorWindow
+    {
+        private readonly Dictionary<DebugCenterTab, ScriptableObject> contents = new();
         private DebugCenterTab selectedTab;
-        private bool hasSavedSelection;
-        private RuntimeDebugWindow runtimeTab;
-        private DebugValueWindow valuesTab;
-        private HorizontalSwipeCurveDebugWindow swipeCurveTab;
-        private PlayerBackpackDebugWindow playerBackpackTab;
-        private BattleDebugWindow battleTab;
-        private TestShooterDebugWindow testShooterTab;
-        private GamePacingDebugWindow gamePacingTab;
-        private BackgroundPhysicsDebugWindow backgroundPhysicsTab;
+        private bool hasSelection;
 
-        [MenuItem("Tools/Debug/Debug Center")]
-        public static void OpenFromMenu() => Open();
+        protected abstract DebugCenterKind Center { get; }
+        protected abstract string PreferenceKey { get; }
 
-        internal static DebugCenterWindow Open(DebugCenterTab? preferredTab = null)
+        protected void Initialize(string title)
         {
-            DebugCenterWindow window = GetWindow<DebugCenterWindow>();
-            window.titleContent = new GUIContent("Debug Center");
-            window.minSize = new Vector2(440f, 360f);
-            window.Show();
+            titleContent = new GUIContent(title);
+            minSize = new Vector2(440f, 360f);
+            RestoreOrSelectDefault();
+        }
 
-            if (preferredTab.HasValue)
+        internal void Select(DebugCenterTab tab)
+        {
+            DebugCenterTabDefinition definition = DebugCenterRegistry.Get(tab);
+            if (definition == null || definition.Center != Center)
             {
-                window.SelectTab(preferredTab.Value);
-            }
-            else if (!window.hasSavedSelection ||
-                     !window.IsTabAvailable(window.selectedTab))
-            {
-                window.SelectFirstAvailableTab();
+                return;
             }
 
-            return window;
-        }
-
-        internal static void CloseAllWindows()
-        {
-            foreach (DebugCenterWindow window in
-                     Resources.FindObjectsOfTypeAll<DebugCenterWindow>())
-            {
-                window.Close();
-            }
-        }
-
-        private void OnEnable()
-        {
-            hasSavedSelection = EditorPrefs.HasKey(LastTabPreferenceKey);
-            selectedTab = (DebugCenterTab)Mathf.Clamp(
-                EditorPrefs.GetInt(LastTabPreferenceKey, 0),
-                0,
-                TabLabels.Length - 1);
-
-            runtimeTab = CreateInstance<RuntimeDebugWindow>();
-            valuesTab = CreateInstance<DebugValueWindow>();
-            swipeCurveTab = CreateInstance<HorizontalSwipeCurveDebugWindow>();
-            playerBackpackTab = CreateInstance<PlayerBackpackDebugWindow>();
-            battleTab = CreateInstance<BattleDebugWindow>();
-            testShooterTab = CreateInstance<TestShooterDebugWindow>();
-            gamePacingTab = CreateInstance<GamePacingDebugWindow>();
-            backgroundPhysicsTab = CreateInstance<BackgroundPhysicsDebugWindow>();
-        }
-
-        private void OnDisable()
-        {
-            GamePacingDebugRuntime.Instance?.ResetGameSpeed();
-            DestroyTab(runtimeTab);
-            DestroyTab(valuesTab);
-            DestroyTab(swipeCurveTab);
-            DestroyTab(playerBackpackTab);
-            DestroyTab(battleTab);
-            DestroyTab(testShooterTab);
-            DestroyTab(gamePacingTab);
-            DestroyTab(backgroundPhysicsTab);
-        }
-
-        private void Update()
-        {
+            selectedTab = tab;
+            hasSelection = true;
+            EditorPrefs.SetInt(PreferenceKey, (int)tab);
             Repaint();
         }
 
-        private void OnGUI()
+        protected virtual void OnEnable()
         {
+            if (EditorPrefs.HasKey(PreferenceKey))
+            {
+                selectedTab = (DebugCenterTab)EditorPrefs.GetInt(PreferenceKey);
+                DebugCenterTabDefinition definition = DebugCenterRegistry.Get(selectedTab);
+                hasSelection = definition != null && definition.Center == Center;
+            }
+        }
+
+        protected virtual void OnDisable()
+        {
+            foreach (ScriptableObject content in contents.Values)
+            {
+                if (content != null)
+                {
+                    DestroyImmediate(content);
+                }
+            }
+
+            contents.Clear();
+        }
+
+        protected virtual void Update() => Repaint();
+
+        protected virtual void OnGUI()
+        {
+            RestoreOrSelectDefault();
             DrawToolbar();
             EditorGUILayout.Space(6f);
-            DrawSelectedTab();
+            DrawSelectedContent();
         }
 
-        private void DrawToolbar()
+        private void RestoreOrSelectDefault()
         {
-            int nextIndex = GUILayout.Toolbar(
-                (int)selectedTab,
-                GetToolbarLabels(),
-                EditorStyles.toolbarButton);
-            if (nextIndex != (int)selectedTab)
+            DebugCenterTabDefinition selected = hasSelection
+                ? DebugCenterRegistry.Get(selectedTab)
+                : null;
+            if (selected != null && selected.Center == Center && selected.IsAvailable())
             {
-                SelectTab((DebugCenterTab)nextIndex);
+                return;
             }
 
-            EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
-            EditorGUILayout.LabelField(
-                $"当前页：{TabLabels[(int)selectedTab]}",
-                EditorStyles.miniLabel);
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.LabelField(
-                IsTabAvailable(selectedTab) ? "运行时已连接" : "运行时未连接",
-                EditorStyles.miniLabel,
-                GUILayout.Width(100f));
-            EditorGUILayout.EndHorizontal();
-        }
-
-        private void DrawSelectedTab()
-        {
-            switch (selectedTab)
+            foreach (DebugCenterTabDefinition definition in DebugCenterRegistry.GetTabs(Center))
             {
-                case DebugCenterTab.Runtime: runtimeTab.DrawTab(); break;
-                case DebugCenterTab.Values: valuesTab.DrawTab(); break;
-                case DebugCenterTab.SwipeCurve: swipeCurveTab.DrawTab(); break;
-                case DebugCenterTab.PlayerBackpack: playerBackpackTab.DrawTab(); break;
-                case DebugCenterTab.Battle: battleTab.DrawTab(); break;
-                case DebugCenterTab.TestShooter: testShooterTab.DrawTab(); break;
-                case DebugCenterTab.GamePacing: gamePacingTab.DrawTab(); break;
-                case DebugCenterTab.BackgroundPhysics: backgroundPhysicsTab.DrawTab(); break;
-            }
-        }
-
-        private void SelectFirstAvailableTab()
-        {
-            for (int index = 1; index < TabLabels.Length; index++)
-            {
-                DebugCenterTab tab = (DebugCenterTab)index;
-                if (IsTabAvailable(tab))
+                if (definition.IsDefault && definition.IsAvailable())
                 {
-                    SelectTab(tab);
+                    Select(definition.Tab);
                     return;
                 }
             }
 
-            SelectTab(DebugCenterTab.Runtime);
-        }
-
-        private string[] GetToolbarLabels()
-        {
-            string[] labels = new string[TabLabels.Length];
-            for (int index = 0; index < TabLabels.Length; index++)
+            foreach (DebugCenterTabDefinition definition in DebugCenterRegistry.GetTabs(Center))
             {
-                labels[index] = IsTabAvailable((DebugCenterTab)index)
-                    ? $"● {TabLabels[index]}"
-                    : $"○ {TabLabels[index]}";
+                if (definition.IsAvailable())
+                {
+                    Select(definition.Tab);
+                    return;
+                }
             }
 
-            return labels;
-        }
-
-        private void SelectTab(DebugCenterTab tab)
-        {
-            selectedTab = tab;
-            EditorPrefs.SetInt(LastTabPreferenceKey, (int)tab);
-            Repaint();
-        }
-
-        internal static bool HasAvailableRuntime()
-        {
-            return DebugValueRuntimeBridge.HasTarget ||
-                   HorizontalSwipeCurveDebugBridge.HasTarget ||
-                   (PlayerBackpackDebugBridge.Active != null &&
-                    PlayerBackpackDebugBridge.Active.DebugEnabled) ||
-                   BattleDebugRuntime.Instance != null ||
-                   TestShooterDebugRuntimeBridge.HasTarget ||
-                   GamePacingDebugRuntime.Instance != null ||
-                   BackgroundPhysicsDebugRuntime.Instance != null;
-        }
-
-        private bool IsTabAvailable(DebugCenterTab tab)
-        {
-            if (!EditorApplication.isPlaying)
+            foreach (DebugCenterTabDefinition definition in DebugCenterRegistry.GetTabs(Center))
             {
-                return false;
+                if (definition.IsDefault)
+                {
+                    Select(definition.Tab);
+                    return;
+                }
+            }
+        }
+
+        private void DrawToolbar()
+        {
+            List<DebugCenterTabDefinition> tabs = new(DebugCenterRegistry.GetTabs(Center));
+            string[] labels = new string[tabs.Count];
+            int currentIndex = 0;
+            for (int index = 0; index < tabs.Count; index++)
+            {
+                DebugCenterTabDefinition definition = tabs[index];
+                labels[index] = definition.IsAvailable() ? $"● {definition.Label}" : $"○ {definition.Label}";
+                if (definition.Tab == selectedTab)
+                {
+                    currentIndex = index;
+                }
             }
 
-            return tab switch
+            int nextIndex = GUILayout.Toolbar(currentIndex, labels, EditorStyles.toolbarButton);
+            if (nextIndex >= 0 && nextIndex < tabs.Count && nextIndex != currentIndex)
             {
-                DebugCenterTab.Runtime => true,
-                DebugCenterTab.Values => DebugValueRuntimeBridge.HasTarget,
-                DebugCenterTab.SwipeCurve => HorizontalSwipeCurveDebugBridge.HasTarget,
-                DebugCenterTab.PlayerBackpack => PlayerBackpackDebugBridge.Active != null && PlayerBackpackDebugBridge.Active.DebugEnabled,
-                DebugCenterTab.Battle => BattleDebugRuntime.Instance != null,
-                DebugCenterTab.TestShooter => TestShooterDebugRuntimeBridge.HasTarget,
-                DebugCenterTab.GamePacing => GamePacingDebugRuntime.Instance != null,
-                DebugCenterTab.BackgroundPhysics => BackgroundPhysicsDebugRuntime.Instance != null,
-                _ => false
-            };
+                Select(tabs[nextIndex].Tab);
+            }
+
+            EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
+            DebugCenterTabDefinition selected = DebugCenterRegistry.Get(selectedTab);
+            EditorGUILayout.LabelField($"当前页：{selected?.Label ?? "-"}", EditorStyles.miniLabel);
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.LabelField(
+                selected != null && selected.IsAvailable() ? "运行时已连接" : "运行时未连接",
+                EditorStyles.miniLabel, GUILayout.Width(100f));
+            EditorGUILayout.EndHorizontal();
         }
 
-        private static void DestroyTab(Object tab)
+        private void DrawSelectedContent()
         {
-            if (tab != null)
+            DebugCenterTabDefinition definition = DebugCenterRegistry.Get(selectedTab);
+            if (definition == null || definition.Center != Center)
             {
-                DestroyImmediate(tab);
+                EditorGUILayout.HelpBox("没有可用的调试页。", MessageType.Info);
+                return;
+            }
+
+            if (!contents.TryGetValue(definition.Tab, out ScriptableObject content) || content == null)
+            {
+                content = definition.CreateContent();
+                contents[definition.Tab] = content;
+            }
+
+            switch (content)
+            {
+                case RuntimeDebugWindow runtime: runtime.DrawTab(); break;
+                case DebugValueWindow values: values.DrawTab(); break;
+                case HorizontalSwipeCurveDebugWindow swipe: swipe.DrawTab(); break;
+                case PlayerBackpackDebugWindow backpack: backpack.DrawTab(); break;
+                case BattleDebugWindow battle: battle.DrawTab(); break;
+                case TestShooterDebugWindow shooter: shooter.DrawTab(); break;
+                case BackgroundPhysicsDebugWindow background: background.DrawTab(); break;
+                case GamePacingDebugWindow pacing: pacing.DrawTab(); break;
+            }
+        }
+    }
+
+    internal sealed class ProgramTestDebugCenterWindow : DebugCenterWindowBase
+    {
+        protected override DebugCenterKind Center => DebugCenterKind.ProgramTest;
+        protected override string PreferenceKey => "BackpackHero.DebugCenter.ProgramTest.LastTab";
+
+        [MenuItem("Tools/Debug/程序测试面板")]
+        internal static void OpenFromMenu() => DebugCenterWorkspace.Open();
+
+        internal static ProgramTestDebugCenterWindow Open(
+            DebugCenterTab? preferredTab = null,
+            bool focus = true)
+        {
+            ProgramTestDebugCenterWindow window = EditorWindow.GetWindow<ProgramTestDebugCenterWindow>(
+                "程序测试面板", focus);
+            window.Initialize("程序测试面板");
+            if (preferredTab.HasValue)
+            {
+                window.Select(preferredTab.Value);
+            }
+
+            if (focus)
+            {
+                window.Focus();
+            }
+
+            return window;
+        }
+    }
+
+    internal sealed class GameplayDesignDebugCenterWindow : DebugCenterWindowBase
+    {
+        protected override DebugCenterKind Center => DebugCenterKind.GameplayDesign;
+        protected override string PreferenceKey => "BackpackHero.DebugCenter.GameplayDesign.LastTab";
+
+        [MenuItem("Tools/Debug/玩法设计面板")]
+        internal static void OpenFromMenu() => DebugCenterWorkspace.Open();
+
+        internal static GameplayDesignDebugCenterWindow Open(
+            DebugCenterTab? preferredTab = null,
+            bool focus = true,
+            bool dockNextToProgramPanel = false)
+        {
+            GameplayDesignDebugCenterWindow window = dockNextToProgramPanel
+                ? EditorWindow.GetWindow<GameplayDesignDebugCenterWindow>(
+                    "玩法设计面板",
+                    focus,
+                    typeof(ProgramTestDebugCenterWindow))
+                : EditorWindow.GetWindow<GameplayDesignDebugCenterWindow>(
+                    "玩法设计面板", focus);
+            window.Initialize("玩法设计面板");
+            if (preferredTab.HasValue)
+            {
+                window.Select(preferredTab.Value);
+            }
+
+            if (focus)
+            {
+                window.Focus();
+            }
+
+            return window;
+        }
+    }
+
+    /// <summary>按固定顺序创建双 Center，以便使用公开 API 尝试将其并列停靠。</summary>
+    internal static class DebugCenterWorkspace
+    {
+        internal static void Open(DebugCenterTab? preferredTab = null)
+        {
+            ProgramTestDebugCenterWindow programPanel =
+                ProgramTestDebugCenterWindow.Open(focus: false);
+            GameplayDesignDebugCenterWindow designPanel =
+                GameplayDesignDebugCenterWindow.Open(
+                    focus: false,
+                    dockNextToProgramPanel: true);
+
+            if (!preferredTab.HasValue)
+            {
+                return;
+            }
+
+            DebugCenterTabDefinition definition =
+                DebugCenterRegistry.Get(preferredTab.Value);
+            if (definition?.Center == DebugCenterKind.ProgramTest)
+            {
+                programPanel.Select(preferredTab.Value);
+                programPanel.Focus();
+            }
+            else if (definition?.Center == DebugCenterKind.GameplayDesign)
+            {
+                designPanel.Select(preferredTab.Value);
+                designPanel.Focus();
             }
         }
     }
@@ -236,7 +383,7 @@ namespace BackpackHero.EditorTools
     [InitializeOnLoad]
     internal static class DebugCenterWindowLifecycle
     {
-        private static bool runtimeWasAvailable;
+        private static readonly Dictionary<DebugCenterTab, bool> WasAvailable = new();
 
         static DebugCenterWindowLifecycle()
         {
@@ -246,28 +393,63 @@ namespace BackpackHero.EditorTools
 
         private static void MonitorRuntime()
         {
-            bool runtimeIsAvailable = EditorApplication.isPlaying &&
-                DebugCenterWindow.HasAvailableRuntime();
-
-            if (runtimeIsAvailable && !runtimeWasAvailable)
+            foreach (DebugCenterTabDefinition definition in GetDefinitions())
             {
-                DebugCenterWindow.Open();
+                bool available = EditorApplication.isPlaying && definition.IsAvailable();
+                WasAvailable.TryGetValue(definition.Tab, out bool wasAvailable);
+                if (available && !wasAvailable)
+                {
+                    OpenFor(definition);
+                }
+
+                WasAvailable[definition.Tab] = available;
             }
-            else if (!runtimeIsAvailable && runtimeWasAvailable)
+        }
+
+        private static IEnumerable<DebugCenterTabDefinition> GetDefinitions()
+        {
+            foreach (DebugCenterTabDefinition definition in DebugCenterRegistry.GetTabs(DebugCenterKind.ProgramTest))
             {
-                DebugCenterWindow.CloseAllWindows();
+                yield return definition;
             }
 
-            runtimeWasAvailable = runtimeIsAvailable;
+            foreach (DebugCenterTabDefinition definition in DebugCenterRegistry.GetTabs(DebugCenterKind.GameplayDesign))
+            {
+                yield return definition;
+            }
+        }
+
+        private static void OpenFor(DebugCenterTabDefinition definition)
+        {
+            DebugCenterWorkspace.Open(definition.Tab);
         }
 
         private static void HandlePlayModeStateChanged(PlayModeStateChange state)
         {
-            if (state == PlayModeStateChange.ExitingPlayMode ||
-                state == PlayModeStateChange.EnteredEditMode)
+            if (state == PlayModeStateChange.ExitingEditMode)
             {
-                runtimeWasAvailable = false;
-                DebugCenterWindow.CloseAllWindows();
+                WasAvailable.Clear();
+                CloseAll<ProgramTestDebugCenterWindow>();
+                CloseAll<GameplayDesignDebugCenterWindow>();
+                return;
+            }
+
+            if (state != PlayModeStateChange.ExitingPlayMode && state != PlayModeStateChange.EnteredEditMode)
+            {
+                return;
+            }
+
+            WasAvailable.Clear();
+            GamePacingDebugRuntime.Instance?.ResetGameSpeed();
+            CloseAll<ProgramTestDebugCenterWindow>();
+            CloseAll<GameplayDesignDebugCenterWindow>();
+        }
+
+        private static void CloseAll<T>() where T : EditorWindow
+        {
+            foreach (T window in Resources.FindObjectsOfTypeAll<T>())
+            {
+                window.Close();
             }
         }
     }

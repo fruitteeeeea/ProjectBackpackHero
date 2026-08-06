@@ -85,7 +85,7 @@ namespace BackpackHero.EditorTools
             GamePacingMultipliers current = draft.Value;
             EditorGUILayout.LabelField("白板倍率", EditorStyles.boldLabel);
             float whiteboardCooldown = DrawMultiplier(
-                "白板倍率", current.WhiteboardCooldown);
+                "物品CD冷却倍率", current.WhiteboardCooldown);
             float aircraftSpeed = DrawMultiplier(
                 "飞机飞行速度", current.AircraftSpeed);
             float projectileDamage = DrawMultiplier(

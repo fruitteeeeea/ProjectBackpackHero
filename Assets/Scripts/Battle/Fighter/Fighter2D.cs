@@ -108,12 +108,14 @@ namespace BackpackHero.Battle
         {
             GamePacingDebugRuntime.MultipliersChanged +=
                 HandlePacingChanged;
+            LevelDifficultyRuntime.Changed += HandleLevelDifficultyChanged;
         }
 
         private void OnDisable()
         {
             GamePacingDebugRuntime.MultipliersChanged -=
                 HandlePacingChanged;
+            LevelDifficultyRuntime.Changed -= HandleLevelDifficultyChanged;
         }
 
         /// <summary>
@@ -198,6 +200,11 @@ namespace BackpackHero.Battle
             ApplyPacingHealth();
         }
 
+        private void HandleLevelDifficultyChanged()
+        {
+            ApplyPacingHealth();
+        }
+
         private void ApplyPacingHealth()
         {
             if (health == null || definition == null)
@@ -208,6 +215,8 @@ namespace BackpackHero.Battle
             health.SetMaximumHealthAndFill(
                 definition.MaximumHealth *
                 GamePacingDebugRuntime.GetAircraftHealthMultiplier(
+                    Faction) *
+                LevelDifficultyRuntime.GetAircraftHealthMultiplier(
                     Faction));
         }
 

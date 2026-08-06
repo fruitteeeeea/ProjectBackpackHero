@@ -11,6 +11,8 @@ namespace BackpackHero.Battle
     [DefaultExecutionOrder(-100)]
     public sealed class LevelFlowController : MonoBehaviour
     {
+        public const int WinsRequired = 3;
+        public const int MaximumRounds = 5;
         private BattleBackpackTarget2D playerTarget;
         private BattleBackpackTarget2D enemyTarget;
         private LevelFlowBannerView bannerView;
@@ -21,16 +23,23 @@ namespace BackpackHero.Battle
         private bool pendingEnemyDeath;
         private bool resolutionQueued;
         private bool showingResult;
+        private int playerWins;
+        private int enemyWins;
+        private bool isMatchComplete;
 
         public static LevelFlowController Instance { get; private set; }
         public static int CurrentRound =>
             Instance != null ? Instance.currentRound : 1;
 
         public int Round => currentRound;
+        public int PlayerWins => playerWins;
+        public int EnemyWins => enemyWins;
+        public bool IsMatchComplete => isMatchComplete;
         public bool IsShowingBanner => bannerRoutine != null;
 
         public static event Action<int> RoundStarted;
         public static event Action<string> ResultShown;
+        public static event Action MatchStateChanged;
 
         [RuntimeInitializeOnLoadMethod(
             RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -39,6 +48,7 @@ namespace BackpackHero.Battle
             Instance = null;
             RoundStarted = null;
             ResultShown = null;
+            MatchStateChanged = null;
         }
 
         [RuntimeInitializeOnLoadMethod(
@@ -101,7 +111,8 @@ namespace BackpackHero.Battle
         public bool RequestStartRound()
         {
             if (BattleFlowController.CurrentPhase !=
-                BattlePhase.Preparation || showingResult)
+                BattlePhase.Preparation || showingResult ||
+                isMatchComplete || currentRound > MaximumRounds)
             {
                 return false;
             }
@@ -117,6 +128,31 @@ namespace BackpackHero.Battle
 
             BeginCombat();
             return true;
+        }
+
+        /// <summary>以指定关卡开始全新对局，供正式入口和调试面板复用。</summary>
+        public void ResetForLevel(int level)
+        {
+            if (bannerRoutine != null)
+            {
+                StopCoroutine(bannerRoutine);
+                bannerRoutine = null;
+            }
+            SetBannerVisible(false);
+
+            LevelManager.EnsureInstance()?.SetLevel(level);
+            currentRound = 1;
+            playerWins = 0;
+            enemyWins = 0;
+            hasCompletedRound = false;
+            pendingPlayerDeath = false;
+            pendingEnemyDeath = false;
+            resolutionQueued = false;
+            showingResult = false;
+            isMatchComplete = false;
+            ResetBackpackHealth();
+            BattleFlowController.EnsureInstance()?.SetPhase(BattlePhase.Preparation);
+            MatchStateChanged?.Invoke();
         }
 
         private void HandleBattlePhaseChanged(BattlePhase phase)
@@ -229,8 +265,25 @@ namespace BackpackHero.Battle
                 yield break;
             }
             hasCompletedRound = true;
+            if (playerWins)
+            {
+                this.playerWins++;
+            }
+            else
+            {
+                enemyWins++;
+            }
+
+            isMatchComplete = this.playerWins >= WinsRequired ||
+                enemyWins >= WinsRequired || currentRound >= MaximumRounds;
+            MatchStateChanged?.Invoke();
+
+            string result = isMatchComplete
+                ? (this.playerWins > enemyWins ? "关卡胜利" : "关卡失败") +
+                  $" {this.playerWins}:{enemyWins}"
+                : playerWins ? "Player Win" : "Player Lose";
             ShowResultBanner(
-                playerWins ? "Player Win" : "Player Lose",
+                result,
                 playerWins
                     ? bannerView != null
                         ? bannerView.WinColor
@@ -311,6 +364,8 @@ namespace BackpackHero.Battle
             bool finishedResult = showingResult;
             showingResult = false;
 
+            // 最终结算也要退出战斗阶段，避免背包继续生成飞机；
+            // IsMatchComplete 会锁住下一回合，保留关卡结算状态。
             if (finishedResult)
             {
                 BattleFlowController.EnsureInstance()
@@ -336,6 +391,7 @@ namespace BackpackHero.Battle
         private void BeginCombat()
         {
             RoundStarted?.Invoke(currentRound);
+            MatchStateChanged?.Invoke();
             BattleFlowController.EnsureInstance()
                 ?.SetPhase(BattlePhase.Combat);
         }

@@ -480,6 +480,9 @@ namespace BackpackHero.Battle
                                 .ProjectileDamage *
                             GamePacingDebugRuntime
                                 .GetProjectileDamageMultiplier(
+                                    fighter.Faction) *
+                            LevelDifficultyRuntime
+                                .GetProjectileDamageMultiplier(
                                     fighter.Faction),
                             fighter.Definition
                                 .ProjectileSpeed,

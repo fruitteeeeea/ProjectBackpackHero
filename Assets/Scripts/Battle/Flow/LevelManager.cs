@@ -4,14 +4,12 @@ using UnityEngine;
 namespace BackpackHero.Battle
 {
     /// <summary>
-    /// 当前关卡的最小状态源，供关卡流程和界面继续扩展。
+    /// 当前正式关卡状态源。第一版固定支持五个关卡。
     /// </summary>
     [DefaultExecutionOrder(-100)]
     public sealed class LevelManager : MonoBehaviour
     {
-        [SerializeField, Min(1)]
-        private int initialLevel = 1;
-
+        public const int MaximumLevel = 5;
         private int currentLevel = 1;
 
         public static LevelManager Instance { get; private set; }
@@ -66,13 +64,14 @@ namespace BackpackHero.Battle
             }
 
             Instance = this;
-            currentLevel = Mathf.Max(1, initialLevel);
+            // 正式流程永远从第一关开始；调试入口使用 SetLevel 显式切换。
+            currentLevel = 1;
             DontDestroyOnLoad(gameObject);
         }
 
         public void SetLevel(int level)
         {
-            int nextLevel = Mathf.Max(1, level);
+            int nextLevel = Mathf.Clamp(level, 1, MaximumLevel);
             if (currentLevel == nextLevel)
             {
                 return;

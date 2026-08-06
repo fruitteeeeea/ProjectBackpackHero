@@ -25,7 +25,9 @@ namespace BackpackHero.EditorTools
         Battle,
         TestShooter,
         BackgroundPhysics,
-        GamePacing
+        GamePacing,
+        Level,
+        LevelDifficulty
     }
 
     internal sealed class DebugCenterTabDefinition
@@ -80,9 +82,15 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.BackgroundPhysics, DebugCenterKind.ProgramTest, "星图物理",
                 () => BackgroundPhysicsDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<BackgroundPhysicsDebugWindow>(), true),
+            new(DebugCenterTab.Level, DebugCenterKind.ProgramTest, "关卡",
+                () => LevelFlowController.Instance != null,
+                () => ScriptableObject.CreateInstance<LevelDebugWindow>()),
             new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
                 () => GamePacingDebugRuntime.Instance != null,
-                () => ScriptableObject.CreateInstance<GamePacingDebugWindow>(), true)
+                () => ScriptableObject.CreateInstance<GamePacingDebugWindow>(), true),
+            new(DebugCenterTab.LevelDifficulty, DebugCenterKind.GameplayDesign, "关卡",
+                () => LevelDifficultyRuntime.Instance != null,
+                () => ScriptableObject.CreateInstance<LevelDifficultyDebugWindow>())
         };
 
         internal static IEnumerable<DebugCenterTabDefinition> GetTabs(DebugCenterKind center)
@@ -280,6 +288,8 @@ namespace BackpackHero.EditorTools
                 case TestShooterDebugWindow shooter: shooter.DrawTab(); break;
                 case BackgroundPhysicsDebugWindow background: background.DrawTab(); break;
                 case GamePacingDebugWindow pacing: pacing.DrawTab(); break;
+                case LevelDebugWindow level: level.DrawTab(); break;
+                case LevelDifficultyDebugWindow levelDifficulty: levelDifficulty.DrawTab(); break;
             }
         }
     }

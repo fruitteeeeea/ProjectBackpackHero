@@ -82,16 +82,40 @@ namespace BackpackHero.EditorTools
         private void DrawMultipliers()
         {
             EditorGUILayout.Space(8f);
-            EditorGUILayout.LabelField("编辑草稿", EditorStyles.boldLabel);
             GamePacingMultipliers current = draft.Value;
+            EditorGUILayout.LabelField("白板倍率", EditorStyles.boldLabel);
+            float whiteboardCooldown = DrawMultiplier(
+                "白板倍率", current.WhiteboardCooldown);
+            float aircraftSpeed = DrawMultiplier(
+                "飞机飞行速度", current.AircraftSpeed);
+            float projectileDamage = DrawMultiplier(
+                "子弹伤害", current.ProjectileDamage);
+            float aircraftHealth = DrawMultiplier(
+                "飞机血量", current.AircraftHealth);
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("背包血量", EditorStyles.boldLabel);
+            float playerBackpackHealth = DrawMultiplier(
+                "玩家背包血量", current.PlayerBackpackHealth);
+            float enemyBackpackHealth = DrawMultiplier(
+                "敌人背包血量", current.EnemyBackpackHealth);
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("整体强度", EditorStyles.boldLabel);
+            float playerOverallStrength = DrawMultiplier(
+                "玩家整体强度", current.PlayerOverallStrength);
+            float enemyOverallStrength = DrawMultiplier(
+                "敌人整体强度", current.EnemyOverallStrength);
+
             GamePacingMultipliers changed = new(
-                DrawMultiplier("飞机飞行速度", current.AircraftSpeed),
-                DrawMultiplier("子弹伤害", current.ProjectileDamage),
-                DrawMultiplier("飞机血量", current.AircraftHealth),
-                DrawMultiplier("玩家背包血量", current.PlayerBackpackHealth),
-                DrawMultiplier("敌人背包血量", current.EnemyBackpackHealth),
-                DrawMultiplier("玩家整体强度", current.PlayerOverallStrength),
-                DrawMultiplier("敌人整体强度", current.EnemyOverallStrength));
+                aircraftSpeed,
+                projectileDamage,
+                aircraftHealth,
+                playerBackpackHealth,
+                enemyBackpackHealth,
+                playerOverallStrength,
+                enemyOverallStrength,
+                whiteboardCooldown);
             if (!AreEqual(current, changed))
             {
                 draft.Value = changed;
@@ -205,7 +229,7 @@ namespace BackpackHero.EditorTools
             if (!IsInRange(values.AircraftSpeed) || !IsInRange(values.ProjectileDamage) ||
                 !IsInRange(values.AircraftHealth) || !IsInRange(values.PlayerBackpackHealth) ||
                 !IsInRange(values.EnemyBackpackHealth) || !IsInRange(values.PlayerOverallStrength) ||
-                !IsInRange(values.EnemyOverallStrength))
+                !IsInRange(values.EnemyOverallStrength) || !IsInRange(values.WhiteboardCooldown))
             {
                 validationMessage = "所有节奏倍率必须在允许范围内。";
                 return false;
@@ -270,6 +294,7 @@ namespace BackpackHero.EditorTools
             Mathf.Approximately(left.PlayerBackpackHealth, right.PlayerBackpackHealth) &&
             Mathf.Approximately(left.EnemyBackpackHealth, right.EnemyBackpackHealth) &&
             Mathf.Approximately(left.PlayerOverallStrength, right.PlayerOverallStrength) &&
-            Mathf.Approximately(left.EnemyOverallStrength, right.EnemyOverallStrength);
+            Mathf.Approximately(left.EnemyOverallStrength, right.EnemyOverallStrength) &&
+            Mathf.Approximately(left.WhiteboardCooldown, right.WhiteboardCooldown);
     }
 }

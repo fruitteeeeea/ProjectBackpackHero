@@ -1,4 +1,5 @@
 using UnityEngine;
+using BackpackHero.Debugging;
 
 namespace BackpackPrototype
 {
@@ -30,14 +31,13 @@ namespace BackpackPrototype
 
         public bool IsCoolingDown { get; private set; }
         public float RemainingCooldown { get; private set; }
+        private float activeCooldownDuration;
 
         public float CooldownProgress
         {
             get
             {
-                if (Data == null ||
-                    !Data.CanEnterCooldown ||
-                    Data.CooldownDuration <= 0f)
+                if (!IsCoolingDown || activeCooldownDuration <= 0f)
                 {
                     return 1f;
                 }
@@ -45,7 +45,7 @@ namespace BackpackPrototype
                 return Mathf.Clamp01(
                     1f -
                     RemainingCooldown /
-                    Data.CooldownDuration);
+                    activeCooldownDuration);
             }
         }
 
@@ -59,8 +59,12 @@ namespace BackpackPrototype
             }
 
             IsCoolingDown = true;
-            RemainingCooldown =
-                Mathf.Max(0.01f, Data.CooldownDuration);
+            activeCooldownDuration = Mathf.Max(
+                0.01f,
+                Data.CooldownDuration *
+                GamePacingDebugRuntime
+                    .GetWhiteboardCooldownMultiplier());
+            RemainingCooldown = activeCooldownDuration;
         }
 
         public bool TickCooldown(float deltaTime)
@@ -84,6 +88,7 @@ namespace BackpackPrototype
             }
 
             IsCoolingDown = false;
+            activeCooldownDuration = 0f;
             return true;
         }
 
@@ -91,6 +96,7 @@ namespace BackpackPrototype
         {
             IsCoolingDown = false;
             RemainingCooldown = 0f;
+            activeCooldownDuration = 0f;
         }
 
         public bool TryUpgrade()

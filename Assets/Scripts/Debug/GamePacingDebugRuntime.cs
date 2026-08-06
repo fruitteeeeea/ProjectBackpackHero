@@ -80,6 +80,17 @@ namespace BackpackHero.Debugging
         }
 
         /// <summary>
+        /// 仅用于背包中飞机物品开始下一轮生成冷却时的时长倍率。
+        /// 已经开始的冷却会保存其开始时的时长，不会因面板更新而改变。
+        /// </summary>
+        public static float GetWhiteboardCooldownMultiplier()
+        {
+            return Instance != null
+                ? Instance.multipliers.WhiteboardCooldown
+                : 1f;
+        }
+
+        /// <summary>
         /// 伤害飘字的纯显示倍率；绝不参与伤害或生命值结算。
         /// </summary>
         public static float GetDamageFloatingTextMagicNumber()

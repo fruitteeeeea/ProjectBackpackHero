@@ -244,6 +244,28 @@ namespace BackpackPrototype
             return true;
         }
 
+        /// <summary>
+        /// 按玩家背包最大生命值的指定比例扣血；不依赖当前调试页选中的目标。
+        /// </summary>
+        public bool DamagePlayerBackpackByMaximumHealthFraction(
+            float fraction)
+        {
+            return TryDamageBackpackByMaximumHealthFraction(
+                playerBackpackSystem,
+                fraction);
+        }
+
+        /// <summary>
+        /// 按敌人背包最大生命值的指定比例扣血；不依赖当前调试页选中的目标。
+        /// </summary>
+        public bool DamageEnemyBackpackByMaximumHealthFraction(
+            float fraction)
+        {
+            return TryDamageBackpackByMaximumHealthFraction(
+                enemyBackpackSystem,
+                fraction);
+        }
+
         public bool SetCurveValue(float value)
         {
             if (playerBackpackSystem?.FighterSpawner ==
@@ -255,6 +277,25 @@ namespace BackpackPrototype
             playerBackpackSystem.SetFlightCurveValue(
                 value);
             RefreshSnapshot();
+            return true;
+        }
+
+        private static bool TryDamageBackpackByMaximumHealthFraction(
+            Component backpackSystem,
+            float fraction)
+        {
+            if (backpackSystem == null ||
+                fraction <= 0f ||
+                !backpackSystem.TryGetComponent(
+                    out BattleBackpackTarget2D target) ||
+                target.Health == null ||
+                target.Health.IsDead)
+            {
+                return false;
+            }
+
+            target.Health.DecreaseHealth(
+                target.Health.MaxHealth * fraction);
             return true;
         }
 

@@ -740,6 +740,12 @@ public sealed class PlayerBackpackSystemTests
             Does.Contain(
                 "class PlayerBackpackDebugWindow"));
         Assert.That(
+            windowSource,
+            Does.Contain("敌人背包血量 - 25%"));
+        Assert.That(
+            windowSource,
+            Does.Contain("玩家背包血量 - 25%"));
+        Assert.That(
             File.ReadAllText("Assets/Editor/DebugCenterWindow.cs"),
             Does.Contain("Tools/Debug/程序测试面板"));
         Assert.That(

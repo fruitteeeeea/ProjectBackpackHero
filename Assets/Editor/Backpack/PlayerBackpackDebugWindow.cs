@@ -164,6 +164,34 @@ namespace BackpackHero.EditorTools
 
             EditorGUILayout.EndHorizontal();
 
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField(
+                "背包血量",
+                EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+
+            using (new EditorGUI.DisabledScope(
+                       !CanDamageEnemyBackpack(bridge)))
+            {
+                if (GUILayout.Button("敌人背包血量 - 25%"))
+                {
+                    bridge.DamageEnemyBackpackByMaximumHealthFraction(
+                        0.25f);
+                }
+            }
+
+            using (new EditorGUI.DisabledScope(
+                       !CanDamagePlayerBackpack(bridge)))
+            {
+                if (GUILayout.Button("玩家背包血量 - 25%"))
+                {
+                    bridge.DamagePlayerBackpackByMaximumHealthFraction(
+                        0.25f);
+                }
+            }
+
+            EditorGUILayout.EndHorizontal();
+
             bool autoCopy = EditorGUILayout.Toggle(
                 "自动复制开启",
                 bridge.AutoCopyPlayerLayoutToEnemy);
@@ -275,6 +303,26 @@ namespace BackpackHero.EditorTools
             {
                 selectedTarget = 0;
             }
+        }
+
+        private static bool CanDamagePlayerBackpack(
+            PlayerBackpackDebugBridge bridge)
+        {
+            return bridge.Target != null &&
+                   bridge.Target.TryGetComponent(
+                       out BattleBackpackTarget2D target) &&
+                   target.Health != null &&
+                   !target.Health.IsDead;
+        }
+
+        private static bool CanDamageEnemyBackpack(
+            PlayerBackpackDebugBridge bridge)
+        {
+            return bridge.EnemyTarget != null &&
+                   bridge.EnemyTarget.TryGetComponent(
+                       out BattleBackpackTarget2D target) &&
+                   target.Health != null &&
+                   !target.Health.IsDead;
         }
 
         private void DrawEnemyDataActions(

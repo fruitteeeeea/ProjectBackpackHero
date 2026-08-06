@@ -33,6 +33,9 @@ namespace BackpackHero.Debugging
         [SerializeField, Min(0f)]
         private float enemyOverallStrengthMultiplier = 1f;
 
+        [SerializeField, Min(0f)]
+        private float whiteboardCooldownMultiplier = 1f;
+
         [Header("Presentation")]
         [Tooltip("仅影响伤害飘字显示数值，不参与实际伤害结算。")]
         [SerializeField, Min(0f)]
@@ -47,6 +50,8 @@ namespace BackpackHero.Debugging
             playerOverallStrengthMultiplier;
         public float EnemyOverallStrengthMultiplier =>
             enemyOverallStrengthMultiplier;
+        public float WhiteboardCooldownMultiplier =>
+            whiteboardCooldownMultiplier;
         public float DamageFloatingTextMagicNumber =>
             damageFloatingTextMagicNumber;
 
@@ -59,6 +64,7 @@ namespace BackpackHero.Debugging
             enemyBackpackHealthMultiplier = values.EnemyBackpackHealth;
             playerOverallStrengthMultiplier = values.PlayerOverallStrength;
             enemyOverallStrengthMultiplier = values.EnemyOverallStrength;
+            whiteboardCooldownMultiplier = values.WhiteboardCooldown;
         }
 
         public GamePacingMultipliers GetValues()
@@ -70,7 +76,8 @@ namespace BackpackHero.Debugging
                 playerBackpackHealthMultiplier,
                 enemyBackpackHealthMultiplier,
                 playerOverallStrengthMultiplier,
-                enemyOverallStrengthMultiplier);
+                enemyOverallStrengthMultiplier,
+                whiteboardCooldownMultiplier);
         }
 
         public void SetDamageFloatingTextMagicNumber(

@@ -234,7 +234,7 @@ MonoBehaviour:
   fighterPrefab: {fileID: 1237829907571473707, guid: c6af0336132b14f98a956820dcff3186, type: 3}
   fighterSpawnPoint: {fileID: 880010000000000004}
   fighterContainer: {fileID: 0}
-  spawnInterval: 0.1
+  spawnInterval: 0.5
   spawnOffset: 1
   maximumBendDistance: 3
   spawnDirectionOffsetRange: {x: -3, y: 3}

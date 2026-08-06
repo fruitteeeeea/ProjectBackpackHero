@@ -13,6 +13,8 @@ namespace BackpackPrototype
     [DisallowMultipleComponent]
     public sealed class BackpackFighterSpawner : MonoBehaviour
     {
+        private const float MinimumSpawnInterval = 0.5f;
+
         private readonly struct SpawnRequest
         {
             public SpawnRequest(
@@ -36,8 +38,8 @@ namespace BackpackPrototype
         [SerializeField]
         private Transform fighterContainer;
 
-        [SerializeField, Min(0.1f)]
-        private float spawnInterval = 0.1f;
+        [SerializeField, Min(MinimumSpawnInterval)]
+        private float spawnInterval = MinimumSpawnInterval;
 
         [SerializeField, Min(0f)]
         private float spawnOffset = 1f;
@@ -78,7 +80,7 @@ namespace BackpackPrototype
 
         public int PendingCount => pendingSpawns.Count;
         public float SpawnInterval =>
-            Mathf.Max(0.1f, spawnInterval);
+            Mathf.Max(MinimumSpawnInterval, spawnInterval);
         public float LastSpawnTime { get; private set; } =
             float.NegativeInfinity;
         public float CurrentCurveValue { get; private set; }
@@ -633,7 +635,7 @@ namespace BackpackPrototype
         private void OnValidate()
         {
             spawnInterval =
-                Mathf.Max(0.1f, spawnInterval);
+                Mathf.Max(MinimumSpawnInterval, spawnInterval);
             spawnOffset = Mathf.Max(0f, spawnOffset);
             maximumBendDistance =
                 Mathf.Max(0f, maximumBendDistance);

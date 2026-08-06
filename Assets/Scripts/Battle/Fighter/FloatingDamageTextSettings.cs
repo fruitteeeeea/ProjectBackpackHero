@@ -12,6 +12,11 @@ namespace BackpackHero.Battle
         menuName = "Backpack Hero/Battle/Floating Damage Text Settings")]
     public sealed class FloatingDamageTextSettings : ScriptableObject
     {
+        private static readonly int OutlineColorId =
+            Shader.PropertyToID("_OutlineColor");
+        private static readonly int OutlineWidthId =
+            Shader.PropertyToID("_OutlineWidth");
+
         [Header("Floating Text Prefabs")]
         [SerializeField] private MMFloatingText playerFloatingTextPrefab;
         [SerializeField] private MMFloatingText enemyFloatingTextPrefab;
@@ -106,15 +111,26 @@ namespace BackpackHero.Battle
             if (floatingTextFont != null)
             {
                 text.font = floatingTextFont;
+
+                // The pooled prefabs were authored with a different TMP material.
+                // Ensure the material instance used for this font receives the
+                // outline settings rather than the prefab's previous material.
+                if (text.fontSharedMaterial == null ||
+                    text.fontSharedMaterial.mainTexture !=
+                    floatingTextFont.material.mainTexture)
+                {
+                    text.fontSharedMaterial = floatingTextFont.material;
+                }
             }
 
             text.color = isPlayer ? playerFaceColor : enemyFaceColor;
             text.fontSize = fontSize;
             text.fontStyle = FontStyles.Bold;
-            text.outlineColor = isPlayer
-                ? playerOutlineColor
-                : enemyOutlineColor;
-            text.outlineWidth = outlineWidth;
+            Material textMaterial = text.fontMaterial;
+            textMaterial.SetColor(
+                OutlineColorId,
+                isPlayer ? playerOutlineColor : enemyOutlineColor);
+            textMaterial.SetFloat(OutlineWidthId, outlineWidth);
 
             if (text is TextMeshPro worldText)
             {

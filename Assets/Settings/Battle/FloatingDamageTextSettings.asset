@@ -132,8 +132,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   floatingTextFont: {fileID: 11400000, guid: 876b76804af684a6b90d6e2a8882be91, type: 2}
-  fontSize: 5
-  outlineWidth: 0.289
+  fontSize: 3
+  outlineWidth: 0.22
   sortingOrder: 200
   playerFaceColor: {r: 0.28, g: 0.78, b: 1, a: 1}
   playerOutlineColor: {r: 0.015, g: 0.04, b: 0.09, a: 0.9}

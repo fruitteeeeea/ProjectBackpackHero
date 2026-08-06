@@ -365,6 +365,10 @@ MonoBehaviour:
   attackFeedback: {fileID: 5458754221317500457}
   hitFeedback: {fileID: 6910629136836392210}
   deathFeedback: {fileID: 646850191882242123}
+  explosionParticlesPrefab: {fileID: 2832922089596973377, guid: 37047f5e138c0460791ae2ebfa2a7f9f, type: 3}
+  deathFlashParticlesPrefab: {fileID: 8193540687021354440, guid: 630a386b881134224a91c1f921f88d0c, type: 3}
+  playerExplosionColor: {r: 0.55, g: 0.85, b: 1, a: 1}
+  enemyExplosionColor: {r: 1, g: 0.55, b: 0.55, a: 1}
   deathCleanupDelay: 0.55
 --- !u!114 &644388059356196384
 MonoBehaviour:
@@ -2070,7 +2074,7 @@ MonoBehaviour:
     - rid: 4998896194082046034
       type: {class: MMF_InstantiateObject, ns: MoreMountains.Feedbacks, asm: MoreMountains.Tools}
       data:
-        Active: 1
+        Active: 0
         UniqueID: 1925208529
         Label: Instantiate Object
         OriginalLabel: Instantiate Object
@@ -2159,7 +2163,7 @@ MonoBehaviour:
     - rid: 9005038807764435021
       type: {class: MMF_ParticlesInstantiation, ns: MoreMountains.Feedbacks, asm: MoreMountains.Tools}
       data:
-        Active: 1
+        Active: 0
         UniqueID: 1667092594
         Label: Particles Instantiation
         OriginalLabel: Particles Instantiation

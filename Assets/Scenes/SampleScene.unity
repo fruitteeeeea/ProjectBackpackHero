@@ -7096,10 +7096,6 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1004, guid: 69fb8199a42c42f697658730650ab314, type: 3}
-      propertyPath: bannerBackground
-      value: 
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

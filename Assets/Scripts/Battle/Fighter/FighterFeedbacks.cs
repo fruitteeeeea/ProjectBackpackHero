@@ -19,6 +19,21 @@ namespace BackpackHero.Battle
         [SerializeField]
         private MMF_Player deathFeedback;
 
+        [Header("Death VFX")]
+        [SerializeField]
+        private GameObject explosionParticlesPrefab;
+
+        [SerializeField]
+        private ParticleSystem deathFlashParticlesPrefab;
+
+        [SerializeField]
+        private Color playerExplosionColor =
+            new Color(0.55f, 0.85f, 1f, 1f);
+
+        [SerializeField]
+        private Color enemyExplosionColor =
+            new Color(1f, 0.55f, 0.55f, 1f);
+
         private FighterDamageFloatingText floatingDamageText;
 
         [Header("Death")]
@@ -43,9 +58,64 @@ namespace BackpackHero.Battle
             floatingDamageText?.Play(damage, faction);
         }
 
-        public void PlayDeath()
+        public void PlayDeath(BattleFaction faction)
         {
             deathFeedback?.PlayFeedbacks();
+
+            Color factionColor =
+                faction == BattleFaction.Player
+                    ? playerExplosionColor
+                    : enemyExplosionColor;
+
+            PlayTintedParticles(
+                explosionParticlesPrefab,
+                factionColor);
+
+            PlayTintedParticles(
+                deathFlashParticlesPrefab,
+                factionColor);
+        }
+
+        private void PlayTintedParticles(
+            GameObject particlesPrefab,
+            Color color)
+        {
+            if (particlesPrefab == null)
+            {
+                return;
+            }
+
+            GameObject particles = Instantiate(
+                particlesPrefab,
+                transform.position,
+                particlesPrefab.transform.rotation);
+
+            foreach (ParticleSystem particleSystem in
+                     particles.GetComponentsInChildren<ParticleSystem>())
+            {
+                ParticleSystem.MainModule main =
+                    particleSystem.main;
+
+                main.startColor = color;
+            }
+        }
+
+        private void PlayTintedParticles(
+            ParticleSystem particlesPrefab,
+            Color color)
+        {
+            if (particlesPrefab == null)
+            {
+                return;
+            }
+
+            ParticleSystem particles = Instantiate(
+                particlesPrefab,
+                transform.position,
+                particlesPrefab.transform.rotation);
+
+            ParticleSystem.MainModule main = particles.main;
+            main.startColor = color;
         }
 
 #if UNITY_EDITOR

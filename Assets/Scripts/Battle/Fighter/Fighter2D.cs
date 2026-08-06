@@ -162,6 +162,7 @@ namespace BackpackHero.Battle
             }
 
             ConfigureHealthBars();
+            SetHealthBarsVisible(false);
             
             gameObject.name =
                 fighterDefinition.DisplayName;
@@ -270,7 +271,7 @@ namespace BackpackHero.Battle
             isDying = true;
 
             DisableCombatInteractions();
-            feedbacks?.PlayDeath();
+            feedbacks?.PlayDeath(Faction);
 
             float cleanupDelay =
                 feedbacks != null
@@ -282,7 +283,24 @@ namespace BackpackHero.Battle
 
         private void HandleDamaged(float damage)
         {
+            SetHealthBarsVisible(true);
             feedbacks?.PlayHit(damage, Faction);
+        }
+
+        private void SetHealthBarsVisible(bool visible)
+        {
+            if (healthBars == null)
+            {
+                return;
+            }
+
+            foreach (HealthBar healthBar in healthBars)
+            {
+                if (healthBar != null)
+                {
+                    healthBar.gameObject.SetActive(visible);
+                }
+            }
         }
 
         private void DisableCombatInteractions()

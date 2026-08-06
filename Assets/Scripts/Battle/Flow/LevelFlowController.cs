@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace BackpackHero.Battle
 {
@@ -13,21 +11,9 @@ namespace BackpackHero.Battle
     [DefaultExecutionOrder(-100)]
     public sealed class LevelFlowController : MonoBehaviour
     {
-        private static readonly Color RoundColor =
-            new Color32(0xFD, 0xD8, 0x35, 0xFF);
-        private static readonly Color WinColor =
-            new Color32(0x21, 0x96, 0xF3, 0xFF);
-        private static readonly Color LoseColor =
-            new Color32(0xE5, 0x39, 0x35, 0xFF);
-
-        [SerializeField, Min(0.1f)]
-        private float bannerDuration = 2f;
-
         private BattleBackpackTarget2D playerTarget;
         private BattleBackpackTarget2D enemyTarget;
-        private Canvas overlayCanvas;
-        private Image bannerBackground;
-        private TextMeshProUGUI bannerLabel;
+        private LevelFlowBannerView bannerView;
         private Coroutine bannerRoutine;
         private int currentRound = 1;
         private bool hasCompletedRound;
@@ -106,6 +92,7 @@ namespace BackpackHero.Battle
         private void Update()
         {
             ResolveTargets();
+            EnsureBanner();
         }
 
         /// <summary>
@@ -244,7 +231,13 @@ namespace BackpackHero.Battle
             hasCompletedRound = true;
             ShowResultBanner(
                 playerWins ? "Player Win" : "Player Lose",
-                playerWins ? WinColor : LoseColor);
+                playerWins
+                    ? bannerView != null
+                        ? bannerView.WinColor
+                        : Color.blue
+                    : bannerView != null
+                        ? bannerView.LoseColor
+                        : Color.red);
         }
 
         private void ResetBackpackHealth()
@@ -255,7 +248,10 @@ namespace BackpackHero.Battle
 
         private void ShowRoundBanner()
         {
-            ShowBanner($"Round {currentRound}", RoundColor,
+            ShowBanner($"Round {currentRound}",
+                bannerView != null
+                    ? bannerView.RoundColor
+                    : Color.yellow,
                 isResult: false);
         }
 
@@ -274,29 +270,42 @@ namespace BackpackHero.Battle
             }
 
             showingResult = isResult;
-            if (bannerBackground != null)
-            {
-                bannerBackground.color = color;
-                bannerBackground.gameObject.SetActive(true);
-            }
-            if (bannerLabel != null)
-            {
-                bannerLabel.text = text;
-                bannerLabel.gameObject.SetActive(true);
-            }
+            bannerView?.SetContent(text, color);
 
-            bannerRoutine = StartCoroutine(HideBannerAfterDelay());
+            bannerRoutine = StartCoroutine(PlayBannerLifecycle());
         }
 
-        private IEnumerator HideBannerAfterDelay()
+        private IEnumerator PlayBannerLifecycle()
         {
-            yield return new WaitForSecondsRealtime(
-                Mathf.Max(0.1f, bannerDuration));
+            float totalDuration = Mathf.Max(
+                FlickerInterval * 6f,
+                DisplayDuration);
+            float steadyDuration = Mathf.Max(
+                0f,
+                totalDuration - FlickerInterval * 6f);
 
-            if (bannerBackground != null)
-            {
-                bannerBackground.gameObject.SetActive(false);
-            }
+            SetBannerVisible(false);
+            yield return new WaitForSecondsRealtime(
+                FlickerInterval);
+            SetBannerVisible(true);
+            yield return new WaitForSecondsRealtime(
+                FlickerInterval);
+            SetBannerVisible(false);
+            yield return new WaitForSecondsRealtime(
+                FlickerInterval);
+            SetBannerVisible(true);
+
+            yield return new WaitForSecondsRealtime(steadyDuration);
+
+            yield return new WaitForSecondsRealtime(
+                FlickerInterval);
+            SetBannerVisible(false);
+            yield return new WaitForSecondsRealtime(
+                FlickerInterval);
+            SetBannerVisible(true);
+            yield return new WaitForSecondsRealtime(
+                FlickerInterval);
+            SetBannerVisible(false);
 
             bannerRoutine = null;
             bool finishedResult = showingResult;
@@ -307,8 +316,22 @@ namespace BackpackHero.Battle
                 BattleFlowController.EnsureInstance()
                     ?.SetPhase(BattlePhase.Preparation);
             }
-
         }
+
+        private void SetBannerVisible(bool visible)
+        {
+            bannerView?.SetVisible(visible);
+        }
+
+        private float DisplayDuration =>
+            bannerView != null
+                ? bannerView.DisplayDuration
+                : 2f;
+
+        private float FlickerInterval =>
+            bannerView != null
+                ? bannerView.FlickerInterval
+                : 0.05f;
 
         private void BeginCombat()
         {
@@ -319,86 +342,13 @@ namespace BackpackHero.Battle
 
         private void EnsureBanner()
         {
-            if (bannerBackground != null && bannerLabel != null)
+            if (bannerView != null)
             {
                 return;
             }
 
-            Canvas overlay = null;
-            foreach (Canvas canvas in FindObjectsByType<Canvas>(
-                         FindObjectsInactive.Include))
-            {
-                if (canvas.name == "LevelFlowOverlay")
-                {
-                    overlay = canvas;
-                    break;
-                }
-            }
-
-            if (overlay == null)
-            {
-                GameObject overlayObject = new GameObject(
-                    "LevelFlowOverlay",
-                    typeof(RectTransform),
-                    typeof(Canvas),
-                    typeof(CanvasScaler));
-                overlay = overlayObject.GetComponent<Canvas>();
-                overlay.renderMode = RenderMode.ScreenSpaceOverlay;
-                overlay.overrideSorting = true;
-                overlay.sortingOrder = 1000;
-
-                CanvasScaler scaler =
-                    overlayObject.GetComponent<CanvasScaler>();
-                scaler.uiScaleMode =
-                    CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution =
-                    new Vector2(1206f, 2622f);
-                scaler.screenMatchMode =
-                    CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-                scaler.matchWidthOrHeight = 0.5f;
-            }
-
-            overlayCanvas = overlay;
-
-            GameObject backgroundObject = new GameObject(
-                "LevelFlowBanner",
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(Image));
-            backgroundObject.transform.SetParent(
-                overlayCanvas.transform,
-                false);
-            bannerBackground = backgroundObject.GetComponent<Image>();
-            bannerBackground.raycastTarget = false;
-            RectTransform backgroundRect =
-                bannerBackground.rectTransform;
-            backgroundRect.anchorMin = new Vector2(0f, 0.5f);
-            backgroundRect.anchorMax = new Vector2(1f, 0.5f);
-            backgroundRect.pivot = new Vector2(0.5f, 0.5f);
-            backgroundRect.offsetMin = new Vector2(0f, -110f);
-            backgroundRect.offsetMax = new Vector2(0f, 110f);
-
-            GameObject labelObject = new GameObject(
-                "Label",
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(TextMeshProUGUI));
-            labelObject.transform.SetParent(backgroundObject.transform,
-                false);
-            bannerLabel = labelObject.GetComponent<TextMeshProUGUI>();
-            bannerLabel.raycastTarget = false;
-            bannerLabel.alignment = TextAlignmentOptions.Center;
-            bannerLabel.font = TMP_Settings.defaultFontAsset;
-            bannerLabel.fontSize = 92f;
-            bannerLabel.fontStyle = FontStyles.Bold;
-            bannerLabel.color = Color.white;
-            bannerLabel.outlineWidth = 0f;
-            RectTransform labelRect = bannerLabel.rectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            backgroundObject.SetActive(false);
+            bannerView = FindAnyObjectByType<LevelFlowBannerView>(
+                FindObjectsInactive.Include);
         }
 
         private void OnDestroy()

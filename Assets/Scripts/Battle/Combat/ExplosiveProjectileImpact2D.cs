@@ -10,6 +10,10 @@ namespace BackpackHero.Battle
         [Header("Visual")]
         [SerializeField] private ParticleSystem impactVfxPrefab;
         [SerializeField, Min(0.01f)] private float impactVfxScale = 1f;
+        [SerializeField] private Color playerImpactVfxColor =
+            new Color(0.55f, 0.85f, 1f, 1f);
+        [SerializeField] private Color enemyImpactVfxColor =
+            new Color(1f, 0.55f, 0.55f, 1f);
         [SerializeField] private AreaDamageResolver2D damageResolver;
         [SerializeField] private CircleDamageArea2D damageArea;
 
@@ -41,6 +45,8 @@ namespace BackpackHero.Battle
 
                 impactVfx.transform.localScale =
                     Vector3.one * impactVfxScale;
+
+                ApplyFactionColor(impactVfx, attackerFaction);
             }
 
             return true;
@@ -50,6 +56,23 @@ namespace BackpackHero.Battle
         {
             damageResolver ??= GetComponent<AreaDamageResolver2D>();
             damageArea ??= GetComponent<CircleDamageArea2D>();
+        }
+
+        private void ApplyFactionColor(
+            ParticleSystem impactVfx,
+            BattleFaction attackerFaction)
+        {
+            Color factionColor =
+                attackerFaction == BattleFaction.Player
+                    ? playerImpactVfxColor
+                    : enemyImpactVfxColor;
+
+            foreach (ParticleSystem particleSystem in
+                     impactVfx.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                ParticleSystem.MainModule main = particleSystem.main;
+                main.startColor = factionColor;
+            }
         }
     }
 }

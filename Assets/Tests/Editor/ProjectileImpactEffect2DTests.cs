@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using BackpackHero.Battle;
 using NUnit.Framework;
 using UnityEditor;
@@ -80,6 +81,58 @@ public sealed class ProjectileImpactEffect2DTests
         Assert.That(nearby.CurrentHealth, Is.EqualTo(8f));
         Assert.That(friendly.CurrentHealth, Is.EqualTo(10f));
         Assert.That(outside.CurrentHealth, Is.EqualTo(10f));
+    }
+
+    [TestCase(BattleFaction.Player, 0.55f, 0.85f, 1f)]
+    [TestCase(BattleFaction.Enemy, 1f, 0.55f, 0.55f)]
+    public void Explosion_TintsImpactParticlesWithAttackerFactionColor(
+        BattleFaction attackerFaction,
+        float red,
+        float green,
+        float blue)
+    {
+        ExplosiveProjectileImpact2D effect =
+            CreateImpactObject<ExplosiveProjectileImpact2D>(
+                "Explosion");
+        ParticleSystem impactVfxPrefab =
+            CreateObject("Impact VFX")
+                .AddComponent<ParticleSystem>();
+
+        typeof(ExplosiveProjectileImpact2D)
+            .GetField(
+                "impactVfxPrefab",
+                BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(effect, impactVfxPrefab);
+
+        HashSet<ParticleSystem> existingParticleSystems = new(
+            Object.FindObjectsByType<ParticleSystem>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None));
+
+        Assert.That(effect.ResolveImpact(
+            null,
+            Vector2.zero,
+            attackerFaction,
+            2f), Is.True);
+
+        ParticleSystem instantiatedVfx = null;
+        foreach (ParticleSystem candidate in
+                 Object.FindObjectsByType<ParticleSystem>(
+                     FindObjectsInactive.Include,
+                     FindObjectsSortMode.None))
+        {
+            if (!existingParticleSystems.Contains(candidate))
+            {
+                instantiatedVfx = candidate;
+                break;
+            }
+        }
+
+        Assert.That(instantiatedVfx, Is.Not.Null);
+        createdObjects.Add(instantiatedVfx.gameObject);
+        Assert.That(
+            instantiatedVfx.main.startColor.color,
+            Is.EqualTo(new Color(red, green, blue, 1f)));
     }
 
     [Test]

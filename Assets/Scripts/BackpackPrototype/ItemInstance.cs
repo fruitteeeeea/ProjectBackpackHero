@@ -68,7 +68,9 @@ namespace BackpackPrototype
                 0.01f,
                 EffectiveCooldownDuration *
                 GamePacingDebugRuntime
-                    .GetWhiteboardCooldownMultiplier());
+                    .GetWhiteboardCooldownMultiplier() /
+                StyleTendencyDebugRuntime
+                    .GetItemCooldownSpeedMultiplier());
             RemainingCooldown = activeCooldownDuration;
         }
 

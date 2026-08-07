@@ -87,8 +87,21 @@ namespace BackpackHero.Battle
                 ? Mathf.Max(
                     0.1f,
                     fighter.Definition.AttackRange +
-                    attackRangeOffset)
+                    attackRangeOffset) *
+                StyleTendencyDebugRuntime
+                    .GetAircraftAttackRangeMultiplier()
                 : 0.1f;
+
+        /// <summary>当前飞机实际使用的索敌扇形完整角度。</summary>
+        public float EffectiveTargetingArcAngle =>
+            fighter != null && fighter.Definition != null
+                ? Mathf.Clamp(
+                    fighter.Definition.TargetingArcAngle *
+                    StyleTendencyDebugRuntime
+                        .GetAircraftTargetingArcAngleMultiplier(),
+                    0.01f,
+                    360f)
+                : 1f;
 
         private void Awake()
         {
@@ -404,11 +417,15 @@ namespace BackpackHero.Battle
                 return;
             }
 
+            float attackDeltaTime = deltaTime *
+                StyleTendencyDebugRuntime
+                    .GetAircraftAttackSpeedMultiplier();
+
             fireModeController?.Tick(
-                deltaTime,
+                attackDeltaTime,
                 transform.up);
 
-            equipmentEffectsController?.Tick(deltaTime);
+            equipmentEffectsController?.Tick(attackDeltaTime);
         }
 
         private void HandleShotRequested(
@@ -734,9 +751,7 @@ namespace BackpackHero.Battle
                     forward,
                     directionToTarget);
 
-            float halfAngle =
-                fighter.Definition
-                    .TargetingArcAngle * 0.5f;
+            float halfAngle = EffectiveTargetingArcAngle * 0.5f;
 
             float minimumAlignment =
                 Mathf.Cos(
@@ -799,7 +814,9 @@ namespace BackpackHero.Battle
                     : Mathf.Max(
                         0.1f,
                         fighterComponent.Definition.AttackRange +
-                        attackRangeOffset);
+                        attackRangeOffset) *
+                    StyleTendencyDebugRuntime
+                        .GetAircraftAttackRangeMultiplier();
 
             Gizmos.color =
                 new Color(1f, 0.8f, 0.1f, 0.8f);
@@ -814,9 +831,16 @@ namespace BackpackHero.Battle
                         .Direction
                     : (Vector2)transform.up;
 
-            float halfAngle =
-                fighterComponent.Definition
-                    .TargetingArcAngle * 0.5f;
+            float targetingArcAngle =
+                Application.isPlaying && fighterComponent == fighter
+                    ? EffectiveTargetingArcAngle
+                    : Mathf.Clamp(
+                        fighterComponent.Definition.TargetingArcAngle *
+                        StyleTendencyDebugRuntime
+                            .GetAircraftTargetingArcAngleMultiplier(),
+                        0.01f,
+                        360f);
+            float halfAngle = targetingArcAngle * 0.5f;
 
             Vector2 leftBoundary =
                 Quaternion.Euler(

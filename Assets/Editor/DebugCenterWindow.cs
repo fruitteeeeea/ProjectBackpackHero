@@ -27,7 +27,8 @@ namespace BackpackHero.EditorTools
         BackgroundPhysics,
         GamePacing,
         Level,
-        LevelDifficulty
+        LevelDifficulty,
+        StyleTendency
     }
 
     internal sealed class DebugCenterTabDefinition
@@ -88,6 +89,9 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
                 () => GamePacingDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<GamePacingDebugWindow>(), true),
+            new(DebugCenterTab.StyleTendency, DebugCenterKind.GameplayDesign, "风格倾向",
+                () => StyleTendencyDebugRuntime.Instance != null,
+                () => ScriptableObject.CreateInstance<StyleTendencyDebugWindow>()),
             new(DebugCenterTab.LevelDifficulty, DebugCenterKind.GameplayDesign, "关卡",
                 () => LevelDifficultyRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<LevelDifficultyDebugWindow>())
@@ -288,6 +292,7 @@ namespace BackpackHero.EditorTools
                 case TestShooterDebugWindow shooter: shooter.DrawTab(); break;
                 case BackgroundPhysicsDebugWindow background: background.DrawTab(); break;
                 case GamePacingDebugWindow pacing: pacing.DrawTab(); break;
+                case StyleTendencyDebugWindow styleTendency: styleTendency.DrawTab(); break;
                 case LevelDebugWindow level: level.DrawTab(); break;
                 case LevelDifficultyDebugWindow levelDifficulty: levelDifficulty.DrawTab(); break;
             }

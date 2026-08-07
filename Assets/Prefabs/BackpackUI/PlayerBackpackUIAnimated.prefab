@@ -2867,6 +2867,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.PreparationActionsUI
   playerBackpackSystem: {fileID: 0}
+  rollButton: {fileID: 1617096585144439740}
+  rollLabel: {fileID: 2121682492631134071}
 --- !u!1 &3321270309942020953
 GameObject:
   m_ObjectHideFlags: 0

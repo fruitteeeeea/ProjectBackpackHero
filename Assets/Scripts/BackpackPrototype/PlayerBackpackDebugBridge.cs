@@ -171,7 +171,23 @@ namespace BackpackPrototype
                 return false;
             }
 
-            playerBackpackSystem.RefreshShop();
+            if (!playerBackpackSystem.TryRefreshShop())
+            {
+                return false;
+            }
+
+            RefreshSnapshot();
+            return true;
+        }
+
+        public bool ResetRolls()
+        {
+            if (!CanModifyPreparation() ||
+                !playerBackpackSystem.ResetRolls())
+            {
+                return false;
+            }
+
             RefreshSnapshot();
             return true;
         }

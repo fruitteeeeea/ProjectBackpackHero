@@ -63,6 +63,10 @@ namespace BackpackPrototype
         [SerializeField]
         private List<ItemPrefabEntry> itemCatalog = new();
 
+        [Header("Shop Roll")]
+        [SerializeField, Min(1)]
+        private int rollsPerPreparation = 3;
+
         [Header("Optional Scene Input")]
         [SerializeField]
         private HorizontalSwipeCurveInput curveInput;
@@ -85,7 +89,12 @@ namespace BackpackPrototype
         private bool isReady;
         private bool isLoadingLayout;
         private bool missingCurveWarningReported;
+        private bool shopInitializedForPreparation;
         private int nextItemId;
+        private int remainingRolls;
+
+        /// <summary>Roll 次数变化后通知商店 UI 刷新显示。</summary>
+        public event Action RollStateChanged;
 
         public BackpackController Backpack =>
             combatController != null
@@ -112,6 +121,17 @@ namespace BackpackPrototype
         public ItemView SelectedItem { get; private set; }
 
         public bool IsReady => isReady;
+
+        public int RollsPerPreparation =>
+            Mathf.Max(1, rollsPerPreparation);
+
+        public int RemainingRolls => remainingRolls;
+
+        public bool CanRollShop =>
+            isReady &&
+            BattleFlowController.CurrentPhase ==
+            BattlePhase.Preparation &&
+            remainingRolls > 0;
 
         private void Awake()
         {
@@ -150,11 +170,7 @@ namespace BackpackPrototype
 
             RebuildBackpackViews();
 
-            if (BattleFlowController.CurrentPhase ==
-                BattlePhase.Preparation)
-            {
-                RefreshShop();
-            }
+            InitializeShopForPreparation();
 
             HandlePhaseChanged(
                 BattleFlowController.CurrentPhase);
@@ -252,21 +268,48 @@ namespace BackpackPrototype
             SelectedItem = null;
         }
 
+        /// <summary>
+        /// 尝试消耗一次 Roll 刷新商店。仅准备阶段且尚有次数时有效。
+        /// </summary>
+        public bool TryRefreshShop()
+        {
+            if (!CanRollShop || !RefreshShopInternal())
+            {
+                return false;
+            }
+
+            remainingRolls--;
+            NotifyRollStateChanged();
+            return true;
+        }
+
+        // 保留给 Unity Button 事件和现有调用点使用。
         public void RefreshShop()
         {
-            if (!isReady ||
-                BattleFlowController.CurrentPhase !=
-                BattlePhase.Preparation)
+            TryRefreshShop();
+        }
+
+        /// <summary>恢复本准备阶段的 Roll 次数，但不刷新商店。</summary>
+        public bool ResetRolls()
+        {
+            if (!isReady)
             {
-                return;
+                return false;
+            }
+
+            remainingRolls = RollsPerPreparation;
+            NotifyRollStateChanged();
+            return true;
+        }
+
+        private bool RefreshShopInternal()
+        {
+            if (itemCatalog.Count == 0 || shopSlots.Count == 0)
+            {
+                return false;
             }
 
             ClearShopViews();
-
-            if (itemCatalog.Count == 0)
-            {
-                return;
-            }
 
             foreach (RectTransform slot in shopSlots)
             {
@@ -285,6 +328,7 @@ namespace BackpackPrototype
             }
 
             SelectedItem = null;
+            return true;
         }
 
         public void EnterCombat()
@@ -490,6 +534,15 @@ namespace BackpackPrototype
 
         private void HandlePhaseChanged(BattlePhase phase)
         {
+            if (phase == BattlePhase.Preparation)
+            {
+                InitializeShopForPreparation();
+            }
+            else
+            {
+                shopInitializedForPreparation = false;
+            }
+
             bool interactionEnabled =
                 phase == BattlePhase.Preparation;
 
@@ -506,6 +559,27 @@ namespace BackpackPrototype
             }
 
             UpdateCurveInputForPhase(phase);
+        }
+
+        private void InitializeShopForPreparation()
+        {
+            if (!isReady ||
+                BattleFlowController.CurrentPhase !=
+                BattlePhase.Preparation ||
+                shopInitializedForPreparation)
+            {
+                return;
+            }
+
+            shopInitializedForPreparation = true;
+            remainingRolls = RollsPerPreparation;
+            RefreshShopInternal();
+            NotifyRollStateChanged();
+        }
+
+        private void NotifyRollStateChanged()
+        {
+            RollStateChanged?.Invoke();
         }
 
         private BackpackCombatController

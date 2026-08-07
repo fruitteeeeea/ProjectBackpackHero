@@ -96,6 +96,10 @@ public sealed class PlayerBackpackSystemTests
             serialized.FindProperty("itemCatalog")
                 .arraySize,
             Is.EqualTo(6));
+        Assert.That(
+            serialized.FindProperty("rollsPerPreparation")
+                .intValue,
+            Is.EqualTo(3));
 
         RectTransform aircraftAnchor =
             FindRectTransform(

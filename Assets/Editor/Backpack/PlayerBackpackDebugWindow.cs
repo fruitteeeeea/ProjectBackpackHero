@@ -231,6 +231,12 @@ namespace BackpackHero.EditorTools
                 }
 
                 if (selectedTarget == 0 &&
+                    GUILayout.Button("刷新Roll次数"))
+                {
+                    bridge.ResetRolls();
+                }
+
+                if (selectedTarget == 0 &&
                     GUILayout.Button("恢复默认布局"))
                 {
                     bridge.RestoreDefaultLayout();

@@ -1,4 +1,7 @@
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using BackpackHero.Battle;
 
 namespace BackpackPrototype
 {
@@ -7,12 +10,41 @@ namespace BackpackPrototype
         [SerializeField]
         private PlayerBackpackSystem playerBackpackSystem;
 
+        [SerializeField]
+        private Button rollButton;
+
+        [SerializeField]
+        private TMP_Text rollLabel;
+
         private PlayerBackpackSystem System =>
             playerBackpackSystem != null
                 ? playerBackpackSystem
                 : playerBackpackSystem =
                     GetComponentInParent<
                         PlayerBackpackSystem>(true);
+
+        private void OnEnable()
+        {
+            BattleFlowController.PhaseChanged += HandlePhaseChanged;
+            SubscribeToSystem();
+            RefreshRollPresentation();
+        }
+
+        private void Start()
+        {
+            SubscribeToSystem();
+            RefreshRollPresentation();
+        }
+
+        private void OnDisable()
+        {
+            BattleFlowController.PhaseChanged -= HandlePhaseChanged;
+            if (playerBackpackSystem != null)
+            {
+                playerBackpackSystem.RollStateChanged -=
+                    RefreshRollPresentation;
+            }
+        }
 
         public void RefreshShop()
         {
@@ -25,6 +57,7 @@ namespace BackpackPrototype
             }
 
             System.RefreshShop();
+            RefreshRollPresentation();
         }
 
         public void TogglePhase()
@@ -38,6 +71,44 @@ namespace BackpackPrototype
             }
 
             System.EnterCombat();
+        }
+
+        private void SubscribeToSystem()
+        {
+            PlayerBackpackSystem system = System;
+            if (system == null)
+            {
+                return;
+            }
+
+            system.RollStateChanged -= RefreshRollPresentation;
+            system.RollStateChanged += RefreshRollPresentation;
+        }
+
+        private void HandlePhaseChanged(BattlePhase _)
+        {
+            RefreshRollPresentation();
+        }
+
+        private void RefreshRollPresentation()
+        {
+            PlayerBackpackSystem system = System;
+            if (system == null)
+            {
+                return;
+            }
+
+            if (rollLabel != null)
+            {
+                rollLabel.text =
+                    $"Roll {system.RemainingRolls}/" +
+                    system.RollsPerPreparation;
+            }
+
+            if (rollButton != null)
+            {
+                rollButton.interactable = system.CanRollShop;
+            }
         }
     }
 }

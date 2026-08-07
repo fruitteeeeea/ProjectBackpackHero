@@ -31,6 +31,52 @@ public sealed class ItemBalanceConfigurationTests
     }
 
     [Test]
+    public void ItemAssets_UseConfiguredAircraftAndEquipmentColors()
+    {
+        ItemData waveEmitter = Load<ItemData>(
+            "Assets/Data/Backpack/Items/" +
+            "Equipment_WaveEmitter.asset");
+
+        string[] aircraftPaths =
+        {
+            "Aircraft_Charge.asset",
+            "Aircraft_First.asset",
+            "Aircraft_L.asset",
+            "Aircraft_Shield.asset",
+        };
+        string[] equipmentPaths =
+        {
+            "Equipment_1x2.asset",
+            "Equipment_ArcCoil.asset",
+            "Equipment_First.asset",
+            "Equipment_RapidCannon.asset",
+            "Equipment_WaveEmitter.asset",
+        };
+        Color aircraftOrange =
+            new Color(1f, 0.8f, 0.5019608f, 1f);
+
+        foreach (string path in aircraftPaths)
+        {
+            ItemData aircraft = Load<ItemData>(
+                "Assets/Data/Backpack/Items/" + path);
+            Assert.That(aircraft.BackgroundColor,
+                Is.EqualTo(aircraftOrange), path);
+        }
+
+        foreach (string path in equipmentPaths)
+        {
+            ItemData equipment = Load<ItemData>(
+                "Assets/Data/Backpack/Items/" + path);
+            Assert.That(equipment.BackgroundColor,
+                Is.EqualTo(waveEmitter.BackgroundColor),
+                path);
+            Assert.That(equipment.EquipmentColor,
+                Is.EqualTo(waveEmitter.EquipmentColor),
+                path);
+        }
+    }
+
+    [Test]
     public void ProjectilePrefabs_ContainApprovedBalanceValues()
     {
         GameObject explosivePrefab = Load<GameObject>(

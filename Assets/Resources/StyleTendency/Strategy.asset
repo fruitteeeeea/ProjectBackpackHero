@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.StyleTendencyDebugSettings
   itemCooldownSpeedMultiplier: 0.5
   aircraftTargetingArcAngleMultiplier: 3
-  aircraftAttackRangeMultiplier: 3
+  aircraftAttackRangeMultiplier: 2
   aircraftAttackSpeedMultiplier: 0.2

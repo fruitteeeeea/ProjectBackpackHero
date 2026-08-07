@@ -29,6 +29,7 @@ namespace BackpackHero.Battle
         public Vector2 ShooterForward { get; }
         public bool HasAimPoint { get; }
         public Vector2 AimPoint { get; }
+        public ProjectileVisualSource VisualSource { get; }
 
         public BattleAttackLaunchContext(
             BattleFaction faction,
@@ -40,7 +41,9 @@ namespace BackpackHero.Battle
             Vector2 shooterPosition,
             Vector2 shooterForward,
             bool hasAimPoint,
-            Vector2 aimPoint)
+            Vector2 aimPoint,
+            ProjectileVisualSource visualSource =
+                ProjectileVisualSource.FighterDefault)
         {
             Faction = faction;
             Damage = Mathf.Max(0f, damage);
@@ -56,6 +59,7 @@ namespace BackpackHero.Battle
                 FireDirection);
             HasAimPoint = hasAimPoint;
             AimPoint = aimPoint;
+            VisualSource = visualSource;
         }
 
         public static BattleAttackLaunchContext
@@ -68,7 +72,9 @@ namespace BackpackHero.Battle
                 Vector2 fireDirection,
                 Vector2 shooterPosition,
                 Vector2 shooterForward,
-                Vector2 aimPoint)
+                Vector2 aimPoint,
+                ProjectileVisualSource visualSource =
+                    ProjectileVisualSource.FighterDefault)
         {
             return new BattleAttackLaunchContext(
                 faction,
@@ -80,7 +86,8 @@ namespace BackpackHero.Battle
                 shooterPosition,
                 shooterForward,
                 true,
-                aimPoint);
+                aimPoint,
+                visualSource);
         }
 
         public static BattleAttackLaunchContext
@@ -92,7 +99,9 @@ namespace BackpackHero.Battle
                 Vector2 origin,
                 Vector2 fireDirection,
                 Vector2 shooterPosition,
-                Vector2 shooterForward)
+                Vector2 shooterForward,
+                ProjectileVisualSource visualSource =
+                    ProjectileVisualSource.FighterDefault)
         {
             return new BattleAttackLaunchContext(
                 faction,
@@ -104,7 +113,8 @@ namespace BackpackHero.Battle
                 shooterPosition,
                 shooterForward,
                 false,
-                Vector2.zero);
+                Vector2.zero,
+                visualSource);
         }
 
         private static Vector2 GetSafeDirection(

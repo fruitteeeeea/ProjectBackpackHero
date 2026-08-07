@@ -439,7 +439,8 @@ namespace BackpackHero.Battle
             FireAttack(
                 defaultPrefab,
                 request.Direction,
-                true);
+                true,
+                ProjectileVisualSource.FighterDefault);
         }
 
         private void HandleEquipmentProjectileShotRequested(
@@ -448,13 +449,15 @@ namespace BackpackHero.Battle
             FireAttack(
                 projectilePrefab,
                 transform.up,
-                false);
+                false,
+                ProjectileVisualSource.Equipment);
         }
 
         private void FireAttack(
             BattleAttack2D requestedPrefab,
             Vector2 fireDirection,
-            bool allowRandomProjectileOverride)
+            bool allowRandomProjectileOverride,
+            ProjectileVisualSource visualSource)
         {
             BattleAttack2D attackPrefab =
                 allowRandomProjectileOverride
@@ -508,7 +511,8 @@ namespace BackpackHero.Battle
                             fireDirection,
                             transform.position,
                             transform.up,
-                            targetPosition);
+                            targetPosition,
+                            visualSource);
 
             attack.Initialize(launchContext);
 

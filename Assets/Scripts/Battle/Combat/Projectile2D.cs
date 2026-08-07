@@ -20,6 +20,9 @@ namespace BackpackHero.Battle
         [SerializeField]
         private HitBox2D hitBox;
 
+        [SerializeField]
+        private ProjectileVisualController2D visualController;
+
         public BattleFaction Faction =>
             hitBox != null
                 ? hitBox.Faction
@@ -55,7 +58,8 @@ namespace BackpackHero.Battle
                 context.Damage,
                 context.Speed,
                 context.FireDirection,
-                trajectoryContext);
+                trajectoryContext,
+                context.VisualSource);
 
             if (context.Lifetime >= 0f)
             {
@@ -93,7 +97,8 @@ namespace BackpackHero.Battle
                 damage,
                 speed,
                 direction,
-                context);
+                context,
+                ProjectileVisualSource.FighterDefault);
         }
 
         /// <summary>
@@ -104,7 +109,9 @@ namespace BackpackHero.Battle
             float damage,
             float speed,
             Vector2 direction,
-            ProjectileTrajectoryLaunchContext context)
+            ProjectileTrajectoryLaunchContext context,
+            ProjectileVisualSource visualSource =
+                ProjectileVisualSource.FighterDefault)
         {
             FindReferences();
 
@@ -135,6 +142,8 @@ namespace BackpackHero.Battle
                 faction,
                 damage);
 
+            visualController?.Apply(faction, visualSource);
+
             trajectoryController.Initialize(
                 Mathf.Max(0f, speed),
                 safeContext);
@@ -156,6 +165,12 @@ namespace BackpackHero.Battle
             {
                 hitBox =
                     GetComponent<HitBox2D>();
+            }
+
+            if (visualController == null)
+            {
+                visualController =
+                    GetComponent<ProjectileVisualController2D>();
             }
         }
 

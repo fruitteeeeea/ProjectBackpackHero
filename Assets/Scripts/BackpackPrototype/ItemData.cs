@@ -31,10 +31,10 @@ namespace BackpackPrototype
             new();
 
         [SerializeField]
-        private float cooldownDuration = -1f;
+        private float cooldownDuration = 3f;
 
         [Header("Aircraft Spawn")]
-        [Tooltip("每次物品冷却完成时生成的飞机数量。")]
+        [Tooltip("每次相邻装备冷却完成时生成的飞机数量。")]
         [SerializeField, Min(1)]
         private int spawnCount = 1;
 
@@ -68,7 +68,7 @@ namespace BackpackPrototype
                 : Array.Empty<Vector2Int>();
 
         public bool CanEnterCooldown =>
-            itemType == ItemType.Aircraft &&
+            itemType == ItemType.Equipment &&
             cooldownDuration > 0f;
 
         public void InitializeForTests(
@@ -108,13 +108,11 @@ namespace BackpackPrototype
         {
             if (itemType == ItemType.Equipment)
             {
-                cooldownDuration = -1f;
+                cooldownDuration = Mathf.Max(0.01f, cooldownDuration);
                 spawnCount = 1;
                 return;
             }
 
-            cooldownDuration =
-                Mathf.Max(0.01f, cooldownDuration);
             spawnCount = Mathf.Max(1, spawnCount);
         }
     }

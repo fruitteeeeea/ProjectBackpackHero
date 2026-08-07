@@ -566,7 +566,7 @@ public sealed class BackpackControllerTests
     }
 
     [Test]
-    public void ItemData_OnlyAircraftCanEnterCooldown()
+    public void ItemData_OnlyEquipmentCanEnterCooldown()
     {
         ItemShapeData shape =
             NewShape(OneCell());
@@ -587,16 +587,16 @@ public sealed class BackpackControllerTests
 
         Assert.That(
             aircraft.CanEnterCooldown,
-            Is.True);
+            Is.False);
         Assert.That(
             aircraft.CooldownDuration,
             Is.EqualTo(2f));
         Assert.That(
             equipment.CanEnterCooldown,
-            Is.False);
+            Is.True);
         Assert.That(
             equipment.CooldownDuration,
-            Is.EqualTo(-1f));
+            Is.EqualTo(2f));
     }
 
     [Test]
@@ -655,37 +655,92 @@ public sealed class BackpackControllerTests
     }
 
     [Test]
-    public void AircraftCooldown_IsStoredOnItemInstance()
+    public void EquipmentCooldown_IsStoredOnItemInstance()
     {
-        ItemInstance aircraft =
+        ItemInstance equipment =
             NewItem(
-                "cooldown-aircraft",
-                OneCell(),
-                ItemType.Aircraft);
+                "cooldown-equipment",
+                OneCell());
+
+        equipment.BeginCooldown();
+
+        Assert.That(
+            equipment.IsCoolingDown,
+            Is.True);
+        Assert.That(
+            equipment.RemainingCooldown,
+            Is.EqualTo(3f));
+        Assert.That(
+            equipment.TickCooldown(1f),
+            Is.False);
+        Assert.That(
+            equipment.CooldownProgress,
+            Is.EqualTo(1f / 3f).Within(0.001f));
+        Assert.That(
+            equipment.TickCooldown(2f),
+            Is.True);
+        Assert.That(
+            equipment.IsCoolingDown,
+            Is.False);
+        Assert.That(
+            equipment.CooldownProgress,
+            Is.EqualTo(1f));
+    }
+
+    [Test]
+    public void AircraftCooldown_DoesNotStart()
+    {
+        ItemInstance aircraft = NewItem(
+            "aircraft-with-legacy-cooldown",
+            OneCell(),
+            ItemType.Aircraft);
 
         aircraft.BeginCooldown();
 
+        Assert.That(aircraft.IsCoolingDown, Is.False);
+        Assert.That(aircraft.RemainingCooldown, Is.Zero);
+    }
+
+    [Test]
+    public void EquipmentRuntimeCooldownOverride_DoesNotChangeItemData()
+    {
+        ItemData data = NewData(
+            "equipment",
+            ItemType.Equipment,
+            3f,
+            NewShape(OneCell()));
+        ItemInstance equipment = new ItemInstance(
+            "equipment", data, Vector2Int.zero);
+
+        equipment.SetRuntimeCooldownDuration(2.5f);
+        equipment.BeginCooldown();
+
+        Assert.That(data.CooldownDuration, Is.EqualTo(3f));
+        Assert.That(equipment.EffectiveCooldownDuration, Is.EqualTo(2.5f));
+        Assert.That(equipment.RemainingCooldown, Is.EqualTo(2.5f));
+
+        equipment.ClearRuntimeCooldownDuration();
+        equipment.BeginCooldown();
+        Assert.That(equipment.RemainingCooldown, Is.EqualTo(3f));
+    }
+
+    [Test]
+    public void GetAdjacentAircraftItems_FiltersAndDeduplicates()
+    {
+        BackpackController backpack = new BackpackController(4, 3);
+        ItemInstance equipment = NewItem("equipment", OneCell());
+        ItemInstance adjacentAircraft = NewItem(
+            "adjacent-aircraft", OneCell(), ItemType.Aircraft);
+        ItemInstance diagonalAircraft = NewItem(
+            "diagonal-aircraft", OneCell(), ItemType.Aircraft);
+
+        Assert.That(backpack.PlaceItem(equipment, new Vector2Int(1, 1)), Is.True);
+        Assert.That(backpack.PlaceItem(adjacentAircraft, new Vector2Int(2, 1)), Is.True);
+        Assert.That(backpack.PlaceItem(diagonalAircraft, new Vector2Int(2, 2)), Is.True);
+
         Assert.That(
-            aircraft.IsCoolingDown,
-            Is.True);
-        Assert.That(
-            aircraft.RemainingCooldown,
-            Is.EqualTo(2f));
-        Assert.That(
-            aircraft.TickCooldown(1f),
-            Is.False);
-        Assert.That(
-            aircraft.CooldownProgress,
-            Is.EqualTo(0.5f).Within(0.001f));
-        Assert.That(
-            aircraft.TickCooldown(1f),
-            Is.True);
-        Assert.That(
-            aircraft.IsCoolingDown,
-            Is.False);
-        Assert.That(
-            aircraft.CooldownProgress,
-            Is.EqualTo(1f));
+            backpack.GetAdjacentAircraftItems(equipment),
+            Is.EquivalentTo(new[] { adjacentAircraft }));
     }
 
     [Test]
@@ -803,7 +858,7 @@ public sealed class BackpackControllerTests
                 itemType,
                 itemType == ItemType.Aircraft
                     ? 2f
-                    : -1f,
+                    : 3f,
                 shape);
 
         return new ItemInstance(

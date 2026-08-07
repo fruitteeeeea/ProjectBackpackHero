@@ -19,6 +19,6 @@ MonoBehaviour:
   equipmentColor: {r: 0.95686275, g: 0.2627451, b: 0.21176471, a: 1}
   equipmentEffects:
   - {fileID: 11400000, guid: 079e37aa0739642d0862d3c0f9334b33, type: 2}
-  cooldownDuration: -1
+  cooldownDuration: 3
   shape: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
   fighterDefinition: {fileID: 0}

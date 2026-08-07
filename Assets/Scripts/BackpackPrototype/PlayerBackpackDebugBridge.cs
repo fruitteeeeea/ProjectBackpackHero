@@ -244,6 +244,57 @@ namespace BackpackPrototype
             return true;
         }
 
+        public bool RandomizeAllEquipmentCooldowns()
+        {
+            if (!BattleFlowController.IsCombatPhase)
+            {
+                return false;
+            }
+
+            bool randomized = RandomizeEquipmentCooldowns(
+                playerBackpackSystem?.CombatController);
+            randomized |= RandomizeEquipmentCooldowns(
+                enemyBackpackSystem?.CombatController);
+
+            if (randomized)
+            {
+                RefreshSnapshot();
+            }
+
+            return randomized;
+        }
+
+        private static bool RandomizeEquipmentCooldowns(
+            BackpackCombatController controller)
+        {
+            if (controller?.Backpack == null)
+            {
+                return false;
+            }
+
+            bool hasEquipment = false;
+            foreach (ItemInstance item in controller.Items)
+            {
+                if (item?.Data == null ||
+                    item.Data.ItemType != ItemType.Equipment)
+                {
+                    continue;
+                }
+
+                item.SetRuntimeCooldownDuration(
+                    item.Data.CooldownDuration +
+                    UnityEngine.Random.Range(-0.5f, 0.5f));
+                hasEquipment = true;
+            }
+
+            if (hasEquipment)
+            {
+                controller.BeginAllCooldowns();
+            }
+
+            return hasEquipment;
+        }
+
         /// <summary>
         /// 按玩家背包最大生命值的指定比例扣血；不依赖当前调试页选中的目标。
         /// </summary>
@@ -438,6 +489,19 @@ namespace BackpackPrototype
             if (item.Data.ItemType !=
                 ItemType.Aircraft)
             {
+                text.Append("\n   冷却：");
+                if (item.IsCoolingDown)
+                {
+                    text.Append(item.RemainingCooldown.ToString("0.00"))
+                        .Append("s  ")
+                        .Append((item.CooldownProgress * 100f).ToString("0"))
+                        .Append('%');
+                }
+                else
+                {
+                    text.Append("未冷却");
+                }
+
                 text.Append("\n   标识颜色：#")
                     .Append(ColorUtility.ToHtmlStringRGB(
                         item.Data.EquipmentColor));
@@ -445,23 +509,7 @@ namespace BackpackPrototype
                 return text.ToString();
             }
 
-            text.Append("\n   冷却：");
-
-            if (item.IsCoolingDown)
-            {
-                text.Append(
-                        item.RemainingCooldown
-                            .ToString("0.00"))
-                    .Append("s  ")
-                    .Append(
-                        (item.CooldownProgress * 100f)
-                        .ToString("0"))
-                    .Append('%');
-            }
-            else
-            {
-                text.Append("未冷却");
-            }
+            text.Append("\n   冷却：无（由相邻装备触发）");
 
             List<ItemInstance> equipment =
                 backpack != null

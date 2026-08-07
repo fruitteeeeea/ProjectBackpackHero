@@ -254,6 +254,12 @@ namespace BackpackHero.EditorTools
                 {
                     bridge.BeginAllCooldowns();
                 }
+
+                if (selectedTarget == 0 &&
+                    GUILayout.Button("随机化装备冷却时间"))
+                {
+                    bridge.RandomizeAllEquipmentCooldowns();
+                }
             }
 
             if (selectedTarget == 0)

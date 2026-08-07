@@ -20,7 +20,7 @@ namespace BackpackPrototype
 
     /// <summary>
     /// 一个正式战斗背包的运行时入口。
-    /// 持有占格数据、推进物品冷却，并把完成冷却的飞机交给生成器。
+    /// 持有占格数据、推进装备冷却，并在完成时生成相邻飞机。
     /// </summary>
     [RequireComponent(typeof(FactionMember))]
     [DisallowMultipleComponent]
@@ -117,12 +117,16 @@ namespace BackpackPrototype
 
                 CooldownCompleted?.Invoke(item);
 
-                int spawnCount = item.Data.SpawnCount;
-                for (int spawnIndex = 0;
-                     spawnIndex < spawnCount;
-                     spawnIndex++)
+                foreach (ItemInstance aircraft
+                         in backpack.GetAdjacentAircraftItems(item))
                 {
-                    FighterSpawner?.RequestSpawn(item);
+                    int spawnCount = aircraft.Data.SpawnCount;
+                    for (int spawnIndex = 0;
+                         spawnIndex < spawnCount;
+                         spawnIndex++)
+                    {
+                        FighterSpawner?.RequestSpawn(aircraft);
+                    }
                 }
 
                 if (backpack.Contains(item) &&

@@ -32,6 +32,11 @@ namespace BackpackPrototype
         public bool IsCoolingDown { get; private set; }
         public float RemainingCooldown { get; private set; }
         private float activeCooldownDuration;
+        private float? runtimeCooldownDuration;
+
+        public float EffectiveCooldownDuration =>
+            runtimeCooldownDuration ??
+            (Data != null ? Data.CooldownDuration : 0f);
 
         public float CooldownProgress
         {
@@ -61,7 +66,7 @@ namespace BackpackPrototype
             IsCoolingDown = true;
             activeCooldownDuration = Mathf.Max(
                 0.01f,
-                Data.CooldownDuration *
+                EffectiveCooldownDuration *
                 GamePacingDebugRuntime
                     .GetWhiteboardCooldownMultiplier());
             RemainingCooldown = activeCooldownDuration;
@@ -97,6 +102,19 @@ namespace BackpackPrototype
             IsCoolingDown = false;
             RemainingCooldown = 0f;
             activeCooldownDuration = 0f;
+        }
+
+        /// <summary>
+        /// 仅覆盖本运行时物品的冷却配置，不会修改ItemData资产。
+        /// </summary>
+        public void SetRuntimeCooldownDuration(float duration)
+        {
+            runtimeCooldownDuration = Mathf.Max(0.01f, duration);
+        }
+
+        public void ClearRuntimeCooldownDuration()
+        {
+            runtimeCooldownDuration = null;
         }
 
         public bool TryUpgrade()

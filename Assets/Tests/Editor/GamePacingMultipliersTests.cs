@@ -182,7 +182,7 @@ public sealed class GamePacingMultipliersTests
     }
 
     [Test]
-    public void WhiteboardCooldown_AffectsOnlyNewAircraftCooldowns()
+    public void WhiteboardCooldown_AffectsOnlyNewEquipmentCooldowns()
     {
         GamePacingDebugRuntime runtime = GamePacingDebugRuntime.Instance;
         if (runtime == null)
@@ -195,8 +195,8 @@ public sealed class GamePacingMultipliersTests
 
         ItemData data = ScriptableObject.CreateInstance<ItemData>();
         data.InitializeForTests(
-            "Cooldown Aircraft", ItemType.Aircraft, 2f, null);
-        var item = new ItemInstance("cooldown-aircraft", data, Vector2Int.zero);
+            "Cooldown Equipment", ItemType.Equipment, 2f, null);
+        var item = new ItemInstance("cooldown-equipment", data, Vector2Int.zero);
         GamePacingMultipliers original = runtime.Multipliers;
         try
         {

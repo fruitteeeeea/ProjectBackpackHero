@@ -557,7 +557,7 @@ public sealed class PlayerBackpackSystemTests
     }
 
     [Test]
-    public void DebugBridge_DescribesAircraftCooldownAndEveryAdjacentEquipmentColor()
+    public void DebugBridge_DescribesAircraftAndEveryAdjacentEquipmentColor()
     {
         ItemShapeData shape =
             ScriptableObject.CreateInstance<
@@ -620,8 +620,6 @@ public sealed class PlayerBackpackSystemTests
                     rightEquipment.AnchorCell),
                 Is.True);
 
-            aircraft.BeginCooldown();
-
             string description =
                 PlayerBackpackDebugBridge
                     .BuildItemDescription(
@@ -633,7 +631,7 @@ public sealed class PlayerBackpackSystemTests
                 Does.Contain("Debug Aircraft"));
             Assert.That(
                 description,
-                Does.Contain("冷却：4.00s"));
+                Does.Contain("冷却：无（由相邻装备触发）"));
             Assert.That(
                 description,
                 Does.Contain("临近装备颜色：2"));

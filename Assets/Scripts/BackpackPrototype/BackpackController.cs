@@ -299,6 +299,30 @@ namespace BackpackPrototype
             return equipmentItems;
         }
 
+        public List<ItemInstance> GetAdjacentAircraftItems(
+            ItemInstance equipment)
+        {
+            var aircraftItems = new List<ItemInstance>();
+
+            if (equipment == null ||
+                equipment.Data == null ||
+                equipment.Data.ItemType != ItemType.Equipment)
+            {
+                return aircraftItems;
+            }
+
+            foreach (ItemInstance adjacentItem in GetAdjacentItems(equipment))
+            {
+                if (adjacentItem.Data != null &&
+                    adjacentItem.Data.ItemType == ItemType.Aircraft)
+                {
+                    aircraftItems.Add(adjacentItem);
+                }
+            }
+
+            return aircraftItems;
+        }
+
         private void FillCells(ItemInstance item, Vector2Int anchorCell)
         {
             foreach (var cell in GetOccupiedCells(item, anchorCell))

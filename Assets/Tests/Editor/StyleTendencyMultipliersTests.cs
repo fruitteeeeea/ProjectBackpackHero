@@ -32,6 +32,7 @@ public sealed class StyleTendencyMultipliersTests
         Assert.That(values.AircraftTargetingArcAngle, Is.EqualTo(1f));
         Assert.That(values.AircraftAttackRange, Is.EqualTo(1f));
         Assert.That(values.AircraftAttackSpeed, Is.EqualTo(1f));
+        Assert.That(values.AircraftFlightSpeed, Is.EqualTo(1f));
         Assert.That(values.CooldownItemType,
             Is.EqualTo(CooldownItemType.Equipment));
         Assert.That(values.AircraftLifetime, Is.EqualTo(1f));
@@ -61,16 +62,19 @@ public sealed class StyleTendencyMultipliersTests
 
         StyleTendencyMultipliers lifetimeValues = new(
             1f, 1f, 1f, 1f, CooldownItemType.Equipment,
-            4f, 0f, -1f);
+            4f, 0f, -1f, 4f);
         Assert.That(lifetimeValues.AircraftLifetime,
             Is.EqualTo(
                 StyleTendencyMultipliers.MaximumAircraftLifetimeMultiplier));
         Assert.That(lifetimeValues.ProjectileSpeed,
             Is.EqualTo(
-                StyleTendencyMultipliers.MinimumProjectileMultiplier));
+                StyleTendencyMultipliers.MinimumProjectileSpeedMultiplier));
         Assert.That(lifetimeValues.ProjectileLifetime,
             Is.EqualTo(
-                StyleTendencyMultipliers.MinimumProjectileMultiplier));
+                StyleTendencyMultipliers.MinimumProjectileLifetimeMultiplier));
+        Assert.That(lifetimeValues.AircraftFlightSpeed,
+            Is.EqualTo(
+                StyleTendencyMultipliers.MaximumAircraftFlightSpeedMultiplier));
     }
 
     [Test]
@@ -82,7 +86,7 @@ public sealed class StyleTendencyMultipliersTests
         {
             StyleTendencyMultipliers expected = new(
                 3f, 0.5f, 1.5f, 0.2f, CooldownItemType.Aircraft,
-                1.5f, 0.75f, 0.5f);
+                1.5f, 0.75f, 0.5f, 1.25f);
             settings.SetValues(expected);
             StyleTendencyMultipliers actual = settings.GetValues();
 
@@ -94,6 +98,8 @@ public sealed class StyleTendencyMultipliersTests
                 Is.EqualTo(expected.AircraftAttackRange));
             Assert.That(actual.AircraftAttackSpeed,
                 Is.EqualTo(expected.AircraftAttackSpeed));
+            Assert.That(actual.AircraftFlightSpeed,
+                Is.EqualTo(expected.AircraftFlightSpeed));
             Assert.That(actual.CooldownItemType,
                 Is.EqualTo(expected.CooldownItemType));
             Assert.That(actual.AircraftLifetime,
@@ -134,7 +140,7 @@ public sealed class StyleTendencyMultipliersTests
 
         runtime.SetMultipliers(new StyleTendencyMultipliers(
             2f, 3f, 0.5f, 1.5f, CooldownItemType.Equipment,
-            1.5f, 0.75f, 0.5f));
+            1.5f, 0.75f, 0.5f, 1.25f));
 
         Assert.That(StyleTendencyDebugRuntime
                 .GetItemCooldownSpeedMultiplier(), Is.EqualTo(2f));
@@ -144,6 +150,8 @@ public sealed class StyleTendencyMultipliersTests
                 .GetAircraftAttackRangeMultiplier(), Is.EqualTo(0.5f));
         Assert.That(StyleTendencyDebugRuntime
                 .GetAircraftAttackSpeedMultiplier(), Is.EqualTo(1.5f));
+        Assert.That(StyleTendencyDebugRuntime
+                .GetAircraftFlightSpeedMultiplier(), Is.EqualTo(1.25f));
         Assert.That(StyleTendencyDebugRuntime
                 .GetAircraftLifetimeMultiplier(), Is.EqualTo(1.5f));
         Assert.That(StyleTendencyDebugRuntime
@@ -251,8 +259,6 @@ public sealed class StyleTendencyMultipliersTests
         Assert.That(settings, Is.Not.Null, path);
         Assert.That(settings.CooldownItemType, Is.EqualTo(expected), path);
         StyleTendencyMultipliers values = settings.GetValues();
-        Assert.That(values.AircraftLifetime, Is.EqualTo(1f), path);
-        Assert.That(values.ProjectileSpeed, Is.EqualTo(1f), path);
-        Assert.That(values.ProjectileLifetime, Is.EqualTo(1f), path);
+        Assert.That(values.AircraftFlightSpeed, Is.EqualTo(1f), path);
     }
 }

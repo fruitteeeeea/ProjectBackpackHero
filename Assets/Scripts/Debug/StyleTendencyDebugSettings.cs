@@ -31,17 +31,22 @@ namespace BackpackHero.Debugging
         private float aircraftAttackSpeedMultiplier = 1f;
 
         [SerializeField, Range(
+            StyleTendencyMultipliers.MinimumAircraftFlightSpeedMultiplier,
+            StyleTendencyMultipliers.MaximumAircraftFlightSpeedMultiplier)]
+        private float aircraftFlightSpeedMultiplier = 1f;
+
+        [SerializeField, Range(
             StyleTendencyMultipliers.MinimumAircraftLifetimeMultiplier,
             StyleTendencyMultipliers.MaximumAircraftLifetimeMultiplier)]
         private float aircraftLifetimeMultiplier = 1f;
 
         [SerializeField, Range(
-            StyleTendencyMultipliers.MinimumProjectileMultiplier,
+            StyleTendencyMultipliers.MinimumProjectileSpeedMultiplier,
             StyleTendencyMultipliers.MaximumProjectileMultiplier)]
         private float projectileSpeedMultiplier = 1f;
 
         [SerializeField, Range(
-            StyleTendencyMultipliers.MinimumProjectileMultiplier,
+            StyleTendencyMultipliers.MinimumProjectileLifetimeMultiplier,
             StyleTendencyMultipliers.MaximumProjectileMultiplier)]
         private float projectileLifetimeMultiplier = 1f;
 
@@ -57,6 +62,8 @@ namespace BackpackHero.Debugging
             aircraftAttackRangeMultiplier;
         public float AircraftAttackSpeedMultiplier =>
             aircraftAttackSpeedMultiplier;
+        public float AircraftFlightSpeedMultiplier =>
+            aircraftFlightSpeedMultiplier;
         public CooldownItemType CooldownItemType => cooldownItemType;
         public float AircraftLifetimeMultiplier => aircraftLifetimeMultiplier;
         public float ProjectileSpeedMultiplier => projectileSpeedMultiplier;
@@ -69,6 +76,7 @@ namespace BackpackHero.Debugging
                 values.AircraftTargetingArcAngle;
             aircraftAttackRangeMultiplier = values.AircraftAttackRange;
             aircraftAttackSpeedMultiplier = values.AircraftAttackSpeed;
+            aircraftFlightSpeedMultiplier = values.AircraftFlightSpeed;
             cooldownItemType = values.CooldownItemType;
             aircraftLifetimeMultiplier = values.AircraftLifetime;
             projectileSpeedMultiplier = values.ProjectileSpeed;
@@ -83,7 +91,8 @@ namespace BackpackHero.Debugging
             cooldownItemType,
             aircraftLifetimeMultiplier,
             projectileSpeedMultiplier,
-            projectileLifetimeMultiplier);
+            projectileLifetimeMultiplier,
+            aircraftFlightSpeedMultiplier);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

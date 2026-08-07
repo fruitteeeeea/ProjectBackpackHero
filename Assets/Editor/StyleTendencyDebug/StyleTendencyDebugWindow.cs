@@ -90,23 +90,42 @@ namespace BackpackHero.EditorTools
 
             EditorGUILayout.Space(6f);
             EditorGUILayout.LabelField("全局属性倍率", EditorStyles.boldLabel);
+            float itemCooldownSpeed = DrawMultiplier(
+                "物品冷却速度", current.ItemCooldownSpeed);
+            float targetingArcAngle = DrawMultiplier(
+                "飞机索敌角度", current.AircraftTargetingArcAngle);
+            float attackRange = DrawMultiplier(
+                "飞机攻击范围", current.AircraftAttackRange);
+            float attackSpeed = EditorGUILayout.Slider(
+                "飞机射速", current.AircraftAttackSpeed,
+                StyleTendencyMultipliers.MinimumAircraftAttackSpeedMultiplier,
+                StyleTendencyMultipliers.MaximumAircraftAttackSpeedMultiplier);
+            float aircraftFlightSpeed = EditorGUILayout.Slider(
+                "飞机飞行速度", current.AircraftFlightSpeed,
+                StyleTendencyMultipliers.MinimumAircraftFlightSpeedMultiplier,
+                StyleTendencyMultipliers.MaximumAircraftFlightSpeedMultiplier);
+            float aircraftLifetime = EditorGUILayout.Slider(
+                "飞机存活时间", current.AircraftLifetime,
+                StyleTendencyMultipliers.MinimumAircraftLifetimeMultiplier,
+                StyleTendencyMultipliers.MaximumAircraftLifetimeMultiplier);
+            float projectileSpeed = EditorGUILayout.Slider(
+                "子弹速度", current.ProjectileSpeed,
+                StyleTendencyMultipliers.MinimumProjectileSpeedMultiplier,
+                StyleTendencyMultipliers.MaximumProjectileMultiplier);
+            float projectileLifetime = EditorGUILayout.Slider(
+                "子弹存活时间", current.ProjectileLifetime,
+                StyleTendencyMultipliers.MinimumProjectileLifetimeMultiplier,
+                StyleTendencyMultipliers.MaximumProjectileMultiplier);
             StyleTendencyMultipliers changed = new(
-                DrawMultiplier("物品冷却速度", current.ItemCooldownSpeed),
-                DrawMultiplier("飞机索敌角度", current.AircraftTargetingArcAngle),
-                DrawMultiplier("飞机攻击范围", current.AircraftAttackRange),
-                EditorGUILayout.Slider("飞机射速", current.AircraftAttackSpeed,
-                    StyleTendencyMultipliers.MinimumAircraftAttackSpeedMultiplier,
-                    StyleTendencyMultipliers.MaximumAircraftAttackSpeedMultiplier),
+                itemCooldownSpeed,
+                targetingArcAngle,
+                attackRange,
+                attackSpeed,
                 cooldownItemType,
-                EditorGUILayout.Slider("飞机存活时间", current.AircraftLifetime,
-                    StyleTendencyMultipliers.MinimumAircraftLifetimeMultiplier,
-                    StyleTendencyMultipliers.MaximumAircraftLifetimeMultiplier),
-                EditorGUILayout.Slider("子弹速度", current.ProjectileSpeed,
-                    StyleTendencyMultipliers.MinimumProjectileMultiplier,
-                    StyleTendencyMultipliers.MaximumProjectileMultiplier),
-                EditorGUILayout.Slider("子弹存活时间", current.ProjectileLifetime,
-                    StyleTendencyMultipliers.MinimumProjectileMultiplier,
-                    StyleTendencyMultipliers.MaximumProjectileMultiplier));
+                aircraftLifetime,
+                projectileSpeed,
+                projectileLifetime,
+                aircraftFlightSpeed);
             if (!AreEqual(current, changed))
             {
                 draft.Value = changed;
@@ -195,11 +214,12 @@ namespace BackpackHero.EditorTools
                 !IsInRange(values.AircraftTargetingArcAngle) ||
                 !IsInRange(values.AircraftAttackRange) ||
                 !IsAircraftAttackSpeedInRange(values.AircraftAttackSpeed) ||
+                !IsAircraftFlightSpeedInRange(values.AircraftFlightSpeed) ||
                 !IsAircraftLifetimeInRange(values.AircraftLifetime) ||
-                !IsProjectileMultiplierInRange(values.ProjectileSpeed) ||
-                !IsProjectileMultiplierInRange(values.ProjectileLifetime))
+                !IsProjectileSpeedInRange(values.ProjectileSpeed) ||
+                !IsProjectileLifetimeInRange(values.ProjectileLifetime))
             {
-                validationMessage = "前三项风格倍率必须在 0.5 到 3 之间；飞机射速必须在 0.2 到 2 之间；飞机存活时间必须在 0.5 到 2 之间；子弹速度和存活时间必须在 0.5 到 1 之间。";
+                validationMessage = "前三项风格倍率必须在 0.5 到 3 之间；飞机射速和飞行速度必须在各自范围内；飞机存活时间必须在 0.5 到 2 之间；子弹速度必须在 0.5 到 1 之间，子弹存活时间必须在 0.1 到 1 之间。";
                 return false;
             }
 
@@ -223,9 +243,21 @@ namespace BackpackHero.EditorTools
             value <= StyleTendencyMultipliers
                 .MaximumAircraftLifetimeMultiplier;
 
-        private static bool IsProjectileMultiplierInRange(float value) =>
+        private static bool IsAircraftFlightSpeedInRange(float value) =>
             value >= StyleTendencyMultipliers
-                .MinimumProjectileMultiplier &&
+                .MinimumAircraftFlightSpeedMultiplier &&
+            value <= StyleTendencyMultipliers
+                .MaximumAircraftFlightSpeedMultiplier;
+
+        private static bool IsProjectileSpeedInRange(float value) =>
+            value >= StyleTendencyMultipliers
+                .MinimumProjectileSpeedMultiplier &&
+            value <= StyleTendencyMultipliers
+                .MaximumProjectileMultiplier;
+
+        private static bool IsProjectileLifetimeInRange(float value) =>
+            value >= StyleTendencyMultipliers
+                .MinimumProjectileLifetimeMultiplier &&
             value <= StyleTendencyMultipliers
                 .MaximumProjectileMultiplier;
 
@@ -279,6 +311,8 @@ namespace BackpackHero.EditorTools
                 right.AircraftAttackRange) &&
             Mathf.Approximately(left.AircraftAttackSpeed,
                 right.AircraftAttackSpeed) &&
+            Mathf.Approximately(left.AircraftFlightSpeed,
+                right.AircraftFlightSpeed) &&
             left.CooldownItemType == right.CooldownItemType &&
             Mathf.Approximately(left.AircraftLifetime,
                 right.AircraftLifetime) &&

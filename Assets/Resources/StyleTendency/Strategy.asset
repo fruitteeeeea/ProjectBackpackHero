@@ -16,7 +16,8 @@ MonoBehaviour:
   aircraftTargetingArcAngleMultiplier: 3
   aircraftAttackRangeMultiplier: 2
   aircraftAttackSpeedMultiplier: 0.2
+  aircraftFlightSpeedMultiplier: 0.6
   aircraftLifetimeMultiplier: 1
   projectileSpeedMultiplier: 0.6
-  projectileLifetimeMultiplier: 0.5
+  projectileLifetimeMultiplier: 0.25
   cooldownItemType: 0

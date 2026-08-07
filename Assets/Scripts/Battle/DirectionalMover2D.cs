@@ -38,7 +38,8 @@ namespace BackpackHero.Battle
             GamePacingDebugRuntime.GetAircraftSpeedMultiplier(
                 factionMember != null
                     ? factionMember.Faction
-                    : BattleFaction.Player);
+                    : BattleFaction.Player) *
+            StyleTendencyDebugRuntime.GetAircraftFlightSpeedMultiplier();
 
         /// <summary>
         /// 当前速度倍率。

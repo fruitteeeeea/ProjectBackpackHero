@@ -1,4 +1,5 @@
 using UnityEngine;
+using BackpackPrototype;
 
 namespace BackpackHero.Debugging
 {
@@ -29,6 +30,11 @@ namespace BackpackHero.Debugging
             StyleTendencyMultipliers.MaximumAircraftAttackSpeedMultiplier)]
         private float aircraftAttackSpeedMultiplier = 1f;
 
+        [Header("Cooldown")]
+        [SerializeField]
+        private CooldownItemType cooldownItemType =
+            BackpackPrototype.CooldownItemType.Equipment;
+
         public float ItemCooldownSpeedMultiplier => itemCooldownSpeedMultiplier;
         public float AircraftTargetingArcAngleMultiplier =>
             aircraftTargetingArcAngleMultiplier;
@@ -36,6 +42,7 @@ namespace BackpackHero.Debugging
             aircraftAttackRangeMultiplier;
         public float AircraftAttackSpeedMultiplier =>
             aircraftAttackSpeedMultiplier;
+        public CooldownItemType CooldownItemType => cooldownItemType;
 
         public void SetValues(StyleTendencyMultipliers values)
         {
@@ -44,13 +51,15 @@ namespace BackpackHero.Debugging
                 values.AircraftTargetingArcAngle;
             aircraftAttackRangeMultiplier = values.AircraftAttackRange;
             aircraftAttackSpeedMultiplier = values.AircraftAttackSpeed;
+            cooldownItemType = values.CooldownItemType;
         }
 
         public StyleTendencyMultipliers GetValues() => new(
             itemCooldownSpeedMultiplier,
             aircraftTargetingArcAngleMultiplier,
             aircraftAttackRangeMultiplier,
-            aircraftAttackSpeedMultiplier);
+            aircraftAttackSpeedMultiplier,
+            cooldownItemType);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

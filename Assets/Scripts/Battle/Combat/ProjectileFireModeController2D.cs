@@ -306,6 +306,12 @@ namespace BackpackHero.Battle
                 interval);
         }
 
+        public void ClearModes()
+        {
+            EnsureModeList();
+            fireModes.Clear();
+        }
+
         public void ReplaceWithSingleMode(
             ProjectileFirePattern pattern,
             float interval)

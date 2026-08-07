@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using BackpackHero.Battle;
+using BackpackHero.Debugging;
 using UnityEngine;
 
 namespace BackpackPrototype
@@ -19,13 +20,16 @@ namespace BackpackPrototype
         {
             public SpawnRequest(
                 ItemInstance item,
+                ItemInstance triggeringEquipment,
                 float? curveValue)
             {
                 Item = item;
+                TriggeringEquipment = triggeringEquipment;
                 CurveValue = curveValue;
             }
 
             public ItemInstance Item { get; }
+            public ItemInstance TriggeringEquipment { get; }
             public float? CurveValue { get; }
         }
 
@@ -130,6 +134,7 @@ namespace BackpackPrototype
 
         public bool RequestSpawn(
             ItemInstance aircraftItem,
+            ItemInstance triggeringEquipment = null,
             float? curveValue = null)
         {
             EnsureReferences();
@@ -137,7 +142,11 @@ namespace BackpackPrototype
             if (!BattleFlowController.IsCombatPhase ||
                 aircraftItem == null ||
                 aircraftItem.Data == null ||
-                aircraftItem.Data.ItemType != ItemType.Aircraft)
+                aircraftItem.Data.ItemType != ItemType.Aircraft ||
+                (triggeringEquipment != null &&
+                 (triggeringEquipment.Data == null ||
+                  triggeringEquipment.Data.ItemType !=
+                  ItemType.Equipment)))
             {
                 return false;
             }
@@ -145,6 +154,7 @@ namespace BackpackPrototype
             pendingSpawns.Enqueue(
                 new SpawnRequest(
                     aircraftItem,
+                    triggeringEquipment,
                     ResolveCurveValue(curveValue)));
 
             if (spawnCoroutine == null)
@@ -259,6 +269,19 @@ namespace BackpackPrototype
                    request.Item.Data != null &&
                    request.Item.Data.ItemType ==
                    ItemType.Aircraft &&
+                   (request.TriggeringEquipment == null
+                       ? StyleTendencyDebugRuntime
+                             .GetCooldownItemType() ==
+                         CooldownItemType.Aircraft
+                       : StyleTendencyDebugRuntime
+                             .GetCooldownItemType() ==
+                         CooldownItemType.Equipment) &&
+                   (request.TriggeringEquipment == null ||
+                    (combatController.Backpack.Contains(
+                         request.TriggeringEquipment) &&
+                     request.TriggeringEquipment.Data != null &&
+                     request.TriggeringEquipment.Data.ItemType ==
+                     ItemType.Equipment)) &&
                    BattleFlowController.IsCombatPhase;
         }
 
@@ -359,11 +382,13 @@ namespace BackpackPrototype
 
             ConfigureAdjacentEquipmentMarkers(
                 fighterObject.transform,
-                request.Item);
+                request.Item,
+                request.TriggeringEquipment);
 
             ConfigureAdjacentEquipmentEffects(
                 fighterObject.transform,
-                request.Item);
+                request.Item,
+                request.TriggeringEquipment);
 
             FighterSpawned?.Invoke(
                 fighterObject,
@@ -374,7 +399,8 @@ namespace BackpackPrototype
 
         private void ConfigureAdjacentEquipmentMarkers(
             Transform fighter,
-            ItemInstance aircraftItem)
+            ItemInstance aircraftItem,
+            ItemInstance triggeringEquipment)
         {
             if (fighter == null || combatController == null)
             {
@@ -384,10 +410,9 @@ namespace BackpackPrototype
             var colors = new List<Color>();
             var uniqueColors = new HashSet<Color>();
 
-            foreach (ItemInstance equipment in
-                     combatController.Backpack
-                         .GetAdjacentEquipmentItems(
-                             aircraftItem))
+            foreach (ItemInstance equipment in GetEquipmentItems(
+                         aircraftItem,
+                         triggeringEquipment))
             {
                 if (equipment?.Data != null &&
                     uniqueColors.Add(
@@ -412,7 +437,8 @@ namespace BackpackPrototype
 
         private void ConfigureAdjacentEquipmentEffects(
             Transform fighter,
-            ItemInstance aircraftItem)
+            ItemInstance aircraftItem,
+            ItemInstance triggeringEquipment)
         {
             if (fighter == null || combatController == null ||
                 !fighter.TryGetComponent(
@@ -423,10 +449,9 @@ namespace BackpackPrototype
 
             var effects = new List<EquipmentEffectDefinition>();
 
-            foreach (ItemInstance equipment in
-                     combatController.Backpack
-                         .GetAdjacentEquipmentItems(
-                             aircraftItem))
+            foreach (ItemInstance equipment in GetEquipmentItems(
+                         aircraftItem,
+                         triggeringEquipment))
             {
                 if (equipment?.Data == null)
                 {
@@ -444,6 +469,23 @@ namespace BackpackPrototype
             }
 
             fighterCombat.ConfigureEquipmentEffects(effects);
+            if (triggeringEquipment != null)
+            {
+                fighterCombat.DisableDefaultFireMode();
+            }
+        }
+
+        private IReadOnlyList<ItemInstance> GetEquipmentItems(
+            ItemInstance aircraftItem,
+            ItemInstance triggeringEquipment)
+        {
+            if (triggeringEquipment != null)
+            {
+                return new[] { triggeringEquipment };
+            }
+
+            return combatController.Backpack.GetAdjacentEquipmentItems(
+                aircraftItem);
         }
 
         private BackpackCombatController FindNearestEnemy()

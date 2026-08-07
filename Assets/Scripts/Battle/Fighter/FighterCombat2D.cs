@@ -228,6 +228,12 @@ namespace BackpackHero.Battle
 
             equipmentEffectsController?.Configure(effects);
         }
+
+        /// <summary>移除飞机自身的默认子弹，仅保留装备效果子弹。</summary>
+        public void DisableDefaultFireMode()
+        {
+            fireModeController?.ClearModes();
+        }
         
         private void Update()
         {

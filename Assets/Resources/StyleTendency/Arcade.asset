@@ -16,3 +16,4 @@ MonoBehaviour:
   aircraftTargetingArcAngleMultiplier: 1
   aircraftAttackRangeMultiplier: 1
   aircraftAttackSpeedMultiplier: 1
+  cooldownItemType: 1

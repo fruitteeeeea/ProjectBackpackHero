@@ -566,7 +566,7 @@ public sealed class BackpackControllerTests
     }
 
     [Test]
-    public void ItemData_OnlyEquipmentCanEnterCooldown()
+    public void ItemData_AircraftAndEquipmentCanEnterCooldown()
     {
         ItemShapeData shape =
             NewShape(OneCell());
@@ -587,7 +587,7 @@ public sealed class BackpackControllerTests
 
         Assert.That(
             aircraft.CanEnterCooldown,
-            Is.False);
+            Is.True);
         Assert.That(
             aircraft.CooldownDuration,
             Is.EqualTo(2f));

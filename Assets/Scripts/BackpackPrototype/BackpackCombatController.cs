@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BackpackHero.Battle;
+using BackpackHero.Debugging;
 using UnityEngine;
 
 namespace BackpackPrototype
@@ -20,7 +21,7 @@ namespace BackpackPrototype
 
     /// <summary>
     /// 一个正式战斗背包的运行时入口。
-    /// 持有占格数据、推进装备冷却，并在完成时生成相邻飞机。
+    /// 持有占格数据、推进当前风格指定的物品冷却，并生成飞机。
     /// </summary>
     [RequireComponent(typeof(FactionMember))]
     [DisallowMultipleComponent]
@@ -90,6 +91,8 @@ namespace BackpackPrototype
 
             BattleFlowController.PhaseChanged +=
                 HandlePhaseChanged;
+            StyleTendencyDebugRuntime.CooldownItemTypeChanged +=
+                HandleCooldownItemTypeChanged;
         }
 
         private void Start()
@@ -119,6 +122,7 @@ namespace BackpackPrototype
                     backpack.Items[index];
 
                 if (item == null ||
+                    !CanCooldown(item) ||
                     !item.TickCooldown(Time.deltaTime))
                 {
                     continue;
@@ -126,38 +130,60 @@ namespace BackpackPrototype
 
                 CooldownCompleted?.Invoke(item);
 
-                IReadOnlyList<ItemInstance> adjacentAircraft =
-                    backpack.GetAdjacentAircraftItems(item);
-
-                if (cooldownLinkEffect != null)
-                {
-                    cooldownLinkEffect.Play(
-                        item,
-                        adjacentAircraft,
-                        RequestAircraftSpawn);
-                }
-                else
-                {
-                    foreach (ItemInstance aircraft in adjacentAircraft)
-                    {
-                        RequestAircraftSpawn(aircraft);
-                    }
-                }
+                HandleCooldownCompleted(item);
 
                 if (backpack.Contains(item) &&
-                    BattleFlowController.IsCombatPhase)
+                    BattleFlowController.IsCombatPhase &&
+                    CanCooldown(item))
                 {
                     item.BeginCooldown();
                 }
             }
         }
 
-        private void RequestAircraftSpawn(ItemInstance aircraft)
+        private void HandleCooldownCompleted(ItemInstance item)
+        {
+            if (item.Data.ItemType == ItemType.Aircraft)
+            {
+                RequestAircraftSpawn(item);
+                return;
+            }
+
+            IReadOnlyList<ItemInstance> adjacentAircraft =
+                backpack.GetAdjacentAircraftItems(item);
+            if (cooldownLinkEffect != null)
+            {
+                cooldownLinkEffect.Play(
+                    item,
+                    adjacentAircraft,
+                    aircraft => RequestAircraftSpawn(aircraft, item));
+                return;
+            }
+
+            foreach (ItemInstance aircraft in adjacentAircraft)
+            {
+                RequestAircraftSpawn(aircraft, item);
+            }
+        }
+
+        private void RequestAircraftSpawn(
+            ItemInstance aircraft,
+            ItemInstance triggeringEquipment = null)
         {
             if (!BattleFlowController.IsCombatPhase ||
                 aircraft == null ||
                 aircraft.Data == null ||
-                !backpack.Contains(aircraft))
+                !backpack.Contains(aircraft) ||
+                (triggeringEquipment == null &&
+                 StyleTendencyDebugRuntime.GetCooldownItemType() !=
+                 CooldownItemType.Aircraft) ||
+                (triggeringEquipment != null &&
+                 (StyleTendencyDebugRuntime.GetCooldownItemType() !=
+                  CooldownItemType.Equipment ||
+                  !backpack.Contains(triggeringEquipment) ||
+                  triggeringEquipment.Data == null ||
+                  triggeringEquipment.Data.ItemType !=
+                  ItemType.Equipment)))
             {
                 return;
             }
@@ -167,7 +193,9 @@ namespace BackpackPrototype
                  spawnIndex < spawnCount;
                  spawnIndex++)
             {
-                FighterSpawner?.RequestSpawn(aircraft);
+                FighterSpawner?.RequestSpawn(
+                    aircraft,
+                    triggeringEquipment);
             }
         }
 
@@ -213,7 +241,8 @@ namespace BackpackPrototype
                 return null;
             }
 
-            if (BattleFlowController.IsCombatPhase)
+            if (BattleFlowController.IsCombatPhase &&
+                CanCooldown(item))
             {
                 item.BeginCooldown();
             }
@@ -231,7 +260,8 @@ namespace BackpackPrototype
                 backpack.PlaceItem(item, cell);
 
             if (placed &&
-                BattleFlowController.IsCombatPhase)
+                BattleFlowController.IsCombatPhase &&
+                CanCooldown(item))
             {
                 item.BeginCooldown();
             }
@@ -283,9 +313,13 @@ namespace BackpackPrototype
                 return;
             }
 
+            ResetAllCooldowns();
             foreach (ItemInstance item in backpack.Items)
             {
-                item?.BeginCooldown();
+                if (CanCooldown(item))
+                {
+                    item.BeginCooldown();
+                }
             }
         }
 
@@ -315,6 +349,25 @@ namespace BackpackPrototype
             }
         }
 
+        private void HandleCooldownItemTypeChanged(
+            CooldownItemType _)
+        {
+            if (BattleFlowController.IsCombatPhase)
+            {
+                FighterSpawner?.ClearPendingSpawns();
+                BeginAllCooldowns();
+            }
+        }
+
+        private static bool CanCooldown(ItemInstance item) =>
+            item?.Data != null &&
+            item.Data.ItemType ==
+            (StyleTendencyDebugRuntime.GetCooldownItemType() ==
+             CooldownItemType.Aircraft
+                ? ItemType.Aircraft
+                : ItemType.Equipment) &&
+            item.Data.CanEnterCooldown;
+
         private void EnsureBackpack()
         {
             if (backpack == null)
@@ -331,6 +384,8 @@ namespace BackpackPrototype
             activeControllers.Remove(this);
             BattleFlowController.PhaseChanged -=
                 HandlePhaseChanged;
+            StyleTendencyDebugRuntime.CooldownItemTypeChanged -=
+                HandleCooldownItemTypeChanged;
             fighterSpawner?.ClearPendingSpawns();
         }
 

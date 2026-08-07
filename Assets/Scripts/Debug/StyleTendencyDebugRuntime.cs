@@ -1,4 +1,5 @@
 using System;
+using BackpackPrototype;
 using UnityEngine;
 
 namespace BackpackHero.Debugging
@@ -17,6 +18,7 @@ namespace BackpackHero.Debugging
 
         public static StyleTendencyDebugRuntime Instance { get; private set; }
         public static event Action<StyleTendencyMultipliers> MultipliersChanged;
+        public static event Action<CooldownItemType> CooldownItemTypeChanged;
 
         public StyleTendencyDebugSettings DefaultSettings => defaultSettings;
         public StyleTendencyMultipliers Multipliers => multipliers;
@@ -34,6 +36,11 @@ namespace BackpackHero.Debugging
 
         public static float GetAircraftAttackSpeedMultiplier() =>
             Instance != null ? Instance.multipliers.AircraftAttackSpeed : 1f;
+
+        public static CooldownItemType GetCooldownItemType() =>
+            Instance != null
+                ? Instance.multipliers.CooldownItemType
+                : BackpackPrototype.CooldownItemType.Equipment;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void CreateRuntime()
@@ -74,8 +81,15 @@ namespace BackpackHero.Debugging
 
         public void SetMultipliers(StyleTendencyMultipliers values)
         {
+            bool cooldownItemTypeChanged =
+                multipliers.CooldownItemType != values.CooldownItemType;
             multipliers = values;
             MultipliersChanged?.Invoke(multipliers);
+            if (cooldownItemTypeChanged)
+            {
+                CooldownItemTypeChanged?.Invoke(
+                    multipliers.CooldownItemType);
+            }
         }
 
         public void LoadSavedValues()

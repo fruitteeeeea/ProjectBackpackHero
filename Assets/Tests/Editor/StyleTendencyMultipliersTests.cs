@@ -32,6 +32,8 @@ public sealed class StyleTendencyMultipliersTests
         Assert.That(values.AircraftTargetingArcAngle, Is.EqualTo(1f));
         Assert.That(values.AircraftAttackRange, Is.EqualTo(1f));
         Assert.That(values.AircraftAttackSpeed, Is.EqualTo(1f));
+        Assert.That(values.CooldownItemType,
+            Is.EqualTo(CooldownItemType.Equipment));
     }
 
     [Test]
@@ -62,7 +64,8 @@ public sealed class StyleTendencyMultipliersTests
             ScriptableObject.CreateInstance<StyleTendencyDebugSettings>();
         try
         {
-            StyleTendencyMultipliers expected = new(3f, 0.5f, 1.5f, 0.2f);
+            StyleTendencyMultipliers expected = new(
+                3f, 0.5f, 1.5f, 0.2f, CooldownItemType.Aircraft);
             settings.SetValues(expected);
             StyleTendencyMultipliers actual = settings.GetValues();
 
@@ -74,6 +77,8 @@ public sealed class StyleTendencyMultipliersTests
                 Is.EqualTo(expected.AircraftAttackRange));
             Assert.That(actual.AircraftAttackSpeed,
                 Is.EqualTo(expected.AircraftAttackSpeed));
+            Assert.That(actual.CooldownItemType,
+                Is.EqualTo(expected.CooldownItemType));
         }
         finally
         {
@@ -82,10 +87,14 @@ public sealed class StyleTendencyMultipliersTests
     }
 
     [Test]
-    public void PresetAssets_StartWithOneForEveryMultiplier()
+    public void PresetAssets_UseExpectedCooldownItemTypes()
     {
-        AssertPresetIsDefault("Assets/Resources/StyleTendency/Strategy.asset");
-        AssertPresetIsDefault("Assets/Resources/StyleTendency/Arcade.asset");
+        AssertPresetCooldownItemType(
+            "Assets/Resources/StyleTendency/Strategy.asset",
+            CooldownItemType.Equipment);
+        AssertPresetCooldownItemType(
+            "Assets/Resources/StyleTendency/Arcade.asset",
+            CooldownItemType.Aircraft);
     }
 
     [Test]
@@ -97,6 +106,8 @@ public sealed class StyleTendencyMultipliersTests
                 "Assets/Resources/StyleTendency/Strategy.asset");
 
         Assert.That(runtime.DefaultSettings, Is.EqualTo(strategy));
+        Assert.That(StyleTendencyDebugRuntime.GetCooldownItemType(),
+            Is.EqualTo(CooldownItemType.Equipment));
 
         runtime.SetMultipliers(new StyleTendencyMultipliers(2f, 3f, 0.5f, 1.5f));
 
@@ -108,6 +119,38 @@ public sealed class StyleTendencyMultipliersTests
                 .GetAircraftAttackRangeMultiplier(), Is.EqualTo(0.5f));
         Assert.That(StyleTendencyDebugRuntime
                 .GetAircraftAttackSpeedMultiplier(), Is.EqualTo(1.5f));
+    }
+
+    [Test]
+    public void Runtime_NotifiesOnlyWhenCooldownItemTypeChanges()
+    {
+        StyleTendencyDebugRuntime runtime = EnsureStyleRuntime();
+        int notificationCount = 0;
+        CooldownItemType notifiedType = CooldownItemType.Equipment;
+        void HandleChanged(CooldownItemType value)
+        {
+            notificationCount++;
+            notifiedType = value;
+        }
+
+        runtime.SetMultipliers(new StyleTendencyMultipliers(
+            1f, 1f, 1f, 1f, CooldownItemType.Equipment));
+        StyleTendencyDebugRuntime.CooldownItemTypeChanged += HandleChanged;
+        try
+        {
+            runtime.SetMultipliers(new StyleTendencyMultipliers(
+                2f, 1f, 1f, 1f, CooldownItemType.Equipment));
+            Assert.That(notificationCount, Is.EqualTo(0));
+
+            runtime.SetMultipliers(new StyleTendencyMultipliers(
+                2f, 1f, 1f, 1f, CooldownItemType.Aircraft));
+            Assert.That(notificationCount, Is.EqualTo(1));
+            Assert.That(notifiedType, Is.EqualTo(CooldownItemType.Aircraft));
+        }
+        finally
+        {
+            StyleTendencyDebugRuntime.CooldownItemTypeChanged -= HandleChanged;
+        }
     }
 
     [Test]
@@ -168,15 +211,13 @@ public sealed class StyleTendencyMultipliersTests
         return pacingRuntimeObject.AddComponent<GamePacingDebugRuntime>();
     }
 
-    private static void AssertPresetIsDefault(string path)
+    private static void AssertPresetCooldownItemType(
+        string path,
+        CooldownItemType expected)
     {
         StyleTendencyDebugSettings settings =
             AssetDatabase.LoadAssetAtPath<StyleTendencyDebugSettings>(path);
         Assert.That(settings, Is.Not.Null, path);
-        StyleTendencyMultipliers values = settings.GetValues();
-        Assert.That(values.ItemCooldownSpeed, Is.EqualTo(1f), path);
-        Assert.That(values.AircraftTargetingArcAngle, Is.EqualTo(1f), path);
-        Assert.That(values.AircraftAttackRange, Is.EqualTo(1f), path);
-        Assert.That(values.AircraftAttackSpeed, Is.EqualTo(1f), path);
+        Assert.That(settings.CooldownItemType, Is.EqualTo(expected), path);
     }
 }

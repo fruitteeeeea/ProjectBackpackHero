@@ -1,5 +1,6 @@
 using BackpackHero.Debugging;
 using BackpackHero.Battle;
+using BackpackPrototype;
 using UnityEditor;
 using UnityEngine;
 
@@ -78,15 +79,25 @@ namespace BackpackHero.EditorTools
         private void DrawMultipliers()
         {
             EditorGUILayout.Space(8f);
-            EditorGUILayout.LabelField("全局属性倍率", EditorStyles.boldLabel);
             StyleTendencyMultipliers current = draft.Value;
+            int cooldownTypeIndex = EditorGUILayout.Popup(
+                "物品冷却方式",
+                current.CooldownItemType == CooldownItemType.Aircraft ? 0 : 1,
+                new[] { "飞机物品冷却", "装备物品冷却" });
+            CooldownItemType cooldownItemType = cooldownTypeIndex == 0
+                ? CooldownItemType.Aircraft
+                : CooldownItemType.Equipment;
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("全局属性倍率", EditorStyles.boldLabel);
             StyleTendencyMultipliers changed = new(
                 DrawMultiplier("物品冷却速度", current.ItemCooldownSpeed),
                 DrawMultiplier("飞机索敌角度", current.AircraftTargetingArcAngle),
                 DrawMultiplier("飞机攻击范围", current.AircraftAttackRange),
                 EditorGUILayout.Slider("飞机射速", current.AircraftAttackSpeed,
                     StyleTendencyMultipliers.MinimumAircraftAttackSpeedMultiplier,
-                    StyleTendencyMultipliers.MaximumAircraftAttackSpeedMultiplier));
+                    StyleTendencyMultipliers.MaximumAircraftAttackSpeedMultiplier),
+                cooldownItemType);
             if (!AreEqual(current, changed))
             {
                 draft.Value = changed;
@@ -243,6 +254,7 @@ namespace BackpackHero.EditorTools
             Mathf.Approximately(left.AircraftAttackRange,
                 right.AircraftAttackRange) &&
             Mathf.Approximately(left.AircraftAttackSpeed,
-                right.AircraftAttackSpeed);
+                right.AircraftAttackSpeed) &&
+            left.CooldownItemType == right.CooldownItemType;
     }
 }

@@ -21,12 +21,20 @@ namespace BackpackHero.Battle
         private float viewportMargin = 0.05f;
 
         private Camera targetCamera;
+        private float configuredLifetime;
         private float elapsedTime;
         private bool hasEnteredScreen;
 
         public float Lifetime => lifetime;
+        /// <summary>Prefab或场景配置的初始寿命，不会受运行时倍率写入影响。</summary>
+        public float ConfiguredLifetime => configuredLifetime;
         public float RemainingLifetime =>
             Mathf.Max(0f, lifetime - elapsedTime);
+
+        private void Awake()
+        {
+            configuredLifetime = lifetime;
+        }
 
         private void OnEnable()
         {

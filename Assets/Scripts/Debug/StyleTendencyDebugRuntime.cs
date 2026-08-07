@@ -37,6 +37,15 @@ namespace BackpackHero.Debugging
         public static float GetAircraftAttackSpeedMultiplier() =>
             Instance != null ? Instance.multipliers.AircraftAttackSpeed : 1f;
 
+        public static float GetAircraftLifetimeMultiplier() =>
+            Instance != null ? Instance.multipliers.AircraftLifetime : 1f;
+
+        public static float GetProjectileSpeedMultiplier() =>
+            Instance != null ? Instance.multipliers.ProjectileSpeed : 1f;
+
+        public static float GetProjectileLifetimeMultiplier() =>
+            Instance != null ? Instance.multipliers.ProjectileLifetime : 1f;
+
         public static CooldownItemType GetCooldownItemType() =>
             Instance != null
                 ? Instance.multipliers.CooldownItemType

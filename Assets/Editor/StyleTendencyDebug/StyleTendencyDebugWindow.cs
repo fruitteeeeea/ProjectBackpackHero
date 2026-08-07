@@ -97,7 +97,16 @@ namespace BackpackHero.EditorTools
                 EditorGUILayout.Slider("飞机射速", current.AircraftAttackSpeed,
                     StyleTendencyMultipliers.MinimumAircraftAttackSpeedMultiplier,
                     StyleTendencyMultipliers.MaximumAircraftAttackSpeedMultiplier),
-                cooldownItemType);
+                cooldownItemType,
+                EditorGUILayout.Slider("飞机存活时间", current.AircraftLifetime,
+                    StyleTendencyMultipliers.MinimumAircraftLifetimeMultiplier,
+                    StyleTendencyMultipliers.MaximumAircraftLifetimeMultiplier),
+                EditorGUILayout.Slider("子弹速度", current.ProjectileSpeed,
+                    StyleTendencyMultipliers.MinimumProjectileMultiplier,
+                    StyleTendencyMultipliers.MaximumProjectileMultiplier),
+                EditorGUILayout.Slider("子弹存活时间", current.ProjectileLifetime,
+                    StyleTendencyMultipliers.MinimumProjectileMultiplier,
+                    StyleTendencyMultipliers.MaximumProjectileMultiplier));
             if (!AreEqual(current, changed))
             {
                 draft.Value = changed;
@@ -185,9 +194,12 @@ namespace BackpackHero.EditorTools
             if (!IsInRange(values.ItemCooldownSpeed) ||
                 !IsInRange(values.AircraftTargetingArcAngle) ||
                 !IsInRange(values.AircraftAttackRange) ||
-                !IsAircraftAttackSpeedInRange(values.AircraftAttackSpeed))
+                !IsAircraftAttackSpeedInRange(values.AircraftAttackSpeed) ||
+                !IsAircraftLifetimeInRange(values.AircraftLifetime) ||
+                !IsProjectileMultiplierInRange(values.ProjectileSpeed) ||
+                !IsProjectileMultiplierInRange(values.ProjectileLifetime))
             {
-                validationMessage = "前三项风格倍率必须在 0.5 到 3 之间；飞机射速必须在 0.2 到 2 之间。";
+                validationMessage = "前三项风格倍率必须在 0.5 到 3 之间；飞机射速必须在 0.2 到 2 之间；飞机存活时间必须在 0.5 到 2 之间；子弹速度和存活时间必须在 0.5 到 1 之间。";
                 return false;
             }
 
@@ -204,6 +216,18 @@ namespace BackpackHero.EditorTools
                 .MinimumAircraftAttackSpeedMultiplier &&
             value <= StyleTendencyMultipliers
                 .MaximumAircraftAttackSpeedMultiplier;
+
+        private static bool IsAircraftLifetimeInRange(float value) =>
+            value >= StyleTendencyMultipliers
+                .MinimumAircraftLifetimeMultiplier &&
+            value <= StyleTendencyMultipliers
+                .MaximumAircraftLifetimeMultiplier;
+
+        private static bool IsProjectileMultiplierInRange(float value) =>
+            value >= StyleTendencyMultipliers
+                .MinimumProjectileMultiplier &&
+            value <= StyleTendencyMultipliers
+                .MaximumProjectileMultiplier;
 
         private void SaveAs(StyleTendencyDebugRuntime runtime)
         {
@@ -255,6 +279,12 @@ namespace BackpackHero.EditorTools
                 right.AircraftAttackRange) &&
             Mathf.Approximately(left.AircraftAttackSpeed,
                 right.AircraftAttackSpeed) &&
-            left.CooldownItemType == right.CooldownItemType;
+            left.CooldownItemType == right.CooldownItemType &&
+            Mathf.Approximately(left.AircraftLifetime,
+                right.AircraftLifetime) &&
+            Mathf.Approximately(left.ProjectileSpeed,
+                right.ProjectileSpeed) &&
+            Mathf.Approximately(left.ProjectileLifetime,
+                right.ProjectileLifetime);
     }
 }

@@ -154,6 +154,7 @@ namespace BackpackHero.Battle
                 fighterDefinition.BaseSpeed);
 
             ApplyPacingHealth();
+            ApplyStyleLifetime();
             FighterCombat2D combat =
                 GetComponent<FighterCombat2D>();
 
@@ -218,6 +219,21 @@ namespace BackpackHero.Battle
                     Faction) *
                 LevelDifficultyRuntime.GetAircraftHealthMultiplier(
                     Faction));
+        }
+
+        private void ApplyStyleLifetime()
+        {
+            LifetimeAndScreenBounds2D lifetime =
+                GetComponent<LifetimeAndScreenBounds2D>();
+            if (lifetime == null)
+            {
+                return;
+            }
+
+            lifetime.SetLifetime(
+                lifetime.ConfiguredLifetime *
+                StyleTendencyDebugRuntime
+                    .GetAircraftLifetimeMultiplier());
         }
 
         private void ConfigureHealthBars()

@@ -30,6 +30,21 @@ namespace BackpackHero.Debugging
             StyleTendencyMultipliers.MaximumAircraftAttackSpeedMultiplier)]
         private float aircraftAttackSpeedMultiplier = 1f;
 
+        [SerializeField, Range(
+            StyleTendencyMultipliers.MinimumAircraftLifetimeMultiplier,
+            StyleTendencyMultipliers.MaximumAircraftLifetimeMultiplier)]
+        private float aircraftLifetimeMultiplier = 1f;
+
+        [SerializeField, Range(
+            StyleTendencyMultipliers.MinimumProjectileMultiplier,
+            StyleTendencyMultipliers.MaximumProjectileMultiplier)]
+        private float projectileSpeedMultiplier = 1f;
+
+        [SerializeField, Range(
+            StyleTendencyMultipliers.MinimumProjectileMultiplier,
+            StyleTendencyMultipliers.MaximumProjectileMultiplier)]
+        private float projectileLifetimeMultiplier = 1f;
+
         [Header("Cooldown")]
         [SerializeField]
         private CooldownItemType cooldownItemType =
@@ -43,6 +58,9 @@ namespace BackpackHero.Debugging
         public float AircraftAttackSpeedMultiplier =>
             aircraftAttackSpeedMultiplier;
         public CooldownItemType CooldownItemType => cooldownItemType;
+        public float AircraftLifetimeMultiplier => aircraftLifetimeMultiplier;
+        public float ProjectileSpeedMultiplier => projectileSpeedMultiplier;
+        public float ProjectileLifetimeMultiplier => projectileLifetimeMultiplier;
 
         public void SetValues(StyleTendencyMultipliers values)
         {
@@ -52,6 +70,9 @@ namespace BackpackHero.Debugging
             aircraftAttackRangeMultiplier = values.AircraftAttackRange;
             aircraftAttackSpeedMultiplier = values.AircraftAttackSpeed;
             cooldownItemType = values.CooldownItemType;
+            aircraftLifetimeMultiplier = values.AircraftLifetime;
+            projectileSpeedMultiplier = values.ProjectileSpeed;
+            projectileLifetimeMultiplier = values.ProjectileLifetime;
         }
 
         public StyleTendencyMultipliers GetValues() => new(
@@ -59,7 +80,10 @@ namespace BackpackHero.Debugging
             aircraftTargetingArcAngleMultiplier,
             aircraftAttackRangeMultiplier,
             aircraftAttackSpeedMultiplier,
-            cooldownItemType);
+            cooldownItemType,
+            aircraftLifetimeMultiplier,
+            projectileSpeedMultiplier,
+            projectileLifetimeMultiplier);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

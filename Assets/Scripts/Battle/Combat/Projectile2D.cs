@@ -1,4 +1,5 @@
 using UnityEngine;
+using BackpackHero.Debugging;
 
 namespace BackpackHero.Battle
 {
@@ -61,14 +62,17 @@ namespace BackpackHero.Battle
                 trajectoryContext,
                 context.VisualSource);
 
-            if (context.Lifetime >= 0f)
+            LifetimeAndScreenBounds2D lifetime =
+                GetComponent<LifetimeAndScreenBounds2D>();
+            if (lifetime != null)
             {
-                LifetimeAndScreenBounds2D lifetime =
-                    GetComponent<
-                        LifetimeAndScreenBounds2D>();
-
-                lifetime?.SetLifetime(
-                    context.Lifetime);
+                float baseLifetime = context.Lifetime >= 0f
+                    ? context.Lifetime
+                    : lifetime.ConfiguredLifetime;
+                lifetime.SetLifetime(
+                    baseLifetime *
+                    StyleTendencyDebugRuntime
+                        .GetProjectileLifetimeMultiplier());
             }
         }
 
@@ -145,7 +149,9 @@ namespace BackpackHero.Battle
             visualController?.Apply(faction, visualSource);
 
             trajectoryController.Initialize(
-                Mathf.Max(0f, speed),
+                Mathf.Max(0f, speed) *
+                StyleTendencyDebugRuntime
+                    .GetProjectileSpeedMultiplier(),
                 safeContext);
 
             gameObject.name =

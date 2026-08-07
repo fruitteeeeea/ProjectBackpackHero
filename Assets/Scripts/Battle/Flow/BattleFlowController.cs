@@ -133,10 +133,22 @@ namespace BackpackHero.Battle
 
         public void TogglePhase()
         {
+            RestoreAllBackpackHealth();
             SetPhase(
                 currentPhase == BattlePhase.Preparation
                     ? BattlePhase.Combat
                     : BattlePhase.Preparation);
+        }
+
+        private static void RestoreAllBackpackHealth()
+        {
+            foreach (BattleBackpackTarget2D backpack in
+                     FindObjectsByType<BattleBackpackTarget2D>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                backpack.Health?.ResetHealth();
+            }
         }
 
         private void ApplyPhase(

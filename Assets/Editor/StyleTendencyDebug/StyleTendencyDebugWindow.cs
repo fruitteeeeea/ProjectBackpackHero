@@ -1,4 +1,5 @@
 using BackpackHero.Debugging;
+using BackpackHero.Battle;
 using UnityEditor;
 using UnityEngine;
 
@@ -35,6 +36,7 @@ namespace BackpackHero.EditorTools
             DrawMultipliers();
             DrawValidation();
             DrawPersistence(runtime);
+            DrawPhaseControl();
         }
 
         private void SyncRuntime(StyleTendencyDebugRuntime runtime)
@@ -119,6 +121,7 @@ namespace BackpackHero.EditorTools
                     }
 
                     runtime.SetMultipliers(draft.Value);
+                    BattleFlowController.EnsureInstance().TogglePhase();
                 }
 
                 using (new EditorGUI.DisabledScope(
@@ -144,6 +147,23 @@ namespace BackpackHero.EditorTools
                         ? settingsTarget.GetValues()
                         : runtime.Multipliers);
                     validationMessage = null;
+                }
+            }
+        }
+
+        private static void DrawPhaseControl()
+        {
+            EditorGUILayout.Space(10f);
+            EditorGUILayout.LabelField("阶段控制", EditorStyles.boldLabel);
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(
+                    $"当前阶段：{BattleFlowController.CurrentPhase}",
+                    EditorStyles.miniLabel);
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("切换阶段"))
+                {
+                    BattleFlowController.EnsureInstance().TogglePhase();
                 }
             }
         }

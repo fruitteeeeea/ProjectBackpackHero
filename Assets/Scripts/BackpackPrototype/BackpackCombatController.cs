@@ -41,6 +41,7 @@ namespace BackpackPrototype
 
         private FactionMember factionMember;
         private BackpackFighterSpawner fighterSpawner;
+        private BackpackCooldownLinkEffect cooldownLinkEffect;
         private BackpackController backpack;
         private int nextItemId;
 
@@ -69,6 +70,14 @@ namespace BackpackPrototype
             factionMember = GetComponent<FactionMember>();
             fighterSpawner =
                 GetComponent<BackpackFighterSpawner>();
+            cooldownLinkEffect =
+                GetComponent<BackpackCooldownLinkEffect>();
+
+            if (cooldownLinkEffect == null)
+            {
+                cooldownLinkEffect =
+                    gameObject.AddComponent<BackpackCooldownLinkEffect>();
+            }
             EnsureBackpack();
         }
 
@@ -117,15 +126,21 @@ namespace BackpackPrototype
 
                 CooldownCompleted?.Invoke(item);
 
-                foreach (ItemInstance aircraft
-                         in backpack.GetAdjacentAircraftItems(item))
+                IReadOnlyList<ItemInstance> adjacentAircraft =
+                    backpack.GetAdjacentAircraftItems(item);
+
+                if (cooldownLinkEffect != null)
                 {
-                    int spawnCount = aircraft.Data.SpawnCount;
-                    for (int spawnIndex = 0;
-                         spawnIndex < spawnCount;
-                         spawnIndex++)
+                    cooldownLinkEffect.Play(
+                        item,
+                        adjacentAircraft,
+                        RequestAircraftSpawn);
+                }
+                else
+                {
+                    foreach (ItemInstance aircraft in adjacentAircraft)
                     {
-                        FighterSpawner?.RequestSpawn(aircraft);
+                        RequestAircraftSpawn(aircraft);
                     }
                 }
 
@@ -134,6 +149,25 @@ namespace BackpackPrototype
                 {
                     item.BeginCooldown();
                 }
+            }
+        }
+
+        private void RequestAircraftSpawn(ItemInstance aircraft)
+        {
+            if (!BattleFlowController.IsCombatPhase ||
+                aircraft == null ||
+                aircraft.Data == null ||
+                !backpack.Contains(aircraft))
+            {
+                return;
+            }
+
+            int spawnCount = aircraft.Data.SpawnCount;
+            for (int spawnIndex = 0;
+                 spawnIndex < spawnCount;
+                 spawnIndex++)
+            {
+                FighterSpawner?.RequestSpawn(aircraft);
             }
         }
 

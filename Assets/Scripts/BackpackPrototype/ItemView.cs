@@ -79,6 +79,21 @@ namespace BackpackPrototype
             Instance != null
                 ? Instance.RemainingCooldown
                 : 0f;
+
+        public Sprite IconSprite => icon != null ? icon.sprite : null;
+
+        public RectTransform RectTransform => rectTransform;
+
+        /// <summary>
+        /// 物品图片的几何中心。用于图标、弹道和命中特效的统一锚点。
+        /// </summary>
+        public Vector3 GetImageGeometricCenterWorldPosition()
+        {
+            return rectTransform != null
+                ? rectTransform.TransformPoint(
+                    GetImageGeometricCenterLocalPosition())
+                : transform.position;
+        }
         
         
         public string DisplayName =>
@@ -211,6 +226,8 @@ namespace BackpackPrototype
                 icon.enabled = instance.Data.Icon != null;
             }
 
+            UpdateIconGeometricCenter();
+
             InitializeCooldownMaterials();
 
             if (label != null)
@@ -250,6 +267,26 @@ namespace BackpackPrototype
         public void PlayMergeFeedback()
         {
             PlayPlacedFeedback();
+        }
+
+        /// <summary>供装备触发命中时使用的白闪，不影响冷却完成闪烁。</summary>
+        public void PlayTriggeredFeedback()
+        {
+            cooldownFlashTween?.Kill();
+            cooldownFlashAmount = 0f;
+            ApplyFlashAmount();
+
+            cooldownFlashTween = DOTween.Sequence()
+                .Append(DOTween.To(
+                    () => cooldownFlashAmount,
+                    SetCooldownFlashAmount,
+                    1f,
+                    0.055f).SetEase(Ease.OutQuad))
+                .Append(DOTween.To(
+                    () => cooldownFlashAmount,
+                    SetCooldownFlashAmount,
+                    0f,
+                    0.13f).SetEase(Ease.InQuad));
         }
 
         private void InitializeCooldownMaterials()
@@ -808,6 +845,42 @@ namespace BackpackPrototype
             var width = (bounds.x + 1) * cellSize.x + bounds.x * spacing.x;
             var height = (bounds.y + 1) * cellSize.y + bounds.y * spacing.y;
             rectTransform.sizeDelta = new Vector2(width, height);
+        }
+
+        private void UpdateIconGeometricCenter()
+        {
+            if (icon == null)
+            {
+                return;
+            }
+
+            RectTransform iconRect = icon.rectTransform;
+            iconRect.anchorMin = new Vector2(.5f, .5f);
+            iconRect.anchorMax = new Vector2(.5f, .5f);
+            iconRect.pivot = new Vector2(.5f, .5f);
+            iconRect.anchoredPosition =
+                GetImageGeometricCenterLocalPosition();
+        }
+
+        private Vector2 GetImageGeometricCenterLocalPosition()
+        {
+            if (Instance?.Data == null ||
+                shapeCellSize.x <= 0f ||
+                shapeCellSize.y <= 0f ||
+                rectTransform == null)
+            {
+                return Vector2.zero;
+            }
+
+            Vector2 center = ItemShapeGeometry.CalculateCenter(
+                Instance.Data.ShapeOffsets);
+            Vector2 pitch = shapeCellSize + shapeSpacing;
+            Rect rect = rectTransform.rect;
+            return new Vector2(
+                rect.xMin + center.x * pitch.x +
+                    shapeCellSize.x * .5f,
+                rect.yMax - center.y * pitch.y -
+                    shapeCellSize.y * .5f);
         }
 
         public bool IsRaycastLocationValid(

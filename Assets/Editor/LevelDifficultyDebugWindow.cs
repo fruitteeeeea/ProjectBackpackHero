@@ -33,6 +33,7 @@ namespace BackpackHero.EditorTools
             LevelDebugWindow.DrawInfo(LevelFlowController.EnsureInstance());
             DrawTarget(runtime);
             DrawPlayerMultipliers();
+            DrawBackpackRoundHealthMultipliers();
             DrawEnemyTable();
             DrawValidation();
             DrawPersistence(runtime);
@@ -102,6 +103,34 @@ namespace BackpackHero.EditorTools
                 }
             }
             EditorGUILayout.HelpBox("蓝色表示当前关卡；黄色表示当前回合实际使用的强度档位。", MessageType.None);
+        }
+
+        private void DrawBackpackRoundHealthMultipliers()
+        {
+            EditorGUILayout.Space(8f);
+            EditorGUILayout.LabelField(
+                "回合背包血量倍率（双方）",
+                EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "最终背包生命 = 基础生命 × 现有阵营倍率 × 回合倍率。",
+                MessageType.None);
+
+            for (int round = 1;
+                 round <=
+                 LevelDifficultySettings
+                     .BackpackRoundMultiplierCount;
+                 round++)
+            {
+                float value = Mathf.Max(
+                    .01f,
+                    EditorGUILayout.FloatField(
+                        $"回合 {round}",
+                        draft.GetBackpackRoundHealthMultiplier(
+                            round)));
+                draft.SetBackpackRoundHealthMultiplier(
+                    round,
+                    value);
+            }
         }
 
         private void DrawValidation()

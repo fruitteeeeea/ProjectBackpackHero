@@ -134,6 +134,9 @@ namespace BackpackHero.Input
                     adjustmentCurve.EnemyEndpoint);
             }
 
+            battleCurve.SetBattleWorldEndpointReadiness(
+                adjustmentCurve.HasBattleWorldEndpoints);
+
             battleCurve.SetCurveValue(adjustmentCurve.CurrentCurveValue);
         }
 

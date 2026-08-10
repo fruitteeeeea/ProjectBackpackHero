@@ -26,4 +26,31 @@ public sealed class CurvedConnectionRendererVisualTests
             Object.DestroyImmediate(gameObject);
         }
     }
+
+    [Test]
+    public void BattleWorldEndpointReadiness_RequiresExplicitSynchronization()
+    {
+        var curveObject = new GameObject("Curve Test");
+        var player = new GameObject("Player Endpoint");
+        var enemy = new GameObject("Enemy Endpoint");
+        try
+        {
+            var curve = curveObject.AddComponent<CurvedConnectionRenderer>();
+
+            curve.SetEndpoints(player.transform, enemy.transform);
+            Assert.That(curve.HasBattleWorldEndpoints, Is.False);
+
+            curve.SetBattleWorldEndpoints(player.transform, enemy.transform);
+            Assert.That(curve.HasBattleWorldEndpoints, Is.True);
+
+            curve.SetBattleWorldEndpointReadiness(false);
+            Assert.That(curve.HasBattleWorldEndpoints, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(enemy);
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(curveObject);
+        }
+    }
 }

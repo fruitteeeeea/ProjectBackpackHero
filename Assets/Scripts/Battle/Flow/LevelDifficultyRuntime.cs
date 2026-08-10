@@ -66,6 +66,15 @@ namespace BackpackHero.Battle
                 : Instance.activeValues.GetEnemyStrength(LevelManager.CurrentLevel, LevelFlowController.CurrentRound).Damage;
         }
 
+        public static float GetBackpackRoundHealthMultiplier()
+        {
+            return Instance?.activeValues != null
+                ? Instance.activeValues
+                    .GetBackpackRoundHealthMultiplier(
+                        LevelFlowController.CurrentRound)
+                : 1f;
+        }
+
         public void SetSettings(LevelDifficultySettings nextSettings)
         {
             if (nextSettings == null) return;

@@ -71,6 +71,10 @@ namespace BackpackPrototype
         [SerializeField]
         private HorizontalSwipeCurveInput curveInput;
 
+        [Header("Battle Curve")]
+        [SerializeField]
+        private CurvedConnectionRenderer adjustmentCurve;
+
         [Header("Battle World Anchors")]
         [SerializeField]
         private RectTransform aircraftSpawnAnchor;
@@ -375,11 +379,6 @@ namespace BackpackPrototype
                 enemySystem != null
                     ? enemySystem.CombatController
                     : null;
-            CurvedConnectionRenderer curve =
-                FindAnyObjectByType<
-                    CurvedConnectionRenderer>(
-                    FindObjectsInactive.Include);
-
             if (aircraftSpawnAnchor == null ||
                 collisionCenterAnchor == null ||
                 worldCamera == null ||
@@ -389,7 +388,7 @@ namespace BackpackPrototype
                 enemy.FighterSpawner == null ||
                 enemySystem.AircraftSpawnAnchor == null ||
                 enemySystem.CollisionCenterAnchor == null ||
-                curve == null)
+                adjustmentCurve == null)
             {
                 return false;
             }
@@ -456,11 +455,11 @@ namespace BackpackPrototype
             }
 
             fighterSpawner.SetMaximumBendDistance(
-                curve.MaxBendDistance);
+                adjustmentCurve.MaxBendDistance);
             enemy.FighterSpawner.SetMaximumBendDistance(
-                curve.MaxBendDistance);
+                adjustmentCurve.MaxBendDistance);
 
-            curve.SetEndpoints(
+            adjustmentCurve.SetBattleWorldEndpoints(
                 fighterSpawner.SpawnPoint,
                 enemy.FighterSpawner.SpawnPoint);
 

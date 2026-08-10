@@ -12,6 +12,18 @@ namespace BackpackHero.Battle
     public sealed class BattleBackpackTarget2D :
         MonoBehaviour
     {
+        [Header("Faction Ship Presentation")]
+        [SerializeField]
+        private SpriteRenderer factionShipRenderer;
+
+        [SerializeField]
+        private Color playerFactionShipColor =
+            new(0.45f, 0.85f, 1f, 1f);
+
+        [SerializeField]
+        private Color enemyFactionShipColor =
+            new(1f, 0.5f, 0.5f, 1f);
+
         private Health health;
         private float baseMaximumHealth;
         private FactionMember factionMember;
@@ -50,6 +62,8 @@ namespace BackpackHero.Battle
             factionMember =
                 GetComponent<FactionMember>();
 
+            ConfigureFactionShipPresentation();
+
             hurtBoxes =
                 GetComponentsInChildren<HurtBox2D>(
                     true);
@@ -85,6 +99,8 @@ namespace BackpackHero.Battle
                 HandlePhaseChanged;
             GamePacingDebugRuntime.MultipliersChanged +=
                 HandlePacingChanged;
+            LevelDifficultyRuntime.Changed +=
+                HandleLevelDifficultyChanged;
         }
 
         private void OnDisable()
@@ -93,6 +109,8 @@ namespace BackpackHero.Battle
                 HandlePhaseChanged;
             GamePacingDebugRuntime.MultipliersChanged -=
                 HandlePacingChanged;
+            LevelDifficultyRuntime.Changed -=
+                HandleLevelDifficultyChanged;
         }
 
         private void Start()
@@ -113,6 +131,11 @@ namespace BackpackHero.Battle
             ApplyPacingHealth();
         }
 
+        private void HandleLevelDifficultyChanged()
+        {
+            ApplyPacingHealth();
+        }
+
         private void ApplyPacingHealth()
         {
             if (health == null)
@@ -123,7 +146,9 @@ namespace BackpackHero.Battle
             health.SetMaximumHealthAndFill(
                 baseMaximumHealth *
                 GamePacingDebugRuntime.GetBackpackHealthMultiplier(
-                    Faction));
+                    Faction) *
+                LevelDifficultyRuntime
+                    .GetBackpackRoundHealthMultiplier());
         }
 
         public void ApplyCombatPresentation(bool active)
@@ -195,6 +220,21 @@ namespace BackpackHero.Battle
                     follower.SetTarget(transform);
                 }
             }
+        }
+
+        private void ConfigureFactionShipPresentation()
+        {
+            if (factionShipRenderer == null)
+            {
+                return;
+            }
+
+            bool isEnemy = Faction == BattleFaction.Enemy;
+            factionShipRenderer.color =
+                isEnemy
+                    ? enemyFactionShipColor
+                    : playerFactionShipColor;
+            factionShipRenderer.flipY = isEnemy;
         }
         
         /// <summary>

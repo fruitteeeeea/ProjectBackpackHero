@@ -40,6 +40,7 @@ namespace BackpackHero.Input
         public float CurrentCurveValue => currentCurveValue;
         public Transform PlayerEndpoint => player;
         public Transform EnemyEndpoint => enemy;
+        public bool HasBattleWorldEndpoints { get; private set; }
 
         public void SetRuntimeVisibility(float visibility)
         {
@@ -93,6 +94,30 @@ namespace BackpackHero.Input
         {
             player = playerEndpoint;
             enemy = enemyEndpoint;
+            RefreshCurve();
+        }
+
+        /// <summary>
+        /// Sets endpoints supplied after both backpacks have completed their
+        /// transition into battle world space. This is the only operation that
+        /// permits the curve to render during combat.
+        /// </summary>
+        public void SetBattleWorldEndpoints(
+            Transform playerEndpoint,
+            Transform enemyEndpoint)
+        {
+            SetEndpoints(playerEndpoint, enemyEndpoint);
+            HasBattleWorldEndpoints =
+                playerEndpoint != null && enemyEndpoint != null;
+            RefreshLineRendererVisibility();
+            RefreshCurve();
+        }
+
+        public void SetBattleWorldEndpointReadiness(bool isReady)
+        {
+            HasBattleWorldEndpoints = isReady &&
+                player != null && enemy != null;
+            RefreshLineRendererVisibility();
             RefreshCurve();
         }
 
@@ -262,11 +287,23 @@ namespace BackpackHero.Input
         {
             EnsureLineRenderer();
 
-            if (lineRenderer != null)
+            if (phase != BattlePhase.Combat)
             {
-                lineRenderer.enabled =
-                    phase == BattlePhase.Combat;
+                HasBattleWorldEndpoints = false;
             }
+
+            RefreshLineRendererVisibility();
+        }
+
+        private void RefreshLineRendererVisibility()
+        {
+            if (!Application.isPlaying || lineRenderer == null)
+            {
+                return;
+            }
+
+            lineRenderer.enabled = BattleFlowController.IsCombatPhase &&
+                HasBattleWorldEndpoints;
         }
 
         private void SubscribeToInput()

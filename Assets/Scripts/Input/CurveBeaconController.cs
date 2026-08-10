@@ -184,5 +184,10 @@ namespace BackpackHero.Input
             color.a = originalAlpha * currentOpacity;
             beaconRenderer.color = color;
         }
+
+        public void SetVisualOpacity(float opacity)
+        {
+            SetOpacity(opacity);
+        }
     }
 }

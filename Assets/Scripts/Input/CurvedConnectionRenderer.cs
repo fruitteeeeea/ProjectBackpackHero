@@ -27,15 +27,25 @@ namespace BackpackHero.Input
         [SerializeField, Range(0f, 1f)] private float lineOpacity = 0.38f;
         [SerializeField, Min(0.01f)] private float textureTiling = 1f;
         [SerializeField, Min(0f)] private float flowSpeed = 0.7f;
+        [SerializeField] private int sortingOrder;
 
         private float currentCurveValue;
         private float flowOffset;
+        private float runtimeVisibility = 1f;
         private MaterialPropertyBlock materialProperties;
 
         private static readonly int FlowOffsetId =
             Shader.PropertyToID("_FlowOffset");
 
         public float CurrentCurveValue => currentCurveValue;
+        public Transform PlayerEndpoint => player;
+        public Transform EnemyEndpoint => enemy;
+
+        public void SetRuntimeVisibility(float visibility)
+        {
+            runtimeVisibility = Mathf.Clamp01(visibility);
+            RefreshCurve();
+        }
 
         public float LineWidth
         {
@@ -295,7 +305,7 @@ namespace BackpackHero.Input
             lineRenderer.loop = false;
             lineRenderer.numCapVertices = 4;
             lineRenderer.numCornerVertices = 2;
-            lineRenderer.sortingOrder = 0;
+            lineRenderer.sortingOrder = sortingOrder;
             lineRenderer.textureMode = LineTextureMode.Tile;
 
             if (lineMaterial != null)
@@ -314,7 +324,7 @@ namespace BackpackHero.Input
             lineRenderer.startWidth = lineWidth;
             lineRenderer.endWidth = lineWidth;
             var visibleColor = lineColor;
-            visibleColor.a = lineOpacity;
+            visibleColor.a = lineOpacity * runtimeVisibility;
             lineRenderer.startColor = visibleColor;
             lineRenderer.endColor = visibleColor;
             lineRenderer.textureScale = new Vector2(textureTiling, 1f);

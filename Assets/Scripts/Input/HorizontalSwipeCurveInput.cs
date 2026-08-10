@@ -165,8 +165,12 @@ namespace BackpackHero.Input
                     continue;
                 }
 
-                ApplyDelta(touch.delta.x.ReadValue());
-                PointerMoved?.Invoke(touch.position.ReadValue());
+                Vector2 delta = touch.delta.ReadValue();
+                ApplyDelta(delta.x);
+                if (delta.sqrMagnitude > Mathf.Epsilon)
+                {
+                    PointerMoved?.Invoke(touch.position.ReadValue());
+                }
 
                 if (touch.press.wasReleasedThisFrame || !touch.press.isPressed)
                 {
@@ -188,8 +192,12 @@ namespace BackpackHero.Input
                 return;
             }
 
-            ApplyDelta(mouse.delta.x.ReadValue());
-            PointerMoved?.Invoke(mouse.position.ReadValue());
+            Vector2 delta = mouse.delta.ReadValue();
+            ApplyDelta(delta.x);
+            if (delta.sqrMagnitude > Mathf.Epsilon)
+            {
+                PointerMoved?.Invoke(mouse.position.ReadValue());
+            }
 
             if (mouse.leftButton.wasReleasedThisFrame || !mouse.leftButton.isPressed)
             {

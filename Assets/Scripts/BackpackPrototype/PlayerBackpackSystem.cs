@@ -90,6 +90,8 @@ namespace BackpackPrototype
         private bool isLoadingLayout;
         private bool missingCurveWarningReported;
         private bool shopInitializedForPreparation;
+        private bool shopItemScaleCached;
+        private Vector3 shopItemLocalScale = Vector3.one;
         private int nextItemId;
         private int remainingRolls;
 
@@ -170,6 +172,7 @@ namespace BackpackPrototype
 
             RebuildBackpackViews();
 
+            CacheShopItemScale();
             InitializeShopForPreparation();
 
             HandlePhaseChanged(
@@ -781,26 +784,59 @@ namespace BackpackPrototype
             itemRect.anchoredPosition =
                 Vector2.zero;
             itemRect.localScale =
-                CalculateShopItemScale(slot);
+                GetShopItemScale(slot);
 
             shopItems.Add(view);
         }
 
-        private Vector3 CalculateShopItemScale(
+        private Vector3 GetShopItemScale(
             RectTransform shopSlot)
         {
-            if (itemLayer == null || shopSlot == null)
+            if (!shopItemScaleCached)
             {
-                return Vector3.one;
+                CacheShopItemScale(shopSlot);
             }
 
+            return shopItemLocalScale;
+        }
+
+        private void CacheShopItemScale(
+            RectTransform shopSlot = null)
+        {
+            if (shopItemScaleCached)
+            {
+                return;
+            }
+
+            shopSlot ??= FindFirstShopSlot();
+
+            if (itemLayer == null || shopSlot == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
             Vector3 backpackScale = itemLayer.lossyScale;
             Vector3 shopScale = shopSlot.lossyScale;
 
-            return new Vector3(
+            shopItemLocalScale = new Vector3(
                 DivideScale(backpackScale.x, shopScale.x),
                 DivideScale(backpackScale.y, shopScale.y),
                 1f);
+            shopItemScaleCached = true;
+        }
+
+        private RectTransform FindFirstShopSlot()
+        {
+            foreach (RectTransform shopSlot in shopSlots)
+            {
+                if (shopSlot != null)
+                {
+                    return shopSlot;
+                }
+            }
+
+            return null;
         }
 
         private static float DivideScale(

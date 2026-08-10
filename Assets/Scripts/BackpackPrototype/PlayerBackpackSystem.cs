@@ -780,8 +780,36 @@ namespace BackpackPrototype
                 new Vector2(0.5f, 0.5f);
             itemRect.anchoredPosition =
                 Vector2.zero;
+            itemRect.localScale =
+                CalculateShopItemScale(slot);
 
             shopItems.Add(view);
+        }
+
+        private Vector3 CalculateShopItemScale(
+            RectTransform shopSlot)
+        {
+            if (itemLayer == null || shopSlot == null)
+            {
+                return Vector3.one;
+            }
+
+            Vector3 backpackScale = itemLayer.lossyScale;
+            Vector3 shopScale = shopSlot.lossyScale;
+
+            return new Vector3(
+                DivideScale(backpackScale.x, shopScale.x),
+                DivideScale(backpackScale.y, shopScale.y),
+                1f);
+        }
+
+        private static float DivideScale(
+            float desiredWorldScale,
+            float parentWorldScale)
+        {
+            return Mathf.Abs(parentWorldScale) > Mathf.Epsilon
+                ? desiredWorldScale / parentWorldScale
+                : 1f;
         }
 
         private ItemView CreateView(
@@ -844,8 +872,6 @@ namespace BackpackPrototype
             }
 
             targetView.PlayMergeFeedback();
-            PlacementEffectPlayer.Play(
-                targetView.GetComponent<RectTransform>());
         }
 
         private void HandleItemDragStateChanged(
@@ -947,8 +973,6 @@ namespace BackpackPrototype
                 backpackViews.Add(view);
             }
 
-            PlacementEffectPlayer.Play(
-                view.GetComponent<RectTransform>());
         }
 
         private void HandleItemDeleted(ItemView view)

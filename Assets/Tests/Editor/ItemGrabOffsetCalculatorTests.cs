@@ -25,7 +25,7 @@ public sealed class ItemGrabOffsetCalculatorTests
     }
 
     [TestCaseSource(nameof(NonLShapes))]
-    public void Calculate_ReturnsTopLeftOccupiedCell_ForNonLShapes(
+    public void Calculate_ReturnsBottomRightOccupiedCell_ForNonLShapes(
         Vector2Int[] shapeOffsets,
         Vector2Int expected)
     {
@@ -46,7 +46,7 @@ public sealed class ItemGrabOffsetCalculatorTests
     }
 
     [Test]
-    public void Calculate_ProvidesOffsetUsedByPlacementAnchor()
+    public void Calculate_PreservesLShapeOffsetUsedByPlacementAnchor()
     {
         Vector2Int grabOffset = ItemGrabOffsetCalculator.Calculate(
             new[]
@@ -64,6 +64,25 @@ public sealed class ItemGrabOffsetCalculatorTests
             Is.EqualTo(new Vector2Int(5, 3)));
     }
 
+    [Test]
+    public void Calculate_UsesBottomRightOffsetForPlacementAnchor()
+    {
+        Vector2Int grabOffset = ItemGrabOffsetCalculator.Calculate(
+            new[]
+            {
+                new Vector2Int(0, 0),
+                new Vector2Int(1, 0),
+                new Vector2Int(2, 0),
+            });
+
+        Assert.That(grabOffset, Is.EqualTo(new Vector2Int(2, 0)));
+        Assert.That(
+            BackpackGridView.CalculateAnchorCell(
+                new Vector2Int(6, 3),
+                grabOffset),
+            Is.EqualTo(new Vector2Int(4, 3)));
+    }
+
     private static object[] NonLShapes =
     {
         new object[]
@@ -79,7 +98,7 @@ public sealed class ItemGrabOffsetCalculatorTests
                 new Vector2Int(0, 1),
                 new Vector2Int(1, 1),
             },
-            new Vector2Int(0, 1),
+            new Vector2Int(2, 1),
         },
         new object[]
         {
@@ -89,7 +108,7 @@ public sealed class ItemGrabOffsetCalculatorTests
                 new Vector2Int(1, 0),
                 new Vector2Int(1, 1),
             },
-            new Vector2Int(1, 0),
+            new Vector2Int(1, 2),
         },
         new object[]
         {
@@ -99,7 +118,7 @@ public sealed class ItemGrabOffsetCalculatorTests
                 new Vector2Int(0, 1),
                 new Vector2Int(2, 1),
             },
-            new Vector2Int(1, 0),
+            new Vector2Int(2, 1),
         },
     };
 }

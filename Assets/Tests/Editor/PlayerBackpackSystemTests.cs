@@ -7,6 +7,7 @@ using System.IO;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.TestTools;
 
 public sealed class PlayerBackpackSystemTests
@@ -118,6 +119,57 @@ public sealed class PlayerBackpackSystemTests
         Assert.That(
             collisionAnchor.parent,
             Is.SameAs(aircraftAnchor.parent));
+    }
+
+    [Test]
+    public void ShopPanel_UsesBackpackFrameAndLargeSlots()
+    {
+        GameObject prefab =
+            AssetDatabase.LoadAssetAtPath<GameObject>(
+                PrefabPath);
+
+        RectTransform shopPanel = FindRectTransform(
+            prefab,
+            "ShopPanel");
+        RectTransform backpackBackground = FindRectTransform(
+            prefab,
+            "BackpackBackground");
+
+        Assert.That(shopPanel, Is.Not.Null);
+        Assert.That(backpackBackground, Is.Not.Null);
+        Assert.That(
+            shopPanel.sizeDelta,
+            Is.EqualTo(new Vector2(1000f, 320f)));
+
+        Image shopFrame = shopPanel.GetComponent<Image>();
+        Image backpackFrame =
+            backpackBackground.GetComponent<Image>();
+        Assert.That(shopFrame, Is.Not.Null);
+        Assert.That(
+            shopFrame.sprite,
+            Is.SameAs(backpackFrame.sprite));
+        Assert.That(
+            shopFrame.color,
+            Is.EqualTo(new Color(1f, 202f / 255f,
+                40f / 255f, 1f)));
+
+        int shopSlotCount = 0;
+        foreach (RectTransform rectTransform in
+                 shopPanel.GetComponentsInChildren<RectTransform>(
+                     true))
+        {
+            if (!rectTransform.name.StartsWith("ShopSlot"))
+            {
+                continue;
+            }
+
+            shopSlotCount++;
+            Assert.That(
+                rectTransform.sizeDelta,
+                Is.EqualTo(new Vector2(320f, 320f)));
+        }
+
+        Assert.That(shopSlotCount, Is.EqualTo(3));
     }
 
     [Test]

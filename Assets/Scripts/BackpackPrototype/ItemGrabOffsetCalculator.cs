@@ -11,17 +11,17 @@ namespace BackpackPrototype
         public static Vector2Int Calculate(
             IReadOnlyList<Vector2Int> shapeOffsets)
         {
-            Vector2Int topLeft = FindTopLeft(shapeOffsets);
+            Vector2Int bottomRight = FindBottomRight(shapeOffsets);
 
             if (shapeOffsets == null || shapeOffsets.Count != 3)
             {
-                return topLeft;
+                return bottomRight;
             }
 
             var uniqueOffsets = new HashSet<Vector2Int>(shapeOffsets);
             if (uniqueOffsets.Count != 3)
             {
-                return topLeft;
+                return bottomRight;
             }
 
             foreach (Vector2Int candidate in uniqueOffsets)
@@ -55,10 +55,10 @@ namespace BackpackPrototype
                 }
             }
 
-            return topLeft;
+            return bottomRight;
         }
 
-        private static Vector2Int FindTopLeft(
+        private static Vector2Int FindBottomRight(
             IReadOnlyList<Vector2Int> shapeOffsets)
         {
             if (shapeOffsets == null || shapeOffsets.Count == 0)
@@ -66,19 +66,20 @@ namespace BackpackPrototype
                 return Vector2Int.zero;
             }
 
-            Vector2Int topLeft = shapeOffsets[0];
+            Vector2Int bottomRight = shapeOffsets[0];
 
             for (int index = 1; index < shapeOffsets.Count; index++)
             {
                 Vector2Int candidate = shapeOffsets[index];
-                if (candidate.y < topLeft.y ||
-                    candidate.y == topLeft.y && candidate.x < topLeft.x)
+                if (candidate.y > bottomRight.y ||
+                    candidate.y == bottomRight.y &&
+                    candidate.x > bottomRight.x)
                 {
-                    topLeft = candidate;
+                    bottomRight = candidate;
                 }
             }
 
-            return topLeft;
+            return bottomRight;
         }
     }
 }

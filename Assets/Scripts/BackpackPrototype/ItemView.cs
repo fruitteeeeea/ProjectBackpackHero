@@ -11,7 +11,7 @@ namespace BackpackPrototype
 {
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasGroup))]
-    public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ICanvasRaycastFilter
+    public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler, ICanvasRaycastFilter
     {
         [SerializeField] private Image background;
         [SerializeField] private Image icon;
@@ -35,7 +35,6 @@ namespace BackpackPrototype
         private Transform originalParent;
         private int originalSiblingIndex;
         private Vector2 originalAnchoredPosition;
-        private Tween scaleTween;
         private Tween dragPositionTween;
         private Tween feedbackTween;
         private Tween cooldownFlashTween;
@@ -45,6 +44,11 @@ namespace BackpackPrototype
         private bool isDragging;
         private Vector2 shapeCellSize;
         private Vector2 shapeSpacing;
+        private Vector2 placementFeedbackAnchoredPosition;
+        private Quaternion placementFeedbackRotation;
+        private Vector3 placementFeedbackScale;
+        private Vector3 placementFeedbackCenterWorldPosition;
+        private bool placementFeedbackActive;
         
         private Material originalBackgroundMaterial;
         private Material originalIconMaterial;
@@ -533,6 +537,10 @@ namespace BackpackPrototype
             Instance.AnchorCell = anchorCell;
             IsPlacedInBackpack = true;
             rectTransform.SetParent(BackpackItemLayer, false);
+            // 拖拽层不在背包的缩放根节点下。以 worldPositionStays
+            // 重设父级会把父级缩放烘焙进物品 localScale；放回背包前
+            // 必须恢复预制体基准，避免每次拖拽后叠乘放大。
+            rectTransform.localScale = Vector3.one;
             rectTransform.anchorMin = new Vector2(0f, 1f);
             rectTransform.anchorMax = new Vector2(0f, 1f);
             rectTransform.pivot = new Vector2(0f, 1f);
@@ -571,7 +579,6 @@ namespace BackpackPrototype
 
             canvasGroup.blocksRaycasts = false;
             canvasGroup.alpha = 0.5f;
-            TweenScale(1.05f);
             DragStateChanged?.Invoke(this, true);
         }
 
@@ -625,22 +632,6 @@ namespace BackpackPrototype
             PlayFailedFeedback();
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            if (!isDragging)
-            {
-                TweenScale(1.08f);
-            }
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            if (!isDragging)
-            {
-                TweenScale(1f);
-            }
-        }
-        
         public void OnPointerClick(PointerEventData eventData)
         {
             RequestSelection();
@@ -737,23 +728,113 @@ namespace BackpackPrototype
 
         private void PlayPlacedFeedback()
         {
-            feedbackTween?.Kill();
+            StopPlacementFeedback();
+
+            // 物品预制体的视觉基准为 1。合成目标可能尚未经过
+            // SetBackpackPosition，因此在播放放置反馈前也显式归一。
             rectTransform.localScale = Vector3.one;
-            feedbackTween = rectTransform.DOPunchScale(new Vector3(0.12f, 0.12f, 0f), 0.22f, 7, 0.65f);
+            placementFeedbackAnchoredPosition =
+                rectTransform.anchoredPosition;
+            placementFeedbackRotation = rectTransform.localRotation;
+            placementFeedbackScale = rectTransform.localScale;
+            placementFeedbackCenterWorldPosition =
+                rectTransform.TransformPoint(rectTransform.rect.center);
+            placementFeedbackActive = true;
+
+            rectTransform.localScale = placementFeedbackScale * 1.25f;
+            KeepPlacementFeedbackCenterFixed();
+
+            float rotation = 0f;
+            Sequence feedbackSequence = DOTween.Sequence();
+            feedbackSequence.Append(DOTween.To(
+                    () => rotation,
+                    value =>
+                    {
+                        rotation = value;
+                        SetPlacementFeedbackRotation(value);
+                    },
+                    14f,
+                    0.055f)
+                .SetEase(Ease.OutQuad));
+            feedbackSequence.Append(DOTween.To(
+                    () => rotation,
+                    value =>
+                    {
+                        rotation = value;
+                        SetPlacementFeedbackRotation(value);
+                    },
+                    -9f,
+                    0.07f)
+                .SetEase(Ease.InOutQuad));
+            feedbackSequence.Append(DOTween.To(
+                    () => rotation,
+                    value =>
+                    {
+                        rotation = value;
+                        SetPlacementFeedbackRotation(value);
+                    },
+                    0f,
+                    0.075f)
+                .SetEase(Ease.OutQuad));
+            feedbackSequence.Join(DOTween.To(
+                    () => rectTransform.localScale,
+                    value => rectTransform.localScale = value,
+                    placementFeedbackScale,
+                    0.24f)
+                .SetEase(Ease.OutElastic, 0.8f, 0.28f));
+
+            feedbackTween = feedbackSequence
+                .OnUpdate(KeepPlacementFeedbackCenterFixed)
+                .OnComplete(ResetPlacementFeedbackTransform)
+                .OnKill(ResetPlacementFeedbackTransform);
         }
 
         private void PlayFailedFeedback()
         {
             feedbackTween?.Kill();
-            rectTransform.localScale = Vector3.one;
             feedbackTween = rectTransform.DOShakePosition(0.18f, new Vector3(12f, 0f, 0f), 12, 90f, false, true);
-            TweenScale(1f);
         }
 
-        private void TweenScale(float targetScale)
+        private void KeepPlacementFeedbackCenterFixed()
         {
-            scaleTween?.Kill();
-            scaleTween = rectTransform.DOScale(targetScale, 0.12f).SetEase(Ease.OutQuad);
+            if (!placementFeedbackActive || rectTransform == null)
+            {
+                return;
+            }
+
+            Vector3 rotatedCenter = rectTransform.TransformPoint(
+                rectTransform.rect.center);
+            rectTransform.position =
+                ItemPlacementRotation.CalculateCorrectedWorldPosition(
+                    rectTransform.position,
+                    placementFeedbackCenterWorldPosition,
+                    rotatedCenter);
+        }
+
+        private void SetPlacementFeedbackRotation(float degrees)
+        {
+            rectTransform.localRotation = placementFeedbackRotation *
+                Quaternion.Euler(0f, 0f, degrees);
+        }
+
+        private void StopPlacementFeedback()
+        {
+            feedbackTween?.Kill();
+            ResetPlacementFeedbackTransform();
+        }
+
+        private void ResetPlacementFeedbackTransform()
+        {
+            if (!placementFeedbackActive || rectTransform == null)
+            {
+                return;
+            }
+
+            rectTransform.localRotation = placementFeedbackRotation;
+            rectTransform.localScale = placementFeedbackScale;
+            rectTransform.anchoredPosition =
+                placementFeedbackAnchoredPosition;
+            placementFeedbackActive = false;
         }
 
         private void OnDestroy()
@@ -768,7 +849,6 @@ namespace BackpackPrototype
                     HandleCooldownCompleted;
             }
 
-            scaleTween?.Kill();
             dragPositionTween?.Kill();
             feedbackTween?.Kill();
             cooldownFlashTween?.Kill();

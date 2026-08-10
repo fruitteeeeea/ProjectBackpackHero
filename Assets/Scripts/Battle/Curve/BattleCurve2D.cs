@@ -78,5 +78,49 @@ namespace BackpackHero.Battle
             return midpoint +
                    (desiredCurveMidpoint - midpoint) * 2f;
         }
+
+        /// <summary>
+        /// Returns the normalized position of the closest point on an evenly
+        /// sampled polyline. The polyline points must be ordered from t=0 to t=1.
+        /// </summary>
+        public static float FindClosestNormalizedTime(
+            Vector2 target,
+            Vector2[] sampledPoints)
+        {
+            if (sampledPoints == null || sampledPoints.Length < 2)
+            {
+                return 0f;
+            }
+
+            float closestDistanceSquared = float.PositiveInfinity;
+            float closestTime = 0f;
+            int segmentCount = sampledPoints.Length - 1;
+
+            for (int index = 0; index < segmentCount; index++)
+            {
+                Vector2 start = sampledPoints[index];
+                Vector2 end = sampledPoints[index + 1];
+                Vector2 segment = end - start;
+                float segmentLengthSquared = segment.sqrMagnitude;
+                float segmentTime = segmentLengthSquared > Mathf.Epsilon
+                    ? Mathf.Clamp01(Vector2.Dot(target - start, segment) /
+                        segmentLengthSquared)
+                    : 0f;
+                Vector2 closestPoint = start + segment * segmentTime;
+                float distanceSquared =
+                    (target - closestPoint).sqrMagnitude;
+
+                if (distanceSquared >= closestDistanceSquared)
+                {
+                    continue;
+                }
+
+                closestDistanceSquared = distanceSquared;
+                closestTime =
+                    (index + segmentTime) / segmentCount;
+            }
+
+            return Mathf.Clamp01(closestTime);
+        }
     }
 }

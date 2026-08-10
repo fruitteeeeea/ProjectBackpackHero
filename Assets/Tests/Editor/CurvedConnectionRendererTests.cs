@@ -1,3 +1,4 @@
+using BackpackHero.Battle;
 using BackpackHero.Input;
 using NUnit.Framework;
 using UnityEngine;
@@ -36,5 +37,57 @@ public sealed class CurvedConnectionRendererTests
 
         Assert.That(clampedValuePoint.x, Is.EqualTo(3f).Within(0.0001f));
         Assert.That(clampedDistancePoint.x, Is.Zero.Within(0.0001f));
+    }
+
+    [Test]
+    public void FindClosestNormalizedTime_CurvedSamplesReturnsNearbyPoint()
+    {
+        const int sampleCount = 64;
+        var samples = new Vector2[sampleCount + 1];
+
+        for (var index = 0; index <= sampleCount; index++)
+        {
+            Vector3 point = CurvedConnectionRenderer.CalculatePoint(
+                Player,
+                Enemy,
+                0.75f,
+                3f,
+                (float)index / sampleCount);
+            samples[index] = point;
+        }
+
+        Vector3 targetPoint = CurvedConnectionRenderer.CalculatePoint(
+            Player,
+            Enemy,
+            0.75f,
+            3f,
+            0.35f);
+        float closestTime = BattleCurve2D.FindClosestNormalizedTime(
+            new Vector2(targetPoint.x + 0.05f, targetPoint.y),
+            samples);
+
+        Assert.That(closestTime, Is.EqualTo(0.35f).Within(0.02f));
+    }
+
+    [TestCase(-5f, 0f, 0f)]
+    [TestCase(5f, 0f, 1f)]
+    public void FindClosestNormalizedTime_OutsideEndpointsClampsToEndpoint(
+        float x,
+        float y,
+        float expectedTime)
+    {
+        var samples = new[]
+        {
+            new Vector2(0f, 0f),
+            new Vector2(1f, 0f),
+            new Vector2(2f, 0f),
+        };
+
+        float closestTime = BattleCurve2D.FindClosestNormalizedTime(
+            new Vector2(x, y),
+            samples);
+
+        Assert.That(closestTime, Is.EqualTo(expectedTime).Within(0.0001f));
+        Assert.That(closestTime, Is.InRange(0f, 1f));
     }
 }

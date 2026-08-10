@@ -83,6 +83,29 @@ public sealed class HorizontalSwipeCurveInputTests
     }
 
     [Test]
+    public void PointerBegan_OnlyPublishesForSuccessfulNonUiGesture()
+    {
+        var gameObject = new UnityEngine.GameObject("Swipe Input Event Test");
+        try
+        {
+            var input = gameObject.AddComponent<HorizontalSwipeCurveInput>();
+            var receivedPositions = new System.Collections.Generic.List<UnityEngine.Vector2>();
+            input.PointerBegan += receivedPositions.Add;
+            input.SetInputEnabled(true);
+
+            Assert.That(input.TryBeginPointer(1, true, new UnityEngine.Vector2(10f, 20f)), Is.False);
+            Assert.That(input.TryBeginPointer(2, false, new UnityEngine.Vector2(30f, 40f)), Is.True);
+
+            Assert.That(receivedPositions, Has.Count.EqualTo(1));
+            Assert.That(receivedPositions[0], Is.EqualTo(new UnityEngine.Vector2(30f, 40f)));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(gameObject);
+        }
+    }
+
+    [Test]
     public void AdditionalPointer_CannotTakeOverActiveGesture()
     {
         model.Enable();

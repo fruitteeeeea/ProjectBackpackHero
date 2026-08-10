@@ -9,7 +9,7 @@ namespace BackpackHero.Debugging
     public sealed class StyleTendencyDebugRuntime : MonoBehaviour
     {
         private const string DefaultSettingsResourceName =
-            "StyleTendency/Strategy";
+            "StyleTendency/Arcade";
 
         [SerializeField]
         private StyleTendencyDebugSettings defaultSettings;

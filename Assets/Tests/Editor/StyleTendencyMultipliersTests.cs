@@ -127,16 +127,16 @@ public sealed class StyleTendencyMultipliersTests
     }
 
     [Test]
-    public void Runtime_UsesStrategyAsDefaultAndExposesAppliedValues()
+    public void Runtime_UsesArcadeAsDefaultAndExposesAppliedValues()
     {
         StyleTendencyDebugRuntime runtime = EnsureStyleRuntime();
-        StyleTendencyDebugSettings strategy =
+        StyleTendencyDebugSettings arcade =
             AssetDatabase.LoadAssetAtPath<StyleTendencyDebugSettings>(
-                "Assets/Resources/StyleTendency/Strategy.asset");
+                "Assets/Resources/StyleTendency/Arcade.asset");
 
-        Assert.That(runtime.DefaultSettings, Is.EqualTo(strategy));
+        Assert.That(runtime.DefaultSettings, Is.EqualTo(arcade));
         Assert.That(StyleTendencyDebugRuntime.GetCooldownItemType(),
-            Is.EqualTo(CooldownItemType.Equipment));
+            Is.EqualTo(CooldownItemType.Aircraft));
 
         runtime.SetMultipliers(new StyleTendencyMultipliers(
             2f, 3f, 0.5f, 1.5f, CooldownItemType.Equipment,

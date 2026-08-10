@@ -138,6 +138,66 @@ namespace BackpackHero.Input
                 t);
         }
 
+        public bool TryEvaluatePoint(
+            float normalizedTime,
+            out Vector3 point)
+        {
+            point = default;
+
+            if (player == null || enemy == null)
+            {
+                return false;
+            }
+
+            point = CalculatePoint(
+                player.position,
+                enemy.position,
+                currentCurveValue,
+                maxBendDistance,
+                normalizedTime);
+            return true;
+        }
+
+        public bool TryFindClosestNormalizedTime(
+            Camera camera,
+            Vector2 screenPosition,
+            int sampleCount,
+            out float normalizedTime)
+        {
+            normalizedTime = 0f;
+
+            if (camera == null || player == null || enemy == null)
+            {
+                return false;
+            }
+
+            int safeSampleCount = Mathf.Clamp(
+                sampleCount,
+                MinSegmentCount,
+                MaxSegmentCount);
+            var projectedPoints = new Vector2[safeSampleCount + 1];
+
+            for (int index = 0; index <= safeSampleCount; index++)
+            {
+                Vector3 worldPoint = CalculatePoint(
+                    player.position,
+                    enemy.position,
+                    currentCurveValue,
+                    maxBendDistance,
+                    (float)index / safeSampleCount);
+                Vector3 projectedPoint =
+                    camera.WorldToScreenPoint(worldPoint);
+                projectedPoints[index] = new Vector2(
+                    projectedPoint.x,
+                    projectedPoint.y);
+            }
+
+            normalizedTime = BattleCurve2D.FindClosestNormalizedTime(
+                screenPosition,
+                projectedPoints);
+            return true;
+        }
+
         private void OnEnable()
         {
             EnsureLineRenderer();

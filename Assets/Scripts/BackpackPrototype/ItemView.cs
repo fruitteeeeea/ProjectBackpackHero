@@ -42,6 +42,7 @@ namespace BackpackPrototype
         private float cooldownFlashAmount;
         private float mergeFlashAmount;
         private bool isDragging;
+        private bool canDeleteFromTrash;
         private Vector2 shapeCellSize;
         private Vector2 shapeSpacing;
         private Vector2 placementFeedbackAnchoredPosition;
@@ -49,6 +50,12 @@ namespace BackpackPrototype
         private Vector3 placementFeedbackScale;
         private Vector3 placementFeedbackCenterWorldPosition;
         private bool placementFeedbackActive;
+        private Image[] trashPreviewImages;
+        private Color[] trashPreviewColors;
+        private Color defaultBackgroundColor;
+        private Color defaultIconColor;
+        private Color defaultLevelLabelColor;
+        private bool deletePreviewColorsCached;
         
         private Material originalBackgroundMaterial;
         private Material originalIconMaterial;
@@ -195,6 +202,8 @@ namespace BackpackPrototype
             TrashZone = trashZone;
             CombatController = combatController;
 
+            CacheTrashPreviewImages();
+
             if (Backpack != null)
             {
                 Backpack.ItemLevelChanged += HandleItemLevelChanged;
@@ -240,6 +249,7 @@ namespace BackpackPrototype
             }
 
             RefreshLevelLabel();
+            CacheDeletePreviewColors();
         }
 
         public void SetMergeHighlight(bool highlighted)
@@ -479,6 +489,8 @@ namespace BackpackPrototype
                 dragPositionTween?.Kill();
                 dragPositionTween = null;
                 GridView?.ClearPlacementPreview();
+                SetTrashPreview(false);
+                canDeleteFromTrash = false;
                 DragStateChanged?.Invoke(this, false);
             }
 
@@ -558,11 +570,13 @@ namespace BackpackPrototype
 
             RequestSelection();
             isDragging = true;
+            canDeleteFromTrash = IsPlacedInBackpack;
             originalParent = rectTransform.parent;
             originalSiblingIndex = rectTransform.GetSiblingIndex();
             originalAnchoredPosition = rectTransform.anchoredPosition;
             CandidateAnchorCell = null;
             GridView?.ClearPlacementPreview();
+            SetTrashPreview(false);
 
             GrabCellOffset = ItemGrabOffsetCalculator.Calculate(
                 Instance?.Data?.ShapeOffsets);
@@ -588,6 +602,20 @@ namespace BackpackPrototype
                 eventData.position,
                 eventData.pressEventCamera);
 
+            bool previewsTrashDelete =
+                canDeleteFromTrash &&
+                IsOverTrash(
+                    eventData.position,
+                    eventData.pressEventCamera);
+            SetTrashPreview(previewsTrashDelete);
+
+            if (previewsTrashDelete)
+            {
+                CandidateAnchorCell = null;
+                GridView?.ClearPlacementPreview();
+                return;
+            }
+
             if (GridView != null && GridView.TryGetCellAtScreenPosition(eventData.position, eventData.pressEventCamera, out var pointerCell))
             {
                 CandidateAnchorCell = BackpackGridView.CalculateAnchorCell(pointerCell, GrabCellOffset);
@@ -610,7 +638,15 @@ namespace BackpackPrototype
             canvasGroup.alpha = 1f;
             GridView?.ClearPlacementPreview();
 
-            if (IsOverTrash(eventData.position, eventData.pressEventCamera))
+            bool deletesFromTrash =
+                canDeleteFromTrash &&
+                IsOverTrash(
+                    eventData.position,
+                    eventData.pressEventCamera);
+            SetTrashPreview(false);
+            canDeleteFromTrash = false;
+
+            if (deletesFromTrash)
             {
                 DeleteItem();
                 return;
@@ -710,20 +746,115 @@ namespace BackpackPrototype
 
         private void DeleteItem()
         {
-            if (IsPlacedInBackpack && Backpack != null)
+            if (!IsPlacedInBackpack || Backpack == null)
             {
-                if (CombatController != null)
-                {
-                    CombatController.RemoveItem(Instance);
-                }
-                else
-                {
-                    Backpack.RemoveItem(Instance);
-                }
+                return;
+            }
+
+            if (CombatController != null)
+            {
+                CombatController.RemoveItem(Instance);
+            }
+            else
+            {
+                Backpack.RemoveItem(Instance);
             }
 
             DeletedSuccessfully?.Invoke(this);
             Destroy(gameObject);
+        }
+
+        private void CacheTrashPreviewImages()
+        {
+            if (TrashZone == null)
+            {
+                trashPreviewImages = Array.Empty<Image>();
+                trashPreviewColors = Array.Empty<Color>();
+                return;
+            }
+
+            trashPreviewImages = TrashZone.GetComponentsInChildren<Image>(
+                true);
+            trashPreviewColors = new Color[trashPreviewImages.Length];
+
+            for (int index = 0;
+                 index < trashPreviewImages.Length;
+                 index++)
+            {
+                trashPreviewColors[index] =
+                    trashPreviewImages[index].color;
+            }
+        }
+
+        private void SetTrashPreview(bool deleting)
+        {
+            if (trashPreviewImages != null &&
+                trashPreviewColors != null)
+            {
+                for (int index = 0;
+                     index < trashPreviewImages.Length;
+                     index++)
+                {
+                    Image previewImage = trashPreviewImages[index];
+                    if (previewImage == null)
+                    {
+                        continue;
+                    }
+
+                    Color defaultColor = trashPreviewColors[index];
+                    previewImage.color = deleting
+                        ? new Color(1f, 0.18f, 0.18f, defaultColor.a)
+                        : defaultColor;
+                }
+            }
+
+            SetItemDeletePreview(deleting);
+        }
+
+        private void CacheDeletePreviewColors()
+        {
+            defaultBackgroundColor = background != null
+                ? background.color
+                : Color.white;
+            defaultIconColor = icon != null
+                ? icon.color
+                : Color.white;
+            defaultLevelLabelColor = levelLabel != null
+                ? levelLabel.color
+                : Color.white;
+            deletePreviewColorsCached = true;
+        }
+
+        private void SetItemDeletePreview(bool deleting)
+        {
+            if (!deletePreviewColorsCached)
+            {
+                return;
+            }
+
+            if (background != null)
+            {
+                background.color = deleting
+                    ? new Color(1f, 0.08f, 0.08f,
+                        defaultBackgroundColor.a)
+                    : defaultBackgroundColor;
+            }
+
+            if (icon != null)
+            {
+                icon.color = deleting
+                    ? new Color(1f, 0.32f, 0.32f,
+                        defaultIconColor.a)
+                    : defaultIconColor;
+            }
+
+            if (levelLabel != null)
+            {
+                levelLabel.color = deleting
+                    ? new Color(1f, 0.76f, 0.76f,
+                        defaultLevelLabelColor.a)
+                    : defaultLevelLabelColor;
+            }
         }
 
         private void PlayPlacedFeedback()

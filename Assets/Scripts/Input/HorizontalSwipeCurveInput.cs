@@ -26,6 +26,26 @@ namespace BackpackHero.Input
         }
 
         public event Action<float> ValueChanged;
+        public event Action<Vector2> PointerBegan;
+        public event Action<Vector2> PointerMoved;
+
+        /// <summary>
+        /// Starts a gesture and reports the screen position only when this
+        /// pointer successfully becomes the active, non-UI gesture.
+        /// </summary>
+        public bool TryBeginPointer(
+            int pointerId,
+            bool beganOverUi,
+            Vector2 screenPosition)
+        {
+            bool began = model.TryBegin(pointerId, beganOverUi);
+            if (began)
+            {
+                PointerBegan?.Invoke(screenPosition);
+            }
+
+            return began;
+        }
 
         /// <summary>
         /// Enables or disables gesture input. Transitioning to enabled resets the value to zero.
@@ -87,8 +107,12 @@ namespace BackpackHero.Input
                 }
 
                 var touchId = touch.touchId.ReadValue();
-                model.TryBegin(touchId, IsPointerOverUi(touchId));
+                TryBeginPointer(
+                    touchId,
+                    IsPointerOverUi(touchId),
+                    touch.position.ReadValue());
                 activePointerKind = PointerKind.Touch;
+
                 return;
             }
         }
@@ -102,7 +126,10 @@ namespace BackpackHero.Input
             }
 
             const int mousePointerId = -1;
-            model.TryBegin(mousePointerId, IsPointerOverUi(mousePointerId));
+            TryBeginPointer(
+                mousePointerId,
+                IsPointerOverUi(mousePointerId),
+                mouse.position.ReadValue());
             activePointerKind = PointerKind.Mouse;
         }
 
@@ -139,6 +166,7 @@ namespace BackpackHero.Input
                 }
 
                 ApplyDelta(touch.delta.x.ReadValue());
+                PointerMoved?.Invoke(touch.position.ReadValue());
 
                 if (touch.press.wasReleasedThisFrame || !touch.press.isPressed)
                 {
@@ -161,6 +189,7 @@ namespace BackpackHero.Input
             }
 
             ApplyDelta(mouse.delta.x.ReadValue());
+            PointerMoved?.Invoke(mouse.position.ReadValue());
 
             if (mouse.leftButton.wasReleasedThisFrame || !mouse.leftButton.isPressed)
             {

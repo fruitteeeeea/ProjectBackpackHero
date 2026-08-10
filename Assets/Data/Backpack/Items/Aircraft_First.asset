@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Aircraft_First
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
   itemName: "\u521D\u53F7\u98DE\u673A"
+  description: "\u6682\u65E0\u63CF\u8FF0"
   icon: {fileID: 2875208246182030159, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

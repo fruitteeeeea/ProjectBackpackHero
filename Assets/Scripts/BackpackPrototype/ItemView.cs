@@ -11,7 +11,7 @@ namespace BackpackPrototype
 {
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasGroup))]
-    public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler, ICanvasRaycastFilter
+    public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, ICanvasRaycastFilter
     {
         [SerializeField] private Image background;
         [SerializeField] private Image icon;
@@ -94,6 +94,7 @@ namespace BackpackPrototype
         public Sprite IconSprite => icon != null ? icon.sprite : null;
 
         public RectTransform RectTransform => rectTransform;
+        public bool IsDragging => isDragging;
 
         /// <summary>
         /// 物品图片的几何中心。用于图标、弹道和命中特效的统一锚点。
@@ -568,8 +569,8 @@ namespace BackpackPrototype
                 return;
             }
 
-            RequestSelection();
             isDragging = true;
+            RequestSelection();
             canDeleteFromTrash = IsPlacedInBackpack;
             originalParent = rectTransform.parent;
             originalSiblingIndex = rectTransform.GetSiblingIndex();
@@ -668,11 +669,6 @@ namespace BackpackPrototype
             PlayFailedFeedback();
         }
 
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            RequestSelection();
-        }
-        
         private void RequestSelection()
         {
             SelectionRequested?.Invoke(this);

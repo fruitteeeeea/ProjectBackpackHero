@@ -98,6 +98,9 @@ namespace BackpackPrototype
         /// <summary>Roll 次数变化后通知商店 UI 刷新显示。</summary>
         public event Action RollStateChanged;
 
+        /// <summary>拖拽物品变化后通知物品信息 UI 刷新。</summary>
+        public event Action<ItemView> SelectedItemChanged;
+
         public BackpackController Backpack =>
             combatController != null
                 ? combatController.Backpack
@@ -253,7 +256,7 @@ namespace BackpackPrototype
                 RebuildBackpackViews();
             }
 
-            SelectedItem = null;
+            SetSelectedItem(null);
             return true;
         }
 
@@ -268,7 +271,7 @@ namespace BackpackPrototype
 
             combatController.RestoreDefaultLayout();
             RebuildBackpackViews();
-            SelectedItem = null;
+            SetSelectedItem(null);
         }
 
         /// <summary>
@@ -330,7 +333,7 @@ namespace BackpackPrototype
                 CreateShopItem(entry, slot);
             }
 
-            SelectedItem = null;
+            SetSelectedItem(null);
             return true;
         }
 
@@ -926,6 +929,11 @@ namespace BackpackPrototype
                     Backpack.CanMerge(source.Instance, view.Instance);
                 view.SetMergeHighlight(canMerge);
             }
+
+            if (!isDragging && SelectedItem == source)
+            {
+                SetSelectedItem(null);
+            }
         }
 
         private void HandleModelItemAdded(
@@ -987,7 +995,7 @@ namespace BackpackPrototype
 
             if (SelectedItem == view)
             {
-                SelectedItem = null;
+                SetSelectedItem(null);
             }
 
             view.gameObject.SetActive(false);
@@ -997,7 +1005,7 @@ namespace BackpackPrototype
         private void HandleSelectionRequested(
             ItemView view)
         {
-            SelectedItem = view;
+            SetSelectedItem(view);
         }
 
         private void HandleItemPlaced(ItemView view)
@@ -1018,7 +1026,7 @@ namespace BackpackPrototype
 
             if (SelectedItem == view)
             {
-                SelectedItem = null;
+                SetSelectedItem(null);
             }
         }
 
@@ -1045,6 +1053,17 @@ namespace BackpackPrototype
             return null;
         }
 
+        private void SetSelectedItem(ItemView view)
+        {
+            if (SelectedItem == view)
+            {
+                return;
+            }
+
+            SelectedItem = view;
+            SelectedItemChanged?.Invoke(SelectedItem);
+        }
+
         private ItemPrefabEntry FindCatalogEntry(
             ItemData data)
         {
@@ -1062,6 +1081,12 @@ namespace BackpackPrototype
 
         private void ClearShopViews()
         {
+            if (SelectedItem != null &&
+                shopItems.Contains(SelectedItem))
+            {
+                SetSelectedItem(null);
+            }
+
             foreach (ItemView view in shopItems)
             {
                 if (view == null)
@@ -1078,6 +1103,12 @@ namespace BackpackPrototype
 
         private void ClearBackpackViews()
         {
+            if (SelectedItem != null &&
+                backpackViews.Contains(SelectedItem))
+            {
+                SetSelectedItem(null);
+            }
+
             foreach (ItemView view in backpackViews)
             {
                 if (view == null)

@@ -7,6 +7,7 @@ using System.IO;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.TestTools;
 
@@ -17,6 +18,19 @@ public sealed class PlayerBackpackSystemTests
         "PlayerBackpackSystem.prefab";
     private const string MainScenePath =
         "Assets/Scenes/SampleScene.unity";
+
+    [Test]
+    public void ItemView_OnlySelectsFromDragInput()
+    {
+        Assert.That(
+            typeof(IBeginDragHandler).IsAssignableFrom(
+                typeof(ItemView)),
+            Is.True);
+        Assert.That(
+            typeof(IPointerClickHandler).IsAssignableFrom(
+                typeof(ItemView)),
+            Is.False);
+    }
 
     [Test]
     public void CompletePrefab_HasRequiredRuntimeAndUiReferences()
@@ -119,6 +133,33 @@ public sealed class PlayerBackpackSystemTests
         Assert.That(
             collisionAnchor.parent,
             Is.SameAs(aircraftAnchor.parent));
+
+        ItemInfoPanel infoPanel =
+            prefab.GetComponentInChildren<ItemInfoPanel>(true);
+        Assert.That(infoPanel, Is.Not.Null);
+
+        SerializedObject infoPanelData =
+            new SerializedObject(infoPanel);
+        Assert.That(
+            infoPanelData.FindProperty("playerBackpackSystem")
+                .objectReferenceValue,
+            Is.SameAs(system));
+        Assert.That(
+            infoPanelData.FindProperty("panelVisual")
+                .objectReferenceValue,
+            Is.Not.Null);
+        Assert.That(
+            infoPanelData.FindProperty("itemNameLabel")
+                .objectReferenceValue,
+            Is.Not.Null);
+        Assert.That(
+            infoPanelData.FindProperty("levelLabel")
+                .objectReferenceValue,
+            Is.Not.Null);
+        Assert.That(
+            infoPanelData.FindProperty("descriptionLabel")
+                .objectReferenceValue,
+            Is.Not.Null);
     }
 
     [Test]

@@ -12,6 +12,9 @@ namespace BackpackPrototype
         [SerializeField]
         private string itemName = "Item";
 
+        [SerializeField, TextArea(2, 5)]
+        private string description = "暂无描述";
+
         [SerializeField]
         private Sprite icon;
 
@@ -46,6 +49,7 @@ namespace BackpackPrototype
         private FighterDefinition fighterDefinition;
 
         public string ItemName => itemName;
+        public string Description => description;
         public Sprite Icon => icon;
         public Color BackgroundColor => backgroundColor;
         public ItemType ItemType => itemType;

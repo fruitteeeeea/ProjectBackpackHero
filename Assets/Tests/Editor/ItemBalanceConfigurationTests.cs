@@ -77,6 +77,32 @@ public sealed class ItemBalanceConfigurationTests
     }
 
     [Test]
+    public void ItemAssets_ProvideDescriptionPlaceholders()
+    {
+        string[] itemPaths =
+        {
+            "Aircraft_Charge.asset",
+            "Aircraft_First.asset",
+            "Aircraft_L.asset",
+            "Aircraft_Shield.asset",
+            "Equipment_1x2.asset",
+            "Equipment_ArcCoil.asset",
+            "Equipment_First.asset",
+            "Equipment_RapidCannon.asset",
+            "Equipment_WaveEmitter.asset",
+        };
+
+        foreach (string path in itemPaths)
+        {
+            ItemData item = Load<ItemData>(
+                "Assets/Data/Backpack/Items/" + path);
+
+            Assert.That(item.Description,
+                Is.EqualTo("暂无描述"), path);
+        }
+    }
+
+    [Test]
     public void ProjectilePrefabs_ContainApprovedBalanceValues()
     {
         GameObject explosivePrefab = Load<GameObject>(

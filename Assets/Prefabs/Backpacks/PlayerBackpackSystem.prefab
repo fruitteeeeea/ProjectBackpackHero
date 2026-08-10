@@ -227,7 +227,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1672991317094457458, guid: a425516da73084bb780a53022ec21caa, type: 3}
       propertyPath: playerBackpackSystem
-      value: 
+      value:
+      objectReference: {fileID: 4057109426059146067}
+    - target: {fileID: 900000000000000003, guid: a425516da73084bb780a53022ec21caa, type: 3}
+      propertyPath: playerBackpackSystem
+      value:
       objectReference: {fileID: 4057109426059146067}
     - target: {fileID: 3129690104707505589, guid: a425516da73084bb780a53022ec21caa, type: 3}
       propertyPath: m_Name

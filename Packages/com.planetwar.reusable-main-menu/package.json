@@ -1,0 +1,20 @@
+{
+  "name": "com.planetwar.reusable-main-menu",
+  "version": "0.1.0",
+  "displayName": "PlanetWar Reusable Main Menu",
+  "description": "A self-contained, themed UGUI main-menu presentation module.",
+  "unity": "6000.0",
+  "documentationUrl": "Documentation~/README.md",
+  "samples": [
+    {
+      "displayName": "Main Menu Demo",
+      "description": "A 720x1280 demo scene and bootstrapper.",
+      "path": "Samples~/MainMenuDemo"
+    }
+  ],
+  "dependencies": {
+    "com.unity.ugui": "2.5.0",
+    "com.unity.textmeshpro": "3.2.0-pre.10",
+    "com.unity.inputsystem": "1.19.0"
+  }
+}

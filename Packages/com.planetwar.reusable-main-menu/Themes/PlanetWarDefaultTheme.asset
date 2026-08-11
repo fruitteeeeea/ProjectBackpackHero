@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Enabled: 1
+  m_Script: {fileID: 11500000, guid: a0479bd71b0942609077b8704250e5ad, type: 3}
+  m_Name: PlanetWarDefaultTheme
+  background: {fileID: 0}
+  headerPanel: {fileID: 0}
+  primaryButton: {fileID: 0}
+  settingsButton: {fileID: 0}
+  profileButton: {fileID: 0}
+  bottomIcons: []
+  panelTint: {r: 1, g: 1, b: 1, a: 1}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  accentColor: {r: 1, g: 0.78, b: 0.14, a: 1}
+  playerName: PLAYER
+  levelName: BATTLE 1
+  gold: 1200
+  diamonds: 50
+  progress: 0.35
+  font: {fileID: 0}

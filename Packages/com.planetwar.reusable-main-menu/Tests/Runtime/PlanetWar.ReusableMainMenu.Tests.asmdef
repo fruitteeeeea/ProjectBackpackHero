@@ -1,0 +1,7 @@
+{
+  "name": "PlanetWar.ReusableMainMenu.Tests",
+  "references": ["PlanetWar.ReusableMainMenu.Runtime"],
+  "includePlatforms": [],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

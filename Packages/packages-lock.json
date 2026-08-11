@@ -1,5 +1,15 @@
 {
   "dependencies": {
+    "com.planetwar.reusable-main-menu": {
+      "version": "file:com.planetwar.reusable-main-menu",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.ugui": "2.5.0",
+        "com.unity.textmeshpro": "3.2.0-pre.10",
+        "com.unity.inputsystem": "1.19.0"
+      }
+    },
     "com.unity.2d.animation": {
       "version": "15.1.0",
       "depth": 0,
@@ -283,6 +293,14 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "com.unity.textmeshpro": {
+      "version": "5.0.0",
+      "depth": 1,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.ugui": "2.0.0"
+      }
     },
     "com.unity.timeline": {
       "version": "1.8.12",

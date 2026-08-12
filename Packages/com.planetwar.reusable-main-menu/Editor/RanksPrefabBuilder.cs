@@ -34,7 +34,10 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var lastCollectionPreview = prefab != null ? prefab.transform.Find("UICardView/Scroll View/Viewport/Content/HangarItemPreview_12") : null;
                 var firstDeckCard = fourthDeckPreview != null ? fourthDeckPreview.GetComponent<HangarCardItem>() : null;
                 var deckLockVisible = fourthDeckPreview != null && Find(fourthDeckPreview, "Lock")?.gameObject.activeSelf == true;
-                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || prefab.transform.Find("UICardView/UICardInfo")?.GetComponent<HangarDetailLayout>() == null))
+                var deckGuideVisible = fourthDeckPreview != null && Find(fourthDeckPreview, "guide")?.gameObject.activeSelf == true;
+                var deckLevelPrefix = fourthDeckPreview != null ? Find(fourthDeckPreview, "lv")?.GetComponentInChildren<TMP_Text>(true) : null;
+                var deckLabelReferences = firstDeckCard != null && new SerializedObject(firstDeckCard).FindProperty("levelPrefixText").objectReferenceValue != null && new SerializedObject(firstDeckCard).FindProperty("levelValueText").objectReferenceValue != null;
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || prefab.transform.Find("UICardView/UICardInfo")?.GetComponent<HangarDetailLayout>() == null))
                 {
                     Debug.Log("[PlanetWar] Rebuilding MainMenu Hangar with the original static card configuration.");
                     Rebuild();
@@ -204,6 +207,14 @@ namespace PlanetWar.ReusableMainMenu.Editor
             if (lockRoot != null) lockRoot.gameObject.SetActive(!state.unlocked);
             var lockBackground = Find(item.transform, "Lockbg");
             if (lockBackground != null) lockBackground.gameObject.SetActive(!state.unlocked);
+            // Original ItemCard only shows guide for spells before their first unlock mission.
+            var guide = Find(item.transform, "guide");
+            if (guide != null) guide.gameObject.SetActive(state.kind == HangarCardItem.CardKind.Spell);
+            // Keep the original authored "Lv" label unchanged; ItemCard.textLevel targets
+            // the separate "level" node and only writes the numeric level.
+            var levelPrefix = Find(item.transform, "lv")?.GetComponent<TMP_Text>();
+            var levelText = Find(item.transform, "level")?.GetComponent<TMP_Text>();
+            card.ConfigureOriginalLabels(levelPrefix, levelText);
             foreach (var button in item.GetComponentsInChildren<Button>(true))
             {
                 button.onClick = new Button.ButtonClickedEvent();

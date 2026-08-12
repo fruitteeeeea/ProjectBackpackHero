@@ -24,6 +24,8 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private int unlockRank;
         [SerializeField] private bool unlocked;
         [SerializeField] private bool equipped;
+        [SerializeField] private TMP_Text levelPrefixText;
+        [SerializeField] private TMP_Text levelValueText;
 
         public CardKind Kind => cardKind;
         public int CardId => cardId;
@@ -54,6 +56,13 @@ namespace PlanetWar.ReusableMainMenu
             ApplyVisual();
         }
 
+        public void ConfigureOriginalLabels(TMP_Text prefix, TMP_Text value)
+        {
+            levelPrefixText = prefix;
+            levelValueText = value;
+            ApplyVisual();
+        }
+
         private void OnEnable() => ApplyVisual();
 
         public void ApplyVisual()
@@ -70,11 +79,24 @@ namespace PlanetWar.ReusableMainMenu
             var lockBackground = Find(transform, "Lockbg");
             if (lockBackground != null) lockBackground.gameObject.SetActive(!unlocked);
             SetText("name", cardName);
-            SetText("lv", level.ToString());
+            // Original ItemCard uses two separate left-top labels: "lv" is the authored
+            // prefix ("Lv"), while "level" is ItemCard.textLevel and receives the number.
+            // These references are the direct equivalents of the original ItemCard's authored
+            // "lv" prefix and textLevel fields. They are serialized by the Builder, rather than
+            // selected from any similarly named nested text object.
+            if (levelPrefixText != null) levelPrefixText.text = "Lv";
+            if (levelValueText != null) levelValueText.text = level.ToString();
             var rank = lockRoot != null ? lockRoot.GetComponentInChildren<TMP_Text>(true) : null;
             if (rank != null) rank.text = $"Rank {unlockRank}";
             var slider = Find(transform, "Slider");
             if (slider != null) slider.gameObject.SetActive(unlocked);
+
+            // Original ItemCard.Refresh(): objGuide is only enabled for a Spell before the
+            // first rank-1 mission. Every Entity card, including all four initial deck cards,
+            // disables it. The package has no MissionSystem yet, so its fixed original preview
+            // uses the unstarted-mission state.
+            var guide = Find(transform, "guide");
+            if (guide != null) guide.gameObject.SetActive(cardKind == CardKind.Spell);
         }
 
         private void OnValidate()

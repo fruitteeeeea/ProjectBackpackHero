@@ -1,7 +1,7 @@
 {
   "name": "PlanetWar.ReusableMainMenu.Runtime",
   "rootNamespace": "PlanetWar.ReusableMainMenu",
-  "references": ["Unity.ugui", "Unity.TextMeshPro"],
+  "references": ["Unity.ugui", "Unity.TextMeshPro", "GUID:a811bde74b26b53498b4f6d872b09b6d"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

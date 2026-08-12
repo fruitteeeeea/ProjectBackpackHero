@@ -1,14 +1,14 @@
 {
   "name": "com.planetwar.reusable-main-menu",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "PlanetWar Reusable Main Menu",
   "description": "A self-contained, themed UGUI main-menu presentation module.",
   "unity": "6000.0",
   "documentationUrl": "Documentation~/README.md",
   "samples": [
     {
-      "displayName": "Main Menu Demo",
-      "description": "A 720x1280 demo scene and bootstrapper.",
+      "displayName": "Main Menu + Ranks Demo",
+      "description": "A 720x1280 demo scene with a static, editable leaderboard.",
       "path": "Samples~/MainMenuDemo"
     }
   ],

@@ -1,0 +1,22 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.5/staging' branch; Version is '6000.5.3f1 (c2eb47b3a2a9) revision 12774215'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 10  (10.0.19045) 64bit ProfessionalWorkstation' Language: 'zh' Physical Memory: 16328 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-mac" at "2026-08-12T02:05:19.5746372Z"
+Process architecture: x64
+Date: 2026-08-12T02:05:19Z
+
+COMMAND LINE ARGUMENTS:
+D:\unity\Edior\6000.5.3f1\Editor\Unity.exe
+-batchmode
+-quit
+-projectPath
+C:\Users\mac\Documents\GitHub\ProjectBackpackHero
+-executeMethod
+PlanetWar.ReusableMainMenu.Editor.RanksPrefabBuilder.Rebuild
+-logFile
+C:\Users\mac\Documents\GitHub\ProjectBackpackHero\RanksPrefabBuilder.log
+Successfully changed project path to: C:\Users\mac\Documents\GitHub\ProjectBackpackHero
+C:/Users/mac/Documents/GitHub/ProjectBackpackHero
+Exiting without the bug reporter. Application will terminate with return code 1

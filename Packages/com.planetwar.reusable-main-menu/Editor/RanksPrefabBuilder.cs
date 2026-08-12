@@ -12,6 +12,9 @@ namespace PlanetWar.ReusableMainMenu.Editor
         private const string Package = "Packages/com.planetwar.reusable-main-menu";
         private const string PrefabPath = Package + "/Prefabs/MainMenu.prefab";
         private const string OriginalRankPagePath = Package + "/Prefabs/RankPageOriginal.prefab";
+        private const string OriginalHangarPagePath = Package + "/Prefabs/HangarOriginal/UICardView.prefab";
+        private const string OriginalHangarItemPath = Package + "/Prefabs/HangarOriginal/ItemCard.prefab";
+        private const string OriginalHangarEquipItemPath = Package + "/Prefabs/HangarOriginal/ItemCardEquip.prefab";
         private const string Art = Package + "/Art/Ranks/";
         private static TMP_FontAsset textFont;
 
@@ -22,7 +25,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
             {
                 if (EditorApplication.isPlayingOrWillChangePlaymode) return;
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-                if (prefab != null && prefab.transform.Find("UIRankList") == null) Rebuild();
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UICardView") == null)) Rebuild();
             };
         }
 
@@ -37,6 +40,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var existing = root.transform.Find("UIRankList");
                 if (existing != null) UnityEngine.Object.DestroyImmediate(existing.gameObject);
                 BuildFromOriginal(root);
+                BuildHangarFromOriginal(root);
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
@@ -94,6 +98,83 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 Set(controller, "tabTargets", Array.ConvertAll(buttons, button => button.transform));
         }
 
+        private static void BuildHangarFromOriginal(GameObject root)
+        {
+            var existing = root.transform.Find("UICardView");
+            if (existing != null) UnityEngine.Object.DestroyImmediate(existing.gameObject);
+
+            var original = PrefabUtility.LoadPrefabContents(OriginalHangarPagePath);
+            if (original == null) throw new InvalidOperationException("Hangar original prefab is missing.");
+            var page = UnityEngine.Object.Instantiate(original);
+            PrefabUtility.UnloadPrefabContents(original);
+            page.name = "UICardView";
+            page.transform.SetParent(root.transform, false);
+            page.SetActive(false);
+            RemoveMissingScripts(page);
+
+            // Keep the original page layout and authored item shells. This migration deliberately
+            // does not reproduce its Addressables/data-driven card population.
+            var view = page.GetComponent<HangarView>() ?? page.AddComponent<HangarView>();
+            CreateStaticPreviewItems(page.transform, view);
+            var mask = CreateMask(page.transform, view);
+            var rankCoin = Find(page.transform, "resCoin");
+            var rankDiamond = Find(page.transform, "resDiam");
+            var topHud = CreateUi("HangarTopSafeArea", page.transform, Vector2.zero, Vector2.zero);
+            var topHudRect = topHud.GetComponent<RectTransform>();
+            topHudRect.anchorMin = new Vector2(0f, 1f); topHudRect.anchorMax = new Vector2(1f, 1f);
+            topHudRect.pivot = new Vector2(.5f, 1f); topHudRect.anchoredPosition = Vector2.zero; topHudRect.sizeDelta = Vector2.zero;
+            topHud.AddComponent<TopSafeAreaInset>();
+            if (rankCoin != null) rankCoin.SetParent(topHud.transform, true);
+            if (rankDiamond != null) rankDiamond.SetParent(topHud.transform, true);
+            Set(view, "placeholderMask", mask);
+            Set(view, "goldText", Find(rankCoin, "Text (TMP)")?.GetComponent<TMP_Text>());
+            Set(view, "diamondText", Find(rankDiamond, "Text (TMP)")?.GetComponent<TMP_Text>());
+            var battleTop = Find(root.transform, "Top");
+            Set(view, "battleGoldText", battleTop != null ? Find(battleTop, "resCoin")?.GetComponentInChildren<TMP_Text>(true) : null);
+            Set(view, "battleDiamondText", battleTop != null ? Find(battleTop, "resDiam")?.GetComponentInChildren<TMP_Text>(true) : null);
+            foreach (var button in page.GetComponentsInChildren<HangarItemPlaceholderButton>(true)) button.SetHangar(view);
+
+            var controller = root.GetComponent<MainMenuPageController>() ?? root.AddComponent<MainMenuPageController>();
+            Set(controller, "hangarPage", view);
+            var bottom = root.GetComponentInChildren<UIMainBottom>(true);
+            if (bottom != null) page.transform.SetSiblingIndex(bottom.transform.GetSiblingIndex());
+        }
+
+        private static void CreateStaticPreviewItems(Transform page, HangarView view)
+        {
+            var equipParent = Find(page, "equipWeapon");
+            var content = Find(Find(page, "Scroll View"), "Content");
+            var equipTemplate = AssetDatabase.LoadAssetAtPath<GameObject>(OriginalHangarEquipItemPath);
+            var itemTemplate = AssetDatabase.LoadAssetAtPath<GameObject>(OriginalHangarItemPath);
+            if (equipParent != null && equipTemplate != null)
+                CreateStaticPreviewItem(equipTemplate, equipParent, view, "HangarEquipPreview_01");
+            if (content == null || itemTemplate == null) return;
+            for (var i = 0; i < 6; i++)
+                CreateStaticPreviewItem(itemTemplate, content, view, $"HangarItemPreview_{i + 1:00}");
+        }
+
+        private static void CreateStaticPreviewItem(GameObject template, Transform parent, HangarView view, string name)
+        {
+            var item = UnityEngine.Object.Instantiate(template, parent, false);
+            item.name = name;
+            RemoveMissingScripts(item);
+            var placeholder = item.GetComponent<HangarItemPlaceholderButton>() ?? item.AddComponent<HangarItemPlaceholderButton>();
+            placeholder.SetHangar(view);
+        }
+
+        private static GameObject CreateMask(Transform parent, HangarView view)
+        {
+            var mask = CreateUi("HangarPlaceholderMask", parent, Vector2.zero, Vector2.zero);
+            var rect = mask.GetComponent<RectTransform>();
+            Stretch(rect); rect.SetAsLastSibling();
+            var image = mask.AddComponent<Image>(); image.color = new Color(0f, 0f, 0f, .62f);
+            var dismiss = mask.AddComponent<HangarMaskDismiss>(); dismiss.SetHangar(view);
+            var label = Text("Placeholder", mask.transform, "Item details coming soon", 30f, Vector2.zero, new Vector2(560f, 72f));
+            label.alignment = TextAlignmentOptions.Center;
+            mask.SetActive(false);
+            return mask;
+        }
+
         private static RankEntry[] CreateEntries()
         {
             var names = new[] { "Starweaver", "Millet Plant Glow", "Daisy Sunwhisper", "Noah Sunbloom", "Ion Frostweaver", "Orange Glow", "Iron Glow", "Sequoia", "Nova Skydancer", "River Ember", "Luna Cloudsong", "Aster Moonfall", "Player", "Sage Brightstar", "Echo Wildfire", "Robin Mistwalker", "Sky Silvermoon", "Piper Sunray", "Rowan Starfall", "Aquamarine" };
@@ -106,7 +187,10 @@ namespace PlanetWar.ReusableMainMenu.Editor
         private static void ConfigureOriginalRow(RankRowView row)
         {
             var root = row.transform;
-            Set(row, "background", Find(root, "iconBg")?.GetComponentInChildren<Image>(true) ?? root.GetComponentInChildren<Image>(true));
+            // Original ItemRankList switches its "bg" ImageLoader between bg_paihang_1 and bg_paihang_2.
+            Set(row, "background", Find(root, "bg")?.GetComponent<Image>());
+            Set(row, "normalBackground", Sprite("bg_paihang_1.png"));
+            Set(row, "currentPlayerBackground", Sprite("bg_paihang_2.png"));
             Set(row, "countryFlag", Find(root, "iconCountry")?.GetComponent<Image>());
             Set(row, "medal", Find(root, "topRank")?.GetComponentInChildren<Image>(true));
             Set(row, "medalSprites", new[] { Sprite("icon_paihang_jiangpai_1.png"), Sprite("icon_paihang_jiangpai_2.png"), Sprite("icon_paihang_jiangpai_3.png") });

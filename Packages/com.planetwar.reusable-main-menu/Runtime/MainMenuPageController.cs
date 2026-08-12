@@ -12,6 +12,7 @@ namespace PlanetWar.ReusableMainMenu
     {
         [SerializeField] private GameObject mainPage;
         [SerializeField] private RanksView ranksPage;
+        [SerializeField] private HangarView hangarPage;
         [SerializeField] private MainBottmChoose tabIndicator;
         [SerializeField] private Transform[] tabTargets;
 
@@ -30,6 +31,7 @@ namespace PlanetWar.ReusableMainMenu
         private void OnAction(MainMenuAction action)
         {
             if (action == MainMenuAction.BottomRank) ShowRanks();
+            else if (action == MainMenuAction.BottomCollection) ShowHangar();
             else if (action == MainMenuAction.BottomHome || action == MainMenuAction.BottomBattle) ShowBattle(action == MainMenuAction.BottomBattle ? 2 : 0);
             else if (action >= MainMenuAction.BottomCollection && action <= MainMenuAction.BottomMore) SelectTab((int)action - (int)MainMenuAction.BottomHome);
         }
@@ -37,6 +39,7 @@ namespace PlanetWar.ReusableMainMenu
         private void ShowRanks()
         {
             if (mainPage != null) mainPage.SetActive(false);
+            if (hangarPage != null) hangarPage.gameObject.SetActive(false);
             if (ranksPage != null) ranksPage.Show();
             SelectTab(1);
         }
@@ -44,8 +47,17 @@ namespace PlanetWar.ReusableMainMenu
         private void ShowBattle(int tabIndex)
         {
             if (ranksPage != null) ranksPage.gameObject.SetActive(false);
+            if (hangarPage != null) hangarPage.gameObject.SetActive(false);
             if (mainPage != null) mainPage.SetActive(true);
             SelectTab(tabIndex);
+        }
+
+        private void ShowHangar()
+        {
+            if (mainPage != null) mainPage.SetActive(false);
+            if (ranksPage != null) ranksPage.gameObject.SetActive(false);
+            if (hangarPage != null) hangarPage.Show();
+            SelectTab(3);
         }
 
         private void SelectTab(int index)

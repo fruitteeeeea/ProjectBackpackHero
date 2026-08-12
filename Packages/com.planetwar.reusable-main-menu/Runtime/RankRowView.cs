@@ -8,6 +8,8 @@ namespace PlanetWar.ReusableMainMenu
     public sealed class RankRowView : MonoBehaviour
     {
         [SerializeField] private Image background;
+        [SerializeField] private Sprite normalBackground;
+        [SerializeField] private Sprite currentPlayerBackground;
         [SerializeField] private Image countryFlag;
         [SerializeField] private Image medal;
         [SerializeField] private Sprite[] medalSprites;
@@ -21,9 +23,12 @@ namespace PlanetWar.ReusableMainMenu
             gameObject.SetActive(entry != null);
             if (entry == null) return;
 
-            if (background != null) background.color = entry.isCurrentPlayer
-                ? new Color(0.38f, 0.55f, 0.98f, 1f)
-                : new Color(0.65f, 0.76f, 0.96f, 1f);
+            if (background != null)
+            {
+                // Same rule as the original ItemRankList: ImageLoader.Select(IsSelf ? 1 : 0).
+                background.sprite = entry.isCurrentPlayer ? currentPlayerBackground : normalBackground;
+                background.color = Color.white;
+            }
             if (countryFlag != null)
             {
                 countryFlag.sprite = entry.countryFlag;

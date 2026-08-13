@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using BackpackHero.Battle;
+using BackpackHero.Debugging;
 using PlanetWar.ReusableMainMenu;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -58,24 +59,57 @@ namespace BackpackPrototype
                 item.ItemName, string.IsNullOrEmpty(stats) ? item.Description : item.Description + "\n\n" + stats, item.Icon, item.Icon, system.IsUnlocked(item), level,
                 system.GetFragments(item), item.UpgradeFragmentCost, item.UpgradeGoldCost,
                 item.CooldownDuration, item.SpawnCount, stats, item.BackgroundColor,
-                item.UnlockRequirementText, BuildDetailValues(item));
+                item.UnlockRequirementText, BuildDetailAttributes(item));
         }
 
-        private static string[] BuildDetailValues(ItemData item)
+        private static HangarDetailAttribute[] BuildDetailAttributes(ItemData item)
         {
-            if (item.ItemType != ItemType.Aircraft || item.FighterDefinition == null) return null;
+            if (item.ItemType == ItemType.Equipment) return BuildEquipmentDetailAttributes(item);
+            if (item.FighterDefinition == null) return null;
             FighterDefinition fighter = item.FighterDefinition;
-            // Matches the retained UICardInfo detail slots: HP, attack, third utility slot,
-            // range, attack interval, and cooldown. The third slot has no target-project price,
-            // so it deliberately displays the meaningful aircraft spawn count instead.
+            // The migrated UICardInfo prefab serializes its six visible rows in this order:
+            // Attack, HP, Attack Speed, Firing Range, CD, Cost.  This differs from the source
+            // PlanetWar textAttList order, so values must follow the actual prefab layout.
             return new[]
             {
-                fighter.MaximumHealth.ToString(),
-                fighter.ProjectileDamage.ToString("0.#"),
-                item.SpawnCount.ToString(),
-                fighter.AttackRange.ToString("0.#"),
-                fighter.AttackInterval.ToString("0.##") + "s",
-                item.CooldownDuration.ToString("0.##") + "s"
+                new HangarDetailAttribute("攻击", GetDisplayedAircraftDamage(fighter).ToString("0.#")),
+                new HangarDetailAttribute("生命", fighter.MaximumHealth.ToString()),
+                new HangarDetailAttribute("攻击间隔", fighter.AttackInterval.ToString("0.##") + "s"),
+                new HangarDetailAttribute("射程", fighter.AttackRange.ToString("0.#")),
+                new HangarDetailAttribute("冷却", item.Cd.ToString("0.##") + "s"),
+                new HangarDetailAttribute("价格", item.Price.ToString())
+            };
+        }
+
+        // FighterCombat2D applies the two gameplay damage multipliers before emitting the
+        // damage event, and FighterDamageFloatingText then applies this display-only magic
+        // number. Showing the same product keeps the Hangar attack value equal to battle text.
+        private static float GetDisplayedAircraftDamage(FighterDefinition fighter)
+        {
+            return fighter.ProjectileDamage *
+                   GamePacingDebugRuntime.GetProjectileDamageMultiplier(BattleFaction.Player) *
+                   LevelDifficultyRuntime.GetProjectileDamageMultiplier(BattleFaction.Player) *
+                   GamePacingDebugRuntime.GetDamageFloatingTextMagicNumber();
+        }
+
+        private static HangarDetailAttribute[] BuildEquipmentDetailAttributes(ItemData item)
+        {
+            float range = 0f, damage = 0f, interval = 0f;
+            bool hasStats = false;
+            foreach (EquipmentEffectDefinition effect in item.EquipmentEffects)
+            {
+                if (effect == null || !effect.TryGetHangarStats(out EquipmentHangarStats stats)) continue;
+                hasStats = true;
+                range = Mathf.Max(range, stats.Range);
+                damage += stats.Damage;
+                interval = interval <= 0f ? stats.Interval : Mathf.Min(interval, stats.Interval);
+            }
+            return new[]
+            {
+                new HangarDetailAttribute("冷却", item.Cd.ToString("0.##") + "s"),
+                new HangarDetailAttribute("作用范围", range.ToString("0.#"), hasStats && range > 0f),
+                new HangarDetailAttribute("伤害", damage.ToString("0.#"), hasStats && damage > 0f),
+                new HangarDetailAttribute("效果间隔", interval.ToString("0.##") + "s", hasStats && interval > 0f)
             };
         }
 
@@ -85,14 +119,14 @@ namespace BackpackPrototype
             if (fighter == null) return "Aircraft configuration unavailable.";
             return $"Type: Aircraft  Shape: {BuildShape(item)}\n" +
                    $"Cooldown {item.CooldownDuration:0.##}s  Spawn {item.SpawnCount}\n" +
-                   $"HP {fighter.MaximumHealth}  Damage {fighter.ProjectileDamage:0.#}\n" +
+                   $"HP {fighter.MaximumHealth}  Damage {GetDisplayedAircraftDamage(fighter):0.#}\n" +
                    $"Attack {fighter.AttackInterval:0.##}s  Speed {fighter.BaseSpeed:0.#}\n" +
                    $"Range {fighter.AttackRange:0.#}";
         }
 
         private static string BuildEquipmentStats(ItemData item)
         {
-            var builder = new StringBuilder($"Type: Equipment  Shape: {BuildShape(item)}\nCooldown {item.CooldownDuration:0.##}s");
+            var builder = new StringBuilder($"Type: Equipment  Shape: {BuildShape(item)}\nCooldown {item.Cd:0.##}s");
             foreach (EquipmentEffectDefinition effect in item.EquipmentEffects)
             {
                 if (effect is ProjectileEquipmentEffectDefinition projectile)

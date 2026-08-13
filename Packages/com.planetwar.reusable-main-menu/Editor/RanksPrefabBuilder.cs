@@ -263,7 +263,8 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 Find(panel.transform, "desc")?.GetComponentInChildren<TMP_Text>(true),
                 Find(panel.transform, "textLock")?.GetComponent<TMP_Text>(),
                 preview,
-                FindAttributeValues(panel.transform));
+                FindAttributeValues(panel.transform),
+                FindAttributeLabels(panel.transform));
             return layout;
         }
 
@@ -276,6 +277,14 @@ namespace PlanetWar.ReusableMainMenu.Editor
             foreach (TMP_Text text in panel.GetComponentsInChildren<TMP_Text>(true))
                 if (text.name == "val") values.Add(text);
             return values.ToArray();
+        }
+
+        private static TMP_Text[] FindAttributeLabels(Transform panel)
+        {
+            var labels = new List<TMP_Text>();
+            foreach (TMP_Text text in panel.GetComponentsInChildren<TMP_Text>(true))
+                if (text.name == "att") labels.Add(text);
+            return labels.ToArray();
         }
 
         private readonly struct HangarCardState

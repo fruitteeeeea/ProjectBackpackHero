@@ -17,10 +17,23 @@ namespace BackpackPrototype
         [SerializeField, Min(MinimumCooldown)]
         private float cooldown = 0.8f;
 
+        [Header("Hangar Detail")]
+        [SerializeField, Min(0f)] private float effectRange;
+        [SerializeField, Min(0f)] private float effectDamage;
+
         public BattleAttack2D ProjectilePrefab => projectilePrefab;
 
         public float Cooldown =>
             Mathf.Max(MinimumCooldown, cooldown);
+
+        public float EffectRange => Mathf.Max(0f, effectRange);
+        public float EffectDamage => Mathf.Max(0f, effectDamage);
+
+        public override bool TryGetHangarStats(out EquipmentHangarStats stats)
+        {
+            stats = new EquipmentHangarStats(EffectRange, EffectDamage, Cooldown);
+            return true;
+        }
 
         public void InitializeForTests(
             BattleAttack2D testProjectilePrefab,

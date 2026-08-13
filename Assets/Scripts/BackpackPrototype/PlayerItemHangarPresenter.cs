@@ -68,16 +68,16 @@ namespace BackpackPrototype
             if (item.FighterDefinition == null) return null;
             FighterDefinition fighter = item.FighterDefinition;
             // The migrated UICardInfo prefab serializes its six visible rows in this order:
-            // Attack, HP, Attack Speed, Firing Range, CD, Cost.  This differs from the source
+            // Attack, HP, Attack Speed, Firing Range, CD, Speed.  This differs from the source
             // PlanetWar textAttList order, so values must follow the actual prefab layout.
             return new[]
             {
-                new HangarDetailAttribute("攻击", GetDisplayedAircraftDamage(fighter).ToString("0.#")),
-                new HangarDetailAttribute("生命", fighter.MaximumHealth.ToString()),
-                new HangarDetailAttribute("攻击间隔", fighter.AttackInterval.ToString("0.##") + "s"),
-                new HangarDetailAttribute("射程", fighter.AttackRange.ToString("0.#")),
-                new HangarDetailAttribute("冷却", item.Cd.ToString("0.##") + "s"),
-                new HangarDetailAttribute("价格", item.Price.ToString())
+                new HangarDetailAttribute("Attack", GetDisplayedAircraftDamage(fighter).ToString("0.#")),
+                new HangarDetailAttribute("HP", fighter.MaximumHealth.ToString()),
+                new HangarDetailAttribute("Attack Speed", fighter.AttackInterval.ToString("0.##") + "s"),
+                new HangarDetailAttribute("Firing Range", fighter.AttackRange.ToString("0.#")),
+                new HangarDetailAttribute("CD", item.Cd.ToString("0.##") + "s"),
+                new HangarDetailAttribute("Speed", fighter.BaseSpeed.ToString("0.#"))
             };
         }
 

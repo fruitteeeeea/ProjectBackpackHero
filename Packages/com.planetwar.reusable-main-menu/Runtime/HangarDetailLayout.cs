@@ -86,9 +86,32 @@ namespace PlanetWar.ReusableMainMenu
                 if (!visible) continue;
                 HangarDetailAttribute attribute = snapshot.DetailAttributes[index];
                 text.text = attribute.Value;
-                if (attributeLabelTexts != null && index < attributeLabelTexts.Length && attributeLabelTexts[index] != null)
-                    attributeLabelTexts[index].text = attribute.Label;
+                TMP_Text label = attributeLabelTexts != null && index < attributeLabelTexts.Length
+                    ? attributeLabelTexts[index]
+                    : null;
+                if (label == null) label = FindSiblingLabel(text);
+                if (label != null) label.text = attribute.Label;
             }
+        }
+
+        // Older baked MainMenu prefabs did not serialize attributeLabelTexts. Their label is
+        // a sibling of an ancestor (not necessarily the value's direct parent), so recover the
+        // closest pre-authored text label without requiring existing prefabs to be rebaked.
+        private static TMP_Text FindSiblingLabel(TMP_Text value)
+        {
+            for (Transform row = value.transform.parent; row != null; row = row.parent)
+            {
+                TMP_Text closest = null;
+                foreach (TMP_Text candidate in row.GetComponentsInChildren<TMP_Text>(true))
+                {
+                    if (candidate == value || candidate.name == "val" ||
+                        string.IsNullOrWhiteSpace(candidate.text)) continue;
+                    closest = candidate;
+                    break;
+                }
+                if (closest != null) return closest;
+            }
+            return null;
         }
     }
 }

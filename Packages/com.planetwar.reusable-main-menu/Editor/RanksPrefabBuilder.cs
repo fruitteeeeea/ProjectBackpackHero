@@ -281,9 +281,28 @@ namespace PlanetWar.ReusableMainMenu.Editor
 
         private static TMP_Text[] FindAttributeLabels(Transform panel)
         {
+            // "att" is the stat-card container in the migrated UI, not the TMP object.
+            // Build labels from the already ordered value slots so each title is paired with
+            // its own card (including the lightning/Speed card), rather than relying on a
+            // global hierarchy order.
             var labels = new List<TMP_Text>();
-            foreach (TMP_Text text in panel.GetComponentsInChildren<TMP_Text>(true))
-                if (text.name == "att") labels.Add(text);
+            foreach (TMP_Text value in FindAttributeValues(panel))
+            {
+                TMP_Text label = null;
+                Transform card = value.transform.parent != null ? value.transform.parent.parent : null;
+                if (card != null)
+                {
+                    foreach (TMP_Text text in card.GetComponentsInChildren<TMP_Text>(true))
+                    {
+                        if (text != value && text.name != "val")
+                        {
+                            label = text;
+                            break;
+                        }
+                    }
+                }
+                labels.Add(label);
+            }
             return labels.ToArray();
         }
 

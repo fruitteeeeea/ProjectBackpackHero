@@ -1,5 +1,5 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace BackpackPrototype
 {
@@ -16,13 +16,13 @@ namespace BackpackPrototype
         private GameObject panelVisual;
 
         [SerializeField]
-        private Text itemNameLabel;
+        private TMP_Text itemNameLabel;
 
         [SerializeField]
-        private Text levelLabel;
+        private TMP_Text levelLabel;
 
         [SerializeField]
-        private Text descriptionLabel;
+        private TMP_Text descriptionLabel;
 
         public bool IsShowing =>
             panelVisual != null && panelVisual.activeSelf;

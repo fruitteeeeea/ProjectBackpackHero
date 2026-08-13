@@ -247,7 +247,8 @@ namespace BackpackPrototype
                 {
                     combatController.AddItem(
                         placement.Data,
-                        placement.AnchorCell);
+                        placement.AnchorCell,
+                        GetPlayerItemLevel(placement.Data));
                 }
             }
             finally
@@ -870,7 +871,8 @@ namespace BackpackPrototype
                 new ItemInstance(
                     $"shop-item-{++nextItemId}",
                     entry.Data,
-                    Vector2Int.zero);
+                    Vector2Int.zero,
+                    GetPlayerItemLevel(entry.Data));
 
             view.Bind(
                 instance,
@@ -897,6 +899,13 @@ namespace BackpackPrototype
                 !BattleFlowController.IsCombatPhase);
 
             return view;
+        }
+
+        private static int GetPlayerItemLevel(ItemData data)
+        {
+            return PlayerItemSystem.Instance != null
+                ? PlayerItemSystem.Instance.GetLevel(data)
+                : ItemInstance.DefaultLevel;
         }
 
         private void HandleItemMerged(

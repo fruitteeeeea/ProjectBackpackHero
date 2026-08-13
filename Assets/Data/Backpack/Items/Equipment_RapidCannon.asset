@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Equipment_RapidCannon
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  itemId: equipment_rapid_cannon
   itemName: "\u901F\u5C04\u673A\u70AE"
   description: "\u6682\u65E0\u63CF\u8FF0"
   icon: {fileID: 6671908658173119883, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}

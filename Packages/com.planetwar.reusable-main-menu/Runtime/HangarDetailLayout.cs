@@ -49,6 +49,15 @@ namespace PlanetWar.ReusableMainMenu
                     card.Icon, card.LockedIcon, card.IsUnlocked, card.IsEquipped, card.UnlockRank, card.Level);
             }
 
+            var snapshot = card.Snapshot;
+            if (snapshot.Name != null)
+            {
+                if (lockText != null) lockText.text = snapshot.Unlocked ? string.Empty : string.IsNullOrEmpty(snapshot.UnlockRequirementText) ? "Locked" : snapshot.UnlockRequirementText;
+                if (upgradeButton != null) upgradeButton.SetActive(snapshot.Unlocked && !snapshot.IsMaxLevel && snapshot.Fragments >= snapshot.RequiredFragments);
+                if (progressGroup != null) progressGroup.SetActive(snapshot.Unlocked && !snapshot.IsMaxLevel);
+                if (equipButton != null) equipButton.SetActive(false);
+                return;
+            }
             // Original Refresh: btnUpgrade = isEnoughDebris; objSlider = !isEnoughDebris;
             // btnBattle = !IsCardEquipped(cardId).  The fixed original initial state has no debris.
             if (upgradeButton != null) upgradeButton.SetActive(false);

@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace PlanetWar.ReusableMainMenu
 {
@@ -15,9 +16,18 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private TMP_Text diamondText;
         [SerializeField] private TMP_Text battleGoldText;
         [SerializeField] private TMP_Text battleDiamondText;
+        private IReadOnlyList<HangarItemSnapshot> boundItems;
+        private int boundGold;
+        private int boundDiamond;
         public void Show()
         {
             gameObject.SetActive(true);
+            if (boundItems != null)
+            {
+                Bind(boundItems, boundGold, boundDiamond);
+                HideDetails();
+                return;
+            }
             // The original UICardView refreshes every visible ItemCard when opened.  Our cards
             // are serialized rather than Addressables-created, so make the same refresh explicit
             // after the inactive page becomes active. This guarantees its Lock group cannot keep
@@ -26,6 +36,32 @@ namespace PlanetWar.ReusableMainMenu
             HideDetails();
             if (goldText != null && battleGoldText != null) goldText.text = battleGoldText.text;
             if (diamondText != null && battleDiamondText != null) diamondText.text = battleDiamondText.text;
+        }
+
+        public void Bind(IReadOnlyList<HangarItemSnapshot> items, int gold, int diamond)
+        {
+            boundItems = items;
+            boundGold = gold;
+            boundDiamond = diamond;
+            var allCards = GetComponentsInChildren<HangarCardItem>(true);
+            var cards = new List<HangarCardItem>();
+            foreach (var card in allCards)
+                if (!IsDetailPreview(card.transform)) cards.Add(card);
+            for (var i = 0; i < cards.Count; i++)
+            {
+                bool active = items != null && i < items.Count;
+                cards[i].gameObject.SetActive(active);
+                if (active) cards[i].Configure(this, items[i]);
+            }
+            if (goldText != null) goldText.text = gold.ToString();
+            if (diamondText != null) diamondText.text = diamond.ToString();
+        }
+
+        private static bool IsDetailPreview(Transform item)
+        {
+            for (var current = item; current != null; current = current.parent)
+                if (current.name == "UICardInfo" || current.name == "UICardSpell") return true;
+            return false;
         }
 
         public void ShowEntityDetails(HangarCardItem card)

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Aircraft_L
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  itemId: aircraft_l
   itemName: "L\u578B\u98DE\u673A"
   description: "\u6682\u65E0\u63CF\u8FF0"
   icon: {fileID: 2875208246182030159, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}

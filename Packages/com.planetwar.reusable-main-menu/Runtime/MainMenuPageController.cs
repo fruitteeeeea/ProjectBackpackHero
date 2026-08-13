@@ -65,5 +65,6 @@ namespace PlanetWar.ReusableMainMenu
             if (tabIndicator != null && tabTargets != null && index >= 0 && index < tabTargets.Length)
                 tabIndicator.OnChooseBottom(tabTargets[index], index);
         }
+
     }
 }

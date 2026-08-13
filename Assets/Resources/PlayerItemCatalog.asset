@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f1e5a6b7c8d4e0f9a1b2c3d4e5f6071, type: 3}
+  m_Name: PlayerItemCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.PlayerItemCatalog
+  items:
+  - {fileID: 11400000, guid: ee27c5917c4254171a17b0f020f2332c, type: 2}
+  - {fileID: 11400000, guid: 3c987ce4efc394e37a25e866476260a1, type: 2}
+  - {fileID: 11400000, guid: 6007433df60c04aecab6ba619a64cb26, type: 2}
+  - {fileID: 11400000, guid: 77720dbcc67ba409d8cce5c77a86ec51, type: 2}
+  - {fileID: 11400000, guid: 929801f3993d745089b19529098347d5, type: 2}
+  - {fileID: 11400000, guid: 52e669e29d7b9424f8ac593098d70618, type: 2}
+  - {fileID: 11400000, guid: be3fb60727ecb4e828e4b4174e60ac6f, type: 2}
+  - {fileID: 11400000, guid: daaef9150fc594dd99de956ba14ff6b4, type: 2}
+  - {fileID: 11400000, guid: 1078dec6aa2324917a0dc4f3f01deec3, type: 2}

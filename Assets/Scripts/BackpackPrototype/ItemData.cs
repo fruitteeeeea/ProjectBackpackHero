@@ -9,6 +9,22 @@ namespace BackpackPrototype
         menuName = "Backpack Prototype/Item Data")]
     public sealed class ItemData : ScriptableObject
     {
+        [Header("Player Progress")]
+        [SerializeField]
+        private string itemId;
+
+        [SerializeField]
+        private bool initiallyUnlocked = true;
+
+        [SerializeField, TextArea(1, 2)]
+        private string unlockRequirementText = "Unlocked by default";
+
+        [SerializeField, Min(0)]
+        private int upgradeGoldCost;
+
+        [SerializeField, Min(0)]
+        private int upgradeFragmentCost;
+
         [SerializeField]
         private string itemName = "Item";
 
@@ -49,6 +65,11 @@ namespace BackpackPrototype
         private FighterDefinition fighterDefinition;
 
         public string ItemName => itemName;
+        public string ItemId => itemId;
+        public bool InitiallyUnlocked => initiallyUnlocked;
+        public string UnlockRequirementText => unlockRequirementText;
+        public int UpgradeGoldCost => upgradeGoldCost;
+        public int UpgradeFragmentCost => upgradeFragmentCost;
         public string Description => description;
         public Sprite Icon => icon;
         public Color BackgroundColor => backgroundColor;
@@ -106,9 +127,23 @@ namespace BackpackPrototype
                 }
             }
         }
+
+        public void ConfigurePlayerProgressForTests(
+            string testItemId,
+            int goldCost = 0,
+            int fragmentCost = 0)
+        {
+            itemId = testItemId;
+            upgradeGoldCost = goldCost;
+            upgradeFragmentCost = fragmentCost;
+            OnValidate();
+        }
         
         private void OnValidate()
         {
+            itemId = itemId?.Trim();
+            upgradeGoldCost = Mathf.Max(0, upgradeGoldCost);
+            upgradeFragmentCost = Mathf.Max(0, upgradeFragmentCost);
             cooldownDuration = Mathf.Max(0.01f, cooldownDuration);
 
             if (itemType == ItemType.Equipment)

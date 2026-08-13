@@ -37,6 +37,16 @@ namespace PlanetWar.ReusableMainMenu
         public int UnlockRank => unlockRank;
         public bool IsUnlocked => unlocked;
         public bool IsEquipped => equipped;
+        public HangarItemSnapshot Snapshot { get; private set; }
+
+        public void Configure(HangarView owner, HangarItemSnapshot snapshot)
+        {
+            Snapshot = snapshot;
+            Configure(owner,
+                snapshot.Kind == HangarItemKind.Equipment ? CardKind.Spell : CardKind.Entity,
+                0, snapshot.Name, snapshot.Description, snapshot.Icon, snapshot.LockedIcon,
+                snapshot.Unlocked, false, 0, snapshot.Level);
+        }
 
         public void Configure(HangarView owner, CardKind kind, int id, string displayName,
             string description, Sprite normalIcon, Sprite greyIcon, bool isUnlocked,
@@ -56,6 +66,11 @@ namespace PlanetWar.ReusableMainMenu
             ApplyVisual();
         }
 
+        public void Configure(HangarItemSnapshot snapshot)
+        {
+            Configure(hangar, snapshot);
+        }
+
         public void ConfigureOriginalLabels(TMP_Text prefix, TMP_Text value)
         {
             levelPrefixText = prefix;
@@ -71,6 +86,11 @@ namespace PlanetWar.ReusableMainMenu
             var grey = Find(transform, "icon (1)")?.GetComponent<Image>();
             if (normal != null) { normal.sprite = icon; normal.gameObject.SetActive(true); }
             if (grey != null) { grey.sprite = lockedIcon != null ? lockedIcon : icon; grey.gameObject.SetActive(!unlocked); }
+            if (Snapshot.Name != null)
+            {
+                var background = Find(transform, "bg")?.GetComponent<Image>();
+                if (background != null) background.color = Snapshot.BackgroundColor;
+            }
 
             // Original ItemCardEquip nests both the grey icon and its background under "Lock".
             // "Lockbg" is only one child, so it cannot be toggled on its own.

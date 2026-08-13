@@ -220,7 +220,8 @@ namespace BackpackPrototype
 
         public ItemInstance AddItem(
             ItemData data,
-            Vector2Int cell)
+            Vector2Int cell,
+            int level = ItemInstance.DefaultLevel)
         {
             EnsureBackpack();
 
@@ -229,12 +230,19 @@ namespace BackpackPrototype
                 return null;
             }
 
+            if (Faction == BattleFaction.Player &&
+                PlayerItemSystem.Instance != null)
+            {
+                level = PlayerItemSystem.Instance.GetLevel(data);
+            }
+
             ItemInstance item =
                 new ItemInstance(
                     $"{Faction.ToString().ToLowerInvariant()}-" +
                     $"item-{++nextItemId}",
                     data,
-                    cell);
+                    cell,
+                    level);
 
             if (!backpack.PlaceItem(item, cell))
             {

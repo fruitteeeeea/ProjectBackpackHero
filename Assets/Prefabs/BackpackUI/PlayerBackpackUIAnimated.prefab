@@ -647,6 +647,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 900000000000000005}
+  - {fileID: 900000000000000101}
   m_Father: {fileID: 3565506307050142392}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -667,10 +668,48 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemInfoPanel
   playerBackpackSystem: {fileID: 0}
-  panelVisual: {fileID: 900000000000000004}
-  itemNameLabel: {fileID: 900000000000000024}
-  levelLabel: {fileID: 900000000000000025}
-  descriptionLabel: {fileID: 900000000000000026}
+  panelVisual: {fileID: 900000000000000102}
+  itemNameLabel: {fileID: 900000000000000103}
+  levelLabel: {fileID: 900000000000000104}
+  descriptionLabel: {fileID: 900000000000000105}
+--- !u!1001 &900000000000000100
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 900000000000000002}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c0d5e7a6b9e24f4b8a7e1d2c3b4a5f60, type: 3}
+--- !u!224 &900000000000000101 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: c0d5e7a6b9e24f4b8a7e1d2c3b4a5f60, type: 3}
+  m_PrefabInstance: {fileID: 900000000000000100}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &900000000000000102 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100000, guid: c0d5e7a6b9e24f4b8a7e1d2c3b4a5f60, type: 3}
+  m_PrefabInstance: {fileID: 900000000000000100}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &900000000000000103 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100043, guid: c0d5e7a6b9e24f4b8a7e1d2c3b4a5f60, type: 3}
+  m_PrefabInstance: {fileID: 900000000000000100}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &900000000000000104 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100053, guid: c0d5e7a6b9e24f4b8a7e1d2c3b4a5f60, type: 3}
+  m_PrefabInstance: {fileID: 900000000000000100}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &900000000000000105 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100063, guid: c0d5e7a6b9e24f4b8a7e1d2c3b4a5f60, type: 3}
+  m_PrefabInstance: {fileID: 900000000000000100}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &900000000000000004
 GameObject:
   m_ObjectHideFlags: 0
@@ -688,7 +727,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &900000000000000005
 RectTransform:
   m_ObjectHideFlags: 0

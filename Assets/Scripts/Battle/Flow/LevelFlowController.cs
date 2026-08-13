@@ -282,15 +282,37 @@ namespace BackpackHero.Battle
                 ? (this.playerWins > enemyWins ? "关卡胜利" : "关卡失败") +
                   $" {this.playerWins}:{enemyWins}"
                 : playerWins ? "Player Win" : "Player Lose";
-            ShowResultBanner(
-                result,
-                playerWins
-                    ? bannerView != null
-                        ? bannerView.WinColor
-                        : Color.blue
-                    : bannerView != null
-                        ? bannerView.LoseColor
-                        : Color.red);
+            bool playerWonMatch = isMatchComplete &&
+                this.playerWins > enemyWins;
+            if (isMatchComplete)
+            {
+                HideBannerImmediately();
+                // End the combat before opening the result overlay. This
+                // invokes the existing fade-out path for aircraft/projectiles
+                // and resets every backpack item's cooldown state.
+                BattleFlowController.EnsureInstance()
+                    ?.SetPhase(BattlePhase.Preparation);
+            }
+            if (isMatchComplete)
+            {
+                BattleResultPresenter presenter =
+                    FindAnyObjectByType<BattleResultPresenter>(
+                        FindObjectsInactive.Include);
+                presenter?.Show(
+                    BattleResultData.CreateDefault(playerWonMatch));
+            }
+            else
+            {
+                ShowResultBanner(
+                    result,
+                    playerWins
+                        ? bannerView != null
+                            ? bannerView.WinColor
+                            : Color.blue
+                        : bannerView != null
+                            ? bannerView.LoseColor
+                            : Color.red);
+            }
         }
 
         private void ResetBackpackHealth()
@@ -376,6 +398,17 @@ namespace BackpackHero.Battle
         private void SetBannerVisible(bool visible)
         {
             bannerView?.SetVisible(visible);
+        }
+
+        private void HideBannerImmediately()
+        {
+            if (bannerRoutine != null)
+            {
+                StopCoroutine(bannerRoutine);
+                bannerRoutine = null;
+            }
+            showingResult = false;
+            bannerView?.Hide();
         }
 
         private float DisplayDuration =>

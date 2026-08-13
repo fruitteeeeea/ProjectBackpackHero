@@ -3627,8 +3627,8 @@ Material:
     - _FaceDilate: -0.07
     - _OutlineSoftness: 0
     - _OutlineWidth: 0.35
-    - _ScaleRatioA: 0.8
-    - _ScaleRatioC: 0.378
+    - _ScaleRatioA: 0.9
+    - _ScaleRatioC: 0.397125
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilReadMask: 1

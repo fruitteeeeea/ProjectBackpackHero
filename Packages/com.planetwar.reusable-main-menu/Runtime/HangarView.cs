@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 namespace PlanetWar.ReusableMainMenu
 {
@@ -16,6 +17,7 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private TMP_Text diamondText;
         [SerializeField] private TMP_Text battleGoldText;
         [SerializeField] private TMP_Text battleDiamondText;
+        private GameObject detailMask;
         private IReadOnlyList<HangarItemSnapshot> boundItems;
         private int boundGold;
         private int boundDiamond;
@@ -68,6 +70,7 @@ namespace PlanetWar.ReusableMainMenu
         {
             HideDetails();
             if (entityDetails != null) entityDetails.SetActive(true);
+            ShowDetailMask(entityDetails);
             ApplyOriginalPreviewLayout(entityDetails, entityLayout, card);
         }
 
@@ -75,6 +78,7 @@ namespace PlanetWar.ReusableMainMenu
         {
             HideDetails();
             if (spellDetails != null) spellDetails.SetActive(true);
+            ShowDetailMask(spellDetails);
             ApplyOriginalPreviewLayout(spellDetails, spellLayout, card);
         }
 
@@ -82,6 +86,43 @@ namespace PlanetWar.ReusableMainMenu
         {
             if (entityDetails != null) entityDetails.SetActive(false);
             if (spellDetails != null) spellDetails.SetActive(false);
+            if (detailMask != null) detailMask.SetActive(false);
+        }
+
+        // The source project's UICardInfo/UICardSpell are modal views. UIManager puts a
+        // black, 150/255-alpha mask behind them and clicking it closes the modal. The reusable
+        // menu has no UIManager, so reproduce that contract locally for its two detail panels.
+        private void ShowDetailMask(GameObject detailPanel)
+        {
+            if (detailMask == null) CreateDetailMask();
+            if (detailMask == null || detailPanel == null) return;
+
+            detailMask.SetActive(true);
+            // UIManager in the source project keeps modal content in a layer above its mask.
+            // These panels share a parent here, so make the selected detail the last sibling and
+            // insert the mask immediately below it. This remains correct after opening either
+            // detail type repeatedly.
+            detailPanel.transform.SetAsLastSibling();
+            detailMask.transform.SetSiblingIndex(
+                Mathf.Max(0, detailPanel.transform.GetSiblingIndex() - 1));
+        }
+
+        private void CreateDetailMask()
+        {
+            Transform parent = entityDetails != null ? entityDetails.transform.parent : spellDetails != null ? spellDetails.transform.parent : null;
+            if (parent == null) return;
+
+            detailMask = new GameObject("HangarDetailMask", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            detailMask.transform.SetParent(parent, false);
+            RectTransform rect = detailMask.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            Image image = detailMask.GetComponent<Image>();
+            image.color = new Color(0f, 0f, 0f, 150f / 255f);
+            detailMask.GetComponent<Button>().onClick.AddListener(HideDetails);
+            detailMask.SetActive(false);
         }
 
         private static void ApplyOriginalPreviewLayout(GameObject panel, HangarDetailLayout layout, HangarCardItem card)

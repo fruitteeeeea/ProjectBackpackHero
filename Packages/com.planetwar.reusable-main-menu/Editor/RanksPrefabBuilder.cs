@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using PlanetWar.ReusableMainMenu;
 using TMPro;
 using UnityEditor;
@@ -253,8 +254,28 @@ namespace PlanetWar.ReusableMainMenu.Editor
             var layout = panel.GetComponent<HangarDetailLayout>() ?? panel.AddComponent<HangarDetailLayout>();
             var previewRoot = Find(panel.transform, "ItemCard (1)") ?? Find(panel.transform, "ItemCard");
             var preview = previewRoot != null ? previewRoot.GetComponent<HangarCardItem>() ?? previewRoot.gameObject.AddComponent<HangarCardItem>() : null;
-            layout.Configure(Find(panel.transform, "btnUpgrade")?.gameObject, Find(panel.transform, "btnUpBattle")?.gameObject, Find(panel.transform, "ObjSlider")?.gameObject, Find(panel.transform, "btns")?.gameObject, Find(panel.transform, "name")?.GetComponentInChildren<TMP_Text>(true), Find(panel.transform, "desc")?.GetComponentInChildren<TMP_Text>(true), Find(panel.transform, "textLock")?.GetComponent<TMP_Text>(), preview);
+            layout.Configure(
+                Find(panel.transform, "btnUpgrade")?.gameObject,
+                Find(panel.transform, "btnUpBattle")?.gameObject,
+                Find(panel.transform, "ObjSlider")?.gameObject,
+                Find(panel.transform, "btns")?.gameObject,
+                Find(panel.transform, "name")?.GetComponentInChildren<TMP_Text>(true),
+                Find(panel.transform, "desc")?.GetComponentInChildren<TMP_Text>(true),
+                Find(panel.transform, "textLock")?.GetComponent<TMP_Text>(),
+                preview,
+                FindAttributeValues(panel.transform));
             return layout;
+        }
+
+        private static TMP_Text[] FindAttributeValues(Transform panel)
+        {
+            // This is executed once while baking the prefab. Runtime receives the resulting
+            // serialized array, exactly like the source UICardInfo.textAttList. Do not search
+            // hierarchy names at runtime: the preview card contains similarly named texts.
+            var values = new List<TMP_Text>();
+            foreach (TMP_Text text in panel.GetComponentsInChildren<TMP_Text>(true))
+                if (text.name == "val") values.Add(text);
+            return values.ToArray();
         }
 
         private readonly struct HangarCardState

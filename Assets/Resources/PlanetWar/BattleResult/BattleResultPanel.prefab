@@ -1,0 +1,246 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 1001}
+  - component: {fileID: 1002}
+  - component: {fileID: 1003}
+  m_Layer: 5
+  m_Name: BattleResultPanel
+  m_IsActive: 0
+--- !u!224 &1001
+RectTransform:
+  m_GameObject: {fileID: 1000}
+  m_Children: [{fileID: 1101}, {fileID: 1201}, {fileID: 1301}, {fileID: 1401}, {fileID: 1501}, {fileID: 1701}]
+  m_Father: {fileID: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: .5, y: .5}
+--- !u!114 &1002
+MonoBehaviour:
+  m_GameObject: {fileID: 1000}
+  m_Enabled: 1
+  m_Script: {fileID: 11500000, guid: 27b4a527610e17749b9a7d3ed0d5b5b0, type: 3}
+  titleBackground: {fileID: 1203}
+  victoryTitleSprite: {fileID: -7292464431158354739, guid: ae303b7c951b7d942900983218663085, type: 3}
+  defeatTitleSprite: {fileID: 4351803838711401846, guid: a79fe2ae7d1711543a3c3f3514fe5389, type: 3}
+  titleLabel: {fileID: 1205}
+  totalScoreLabel: {fileID: 1303}
+  scoreDeltaLabel: {fileID: 1403}
+  rewardsRoot: {fileID: 1501}
+  rewardLabels: [{fileID: 1504}, {fileID: 1514}]
+  victoryConfetti: {fileID: 0}
+  continueButton: {fileID: 1704}
+  defaultTotalScore: 0
+  defaultVictoryDelta: 30
+  defaultDefeatDelta: -10
+  mainMenuSceneName: MainMenuDemo
+--- !u!225 &1003
+CanvasGroup:
+  m_GameObject: {fileID: 1000}
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+--- !u!1 &1100
+GameObject:
+  m_Component: [{component: {fileID: 1101}}, {component: {fileID: 1103}}]
+  m_Layer: 5
+  m_Name: Dim
+  m_IsActive: 1
+--- !u!224 &1101
+RectTransform:
+  m_GameObject: {fileID: 1100}
+  m_Father: {fileID: 1001}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_SizeDelta: {x: 0, y: 0}
+--- !u!114 &1103
+MonoBehaviour:
+  m_GameObject: {fileID: 1100}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Color: {r: .02, g: .04, b: .12, a: .8}
+  m_RaycastTarget: 1
+--- !u!1 &1200
+GameObject:
+  m_Component: [{component: {fileID: 1201}}, {component: {fileID: 1203}}, {component: {fileID: 1205}}]
+  m_Layer: 5
+  m_Name: Title
+  m_IsActive: 1
+--- !u!224 &1201
+RectTransform:
+  m_GameObject: {fileID: 1200}
+  m_Father: {fileID: 1001}
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: 255}
+  m_SizeDelta: {x: 554, y: 246}
+--- !u!114 &1203
+MonoBehaviour:
+  m_GameObject: {fileID: 1200}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Sprite: {fileID: -7292464431158354739, guid: ae303b7c951b7d942900983218663085, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &1205
+MonoBehaviour:
+  m_GameObject: {fileID: 1200}
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_fontAsset: {fileID: 11400000, guid: 9045a88236af850418b2035f52e7f847, type: 2}
+  m_text: Victory
+  m_fontSize: 56
+  m_fontStyle: 1
+  m_alignment: 514
+  m_color: {r: 1, g: 1, b: 1, a: 1}
+--- !u!1 &1300
+GameObject:
+  m_Component: [{component: {fileID: 1301}}, {component: {fileID: 1303}}]
+  m_Layer: 5
+  m_Name: score
+  m_IsActive: 1
+--- !u!224 &1301
+RectTransform:
+  m_GameObject: {fileID: 1300}
+  m_Father: {fileID: 1001}
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: -130}
+  m_SizeDelta: {x: 720, y: 100}
+--- !u!114 &1303
+MonoBehaviour:
+  m_GameObject: {fileID: 1300}
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_fontAsset: {fileID: 11400000, guid: 9045a88236af850418b2035f52e7f847, type: 2}
+  m_text: '0'
+  m_fontSize: 48
+  m_alignment: 514
+--- !u!1 &1400
+GameObject:
+  m_Component: [{component: {fileID: 1401}}, {component: {fileID: 1403}}]
+  m_Layer: 5
+  m_Name: value
+  m_IsActive: 1
+--- !u!224 &1401
+RectTransform:
+  m_GameObject: {fileID: 1400}
+  m_Father: {fileID: 1001}
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: -195}
+  m_SizeDelta: {x: 720, y: 100}
+--- !u!114 &1403
+MonoBehaviour:
+  m_GameObject: {fileID: 1400}
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_fontAsset: {fileID: 11400000, guid: 9045a88236af850418b2035f52e7f847, type: 2}
+  m_text: ' +30'
+  m_fontSize: 42
+  m_alignment: 514
+--- !u!1 &1500
+GameObject:
+  m_Component: [{component: {fileID: 1501}}]
+  m_Layer: 5
+  m_Name: rewardRoot
+  m_IsActive: 1
+--- !u!224 &1501
+RectTransform:
+  m_GameObject: {fileID: 1500}
+  m_Children: [{fileID: 1503}, {fileID: 1513}]
+  m_Father: {fileID: 1001}
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: -35}
+  m_SizeDelta: {x: 600, y: 150}
+--- !u!1 &1502
+GameObject:
+  m_Component: [{component: {fileID: 1503}}, {component: {fileID: 1504}}]
+  m_Layer: 5
+  m_Name: GoldReward
+  m_IsActive: 1
+--- !u!224 &1503
+RectTransform:
+  m_GameObject: {fileID: 1502}
+  m_Father: {fileID: 1501}
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: -150, y: 0}
+  m_SizeDelta: {x: 280, y: 80}
+--- !u!114 &1504
+MonoBehaviour:
+  m_GameObject: {fileID: 1502}
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_fontAsset: {fileID: 11400000, guid: 9045a88236af850418b2035f52e7f847, type: 2}
+  m_text: GOLD  x50
+  m_fontSize: 28
+  m_alignment: 514
+--- !u!1 &1512
+GameObject:
+  m_Component: [{component: {fileID: 1513}}, {component: {fileID: 1514}}]
+  m_Layer: 5
+  m_Name: DiamondReward
+  m_IsActive: 1
+--- !u!224 &1513
+RectTransform:
+  m_GameObject: {fileID: 1512}
+  m_Father: {fileID: 1501}
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 150, y: 0}
+  m_SizeDelta: {x: 280, y: 80}
+--- !u!114 &1514
+MonoBehaviour:
+  m_GameObject: {fileID: 1512}
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_fontAsset: {fileID: 11400000, guid: 9045a88236af850418b2035f52e7f847, type: 2}
+  m_text: DIAMOND  x1
+  m_fontSize: 28
+  m_alignment: 514
+--- !u!1 &1700
+GameObject:
+  m_Component: [{component: {fileID: 1701}}, {component: {fileID: 1703}}, {component: {fileID: 1704}}]
+  m_Layer: 5
+  m_Name: btnContinue
+  m_IsActive: 1
+--- !u!224 &1701
+RectTransform:
+  m_GameObject: {fileID: 1700}
+  m_Children: [{fileID: 1711}]
+  m_Father: {fileID: 1001}
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: -319.7}
+  m_SizeDelta: {x: 246, y: 103}
+--- !u!114 &1703
+MonoBehaviour:
+  m_GameObject: {fileID: 1700}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Sprite: {fileID: -528090190119758672, guid: c01a1e3b63647ea47ab3fe0bfd126aea, type: 3}
+--- !u!114 &1704
+MonoBehaviour:
+  m_GameObject: {fileID: 1700}
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Interactable: 1
+--- !u!1 &1710
+GameObject:
+  m_Component: [{component: {fileID: 1711}}, {component: {fileID: 1712}}]
+  m_Layer: 5
+  m_Name: Label
+  m_IsActive: 1
+--- !u!224 &1711
+RectTransform:
+  m_GameObject: {fileID: 1710}
+  m_Father: {fileID: 1701}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_SizeDelta: {x: 0, y: 0}
+--- !u!114 &1712
+MonoBehaviour:
+  m_GameObject: {fileID: 1710}
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_fontAsset: {fileID: 11400000, guid: 9045a88236af850418b2035f52e7f847, type: 2}
+  m_text: Continue
+  m_fontSize: 36
+  m_fontStyle: 1
+  m_alignment: 514

@@ -82,6 +82,11 @@ namespace BackpackHero.Battle
             }
         }
 
+        public void Hide()
+        {
+            SetVisible(false);
+        }
+
         private void ApplyStyle()
         {
             if (bannerBackground != null)

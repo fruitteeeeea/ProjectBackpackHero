@@ -83,9 +83,23 @@ namespace BackpackHero.Background
                 touchInteractor = GetComponent<BackgroundTouchInteractor>();
             }
 
+            // Scene references are normally serialized by the editor bootstrap.  Recover the
+            // two authored containers if a scene was saved before that happened; never create
+            // scene hierarchy at runtime.
+            linesRoot ??= transform.Find("Lines");
+            planetsRoot ??= transform.Find("Planets");
+
             if (planets == null || planets.Length == 0)
             {
                 planets = GetComponentsInChildren<BackgroundPlanet>(true);
+            }
+
+            if (planetsRoot == null)
+            {
+                Debug.LogWarning(
+                    "Constellation background has no Planets container; skipping star-map binding.",
+                    this);
+                return;
             }
 
             RemoveLegacyNodeDots();

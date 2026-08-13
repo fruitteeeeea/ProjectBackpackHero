@@ -18,6 +18,11 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private TMP_Text battleGoldText;
         [SerializeField] private TMP_Text battleDiamondText;
         private GameObject detailMask;
+        private Transform detailOverlayParent;
+        private Transform entityDetailsParent;
+        private Transform spellDetailsParent;
+        private int entityDetailsSiblingIndex;
+        private int spellDetailsSiblingIndex;
         private IReadOnlyList<HangarItemSnapshot> boundItems;
         private int boundGold;
         private int boundDiamond;
@@ -69,6 +74,7 @@ namespace PlanetWar.ReusableMainMenu
         public void ShowEntityDetails(HangarCardItem card)
         {
             HideDetails();
+            MoveDetailToOverlay(entityDetails);
             if (entityDetails != null) entityDetails.SetActive(true);
             ShowDetailMask(entityDetails);
             ApplyOriginalPreviewLayout(entityDetails, entityLayout, card);
@@ -77,6 +83,7 @@ namespace PlanetWar.ReusableMainMenu
         public void ShowSpellDetails(HangarCardItem card)
         {
             HideDetails();
+            MoveDetailToOverlay(spellDetails);
             if (spellDetails != null) spellDetails.SetActive(true);
             ShowDetailMask(spellDetails);
             ApplyOriginalPreviewLayout(spellDetails, spellLayout, card);
@@ -87,6 +94,8 @@ namespace PlanetWar.ReusableMainMenu
             if (entityDetails != null) entityDetails.SetActive(false);
             if (spellDetails != null) spellDetails.SetActive(false);
             if (detailMask != null) detailMask.SetActive(false);
+            RestoreDetailParent(entityDetails, ref entityDetailsParent, entityDetailsSiblingIndex);
+            RestoreDetailParent(spellDetails, ref spellDetailsParent, spellDetailsSiblingIndex);
         }
 
         // The source project's UICardInfo/UICardSpell are modal views. UIManager puts a
@@ -109,7 +118,11 @@ namespace PlanetWar.ReusableMainMenu
 
         private void CreateDetailMask()
         {
-            Transform parent = entityDetails != null ? entityDetails.transform.parent : spellDetails != null ? spellDetails.transform.parent : null;
+            // The original UIManager owns its mask at the canvas level, above the bottom tab
+            // page.  The migrated panels live inside UICardView, so using their direct parent
+            // would leave UIMainBottom undimmed.  Use the page's parent (MainMenu root) instead.
+            detailOverlayParent = transform.parent;
+            Transform parent = detailOverlayParent;
             if (parent == null) return;
 
             detailMask = new GameObject("HangarDetailMask", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
@@ -123,6 +136,33 @@ namespace PlanetWar.ReusableMainMenu
             image.color = new Color(0f, 0f, 0f, 150f / 255f);
             detailMask.GetComponent<Button>().onClick.AddListener(HideDetails);
             detailMask.SetActive(false);
+        }
+
+        private void MoveDetailToOverlay(GameObject panel)
+        {
+            if (panel == null) return;
+            if (detailOverlayParent == null) detailOverlayParent = transform.parent;
+            if (detailOverlayParent == null || panel.transform.parent == detailOverlayParent) return;
+
+            if (panel == entityDetails)
+            {
+                entityDetailsParent = panel.transform.parent;
+                entityDetailsSiblingIndex = panel.transform.GetSiblingIndex();
+            }
+            else if (panel == spellDetails)
+            {
+                spellDetailsParent = panel.transform.parent;
+                spellDetailsSiblingIndex = panel.transform.GetSiblingIndex();
+            }
+            panel.transform.SetParent(detailOverlayParent, false);
+        }
+
+        private static void RestoreDetailParent(GameObject panel, ref Transform originalParent, int siblingIndex)
+        {
+            if (panel == null || originalParent == null) return;
+            panel.transform.SetParent(originalParent, false);
+            panel.transform.SetSiblingIndex(Mathf.Clamp(siblingIndex, 0, originalParent.childCount - 1));
+            originalParent = null;
         }
 
         private static void ApplyOriginalPreviewLayout(GameObject panel, HangarDetailLayout layout, HangarCardItem card)

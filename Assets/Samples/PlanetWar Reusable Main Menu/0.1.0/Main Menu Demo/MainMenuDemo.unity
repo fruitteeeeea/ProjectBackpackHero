@@ -313,13 +313,25 @@ PrefabInstance:
       propertyPath: m_Color.a
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2000000001, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -124.30005
+      objectReference: {fileID: 0}
     - target: {fileID: 2000000015, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
       value: 1801810542
       objectReference: {fileID: 0}
+    - target: {fileID: 2000000017, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -230
+      objectReference: {fileID: 0}
     - target: {fileID: 2000000039, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
       value: 1801810542
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000000073, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -124.30005
       objectReference: {fileID: 0}
     - target: {fileID: 2000000079, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
@@ -329,6 +341,10 @@ PrefabInstance:
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
       value: 1801810542
       objectReference: {fileID: 0}
+    - target: {fileID: 2000000089, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -134.15002
+      objectReference: {fileID: 0}
     - target: {fileID: 2000000155, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -337,6 +353,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2000000159, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 158.68
+      objectReference: {fileID: 0}
     - target: {fileID: 2000000162, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
       value: 1801810542
@@ -344,10 +364,6 @@ PrefabInstance:
     - target: {fileID: 2000000166, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
       value: 1801810542
-      objectReference: {fileID: 0}
-    - target: {fileID: 2000000190, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -160.3693
       objectReference: {fileID: 0}
     - target: {fileID: 2000000198, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
@@ -812,8 +828,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 52e70965d3cf4a5bb7710ca07f488b39, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
+  matchPrefab: {fileID: 0}
+  player:
+    avatar: {fileID: 0}
+    displayName: Commander
+    rank: Bronze I
+    score: 0
+  opponent:
+    avatar: {fileID: 0}
+    displayName: Opponent
+    rank: Bronze I
+    score: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

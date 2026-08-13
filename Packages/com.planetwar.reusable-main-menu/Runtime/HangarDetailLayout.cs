@@ -18,9 +18,13 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private TMP_Text descriptionText;
         [SerializeField] private TMP_Text lockText;
         [SerializeField] private HangarCardItem previewItem;
+        // Mirrors the source UICardInfo.textAttList contract: each fixed UI slot is serialized
+        // in display order, rather than inferred from hierarchy names.
+        [SerializeField] private TMP_Text[] attributeValueTexts;
 
         public void Configure(GameObject upgrade, GameObject equip, GameObject progress, GameObject actions,
-            TMP_Text name, TMP_Text description, TMP_Text lockLabel, HangarCardItem preview)
+            TMP_Text name, TMP_Text description, TMP_Text lockLabel, HangarCardItem preview,
+            TMP_Text[] attributeValues = null)
         {
             upgradeButton = upgrade;
             equipButton = equip;
@@ -30,6 +34,7 @@ namespace PlanetWar.ReusableMainMenu
             descriptionText = description;
             lockText = lockLabel;
             previewItem = preview;
+            attributeValueTexts = attributeValues;
         }
 
         public void ShowPreview(HangarCardItem card)
@@ -52,6 +57,7 @@ namespace PlanetWar.ReusableMainMenu
             var snapshot = card.Snapshot;
             if (snapshot.Name != null)
             {
+                ApplyDetailValues(snapshot);
                 if (lockText != null) lockText.text = snapshot.Unlocked ? string.Empty : string.IsNullOrEmpty(snapshot.UnlockRequirementText) ? "Locked" : snapshot.UnlockRequirementText;
                 if (upgradeButton != null) upgradeButton.SetActive(snapshot.Unlocked && !snapshot.IsMaxLevel && snapshot.Fragments >= snapshot.RequiredFragments);
                 if (progressGroup != null) progressGroup.SetActive(snapshot.Unlocked && !snapshot.IsMaxLevel);
@@ -63,6 +69,18 @@ namespace PlanetWar.ReusableMainMenu
             if (upgradeButton != null) upgradeButton.SetActive(false);
             if (progressGroup != null) progressGroup.SetActive(card.IsUnlocked);
             if (equipButton != null) equipButton.SetActive(card.IsUnlocked && !card.IsEquipped);
+        }
+
+        private void ApplyDetailValues(HangarItemSnapshot snapshot)
+        {
+            if (snapshot.DetailValues == null || snapshot.DetailValues.Length == 0) return;
+            if (attributeValueTexts == null) return;
+            for (int index = 0; index < attributeValueTexts.Length; index++)
+            {
+                TMP_Text text = attributeValueTexts[index];
+                if (text == null || index >= snapshot.DetailValues.Length) continue;
+                text.text = snapshot.DetailValues[index];
+            }
         }
     }
 }

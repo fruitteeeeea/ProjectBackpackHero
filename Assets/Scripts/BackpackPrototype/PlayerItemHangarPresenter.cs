@@ -58,7 +58,25 @@ namespace BackpackPrototype
                 item.ItemName, string.IsNullOrEmpty(stats) ? item.Description : item.Description + "\n\n" + stats, item.Icon, item.Icon, system.IsUnlocked(item), level,
                 system.GetFragments(item), item.UpgradeFragmentCost, item.UpgradeGoldCost,
                 item.CooldownDuration, item.SpawnCount, stats, item.BackgroundColor,
-                item.UnlockRequirementText);
+                item.UnlockRequirementText, BuildDetailValues(item));
+        }
+
+        private static string[] BuildDetailValues(ItemData item)
+        {
+            if (item.ItemType != ItemType.Aircraft || item.FighterDefinition == null) return null;
+            FighterDefinition fighter = item.FighterDefinition;
+            // Matches the retained UICardInfo detail slots: HP, attack, third utility slot,
+            // range, attack interval, and cooldown. The third slot has no target-project price,
+            // so it deliberately displays the meaningful aircraft spawn count instead.
+            return new[]
+            {
+                fighter.MaximumHealth.ToString(),
+                fighter.ProjectileDamage.ToString("0.#"),
+                item.SpawnCount.ToString(),
+                fighter.AttackRange.ToString("0.#"),
+                fighter.AttackInterval.ToString("0.##") + "s",
+                item.CooldownDuration.ToString("0.##") + "s"
+            };
         }
 
         private static string BuildAircraftStats(ItemData item)

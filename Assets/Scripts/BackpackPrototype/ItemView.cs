@@ -19,6 +19,9 @@ namespace BackpackPrototype
         [SerializeField] private TextMeshProUGUI levelLabel;
         [SerializeField] private TMP_Text itemLabel;
 
+        [SerializeField, Min(0f)]
+        private float shopDropHitPadding = 32f;
+
         private static readonly int CooldownProgressId =
             Shader.PropertyToID("_CooldownProgress");
 
@@ -40,6 +43,7 @@ namespace BackpackPrototype
         private Tween feedbackTween;
         private Tween cooldownFlashTween;
         private Tween mergeFlashTween;
+        private Tween shopTransitionTween;
         private float cooldownFlashAmount;
         private float mergeFlashAmount;
         private bool isDragging;
@@ -74,6 +78,7 @@ namespace BackpackPrototype
         public RectTransform BackpackItemLayer { get; private set; }
         public RectTransform DragLayer { get; private set; }
         public RectTransform TrashZone { get; private set; }
+        public RectTransform ShopDropZone { get; private set; }
         public Vector2Int GrabCellOffset { get; private set; }
         public Vector2 GrabAnchorOffset { get; private set; }
         public Vector2Int? CandidateAnchorCell { get; private set; }
@@ -161,6 +166,8 @@ namespace BackpackPrototype
         public event Action<ItemView, ItemInstance> MergedSuccessfully;
         public event Action<ItemView, bool> DragStateChanged;
         public event Action<ItemView> DragPreviewChanged;
+        public event Func<ItemView, bool> ShopDropRequested;
+        public event Func<ItemView, Vector2Int, bool> SqueezeRequested;
 
         private void Awake()
         {
@@ -292,6 +299,56 @@ namespace BackpackPrototype
 
             RefreshLevelLabel();
             CacheDeletePreviewColors();
+        }
+
+        public void SetShopDropZone(RectTransform shopDropZone)
+        {
+            ShopDropZone = shopDropZone;
+        }
+
+        public void SetShopPosition(
+            RectTransform shopContainer,
+            Vector2 anchoredPosition,
+            Vector3 scale)
+        {
+            shopTransitionTween?.Kill();
+            rectTransform.SetParent(shopContainer, false);
+            rectTransform.anchorMin = new Vector2(.5f, .5f);
+            rectTransform.anchorMax = new Vector2(.5f, .5f);
+            rectTransform.pivot = new Vector2(.5f, .5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.localScale = scale;
+            rectTransform.localRotation = Quaternion.identity;
+            IsPlacedInBackpack = false;
+        }
+
+        public void TweenToShopPosition(
+            RectTransform shopContainer,
+            Vector2 anchoredPosition,
+            Vector3 scale,
+            Vector3? startWorldPosition = null)
+        {
+            shopTransitionTween?.Kill();
+            if (startWorldPosition.HasValue)
+            {
+                rectTransform.position = startWorldPosition.Value;
+            }
+            rectTransform.SetParent(shopContainer, true);
+            rectTransform.anchorMin = new Vector2(.5f, .5f);
+            rectTransform.anchorMax = new Vector2(.5f, .5f);
+            rectTransform.pivot = new Vector2(.5f, .5f);
+            IsPlacedInBackpack = false;
+
+            shopTransitionTween = DOTween.Sequence()
+                .Join(rectTransform.DOAnchorPos(anchoredPosition, .32f)
+                    .SetEase(Ease.OutCubic))
+                .Join(rectTransform.DOScale(scale, .32f)
+                    .SetEase(Ease.OutBack))
+                .Join(rectTransform.DOLocalRotate(
+                    Vector3.zero,
+                    .32f,
+                    RotateMode.FastBeyond360)
+                    .SetEase(Ease.OutCubic));
         }
 
         public void SetMergeHighlight(bool highlighted)
@@ -714,6 +771,14 @@ namespace BackpackPrototype
                 return;
             }
 
+            if (IsOverShop(
+                    eventData.position,
+                    eventData.pressEventCamera) &&
+                ShopDropRequested?.Invoke(this) == true)
+            {
+                return;
+            }
+
             if (CandidateAnchorCell.HasValue && TryPlaceAt(CandidateAnchorCell.Value))
             {
                 return;
@@ -761,6 +826,8 @@ namespace BackpackPrototype
                 return true;
             }
 
+            SqueezeRequested?.Invoke(this, anchorCell);
+
             bool moved;
 
             if (CombatController != null)
@@ -800,6 +867,25 @@ namespace BackpackPrototype
         {
             return TrashZone != null &&
                 RectTransformUtility.RectangleContainsScreenPoint(TrashZone, screenPosition, eventCamera);
+        }
+
+        private bool IsOverShop(Vector2 screenPosition, Camera eventCamera)
+        {
+            if (ShopDropZone == null ||
+                !RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    ShopDropZone,
+                    screenPosition,
+                    eventCamera,
+                    out Vector2 localPoint))
+            {
+                return false;
+            }
+
+            Rect rect = ShopDropZone.rect;
+            return localPoint.x >= rect.xMin - shopDropHitPadding &&
+                localPoint.x <= rect.xMax + shopDropHitPadding &&
+                localPoint.y >= rect.yMin - shopDropHitPadding &&
+                localPoint.y <= rect.yMax + shopDropHitPadding;
         }
 
         private void DeleteItem()
@@ -1042,6 +1128,7 @@ namespace BackpackPrototype
             feedbackTween?.Kill();
             cooldownFlashTween?.Kill();
             mergeFlashTween?.Kill();
+            shopTransitionTween?.Kill();
             ReleaseCooldownMaterials();
         }
 

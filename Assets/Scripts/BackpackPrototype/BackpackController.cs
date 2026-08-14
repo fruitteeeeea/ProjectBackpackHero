@@ -80,6 +80,43 @@ namespace BackpackPrototype
             return true;
         }
 
+        public bool CanPlaceIgnoring(
+            ItemInstance item,
+            Vector2Int anchorCell,
+            params ItemInstance[] ignoredItems)
+        {
+            foreach (var cell in GetOccupiedCells(item, anchorCell))
+            {
+                if (!IsInside(cell))
+                {
+                    return false;
+                }
+
+                ItemInstance occupyingItem = occupied[cell.x, cell.y];
+                if (occupyingItem == null)
+                {
+                    continue;
+                }
+
+                bool ignored = false;
+                foreach (ItemInstance ignoredItem in ignoredItems)
+                {
+                    if (occupyingItem == ignoredItem)
+                    {
+                        ignored = true;
+                        break;
+                    }
+                }
+
+                if (!ignored)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public bool PlaceItem(ItemInstance item, Vector2Int anchorCell)
         {
             if (!CanPlace(item, anchorCell))

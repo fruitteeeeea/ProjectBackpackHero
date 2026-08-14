@@ -38,8 +38,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -92, y: -419}
-  m_SizeDelta: {x: 790.2186, y: 254.2464}
+  m_AnchoredPosition: {x: -0.4753, y: -441}
+  m_SizeDelta: {x: 973.2681, y: 119.219}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1905794027122968888
 MonoBehaviour:
@@ -210,6 +210,7 @@ MonoBehaviour:
   gridRect: {fileID: 2055030556410843291}
   cellSize: {x: 80, y: 80}
   spacing: {x: 8, y: 8}
+  dropHitPadding: 32
   columns: 7
   rows: 4
   slots:
@@ -5762,7 +5763,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 403, y: -426}
+  m_AnchoredPosition: {x: 763, y: -426}
   m_SizeDelta: {x: 180, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &5282304910803438874

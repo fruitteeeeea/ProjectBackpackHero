@@ -77,11 +77,29 @@ public sealed class BackpackGridViewTests
             Is.EqualTo(new Vector2Int(expectedX, expectedY)));
     }
 
-    [TestCase(-0.01f, 40f)]
-    [TestCase(608.01f, 40f)]
-    [TestCase(40f, -0.01f)]
-    [TestCase(40f, 344.01f)]
-    public void TryGetCellAtScreenPosition_RejectsOutsideGrid(
+    [TestCase(-32f, 40f, 0, 0)]
+    [TestCase(640f, 40f, 6, 0)]
+    [TestCase(40f, -32f, 0, 0)]
+    [TestCase(40f, 376f, 0, 3)]
+    public void TryGetCellAtScreenPosition_MapsExpandedDropAreaToEdgeCell(
+        float fromLeft,
+        float fromTop,
+        int expectedX,
+        int expectedY)
+    {
+        Assert.That(
+            TryGetCell(fromLeft, fromTop, out Vector2Int cell),
+            Is.True);
+        Assert.That(
+            cell,
+            Is.EqualTo(new Vector2Int(expectedX, expectedY)));
+    }
+
+    [TestCase(-32.01f, 40f)]
+    [TestCase(640.01f, 40f)]
+    [TestCase(40f, -32.01f)]
+    [TestCase(40f, 376.01f)]
+    public void TryGetCellAtScreenPosition_RejectsBeyondExpandedDropArea(
         float fromLeft,
         float fromTop)
     {

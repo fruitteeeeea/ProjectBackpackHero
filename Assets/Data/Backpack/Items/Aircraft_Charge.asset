@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Aircraft_Charge
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
   itemId: aircraft_charge
-  itemName: "\u51B2\u950B\u98DE\u673A"
-  description: "\u6682\u65E0\u63CF\u8FF0"
+  itemName: Dash Fighter
+  description: A fast striker that trades durability for speed.
   icon: {fileID: 5743120003231325584, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

@@ -17,6 +17,7 @@ namespace BackpackPrototype
         [SerializeField] private Image icon;
         [SerializeField] private Text label;
         [SerializeField] private TextMeshProUGUI levelLabel;
+        [SerializeField] private TMP_Text itemLabel;
 
         private static readonly int CooldownProgressId =
             Shader.PropertyToID("_CooldownProgress");
@@ -151,6 +152,16 @@ namespace BackpackPrototype
                 label = GetComponentInChildren<Text>();
             }
 
+            if (itemLabel == null)
+            {
+                foreach (TMP_Text candidate in GetComponentsInChildren<TMP_Text>(true))
+                {
+                    if (candidate.gameObject.name != "ItemLabel") continue;
+                    itemLabel = candidate;
+                    break;
+                }
+            }
+
             if (icon == null)
             {
                 Transform iconTransform =
@@ -247,6 +258,11 @@ namespace BackpackPrototype
             if (label != null)
             {
                 label.text = instance.Data.ItemName;
+            }
+
+            if (itemLabel != null)
+            {
+                itemLabel.text = instance.Data.ItemName;
             }
 
             RefreshLevelLabel();

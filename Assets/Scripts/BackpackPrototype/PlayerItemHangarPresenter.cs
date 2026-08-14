@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Text;
 using BackpackHero.Battle;
 using BackpackHero.Debugging;
 using PlanetWar.ReusableMainMenu;
@@ -53,12 +52,11 @@ namespace BackpackPrototype
         private HangarItemSnapshot BuildSnapshot(ItemData item)
         {
             int level = system.GetLevel(item);
-            string stats = item.ItemType == ItemType.Aircraft ? BuildAircraftStats(item) : BuildEquipmentStats(item);
             return new HangarItemSnapshot(
                 item.ItemType == ItemType.Aircraft ? HangarItemKind.Aircraft : HangarItemKind.Equipment,
-                item.ItemName, string.IsNullOrEmpty(stats) ? item.Description : item.Description + "\n\n" + stats, item.Icon, item.Icon, system.IsUnlocked(item), level,
+                item.ItemName, item.Description, item.Icon, item.Icon, system.IsUnlocked(item), level,
                 system.GetFragments(item), item.UpgradeFragmentCost, item.UpgradeGoldCost,
-                item.CooldownDuration, item.SpawnCount, stats, item.BackgroundColor,
+                item.CooldownDuration, item.SpawnCount, null, item.BackgroundColor,
                 item.UnlockRequirementText, BuildDetailAttributes(item));
         }
 
@@ -113,44 +111,5 @@ namespace BackpackPrototype
             };
         }
 
-        private static string BuildAircraftStats(ItemData item)
-        {
-            var fighter = item.FighterDefinition;
-            if (fighter == null) return "Aircraft configuration unavailable.";
-            return $"Type: Aircraft  Shape: {BuildShape(item)}\n" +
-                   $"Cooldown {item.CooldownDuration:0.##}s  Spawn {item.SpawnCount}\n" +
-                   $"HP {fighter.MaximumHealth}  Damage {GetDisplayedAircraftDamage(fighter):0.#}\n" +
-                   $"Attack {fighter.AttackInterval:0.##}s  Speed {fighter.BaseSpeed:0.#}\n" +
-                   $"Range {fighter.AttackRange:0.#}";
-        }
-
-        private static string BuildEquipmentStats(ItemData item)
-        {
-            var builder = new StringBuilder($"Type: Equipment  Shape: {BuildShape(item)}\nCooldown {item.Cd:0.##}s");
-            foreach (EquipmentEffectDefinition effect in item.EquipmentEffects)
-            {
-                if (effect is ProjectileEquipmentEffectDefinition projectile)
-                {
-                    string projectileName = projectile.ProjectilePrefab != null
-                        ? projectile.ProjectilePrefab.name
-                        : "None";
-                    builder.Append($"\nEffect: {effect.name}  Projectile: {projectileName}, {projectile.Cooldown:0.##}s");
-                }
-                else if (effect != null) builder.Append($"\nEffect: {effect.name}");
-            }
-            return builder.ToString();
-        }
-
-        private static string BuildShape(ItemData item)
-        {
-            if (item.ShapeOffsets.Count == 0) return "None";
-            var builder = new StringBuilder();
-            foreach (Vector2Int cell in item.ShapeOffsets)
-            {
-                if (builder.Length > 0) builder.Append(' ');
-                builder.Append($"({cell.x},{cell.y})");
-            }
-            return builder.ToString();
-        }
     }
 }

@@ -76,7 +76,7 @@ public sealed class ItemBalanceConfigurationTests
         }
     }
 
-    [Test]
+    [Test, Ignore("Superseded by ItemAssets_ProvideShortDisplayNamesAndDescriptions.")]
     public void ItemAssets_ProvideDescriptionPlaceholders()
     {
         string[] itemPaths =
@@ -99,6 +99,31 @@ public sealed class ItemBalanceConfigurationTests
 
             Assert.That(item.Description,
                 Is.EqualTo("暂无描述"), path);
+        }
+    }
+
+    [Test]
+    public void ItemAssets_ProvideShortDisplayNamesAndDescriptions()
+    {
+        (string path, string name, string description)[] expectedItems =
+        {
+            ("Aircraft_Charge.asset", "Dash Fighter", "A fast striker that trades durability for speed."),
+            ("Aircraft_First.asset", "Scout Fighter", "A balanced fighter for reliable frontline damage."),
+            ("Aircraft_L.asset", "Twin Fighter", "Deploys two balanced fighters in a compact formation."),
+            ("Aircraft_Shield.asset", "Guardian Fighter", "A durable defender built to hold the line."),
+            ("Equipment_1x2.asset", "Arc Launcher", "Adds arcing shots to adjacent fighters."),
+            ("Equipment_ArcCoil.asset", "Arc Coil", "Adds chain-lightning shots to adjacent fighters."),
+            ("Equipment_First.asset", "Blast Module", "Adds explosive shots to adjacent fighters."),
+            ("Equipment_RapidCannon.asset", "Rapid Cannon", "Adds rapid straight shots to adjacent fighters."),
+            ("Equipment_WaveEmitter.asset", "Wave Emitter", "Adds weaving wave shots to adjacent fighters."),
+        };
+
+        foreach ((string path, string name, string description) expected in expectedItems)
+        {
+            ItemData item = Load<ItemData>("Assets/Data/Backpack/Items/" + expected.path);
+            Assert.That(item.ItemName, Is.EqualTo(expected.name), expected.path);
+            Assert.That(item.Description, Is.EqualTo(expected.description), expected.path);
+            Assert.That(item.Description.Length, Is.LessThanOrEqualTo(64), expected.path);
         }
     }
 

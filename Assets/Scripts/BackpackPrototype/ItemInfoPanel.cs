@@ -35,6 +35,7 @@ namespace BackpackPrototype
 
         private void Awake()
         {
+            ResolveTextReferences();
             SetVisible(false);
         }
 
@@ -92,6 +93,25 @@ namespace BackpackPrototype
             }
 
             SetVisible(true);
+        }
+
+        private void ResolveTextReferences()
+        {
+            if (panelVisual == null) return;
+
+            foreach (TMP_Text text in panelVisual.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (text == null) continue;
+                switch (text.gameObject.name)
+                {
+                    // Nested prefab references can remain pointed at their source asset after
+                    // a parent prefab is instantiated. Always use the text objects below this
+                    // runtime visual, rather than retaining a stale serialized reference.
+                    case "ItemNameText": itemNameLabel = text; break;
+                    case "LevelText": levelLabel = text; break;
+                    case "DescriptionText": descriptionLabel = text; break;
+                }
+            }
         }
 
         private void SubscribeToSystem()

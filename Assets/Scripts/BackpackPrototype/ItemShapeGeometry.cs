@@ -45,38 +45,39 @@ namespace BackpackPrototype
                 return false;
             }
 
-            Vector2Int candidate =
-                ItemGrabOffsetCalculator.Calculate(shapeOffsets);
-            int horizontalNeighbors = 0;
-            int verticalNeighbors = 0;
-
-            foreach (Vector2Int offset in shapeOffsets)
+            foreach (Vector2Int candidate in shapeOffsets)
             {
-                if (offset == candidate)
+                int horizontalNeighbors = 0;
+                int verticalNeighbors = 0;
+
+                foreach (Vector2Int offset in shapeOffsets)
                 {
-                    continue;
+                    if (offset == candidate)
+                    {
+                        continue;
+                    }
+
+                    if (offset.y == candidate.y &&
+                        Mathf.Abs(offset.x - candidate.x) == 1)
+                    {
+                        horizontalNeighbors++;
+                    }
+
+                    if (offset.x == candidate.x &&
+                        Mathf.Abs(offset.y - candidate.y) == 1)
+                    {
+                        verticalNeighbors++;
+                    }
                 }
 
-                if (offset.y == candidate.y &&
-                    Mathf.Abs(offset.x - candidate.x) == 1)
+                if (horizontalNeighbors == 1 && verticalNeighbors == 1)
                 {
-                    horizontalNeighbors++;
-                }
-
-                if (offset.x == candidate.x &&
-                    Mathf.Abs(offset.y - candidate.y) == 1)
-                {
-                    verticalNeighbors++;
+                    corner = candidate;
+                    return true;
                 }
             }
 
-            if (horizontalNeighbors != 1 || verticalNeighbors != 1)
-            {
-                return false;
-            }
-
-            corner = candidate;
-            return true;
+            return false;
         }
     }
 }

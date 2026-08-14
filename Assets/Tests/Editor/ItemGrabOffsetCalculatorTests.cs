@@ -4,28 +4,30 @@ using UnityEngine;
 
 public sealed class ItemGrabOffsetCalculatorTests
 {
-    [TestCase(0, 0)]
-    [TestCase(1, 0)]
-    [TestCase(0, 1)]
-    [TestCase(1, 1)]
-    public void Calculate_ReturnsCornerCell_ForAllLOrientations(
+    [TestCase(0, 0, 0, 1)]
+    [TestCase(1, 0, 1, 1)]
+    [TestCase(0, 1, 0, 1)]
+    [TestCase(1, 1, 1, 1)]
+    public void Calculate_ReturnsCenterOfBottomRow_ForAllLOrientations(
+        int cornerX,
+        int cornerY,
         int expectedX,
         int expectedY)
     {
-        Vector2Int corner = new Vector2Int(expectedX, expectedY);
+        Vector2Int corner = new Vector2Int(cornerX, cornerY);
         Vector2Int horizontal = corner +
-            (expectedX == 0 ? Vector2Int.right : Vector2Int.left);
+            (cornerX == 0 ? Vector2Int.right : Vector2Int.left);
         Vector2Int vertical = corner +
-            (expectedY == 0 ? Vector2Int.down : Vector2Int.up);
+            (cornerY == 0 ? Vector2Int.down : Vector2Int.up);
 
         Assert.That(
             ItemGrabOffsetCalculator.Calculate(
                 new[] { corner, horizontal, vertical }),
-            Is.EqualTo(corner));
+            Is.EqualTo(new Vector2Int(expectedX, expectedY)));
     }
 
     [TestCaseSource(nameof(NonLShapes))]
-    public void Calculate_ReturnsBottomRightOccupiedCell_ForNonLShapes(
+    public void Calculate_ReturnsCenterOfBottomRow_ForNonLShapes(
         Vector2Int[] shapeOffsets,
         Vector2Int expected)
     {
@@ -46,7 +48,7 @@ public sealed class ItemGrabOffsetCalculatorTests
     }
 
     [Test]
-    public void Calculate_PreservesLShapeOffsetUsedByPlacementAnchor()
+    public void Calculate_UsesLowerGeometricCenterForPlacementAnchor()
     {
         Vector2Int grabOffset = ItemGrabOffsetCalculator.Calculate(
             new[]
@@ -54,6 +56,25 @@ public sealed class ItemGrabOffsetCalculatorTests
                 new Vector2Int(0, 0),
                 new Vector2Int(1, 0),
                 new Vector2Int(1, 1),
+            });
+
+        Assert.That(grabOffset, Is.EqualTo(new Vector2Int(1, 1)));
+        Assert.That(
+            BackpackGridView.CalculateAnchorCell(
+                new Vector2Int(6, 3),
+                grabOffset),
+            Is.EqualTo(new Vector2Int(5, 2)));
+    }
+
+    [Test]
+    public void Calculate_UsesBottomCenterOffsetForPlacementAnchor()
+    {
+        Vector2Int grabOffset = ItemGrabOffsetCalculator.Calculate(
+            new[]
+            {
+                new Vector2Int(0, 0),
+                new Vector2Int(1, 0),
+                new Vector2Int(2, 0),
             });
 
         Assert.That(grabOffset, Is.EqualTo(new Vector2Int(1, 0)));
@@ -65,22 +86,49 @@ public sealed class ItemGrabOffsetCalculatorTests
     }
 
     [Test]
-    public void Calculate_UsesBottomRightOffsetForPlacementAnchor()
+    public void CalculateVisualAnchor_ReturnsGeometricCenterOnBottomEdge()
     {
-        Vector2Int grabOffset = ItemGrabOffsetCalculator.Calculate(
+        Vector2 anchor = ItemGrabOffsetCalculator.CalculateVisualAnchor(
             new[]
             {
                 new Vector2Int(0, 0),
                 new Vector2Int(1, 0),
-                new Vector2Int(2, 0),
             });
 
-        Assert.That(grabOffset, Is.EqualTo(new Vector2Int(2, 0)));
-        Assert.That(
-            BackpackGridView.CalculateAnchorCell(
-                new Vector2Int(6, 3),
-                grabOffset),
-            Is.EqualTo(new Vector2Int(4, 3)));
+        Assert.That(anchor, Is.EqualTo(new Vector2(0.5f, 0f)));
+    }
+
+    [TestCase(0)]
+    [TestCase(1)]
+    public void TryCalculateTwoByOneAnchor_UsesPressedCell(
+        int pressedCellX)
+    {
+        bool found = ItemGrabOffsetCalculator.TryCalculateTwoByOneAnchor(
+            new[]
+            {
+                new Vector2Int(0, 0),
+                new Vector2Int(1, 0),
+            },
+            new Vector2Int(pressedCellX, 0),
+            out Vector2 anchor);
+
+        Assert.That(found, Is.True);
+        Assert.That(anchor, Is.EqualTo(new Vector2(pressedCellX, 0f)));
+    }
+
+    [Test]
+    public void TryCalculateTwoByOneAnchor_RejectsOtherShapes()
+    {
+        bool found = ItemGrabOffsetCalculator.TryCalculateTwoByOneAnchor(
+            new[]
+            {
+                new Vector2Int(0, 0),
+                new Vector2Int(0, 1),
+            },
+            new Vector2Int(0, 0),
+            out _);
+
+        Assert.That(found, Is.False);
     }
 
     private static object[] NonLShapes =
@@ -98,7 +146,7 @@ public sealed class ItemGrabOffsetCalculatorTests
                 new Vector2Int(0, 1),
                 new Vector2Int(1, 1),
             },
-            new Vector2Int(2, 1),
+            new Vector2Int(1, 1),
         },
         new object[]
         {
@@ -118,7 +166,7 @@ public sealed class ItemGrabOffsetCalculatorTests
                 new Vector2Int(0, 1),
                 new Vector2Int(2, 1),
             },
-            new Vector2Int(2, 1),
+            new Vector2Int(1, 1),
         },
     };
 }

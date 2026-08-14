@@ -124,6 +124,31 @@ public sealed class PlayerItemSystemTests
         Assert.That(system.GetDeckItem(3), Is.SameAs(equipment));
     }
 
+    [Test]
+    public void PersistedSave_AlwaysRestoresEveryCatalogItemToUnlockedMaxLevel()
+    {
+        ItemData aircraft = NewItem("current_aircraft", type: ItemType.Aircraft);
+        ItemData equipment = NewItem("current_equipment");
+        PlayerPrefs.SetString(PlayerItemSystem.SaveKey, JsonUtility.ToJson(new PlayerItemSaveData
+        {
+            Items = new List<PlayerItemState>
+            {
+                new() { ItemId = aircraft.ItemId, Unlocked = false, Level = 1, FragmentCount = 6 },
+                new() { ItemId = equipment.ItemId, Unlocked = true, Level = 1, FragmentCount = 4 }
+            }
+        }));
+        PlayerPrefs.Save();
+
+        PlayerItemSystem system = NewSystem(aircraft, equipment);
+
+        Assert.That(system.IsUnlocked(aircraft), Is.True);
+        Assert.That(system.GetLevel(aircraft), Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(system.IsUnlocked(equipment), Is.True);
+        Assert.That(system.GetLevel(equipment), Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(system.GetFragments(aircraft), Is.EqualTo(6));
+        Assert.That(system.GetFragments(equipment), Is.EqualTo(4));
+    }
+
     private PlayerItemSystem NewSystem(params ItemData[] items)
     {
         GameObject systemRoot = new GameObject("TestSystem");

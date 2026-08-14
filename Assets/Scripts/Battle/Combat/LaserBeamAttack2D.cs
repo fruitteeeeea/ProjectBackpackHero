@@ -25,6 +25,10 @@ namespace BackpackHero.Battle
             damageResolver;
 
         [SerializeField]
+        private ProjectileVisualSettings
+            visualSettings;
+
+        [SerializeField]
         private SegmentBoxDamageArea2D
             damageArea;
 
@@ -223,7 +227,10 @@ namespace BackpackHero.Battle
             beamRenderer.sortingOrder =
                 sortingOrder;
 
-            Color initialColor = tint;
+            Color initialColor = visualSettings != null
+                ? visualSettings.GetFactionColor(
+                    launchContext.Faction)
+                : tint;
             initialColor.a = 0f;
             beamRenderer.color = initialColor;
         }

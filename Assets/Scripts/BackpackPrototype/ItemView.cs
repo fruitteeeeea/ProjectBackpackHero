@@ -75,6 +75,7 @@ namespace BackpackPrototype
         public RectTransform DragLayer { get; private set; }
         public RectTransform TrashZone { get; private set; }
         public Vector2Int GrabCellOffset { get; private set; }
+        public Vector2 GrabAnchorOffset { get; private set; }
         public Vector2Int? CandidateAnchorCell { get; private set; }
         public bool IsPlacedInBackpack { get; private set; }
         
@@ -619,8 +620,24 @@ namespace BackpackPrototype
             GridView?.ClearPlacementPreview();
             SetTrashPreview(false);
 
-            GrabCellOffset = ItemGrabOffsetCalculator.Calculate(
-                Instance?.Data?.ShapeOffsets);
+            IReadOnlyList<Vector2Int> shapeOffsets =
+                Instance?.Data?.ShapeOffsets;
+            GrabCellOffset = ItemGrabOffsetCalculator.Calculate(shapeOffsets);
+            GrabAnchorOffset = ItemGrabOffsetCalculator.CalculateVisualAnchor(
+                shapeOffsets);
+
+            if (TryGetShapeCellAtScreenPosition(
+                    eventData.position,
+                    eventData.pressEventCamera,
+                    out Vector2Int grabbedCell) &&
+                ItemGrabOffsetCalculator.TryCalculateTwoByOneAnchor(
+                    shapeOffsets,
+                    grabbedCell,
+                    out Vector2 twoByOneAnchor))
+            {
+                GrabCellOffset = grabbedCell;
+                GrabAnchorOffset = twoByOneAnchor;
+            }
 
             if (DragLayer != null)
             {
@@ -1139,6 +1156,18 @@ namespace BackpackPrototype
             Vector2 screenPoint,
             Camera eventCamera)
         {
+            return TryGetShapeCellAtScreenPosition(
+                screenPoint,
+                eventCamera,
+                out _);
+        }
+
+        private bool TryGetShapeCellAtScreenPosition(
+            Vector2 screenPoint,
+            Camera eventCamera,
+            out Vector2Int shapeCell)
+        {
+            shapeCell = default;
             if (Instance == null ||
                 Instance.Data == null ||
                 !RectTransformUtility.ScreenPointToLocalPointInRectangle(
@@ -1171,6 +1200,7 @@ namespace BackpackPrototype
             {
                 if (offset == pointedCell)
                 {
+                    shapeCell = offset;
                     return true;
                 }
             }
@@ -1193,7 +1223,7 @@ namespace BackpackPrototype
             }
 
             Vector3 targetPosition = pointerWorldPosition -
-                GetGrabCellCenterWorldOffset();
+                GetGrabAnchorWorldOffset();
             dragPositionTween?.Kill();
             dragPositionTween = rectTransform.DOMove(
                     targetPosition,
@@ -1201,17 +1231,17 @@ namespace BackpackPrototype
                 .SetEase(Ease.OutQuad);
         }
 
-        private Vector3 GetGrabCellCenterWorldOffset()
+        private Vector3 GetGrabAnchorWorldOffset()
         {
             Vector2 pitch = shapeCellSize + shapeSpacing;
             Rect rect = rectTransform.rect;
-            Vector3 localCellCenter = new Vector3(
-                rect.xMin + GrabCellOffset.x * pitch.x +
+            Vector3 localAnchor = new Vector3(
+                rect.xMin + GrabAnchorOffset.x * pitch.x +
                     shapeCellSize.x * 0.5f,
-                rect.yMax - GrabCellOffset.y * pitch.y -
-                    shapeCellSize.y * 0.5f);
+                rect.yMax - GrabAnchorOffset.y * pitch.y -
+                    shapeCellSize.y);
 
-            return rectTransform.TransformVector(localCellCenter);
+            return rectTransform.TransformVector(localAnchor);
         }
 
         private static Vector2Int GetShapeBounds(IReadOnlyList<Vector2Int> offsets)

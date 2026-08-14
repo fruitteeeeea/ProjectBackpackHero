@@ -88,6 +88,21 @@ public sealed class PlayerItemSystemTests
         Assert.That(system.Gold, Is.Zero);
     }
 
+    [Test]
+    public void Deck_EnforcesFixedTypesAndRejectsDuplicates()
+    {
+        ItemData aircraft = NewItem("deck_aircraft", type: ItemType.Aircraft);
+        ItemData equipment = NewItem("deck_equipment", type: ItemType.Equipment);
+        PlayerItemSystem system = NewSystem(aircraft, equipment);
+
+        Assert.That(system.TryEquipDeckSlot(0, aircraft), Is.EqualTo(PlayerDeckResult.Success));
+        Assert.That(system.TryEquipDeckSlot(1, aircraft), Is.EqualTo(PlayerDeckResult.Duplicate));
+        Assert.That(system.TryEquipDeckSlot(3, aircraft), Is.EqualTo(PlayerDeckResult.WrongType));
+        Assert.That(system.TryEquipDeckSlot(3, equipment), Is.EqualTo(PlayerDeckResult.Success));
+        Assert.That(system.GetDeckItem(0), Is.SameAs(aircraft));
+        Assert.That(system.GetDeckItem(3), Is.SameAs(equipment));
+    }
+
     private PlayerItemSystem NewSystem(params ItemData[] items)
     {
         GameObject systemRoot = new GameObject("TestSystem");
@@ -97,10 +112,10 @@ public sealed class PlayerItemSystemTests
         return system;
     }
 
-    private ItemData NewItem(string id, int gold = 0, int fragments = 0)
+    private ItemData NewItem(string id, int gold = 0, int fragments = 0, ItemType type = ItemType.Equipment)
     {
         ItemData item = ScriptableObject.CreateInstance<ItemData>();
-        item.InitializeForTests(id, ItemType.Equipment, 1f, null);
+        item.InitializeForTests(id, type, 1f, null);
         item.ConfigurePlayerProgressForTests(id, gold, fragments);
         created.Add(item);
         return item;

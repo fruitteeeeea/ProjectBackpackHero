@@ -328,6 +328,33 @@ namespace BackpackPrototype
                 return false;
             }
 
+            PlayerItemSystem playerItems = PlayerItemSystem.Instance;
+            if (playerItems == null)
+            {
+                Debug.LogError("PlayerItemSystem is required before rolling the player shop.", this);
+                return false;
+            }
+
+            List<ItemPrefabEntry> deckCatalog = new();
+            foreach (ItemPrefabEntry entry in itemCatalog)
+            {
+                if (entry != null && entry.Data != null && entry.Prefab != null &&
+                    playerItems.IsEquipped(entry.Data))
+                {
+                    deckCatalog.Add(entry);
+                }
+            }
+
+            if (deckCatalog.Count == 0)
+            {
+                Debug.LogWarning(
+                    "Player Deck has no items registered in PlayerBackpackSystem.itemCatalog; shop roll skipped.",
+                    this);
+                ClearShopViews();
+                SetSelectedItem(null);
+                return false;
+            }
+
             ClearShopViews();
 
             foreach (RectTransform slot in shopSlots)
@@ -338,10 +365,10 @@ namespace BackpackPrototype
                 }
 
                 ItemPrefabEntry entry =
-                    itemCatalog[
+                    deckCatalog[
                         UnityEngine.Random.Range(
                             0,
-                            itemCatalog.Count)];
+                            deckCatalog.Count)];
 
                 CreateShopItem(entry, slot);
             }

@@ -44,9 +44,29 @@ namespace BackpackPrototype
             if (hangar == null) hangar = FindFirstObjectByType<HangarView>(FindObjectsInactive.Include);
             if (system == null || hangar == null) return;
 
-            var snapshots = new List<HangarItemSnapshot>();
-            foreach (ItemData item in system.GetAllItems()) snapshots.Add(BuildSnapshot(item));
-            hangar.Bind(snapshots, system.Gold, system.Diamond);
+            var deck = new List<HangarItemSnapshot>();
+            foreach (ItemData item in system.GetDeckItems())
+                deck.Add(item != null ? BuildSnapshot(item) : default);
+
+            var collection = new List<HangarItemSnapshot>();
+            foreach (ItemData item in system.GetAllItems())
+                if (!system.IsEquipped(item)) collection.Add(BuildSnapshot(item));
+
+            hangar.BindDeckAndCollection(
+                deck,
+                collection,
+                system.Gold,
+                system.Diamond,
+                HandleDeckReplacement);
+        }
+
+        private void HandleDeckReplacement(int slot, HangarItemSnapshot snapshot)
+        {
+            if (system == null || string.IsNullOrEmpty(snapshot.ItemId)) return;
+            ItemData item = null;
+            foreach (ItemData candidate in system.GetAllItems())
+                if (candidate != null && candidate.ItemId == snapshot.ItemId) { item = candidate; break; }
+            system.TryEquipDeckSlot(slot, item);
         }
 
         private HangarItemSnapshot BuildSnapshot(ItemData item)
@@ -57,7 +77,7 @@ namespace BackpackPrototype
                 item.ItemName, item.Description, item.Icon, item.Icon, system.IsUnlocked(item), level,
                 system.GetFragments(item), item.UpgradeFragmentCost, item.UpgradeGoldCost,
                 item.CooldownDuration, item.SpawnCount, null, item.BackgroundColor,
-                item.UnlockRequirementText, BuildDetailAttributes(item));
+                item.UnlockRequirementText, BuildDetailAttributes(item), item.ItemId);
         }
 
         private static HangarDetailAttribute[] BuildDetailAttributes(ItemData item)

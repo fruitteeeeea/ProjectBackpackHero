@@ -108,9 +108,9 @@ public sealed class PlayerBackpackSystemTests
                 .arraySize,
             Is.EqualTo(3));
         Assert.That(
-            serialized.FindProperty("itemCatalog")
-                .arraySize,
-            Is.EqualTo(6));
+            serialized.FindProperty("itemViewPrefab")
+                .objectReferenceValue,
+            Is.Not.Null);
         Assert.That(
             serialized.FindProperty("rollsPerPreparation")
                 .intValue,

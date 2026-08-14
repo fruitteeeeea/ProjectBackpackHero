@@ -59,9 +59,15 @@ namespace BackpackPrototype
         [SerializeField]
         private List<RectTransform> shopSlots = new();
 
-        [Header("Item Catalog")]
+        [Header("Item View")]
         [SerializeField]
-        private List<ItemPrefabEntry> itemCatalog = new();
+        private ItemView itemViewPrefab;
+        [SerializeField] private ItemView itemView1x2Prefab;
+        [SerializeField] private ItemView itemView2x1Prefab;
+        [SerializeField] private ItemView itemViewLMissingBottomLeftPrefab;
+        [SerializeField] private ItemView itemViewLMissingBottomRightPrefab;
+        [SerializeField] private ItemView itemViewLMissingTopLeftPrefab;
+        [SerializeField] private ItemView itemViewLMissingTopRightPrefab;
 
         [Header("Shop Roll")]
         [SerializeField, Min(1)]
@@ -90,6 +96,7 @@ namespace BackpackPrototype
 
         private BackpackCombatController combatController;
         private BackpackFighterSpawner fighterSpawner;
+        private PlayerItemSystem playerItemSystem;
         private PlayerBackpackDragDebugOverlay dragDebugOverlay;
         private ItemView draggingItem;
         private bool isReady;
@@ -150,6 +157,11 @@ namespace BackpackPrototype
                 GetComponent<BackpackCombatController>();
             fighterSpawner =
                 GetComponent<BackpackFighterSpawner>();
+            playerItemSystem = PlayerItemSystem.Instance;
+            if (playerItemSystem != null)
+            {
+                playerItemSystem.Changed += HandlePlayerItemsChanged;
+            }
 
             ResolveBattleAnchors();
             HideAnchorGraphics();
@@ -217,8 +229,7 @@ namespace BackpackPrototype
                 BackpackLayoutItem placement =
                     layout[index];
 
-                if (placement.Data == null ||
-                    FindCatalogEntry(placement.Data) == null)
+                if (placement.Data == null)
                 {
                     Debug.LogError(
                         $"布局条目 {index} 缺少物品或UI Prefab配置。",
@@ -323,7 +334,7 @@ namespace BackpackPrototype
 
         private bool RefreshShopInternal()
         {
-            if (itemCatalog.Count == 0 || shopSlots.Count == 0)
+            if (shopSlots.Count == 0)
             {
                 return false;
             }
@@ -335,20 +346,14 @@ namespace BackpackPrototype
                 return false;
             }
 
-            List<ItemPrefabEntry> deckCatalog = new();
-            foreach (ItemPrefabEntry entry in itemCatalog)
-            {
-                if (entry != null && entry.Data != null && entry.Prefab != null &&
-                    playerItems.IsEquipped(entry.Data))
-                {
-                    deckCatalog.Add(entry);
-                }
-            }
+            List<ItemData> deckCatalog = new();
+            foreach (ItemData item in playerItems.GetDeckItems())
+                if (item != null) deckCatalog.Add(item);
 
             if (deckCatalog.Count == 0)
             {
                 Debug.LogWarning(
-                    "Player Deck has no items registered in PlayerBackpackSystem.itemCatalog; shop roll skipped.",
+                    "Player Deck is empty; shop roll skipped.",
                     this);
                 ClearShopViews();
                 SetSelectedItem(null);
@@ -364,13 +369,13 @@ namespace BackpackPrototype
                     continue;
                 }
 
-                ItemPrefabEntry entry =
+                ItemData item =
                     deckCatalog[
                         UnityEngine.Random.Range(
                             0,
                             deckCatalog.Count)];
 
-                CreateShopItem(entry, slot);
+                CreateShopItem(item, slot);
             }
 
             SetSelectedItem(null);
@@ -774,10 +779,9 @@ namespace BackpackPrototype
                 return FindView(item);
             }
 
-            ItemPrefabEntry entry =
-                FindCatalogEntry(item.Data);
+            ItemData data = item.Data;
 
-            if (entry == null)
+            if (data == null)
             {
                 Debug.LogError(
                     $"找不到 {item.Data?.name} 的UI Prefab。",
@@ -786,7 +790,7 @@ namespace BackpackPrototype
             }
 
             ItemView view =
-                CreateView(entry, itemLayer, item);
+                CreateView(data, itemLayer, item);
 
             if (view == null)
             {
@@ -799,11 +803,11 @@ namespace BackpackPrototype
         }
 
         private void CreateShopItem(
-            ItemPrefabEntry entry,
+            ItemData data,
             RectTransform slot)
         {
             ItemView view =
-                CreateView(entry, slot);
+                CreateView(data, slot);
 
             if (view == null)
             {
@@ -887,27 +891,28 @@ namespace BackpackPrototype
         }
 
         private ItemView CreateView(
-            ItemPrefabEntry entry,
+            ItemData data,
             Transform parent,
             ItemInstance existingInstance = null)
         {
-            if (entry?.Data == null ||
-                entry.Prefab == null ||
+            ItemView prefab = ResolveItemViewPrefab(data);
+            if (data == null ||
+                prefab == null ||
                 parent == null)
             {
                 return null;
             }
 
             ItemView view =
-                Instantiate(entry.Prefab, parent, false);
+                Instantiate(prefab, parent, false);
 
             ItemInstance instance =
                 existingInstance ??
                 new ItemInstance(
                     $"shop-item-{++nextItemId}",
-                    entry.Data,
+                    data,
                     Vector2Int.zero,
-                    GetPlayerItemLevel(entry.Data));
+                    GetPlayerItemLevel(data));
 
             view.Bind(
                 instance,
@@ -938,12 +943,25 @@ namespace BackpackPrototype
             return view;
         }
 
+        private void HandlePlayerItemsChanged()
+        {
+            if (BattleFlowController.CurrentPhase == BattlePhase.Preparation)
+            {
+                RefreshShopInternal();
+            }
+        }
+
         private static int GetPlayerItemLevel(ItemData data)
         {
             return PlayerItemSystem.Instance != null
                 ? PlayerItemSystem.Instance.GetLevel(data)
                 : ItemInstance.DefaultLevel;
         }
+
+        private ItemView ResolveItemViewPrefab(ItemData data) =>
+            ItemViewPrefabSelector.Select(data, itemViewPrefab, itemView1x2Prefab, itemView2x1Prefab,
+                itemViewLMissingBottomLeftPrefab, itemViewLMissingBottomRightPrefab,
+                itemViewLMissingTopLeftPrefab, itemViewLMissingTopRightPrefab);
 
         private void HandleItemMerged(
             ItemView source,
@@ -1150,21 +1168,6 @@ namespace BackpackPrototype
             SelectedItemChanged?.Invoke(SelectedItem);
         }
 
-        private ItemPrefabEntry FindCatalogEntry(
-            ItemData data)
-        {
-            foreach (ItemPrefabEntry entry in itemCatalog)
-            {
-                if (entry != null &&
-                    entry.Data == data)
-                {
-                    return entry;
-                }
-            }
-
-            return null;
-        }
-
         private void ClearShopViews()
         {
             if (SelectedItem != null &&
@@ -1219,15 +1222,7 @@ namespace BackpackPrototype
                 dragLayer != null &&
                 trashZone != null &&
                 shopSlots.Count == 3 &&
-                itemCatalog.Count > 0;
-
-            foreach (ItemPrefabEntry entry in itemCatalog)
-            {
-                valid &=
-                    entry != null &&
-                    entry.Data != null &&
-                    entry.Prefab != null;
-            }
+                itemViewPrefab != null;
 
             if (!valid)
             {
@@ -1254,6 +1249,11 @@ namespace BackpackPrototype
 
         private void OnDestroy()
         {
+            if (playerItemSystem != null)
+            {
+                playerItemSystem.Changed -= HandlePlayerItemsChanged;
+            }
+
             if (Backpack != null)
             {
                 Backpack.ItemAdded -= HandleModelItemAdded;

@@ -24,24 +24,8 @@ namespace BackpackHero.EditorTools
         private const string MainScenePath =
             "Assets/Scenes/SampleScene.unity";
 
-        private static readonly (
-            string Data,
-            string View)[] Catalog =
-        {
-            (
-                "Assets/Data/Backpack/Items/Aircraft_First.asset",
-                "Assets/Prefabs/BackpackUI/Items/Item_2x1.prefab"),
-            (
-                "Assets/Data/Backpack/Items/Equipment_First.asset",
-                "Assets/Prefabs/BackpackUI/Items/Item_1x1.prefab"),
-            (
-                "Assets/Data/Backpack/Items/Aircraft_L.asset",
-                "Assets/Prefabs/BackpackUI/Items/" +
-                "Item_L_MissingBottomRight.prefab"),
-            (
-                "Assets/Data/Backpack/Items/Equipment_1x2.asset",
-                "Assets/Prefabs/BackpackUI/Items/Item_1x2.prefab"),
-        };
+        private const string ItemViewPrefabPath =
+            "Assets/Prefabs/BackpackUI/Items/Item_1x1.prefab";
 
         [MenuItem(
             "Tools/Backpack/Build Complete Player Backpack")]
@@ -247,27 +231,25 @@ namespace BackpackHero.EditorTools
                     shopSlots[index];
             }
 
-            SerializedProperty catalog =
-                serialized.FindProperty("itemCatalog");
-            catalog.arraySize = Catalog.Length;
-
-            for (int index = 0;
-                 index < Catalog.Length;
-                 index++)
-            {
-                SerializedProperty entry =
-                    catalog.GetArrayElementAtIndex(index);
-                entry.FindPropertyRelative("data")
-                    .objectReferenceValue =
-                    AssetDatabase.LoadAssetAtPath<ItemData>(
-                        Catalog[index].Data);
-                entry.FindPropertyRelative("prefab")
-                    .objectReferenceValue =
-                    AssetDatabase.LoadAssetAtPath<ItemView>(
-                        Catalog[index].View);
-            }
+            serialized.FindProperty("itemViewPrefab")
+                .objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<ItemView>(
+                    ItemViewPrefabPath);
+            SetItemViewPrefab(serialized, "itemView1x2Prefab", "Item_1x2.prefab");
+            SetItemViewPrefab(serialized, "itemView2x1Prefab", "Item_2x1.prefab");
+            SetItemViewPrefab(serialized, "itemViewLMissingBottomLeftPrefab", "Item_L_MissingBottomLeft.prefab");
+            SetItemViewPrefab(serialized, "itemViewLMissingBottomRightPrefab", "Item_L_MissingBottomRight.prefab");
+            SetItemViewPrefab(serialized, "itemViewLMissingTopLeftPrefab", "Item_L_MissingTopLeft.prefab");
+            SetItemViewPrefab(serialized, "itemViewLMissingTopRightPrefab", "Item_L_MissingTopRight.prefab");
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetItemViewPrefab(SerializedObject target, string property, string fileName)
+        {
+            target.FindProperty(property).objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<ItemView>(
+                    "Assets/Prefabs/BackpackUI/Items/" + fileName);
         }
 
         private static void IntegrateMainScene(

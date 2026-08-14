@@ -385,12 +385,14 @@ public sealed class EnemyBackpackSystemTests
                     EnemyBackpackSystem>();
             SerializedObject missingSerialized =
                 new SerializedObject(missingSystem);
-            SerializedProperty catalog =
-                missingSerialized.FindProperty(
-                    "itemCatalog");
-            catalog.arraySize = 1;
+            missingSerialized.FindProperty("itemViewPrefab")
+                .objectReferenceValue = null;
             missingSerialized
                 .ApplyModifiedPropertiesWithoutUndo();
+            LogAssert.Expect(
+                LogType.Error,
+                new System.Text.RegularExpressions.Regex(
+                    "EnemyBackpackSystem"));
             Initialize(missingCatalogInstance);
 
             missingCatalog.InitializeForTests(
@@ -400,10 +402,6 @@ public sealed class EnemyBackpackSystemTests
                         equipment,
                         Vector2Int.zero),
                 });
-            LogAssert.Expect(
-                LogType.Error,
-                new System.Text.RegularExpressions.Regex(
-                    "缺少物品或UI Prefab"));
             Assert.That(
                 missingSystem.ApplyData(missingCatalog),
                 Is.False);

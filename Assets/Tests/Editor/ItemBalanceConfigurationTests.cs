@@ -8,6 +8,50 @@ using UnityEngine;
 public sealed class ItemBalanceConfigurationTests
 {
     [Test]
+    public void NewAircraftAssets_MatchConfiguredItemsAndCombatProfiles()
+    {
+        AssertAircraft(
+            "Aircraft_Explosive.asset",
+            "Fighter_04_Explosive.asset",
+            "爆炸飞机", 2f, 2,
+            4.5f, 8, 0.5f, 30f, 0.5f, 0.8f, 8f,
+            "ItemShape_1x2.asset");
+        AssertAircraft(
+            "Aircraft_Sniper.asset",
+            "Fighter_05_Sniper.asset",
+            "狙击飞机", 3.5f, 1,
+            1f, 6, 6.5f, 45f, 1f, 2.5f, 12f,
+            "ItemShape_L_MissingTopLeft.asset");
+        AssertAircraft(
+            "Aircraft_Laser.asset",
+            "Fighter_06_Laser.asset",
+            "激光飞机", 2f, 3,
+            3f, 8, 6.5f, 90f, 1f, 0.5f, 12f,
+            "ItemShape_L_MissingTopRight.asset");
+        AssertAircraft(
+            "Aircraft_Shotgun.asset",
+            "Fighter_07_Shotgun.asset",
+            "霰弹飞机", 2.5f, 1,
+            2.5f, 16, 1.5f, 40f, 1f, 0.8f, 8f,
+            "ItemShape_L_MissingBottomRight.asset");
+
+        FighterDefinition explosive = Load<FighterDefinition>(
+            "Assets/Settings/Battle/Fighters/Fighter_04_Explosive.asset");
+        FighterDefinition laser = Load<FighterDefinition>(
+            "Assets/Settings/Battle/Fighters/Fighter_06_Laser.asset");
+        FighterDefinition shotgun = Load<FighterDefinition>(
+            "Assets/Settings/Battle/Fighters/Fighter_07_Shotgun.asset");
+
+        Assert.That(explosive.DeathExplosionAttackPrefab,
+            Is.TypeOf<Projectile2D>());
+        Assert.That(laser.DefaultAttackPrefab,
+            Is.TypeOf<LaserBeamAttack2D>());
+        Assert.That(laser.LinkedLaserAttackPrefab,
+            Is.TypeOf<LaserBeamAttack2D>());
+        Assert.That(shotgun.DefaultFirePattern,
+            Is.TypeOf<SpreadProjectileFirePattern>());
+    }
+    [Test]
     public void ItemAssets_ContainApprovedBalanceValues()
     {
         ItemData lAircraft = Load<ItemData>(
@@ -178,5 +222,43 @@ public sealed class ItemBalanceConfigurationTests
         T asset = AssetDatabase.LoadAssetAtPath<T>(path);
         Assert.That(asset, Is.Not.Null, path);
         return asset;
+    }
+
+    private static void AssertAircraft(
+        string itemFile,
+        string fighterFile,
+        string displayName,
+        float cooldown,
+        int spawnCount,
+        float speed,
+        int health,
+        float range,
+        float arc,
+        float interval,
+        float damage,
+        float projectileSpeed,
+        string shapeFile)
+    {
+        ItemData item = Load<ItemData>(
+            "Assets/Data/Backpack/Items/" + itemFile);
+        FighterDefinition fighter = Load<FighterDefinition>(
+            "Assets/Settings/Battle/Fighters/" + fighterFile);
+        ItemShapeData shape = Load<ItemShapeData>(
+            "Assets/Data/Backpack/ItemShapes/" + shapeFile);
+
+        Assert.That(item.ItemName, Is.EqualTo(displayName));
+        Assert.That(item.CooldownDuration, Is.EqualTo(cooldown));
+        Assert.That(item.SpawnCount, Is.EqualTo(spawnCount));
+        Assert.That(item.Shape, Is.SameAs(shape));
+        Assert.That(item.FighterDefinition, Is.SameAs(fighter));
+        Assert.That(item.Icon, Is.SameAs(fighter.Sprite));
+        Assert.That(fighter.BaseSpeed, Is.EqualTo(speed));
+        Assert.That(fighter.MaximumHealth, Is.EqualTo(health));
+        Assert.That(fighter.AttackRange, Is.EqualTo(range));
+        Assert.That(fighter.TargetingArcAngle, Is.EqualTo(arc));
+        Assert.That(fighter.AttackInterval, Is.EqualTo(interval));
+        Assert.That(fighter.ProjectileDamage, Is.EqualTo(damage));
+        Assert.That(fighter.ProjectileSpeed, Is.EqualTo(projectileSpeed));
+        Assert.That(fighter.TargetingPriority, Is.Zero);
     }
 }

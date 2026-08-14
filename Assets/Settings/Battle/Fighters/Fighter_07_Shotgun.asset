@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b763cd29887646c9b860c37e1ceb8cfd, type: 3}
+  m_Name: Fighter_07_Shotgun
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FighterDefinition
+  displayName: 霰弹飞机
+  sprite: {fileID: -2813064195979843760, guid: 7c89f10bd7e9a44449747e38e6a9ab88, type: 3}
+  baseColor: {r: 1, g: 1, b: 1, a: 1}
+  baseSpeed: 2.5
+  maximumHealth: 16
+  attackRange: 1.5
+  targetingArcAngle: 40
+  targetingPriority: 0
+  attackInterval: 1
+  projectileDamage: 0.8
+  projectileSpeed: 8
+  defaultAttackPrefab: {fileID: 9181062788350396426, guid: 6931d63d73f334a0e9b4ee30938152ad, type: 3}
+  defaultFirePattern: {fileID: 11400000, guid: ce2bbe51313a4874a1cef8bd1bfb463a, type: 2}
+  deathExplosionAttackPrefab: {fileID: 0}
+  linkedLaserAttackPrefab: {fileID: 0}

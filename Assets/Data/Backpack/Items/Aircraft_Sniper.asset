@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
+  m_Name: Aircraft_Sniper
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  id: aircraft_sniper
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: 狙击飞机
+  desc: 超远射程的高伤害单发飞机。
+  icon: {fileID: 1392089294744885835, guid: 0897ebf00f07aba4f8d0894d7dec823f, type: 3}
+  backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
+  itemType: 0
+  equipmentColor: {r: 1, g: 1, b: 1, a: 1}
+  equipmentEffects: []
+  cd: 3.5
+  price: 0
+  count: 1
+  shape: {fileID: 11400000, guid: 2fa3334394efd48cb99dfc925ea989e4, type: 2}
+  fighterDefinition: {fileID: 11400000, guid: 42dcafbf956d444ea94d47223094afec, type: 2}

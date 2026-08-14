@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
+  m_Name: Aircraft_Shotgun
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  id: aircraft_shotgun
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: 霰弹飞机
+  desc: 近距离发射三发散射子弹。
+  icon: {fileID: -2813064195979843760, guid: 7c89f10bd7e9a44449747e38e6a9ab88, type: 3}
+  backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
+  itemType: 0
+  equipmentColor: {r: 1, g: 1, b: 1, a: 1}
+  equipmentEffects: []
+  cd: 2.5
+  price: 0
+  count: 1
+  shape: {fileID: 11400000, guid: 84129650cb54b4c05ab80593ee53926b, type: 2}
+  fighterDefinition: {fileID: 11400000, guid: 1460e63fcc2f4a509983b25ad821f389, type: 2}

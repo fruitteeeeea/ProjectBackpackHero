@@ -27,6 +27,9 @@ namespace BackpackPrototype
         [SerializeField]
         private bool autoCopyPlayerLayoutToEnemy = true;
 
+        [SerializeField]
+        private bool dragCellVisualizationEnabled;
+
         [SerializeField, Min(0.05f)]
         private float refreshInterval = 0.1f;
 
@@ -57,6 +60,9 @@ namespace BackpackPrototype
 
         public bool AutoCopyPlayerLayoutToEnemy =>
             autoCopyPlayerLayoutToEnemy;
+
+        public bool DragCellVisualizationEnabled =>
+            dragCellVisualizationEnabled;
 
         public PlayerBackpackDebugSnapshot Snapshot =>
             snapshot;
@@ -124,6 +130,12 @@ namespace BackpackPrototype
         public void SetDebugEnabled(bool enabled)
         {
             debugEnabled = enabled;
+        }
+
+        public void SetDragCellVisualizationEnabled(bool enabled)
+        {
+            dragCellVisualizationEnabled = enabled;
+            playerBackpackSystem?.RefreshDragCellVisualization();
         }
 
         public void TogglePhase()

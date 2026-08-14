@@ -90,6 +90,8 @@ namespace BackpackPrototype
 
         private BackpackCombatController combatController;
         private BackpackFighterSpawner fighterSpawner;
+        private PlayerBackpackDragDebugOverlay dragDebugOverlay;
+        private ItemView draggingItem;
         private bool isReady;
         private bool isLoadingLayout;
         private bool missingCurveWarningReported;
@@ -153,6 +155,12 @@ namespace BackpackPrototype
             HideAnchorGraphics();
 
             isReady = ValidateConfiguration();
+
+            if (gridView != null)
+            {
+                dragDebugOverlay =
+                    PlayerBackpackDragDebugOverlay.Create(gridView);
+            }
 
             if (Backpack != null)
             {
@@ -891,6 +899,8 @@ namespace BackpackPrototype
                 HandleItemMerged;
             view.DragStateChanged +=
                 HandleItemDragStateChanged;
+            view.DragPreviewChanged +=
+                HandleItemDragPreviewChanged;
             view.PlacedSuccessfully +=
                 HandleItemPlaced;
             view.DeletedSuccessfully +=
@@ -925,6 +935,15 @@ namespace BackpackPrototype
             ItemView source,
             bool isDragging)
         {
+            if (isDragging)
+            {
+                draggingItem = source;
+            }
+            else if (draggingItem == source)
+            {
+                draggingItem = null;
+            }
+
             foreach (ItemView view in backpackViews)
             {
                 if (view == null || view == source)
@@ -942,6 +961,38 @@ namespace BackpackPrototype
             {
                 SetSelectedItem(null);
             }
+
+            RefreshDragCellVisualization();
+        }
+
+        private void HandleItemDragPreviewChanged(ItemView source)
+        {
+            if (source == draggingItem)
+            {
+                RefreshDragCellVisualization();
+            }
+        }
+
+        /// <summary>Refreshes the optional runtime drag-cell diagnostic overlay.</summary>
+        public void RefreshDragCellVisualization()
+        {
+            bool enabled =
+                PlayerBackpackDebugBridge.Active != null &&
+                PlayerBackpackDebugBridge.Active.Target == this &&
+                PlayerBackpackDebugBridge.Active
+                    .DragCellVisualizationEnabled;
+
+            dragDebugOverlay?.Refresh(
+                Backpack,
+                draggingItem,
+                enabled);
+        }
+
+        private void LateUpdate()
+        {
+            // The item view follows the pointer with a tween, so update after it
+            // to keep blue/green markers locked to its rendered cells.
+            RefreshDragCellVisualization();
         }
 
         private void HandleModelItemAdded(
@@ -1163,6 +1214,8 @@ namespace BackpackPrototype
 
         private void OnDisable()
         {
+            draggingItem = null;
+            dragDebugOverlay?.Clear();
             BattleFlowController.PhaseChanged -=
                 HandlePhaseChanged;
 

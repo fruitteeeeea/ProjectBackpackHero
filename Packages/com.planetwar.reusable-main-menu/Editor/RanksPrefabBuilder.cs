@@ -172,7 +172,8 @@ namespace PlanetWar.ReusableMainMenu.Editor
                     Card(1001, "Pioneer", "A small basic fighter craft, a common sight on the space battlefield.", "icon_feichuan_1", true, true, 1),
                     Card(1002, "UFO", "Fires lightning chains to deal chain damage to surrounding enemies.", "icon_feichuan_2", true, true, 1),
                     Card(1003, "Swarm", "Appears in massive swarms, flies at high speed, and focuses fire on enemy targets.", "icon_feichuan_3", true, true, 1),
-                    Card(1004, "Battleship", "The core combat force of space warfare, slow in flight, and excels at long-range heavy artillery barrages.", "icon_feichuan_4", true, true, 1),
+                    Card(2005, "Solar-Storm", "Deal damage to all enemy units in a vertical line.", "icon_jineng_5", true, true, 1, HangarCardItem.CardKind.Spell),
+                    Card(2003, "Freeze-Beam", "Freeze all combat units in a vertical line.", "icon_jineng_3", true, true, 1, HangarCardItem.CardKind.Spell),
                 };
                 for (var i = 0; i < deck.Length; i++) CreateStaticPreviewItem(equipTemplate, equipParent, view, $"HangarEquipPreview_{i + 1:00}", deck[i]);
             }

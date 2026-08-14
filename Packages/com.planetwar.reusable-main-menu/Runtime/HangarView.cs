@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 using UnityEngine.UI;
 
 namespace PlanetWar.ReusableMainMenu
@@ -26,12 +27,23 @@ namespace PlanetWar.ReusableMainMenu
         private IReadOnlyList<HangarItemSnapshot> boundItems;
         private int boundGold;
         private int boundDiamond;
+        private IReadOnlyList<HangarItemSnapshot> boundDeck;
+        private IReadOnlyList<HangarItemSnapshot> boundCollection;
+        private Action<int, HangarItemSnapshot> replaceDeckSlot;
+        private HangarCardItem pendingEquipCard;
         public void Show()
         {
+            EndEquipSelection();
             gameObject.SetActive(true);
             if (boundItems != null)
             {
                 Bind(boundItems, boundGold, boundDiamond);
+                HideDetails();
+                return;
+            }
+            if (boundDeck != null)
+            {
+                BindDeckAndCollection(boundDeck, boundCollection, boundGold, boundDiamond, replaceDeckSlot);
                 HideDetails();
                 return;
             }
@@ -43,6 +55,11 @@ namespace PlanetWar.ReusableMainMenu
             HideDetails();
             if (goldText != null && battleGoldText != null) goldText.text = battleGoldText.text;
             if (diamondText != null && battleDiamondText != null) diamondText.text = battleDiamondText.text;
+        }
+
+        private void OnDisable()
+        {
+            EndEquipSelection();
         }
 
         public void Bind(IReadOnlyList<HangarItemSnapshot> items, int gold, int diamond)
@@ -64,6 +81,57 @@ namespace PlanetWar.ReusableMainMenu
             if (diamondText != null) diamondText.text = diamond.ToString();
         }
 
+        public void BindDeckAndCollection(
+            IReadOnlyList<HangarItemSnapshot> deck,
+            IReadOnlyList<HangarItemSnapshot> collection,
+            int gold,
+            int diamond,
+            Action<int, HangarItemSnapshot> replaceSlot)
+        {
+            boundDeck = deck;
+            boundCollection = collection;
+            boundGold = gold;
+            boundDiamond = diamond;
+            replaceDeckSlot = replaceSlot;
+            BindDeckCards(deck);
+            BindCollectionCards(collection);
+            if (goldText != null) goldText.text = gold.ToString();
+            if (diamondText != null) diamondText.text = diamond.ToString();
+        }
+
+        public void HandleCardClick(HangarCardItem card)
+        {
+            if (card == null) return;
+            if (pendingEquipCard != null)
+            {
+                if (card.IsDeckSlot && IsCompatibleTarget(card, pendingEquipCard))
+                {
+                    replaceDeckSlot?.Invoke(card.DeckSlot, pendingEquipCard.Snapshot);
+                    EndEquipSelection();
+                }
+                return;
+            }
+            if (card.IsEmptyDeckSlot) return;
+            if (card.Kind == HangarCardItem.CardKind.Spell) ShowSpellDetails(card);
+            else ShowEntityDetails(card);
+        }
+
+        public void BeginEquipSelection(HangarCardItem card)
+        {
+            if (card == null || card.IsDeckSlot || !card.IsUnlocked || string.IsNullOrEmpty(card.Snapshot.ItemId)) return;
+            HideDetails();
+            EndEquipSelection();
+            pendingEquipCard = card;
+            foreach (HangarCardItem target in GetDeckCards())
+                target.SetSwapHighlight(IsCompatibleTarget(target, card));
+        }
+
+        public void EndEquipSelection()
+        {
+            pendingEquipCard = null;
+            foreach (HangarCardItem target in GetDeckCards()) target.SetSwapHighlight(false);
+        }
+
         private static bool IsDetailPreview(Transform item)
         {
             for (var current = item; current != null; current = current.parent)
@@ -78,6 +146,7 @@ namespace PlanetWar.ReusableMainMenu
             if (entityDetails != null) entityDetails.SetActive(true);
             ShowDetailMask(entityDetails);
             ApplyOriginalPreviewLayout(entityDetails, entityLayout, card);
+            ConfigureEquipButton(entityDetails, card);
         }
 
         public void ShowSpellDetails(HangarCardItem card)
@@ -87,6 +156,7 @@ namespace PlanetWar.ReusableMainMenu
             if (spellDetails != null) spellDetails.SetActive(true);
             ShowDetailMask(spellDetails);
             ApplyOriginalPreviewLayout(spellDetails, spellLayout, card);
+            ConfigureEquipButton(spellDetails, card);
         }
 
         public void HideDetails()
@@ -96,6 +166,69 @@ namespace PlanetWar.ReusableMainMenu
             if (detailMask != null) detailMask.SetActive(false);
             RestoreDetailParent(entityDetails, ref entityDetailsParent, entityDetailsSiblingIndex);
             RestoreDetailParent(spellDetails, ref spellDetailsParent, spellDetailsSiblingIndex);
+        }
+
+        private void BindDeckCards(IReadOnlyList<HangarItemSnapshot> deck)
+        {
+            List<HangarCardItem> cards = GetDeckCards();
+            for (int slot = 0; slot < cards.Count; slot++)
+            {
+                HangarCardItem card = cards[slot];
+                card.gameObject.SetActive(true);
+                HangarItemSnapshot snapshot = deck != null && slot < deck.Count ? deck[slot] : default;
+                HangarCardItem.CardKind kind = slot < 3 ? HangarCardItem.CardKind.Entity : HangarCardItem.CardKind.Spell;
+                if (string.IsNullOrEmpty(snapshot.ItemId)) card.ConfigureEmptyDeckSlot(this, slot, kind);
+                else card.Configure(this, snapshot, slot);
+            }
+        }
+
+        private void BindCollectionCards(IReadOnlyList<HangarItemSnapshot> collection)
+        {
+            List<HangarCardItem> cards = new();
+            foreach (HangarCardItem card in GetComponentsInChildren<HangarCardItem>(true))
+                if (!IsDetailPreview(card.transform) && !IsUnder(card.transform, "equipWeapon")) cards.Add(card);
+            for (int index = 0; index < cards.Count; index++)
+            {
+                bool active = collection != null && index < collection.Count;
+                cards[index].gameObject.SetActive(active);
+                if (active) cards[index].Configure(this, collection[index]);
+            }
+        }
+
+        private List<HangarCardItem> GetDeckCards()
+        {
+            Transform deck = Find(transform, "equipWeapon");
+            var cards = deck != null ? new List<HangarCardItem>(deck.GetComponentsInChildren<HangarCardItem>(true)) : new List<HangarCardItem>();
+            if (deck != null && cards.Count > 0)
+            {
+                while (cards.Count < 5)
+                {
+                    GameObject clone = Instantiate(cards[0].gameObject, deck, false);
+                    clone.name = $"HangarEquipPreview_{cards.Count + 1:00}";
+                    cards.Add(clone.GetComponent<HangarCardItem>());
+                }
+            }
+            return cards;
+        }
+
+        private static bool IsUnder(Transform item, string ancestorName)
+        {
+            for (Transform current = item; current != null; current = current.parent)
+                if (current.name == ancestorName) return true;
+            return false;
+        }
+
+        private static bool IsCompatibleTarget(HangarCardItem target, HangarCardItem source) =>
+            target != null && target.IsDeckSlot && source != null && target.Kind == source.Kind;
+
+        private void ConfigureEquipButton(GameObject panel, HangarCardItem card)
+        {
+            Transform buttonTransform = Find(panel != null ? panel.transform : null, "btnUpBattle");
+            Button button = buttonTransform != null ? buttonTransform.GetComponent<Button>() : null;
+            if (button == null) return;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => BeginEquipSelection(card));
+            button.gameObject.SetActive(card != null && !card.IsDeckSlot && card.IsUnlocked);
         }
 
         // The source project's UICardInfo/UICardSpell are modal views. UIManager puts a

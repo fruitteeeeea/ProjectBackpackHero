@@ -37,11 +37,16 @@ namespace PlanetWar.ReusableMainMenu
         public int UnlockRank => unlockRank;
         public bool IsUnlocked => unlocked;
         public bool IsEquipped => equipped;
+        public int DeckSlot { get; private set; } = -1;
+        public bool IsDeckSlot => DeckSlot >= 0;
+        public bool IsEmptyDeckSlot { get; private set; }
         public HangarItemSnapshot Snapshot { get; private set; }
 
-        public void Configure(HangarView owner, HangarItemSnapshot snapshot)
+        public void Configure(HangarView owner, HangarItemSnapshot snapshot, int deckSlot = -1)
         {
             Snapshot = snapshot;
+            DeckSlot = deckSlot;
+            IsEmptyDeckSlot = false;
             Configure(owner,
                 snapshot.Kind == HangarItemKind.Equipment ? CardKind.Spell : CardKind.Entity,
                 0, snapshot.Name, snapshot.Description, snapshot.Icon, snapshot.LockedIcon,
@@ -71,6 +76,53 @@ namespace PlanetWar.ReusableMainMenu
             Configure(hangar, snapshot);
         }
 
+        public void ConfigureEmptyDeckSlot(HangarView owner, int deckSlot, CardKind kind)
+        {
+            hangar = owner;
+            DeckSlot = deckSlot;
+            IsEmptyDeckSlot = true;
+            Snapshot = default;
+            cardKind = kind;
+            cardId = 0;
+            cardName = string.Empty;
+            cardDescription = string.Empty;
+            icon = null;
+            lockedIcon = null;
+            unlocked = true;
+            equipped = false;
+            level = 0;
+            ApplyVisual();
+        }
+
+        public void SetSwapHighlight(bool enabled)
+        {
+            StopAllCoroutines();
+            transform.localRotation = Quaternion.identity;
+            if (enabled) StartCoroutine(SwapBreath());
+        }
+
+        private System.Collections.IEnumerator SwapBreath()
+        {
+            while (true)
+            {
+                yield return RotateTo(-5f);
+                yield return RotateTo(5f);
+            }
+        }
+
+        private System.Collections.IEnumerator RotateTo(float target)
+        {
+            float elapsed = 0f;
+            float start = transform.localEulerAngles.z;
+            if (start > 180f) start -= 360f;
+            while (elapsed < 0.5f)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(start, target, elapsed / 0.5f));
+                yield return null;
+            }
+        }
+
         public void ConfigureOriginalLabels(TMP_Text prefix, TMP_Text value)
         {
             levelPrefixText = prefix;
@@ -84,7 +136,7 @@ namespace PlanetWar.ReusableMainMenu
         {
             var normal = Find(transform, "icon")?.GetComponent<Image>();
             var grey = Find(transform, "icon (1)")?.GetComponent<Image>();
-            if (normal != null) { normal.sprite = icon; normal.gameObject.SetActive(true); }
+            if (normal != null) { normal.sprite = icon; normal.gameObject.SetActive(!IsEmptyDeckSlot); }
             if (grey != null) { grey.sprite = lockedIcon != null ? lockedIcon : icon; grey.gameObject.SetActive(!unlocked); }
             if (Snapshot.Name != null)
             {
@@ -95,21 +147,21 @@ namespace PlanetWar.ReusableMainMenu
             // Original ItemCardEquip nests both the grey icon and its background under "Lock".
             // "Lockbg" is only one child, so it cannot be toggled on its own.
             var lockRoot = Find(transform, "Lock");
-            if (lockRoot != null) lockRoot.gameObject.SetActive(!unlocked);
+            if (lockRoot != null) lockRoot.gameObject.SetActive(!unlocked && !IsEmptyDeckSlot);
             var lockBackground = Find(transform, "Lockbg");
-            if (lockBackground != null) lockBackground.gameObject.SetActive(!unlocked);
+            if (lockBackground != null) lockBackground.gameObject.SetActive(!unlocked && !IsEmptyDeckSlot);
             SetText("name", cardName);
             // Original ItemCard uses two separate left-top labels: "lv" is the authored
             // prefix ("Lv"), while "level" is ItemCard.textLevel and receives the number.
             // These references are the direct equivalents of the original ItemCard's authored
             // "lv" prefix and textLevel fields. They are serialized by the Builder, rather than
             // selected from any similarly named nested text object.
-            if (levelPrefixText != null) levelPrefixText.text = "Lv";
-            if (levelValueText != null) levelValueText.text = level.ToString();
+            if (levelPrefixText != null) levelPrefixText.text = IsEmptyDeckSlot ? string.Empty : "Lv";
+            if (levelValueText != null) levelValueText.text = IsEmptyDeckSlot ? string.Empty : level.ToString();
             var rank = lockRoot != null ? lockRoot.GetComponentInChildren<TMP_Text>(true) : null;
             if (rank != null) rank.text = $"Rank {unlockRank}";
             var slider = Find(transform, "Slider");
-            if (slider != null) slider.gameObject.SetActive(unlocked);
+            if (slider != null) slider.gameObject.SetActive(unlocked && !IsEmptyDeckSlot);
 
             // Original ItemCard.Refresh(): objGuide is only enabled for a Spell before the
             // first rank-1 mission. Every Entity card, including all four initial deck cards,
@@ -127,8 +179,7 @@ namespace PlanetWar.ReusableMainMenu
         // Bound through the original card button's serialized m_OnClick list.
         public void onClickItem()
         {
-            if (cardKind == CardKind.Spell) hangar?.ShowSpellDetails(this);
-            else hangar?.ShowEntityDetails(this);
+            hangar?.HandleCardClick(this);
         }
 
         private void SetText(string parentName, string value)

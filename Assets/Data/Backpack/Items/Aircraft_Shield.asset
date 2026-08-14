@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Aircraft_Shield
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
   itemId: aircraft_shield
-  itemName: "\u62A4\u76FE\u98DE\u673A"
-  description: "\u6682\u65E0\u63CF\u8FF0"
+  itemName: Guardian Fighter
+  description: A durable defender built to hold the line.
   icon: {fileID: -3617167132811397957, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

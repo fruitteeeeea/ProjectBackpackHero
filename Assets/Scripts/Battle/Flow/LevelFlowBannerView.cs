@@ -63,11 +63,6 @@ namespace BackpackHero.Battle
         {
             ApplyStyle();
 
-            if (bannerBackground != null)
-            {
-                bannerBackground.color = color;
-            }
-
             if (bannerLabel != null)
             {
                 bannerLabel.text = text;
@@ -103,9 +98,7 @@ namespace BackpackHero.Battle
             if (bannerLabel != null)
             {
                 bannerLabel.fontSize = fontSize;
-                bannerLabel.fontStyle = FontStyles.Bold;
                 bannerLabel.color = textColor;
-                bannerLabel.outlineWidth = 0f;
             }
         }
 

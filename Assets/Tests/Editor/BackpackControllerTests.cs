@@ -844,6 +844,44 @@ public sealed class BackpackControllerTests
         Assert.That(backpack.CanMerge(levelOne, levelTwo), Is.False);
     }
 
+    [Test]
+    public void CanPlaceIgnoring_AllowsOneDisplacedItem()
+    {
+        BackpackController backpack = new BackpackController(4, 2);
+        ItemInstance source = NewItem("source", OneCell());
+        ItemInstance displaced = NewItem("displaced", OneCell());
+
+        Assert.That(
+            backpack.PlaceItem(displaced, new Vector2Int(1, 0)),
+            Is.True);
+
+        Assert.That(
+            backpack.CanPlaceIgnoring(
+                source,
+                new Vector2Int(1, 0),
+                displaced),
+            Is.True);
+    }
+
+    [Test]
+    public void CanPlaceIgnoring_RejectsUnignoredItem()
+    {
+        BackpackController backpack = new BackpackController(4, 2);
+        ItemInstance source = NewItem("source", OneCell());
+        ItemInstance first = NewItem("first", OneCell());
+        ItemInstance second = NewItem("second", OneCell());
+
+        Assert.That(backpack.PlaceItem(first, new Vector2Int(1, 0)), Is.True);
+        Assert.That(backpack.PlaceItem(second, new Vector2Int(2, 0)), Is.True);
+
+        Assert.That(
+            backpack.CanPlaceIgnoring(
+                source,
+                new Vector2Int(2, 0),
+                first),
+            Is.False);
+    }
+
     private static ItemInstance NewItem(
         string id,
         IReadOnlyList<Vector2Int> offsets,

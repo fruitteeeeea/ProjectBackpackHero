@@ -42,6 +42,10 @@ namespace BackpackPrototype
             "AircraftSpawnAnchor";
         private const string CollisionAnchorName =
             "CollisionCenterAnchor";
+        private const int ShopRollItemCount = 3;
+        private const int CompactShopItemCount = 4;
+        private const float ShopHorizontalPadding = 24f;
+        private const float CompactShopItemSpacing = 64f;
 
         [Header("Backpack UI")]
         [SerializeField]
@@ -105,6 +109,11 @@ namespace BackpackPrototype
         private bool shopInitializedForPreparation;
         private bool shopItemScaleCached;
         private Vector3 shopItemLocalScale = Vector3.one;
+        private RectTransform shopDropZone;
+        private RectTransform shopContainer;
+        private readonly HashSet<ItemInstance> pendingShopTransfers = new();
+        private readonly Dictionary<ItemInstance, Vector3>
+            pendingShopTransferStartPositions = new();
         private int nextItemId;
         private int remainingRolls;
 
@@ -198,9 +207,9 @@ namespace BackpackPrototype
             }
 
             RestoreDeckLayout();
-            RebuildBackpackViews();
-
+            InitializeShopContainer();
             CacheShopItemScale();
+            RebuildBackpackViews();
             InitializeShopForPreparation();
 
             HandlePhaseChanged(
@@ -404,7 +413,8 @@ namespace BackpackPrototype
 
         private bool RefreshShopInternal()
         {
-            if (shopSlots.Count == 0)
+            InitializeShopContainer();
+            if (shopContainer == null)
             {
                 return false;
             }
@@ -432,20 +442,15 @@ namespace BackpackPrototype
 
             ClearShopViews();
 
-            foreach (RectTransform slot in shopSlots)
+            for (int index = 0; index < ShopRollItemCount; index++)
             {
-                if (slot == null)
-                {
-                    continue;
-                }
-
                 ItemData item =
                     deckCatalog[
                         UnityEngine.Random.Range(
                             0,
                             deckCatalog.Count)];
 
-                CreateShopItem(item, slot);
+                CreateShopItem(item);
             }
 
             SetSelectedItem(null);
@@ -872,33 +877,18 @@ namespace BackpackPrototype
             return view;
         }
 
-        private void CreateShopItem(
-            ItemData data,
-            RectTransform slot)
+        private void CreateShopItem(ItemData data)
         {
             ItemView view =
-                CreateView(data, slot);
+                CreateView(data, shopContainer);
 
             if (view == null)
             {
                 return;
             }
 
-            RectTransform itemRect =
-                view.GetComponent<RectTransform>();
-
-            itemRect.anchorMin =
-                new Vector2(0.5f, 0.5f);
-            itemRect.anchorMax =
-                new Vector2(0.5f, 0.5f);
-            itemRect.pivot =
-                new Vector2(0.5f, 0.5f);
-            itemRect.anchoredPosition =
-                Vector2.zero;
-            itemRect.localScale =
-                GetShopItemScale(slot);
-
             shopItems.Add(view);
+            ReflowShopItems();
         }
 
         private Vector3 GetShopItemScale(
@@ -936,6 +926,123 @@ namespace BackpackPrototype
                 DivideScale(backpackScale.y, shopScale.y),
                 1f);
             shopItemScaleCached = true;
+        }
+
+        private void InitializeShopContainer()
+        {
+            if (shopContainer != null)
+            {
+                return;
+            }
+
+            shopDropZone = FindFirstShopSlot()?.parent as RectTransform;
+            if (shopDropZone == null)
+            {
+                return;
+            }
+
+            HorizontalLayoutGroup layout =
+                shopDropZone.GetComponent<HorizontalLayoutGroup>();
+            if (layout != null)
+            {
+                layout.enabled = false;
+            }
+
+            foreach (RectTransform slot in shopSlots)
+            {
+                if (slot != null)
+                {
+                    slot.gameObject.SetActive(false);
+                }
+            }
+
+            var containerObject = new GameObject(
+                "ShopItemContainer",
+                typeof(RectTransform));
+            shopContainer =
+                containerObject.GetComponent<RectTransform>();
+            shopContainer.SetParent(shopDropZone, false);
+            shopContainer.anchorMin = Vector2.zero;
+            shopContainer.anchorMax = Vector2.one;
+            shopContainer.offsetMin = Vector2.zero;
+            shopContainer.offsetMax = Vector2.zero;
+            shopContainer.pivot = new Vector2(.5f, .5f);
+
+            foreach (ItemView view in backpackViews)
+            {
+                view?.SetShopDropZone(shopDropZone);
+            }
+
+            foreach (ItemView view in shopItems)
+            {
+                view?.SetShopDropZone(shopDropZone);
+            }
+        }
+
+        private void ReflowShopItems(
+            ItemView tweeningView = null,
+            Vector3? tweenStartWorldPosition = null)
+        {
+            if (shopContainer == null || shopItems.Count == 0)
+            {
+                return;
+            }
+
+            float availableWidth = Mathf.Max(
+                0f,
+                shopContainer.rect.width - ShopHorizontalPadding * 2f);
+            float widestItem = 0f;
+            foreach (ItemView view in shopItems)
+            {
+                if (view != null)
+                {
+                    widestItem = Mathf.Max(
+                        widestItem,
+                        view.RectTransform.rect.width);
+                }
+            }
+
+            Vector3 itemScale = shopItemLocalScale;
+            float scaledWidth = widestItem;
+            bool compactLayout =
+                shopItems.Count <= CompactShopItemCount;
+            float gap = shopItems.Count > 1
+                ? compactLayout
+                    ? CompactShopItemSpacing
+                    : (availableWidth - scaledWidth * shopItems.Count) /
+                      (shopItems.Count - 1)
+                : 0f;
+            float contentWidth = scaledWidth * shopItems.Count +
+                gap * Mathf.Max(0, shopItems.Count - 1);
+            float firstX = -contentWidth * .5f + scaledWidth * .5f;
+
+            for (int index = 0; index < shopItems.Count; index++)
+            {
+                ItemView view = shopItems[index];
+                if (view == null)
+                {
+                    continue;
+                }
+
+                Vector2 position = new(
+                    firstX + index * (scaledWidth + gap),
+                    0f);
+                if (view == tweeningView)
+                {
+                    view.TweenToShopPosition(
+                        shopContainer,
+                        position,
+                        itemScale,
+                        tweenStartWorldPosition);
+                }
+                else
+                {
+                    view.SetShopPosition(
+                        shopContainer,
+                        position,
+                        itemScale);
+                }
+            }
         }
 
         private RectTransform FindFirstShopSlot()
@@ -1003,12 +1110,17 @@ namespace BackpackPrototype
                 HandleItemDragStateChanged;
             view.DragPreviewChanged +=
                 HandleItemDragPreviewChanged;
+            view.ShopDropRequested +=
+                HandleShopDropRequested;
+            view.SqueezeRequested +=
+                HandleSqueezeRequested;
             view.PlacedSuccessfully +=
                 HandleItemPlaced;
             view.DeletedSuccessfully +=
                 HandleItemDeleted;
             view.SetInteractionEnabled(
                 !BattleFlowController.IsCombatPhase);
+            view.SetShopDropZone(shopDropZone);
 
             return view;
         }
@@ -1088,6 +1200,95 @@ namespace BackpackPrototype
             }
         }
 
+        private bool HandleShopDropRequested(ItemView view)
+        {
+            if (view == null || view.Instance == null)
+            {
+                return false;
+            }
+
+            if (!view.IsPlacedInBackpack)
+            {
+                ReflowShopItems();
+                return true;
+            }
+
+            pendingShopTransfers.Add(view.Instance);
+            pendingShopTransferStartPositions[view.Instance] =
+                view.RectTransform.position;
+            bool removed = CombatController != null
+                ? CombatController.RemoveItem(view.Instance)
+                : Backpack != null && Backpack.RemoveItem(view.Instance);
+            if (!removed)
+            {
+                pendingShopTransfers.Remove(view.Instance);
+                pendingShopTransferStartPositions.Remove(view.Instance);
+            }
+
+            return removed;
+        }
+
+        private bool HandleSqueezeRequested(
+            ItemView source,
+            Vector2Int anchorCell)
+        {
+            if (source?.Instance == null || Backpack == null)
+            {
+                return false;
+            }
+
+            ItemInstance displaced = null;
+            foreach (Vector2Int cell in
+                     Backpack.GetOccupiedCells(source.Instance, anchorCell))
+            {
+                if (!Backpack.IsInside(cell))
+                {
+                    return false;
+                }
+
+                ItemInstance occupant = Backpack.GetItemAt(cell);
+                if (occupant == null || occupant == source.Instance)
+                {
+                    continue;
+                }
+
+                if (displaced != null && displaced != occupant)
+                {
+                    return false;
+                }
+
+                displaced = occupant;
+            }
+
+            if (displaced == null ||
+                !Backpack.CanPlaceIgnoring(
+                    source.Instance,
+                    anchorCell,
+                    source.Instance,
+                    displaced))
+            {
+                return false;
+            }
+
+            pendingShopTransfers.Add(displaced);
+            ItemView displacedView = FindView(displaced);
+            if (displacedView != null)
+            {
+                pendingShopTransferStartPositions[displaced] =
+                    displacedView.RectTransform.position;
+            }
+            bool removed = CombatController != null
+                ? CombatController.RemoveItem(displaced)
+                : Backpack.RemoveItem(displaced);
+            if (!removed)
+            {
+                pendingShopTransfers.Remove(displaced);
+                pendingShopTransferStartPositions.Remove(displaced);
+            }
+
+            return removed;
+        }
+
         /// <summary>Refreshes the optional runtime drag-cell diagnostic overlay.</summary>
         public void RefreshDragCellVisualization()
         {
@@ -1126,7 +1327,10 @@ namespace BackpackPrototype
                 return;
             }
 
-            shopItems.Remove(existing);
+            if (shopItems.Remove(existing))
+            {
+                ReflowShopItems();
+            }
 
             if (!backpackViews.Contains(existing))
             {
@@ -1164,7 +1368,31 @@ namespace BackpackPrototype
                 return;
             }
 
-            shopItems.Remove(view);
+            if (pendingShopTransfers.Remove(item))
+            {
+                Vector3 startWorldPosition =
+                    view.RectTransform.position;
+                if (pendingShopTransferStartPositions.TryGetValue(
+                        item,
+                        out Vector3 capturedStartWorldPosition))
+                {
+                    startWorldPosition = capturedStartWorldPosition;
+                }
+                pendingShopTransferStartPositions.Remove(item);
+                backpackViews.Remove(view);
+                if (!shopItems.Contains(view))
+                {
+                    shopItems.Add(view);
+                }
+
+                ReflowShopItems(view, startWorldPosition);
+                return;
+            }
+
+            if (shopItems.Remove(view))
+            {
+                ReflowShopItems();
+            }
             backpackViews.Remove(view);
 
             if (SelectedItem == view)
@@ -1184,7 +1412,10 @@ namespace BackpackPrototype
 
         private void HandleItemPlaced(ItemView view)
         {
-            shopItems.Remove(view);
+            if (shopItems.Remove(view))
+            {
+                ReflowShopItems();
+            }
 
             if (!backpackViews.Contains(view))
             {
@@ -1195,7 +1426,10 @@ namespace BackpackPrototype
 
         private void HandleItemDeleted(ItemView view)
         {
-            shopItems.Remove(view);
+            if (shopItems.Remove(view))
+            {
+                ReflowShopItems();
+            }
             backpackViews.Remove(view);
 
             if (SelectedItem == view)
@@ -1291,7 +1525,7 @@ namespace BackpackPrototype
                 itemLayer != null &&
                 dragLayer != null &&
                 trashZone != null &&
-                shopSlots.Count == 3 &&
+                shopSlots.Count > 0 &&
                 itemViewPrefab != null;
 
             if (!valid)

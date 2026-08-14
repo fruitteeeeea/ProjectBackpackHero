@@ -22,6 +22,9 @@ namespace BackpackPrototype
         [SerializeField] private Vector2 cellSize = new(80f, 80f);
         [SerializeField] private Vector2 spacing = new(8f, 8f);
 
+        [SerializeField, Min(0f)]
+        private float dropHitPadding = 32f;
+
         [SerializeField, Min(1)]
         private int columns = 7;
 
@@ -65,15 +68,31 @@ namespace BackpackPrototype
             }
 
             var rect = gridRect.rect;
-            var fromTopLeft = new Vector2(localPoint.x - rect.xMin, rect.yMax - localPoint.y);
+            float clampedLocalX = Mathf.Clamp(
+                localPoint.x,
+                rect.xMin,
+                rect.xMax);
+            float clampedLocalY = Mathf.Clamp(
+                localPoint.y,
+                rect.yMin,
+                rect.yMax);
+            bool isInsideExpandedBounds =
+                localPoint.x >= rect.xMin - dropHitPadding &&
+                localPoint.x <= rect.xMax + dropHitPadding &&
+                localPoint.y >= rect.yMin - dropHitPadding &&
+                localPoint.y <= rect.yMax + dropHitPadding;
+            if (!isInsideExpandedBounds)
+            {
+                return false;
+            }
+
+            var fromTopLeft = new Vector2(
+                clampedLocalX - rect.xMin,
+                rect.yMax - clampedLocalY);
             var stepX = cellSize.x + spacing.x;
             var stepY = cellSize.y + spacing.y;
 
-            if (fromTopLeft.x < 0f ||
-                fromTopLeft.x > rect.width ||
-                fromTopLeft.y < 0f ||
-                fromTopLeft.y > rect.height ||
-                stepX <= 0f ||
+            if (stepX <= 0f ||
                 stepY <= 0f)
             {
                 return false;

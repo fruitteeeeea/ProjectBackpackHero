@@ -135,6 +135,23 @@ namespace BackpackPrototype
                 -anchorCell.y * (cellSize.y + spacing.y));
         }
 
+        /// <summary>Returns the world-space center of a logical backpack cell.</summary>
+        public Vector3 GetCellCenterWorldPosition(Vector2Int cell)
+        {
+            if (gridRect == null)
+            {
+                return transform.position;
+            }
+
+            Rect rect = gridRect.rect;
+            Vector2 pitch = cellSize + spacing;
+            Vector3 localCellCenter = new(
+                rect.xMin + cell.x * pitch.x + cellSize.x * .5f,
+                rect.yMax - cell.y * pitch.y - cellSize.y * .5f);
+
+            return gridRect.TransformPoint(localCellCenter);
+        }
+
         public static Vector2Int CalculateAnchorCell(Vector2Int pointerCell, Vector2Int grabCellOffset)
         {
             return pointerCell - grabCellOffset;

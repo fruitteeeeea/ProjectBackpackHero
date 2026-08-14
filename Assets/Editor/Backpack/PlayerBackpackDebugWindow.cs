@@ -39,6 +39,8 @@ namespace BackpackHero.EditorTools
 
             DrawTargetSelector(bridge);
 
+            DrawDragCellVisualizationToggle(bridge);
+
             DrawRandomProjectileToggle();
 
             PlayerBackpackDebugSnapshot snapshot =
@@ -103,6 +105,19 @@ namespace BackpackHero.EditorTools
                         "随机池为空，发射时会回退到默认子弹。",
                         MessageType.Warning);
                 }
+            }
+        }
+
+        private static void DrawDragCellVisualizationToggle(
+            PlayerBackpackDebugBridge bridge)
+        {
+            bool enabled = EditorGUILayout.Toggle(
+                "拖拽格子可视化",
+                bridge.DragCellVisualizationEnabled);
+
+            if (enabled != bridge.DragCellVisualizationEnabled)
+            {
+                bridge.SetDragCellVisualizationEnabled(enabled);
             }
         }
 

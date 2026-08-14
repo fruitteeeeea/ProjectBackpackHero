@@ -98,6 +98,29 @@ namespace BackpackPrototype
         public bool IsDragging => isDragging;
 
         /// <summary>
+        /// Returns the current world-space center of one logical item cell.
+        /// This stays correct while the item is in either the backpack or drag layer.
+        /// </summary>
+        public Vector3 GetShapeCellCenterWorldPosition(
+            Vector2Int cellOffset)
+        {
+            if (rectTransform == null)
+            {
+                return transform.position;
+            }
+
+            Vector2 pitch = shapeCellSize + shapeSpacing;
+            Rect rect = rectTransform.rect;
+            Vector3 localCellCenter = new(
+                rect.xMin + cellOffset.x * pitch.x +
+                    shapeCellSize.x * .5f,
+                rect.yMax - cellOffset.y * pitch.y -
+                    shapeCellSize.y * .5f);
+
+            return rectTransform.TransformPoint(localCellCenter);
+        }
+
+        /// <summary>
         /// 物品图片的几何中心。用于图标、弹道和命中特效的统一锚点。
         /// </summary>
         public Vector3 GetImageGeometricCenterWorldPosition()
@@ -136,6 +159,7 @@ namespace BackpackPrototype
         public event Action<ItemView> SelectionRequested;
         public event Action<ItemView, ItemInstance> MergedSuccessfully;
         public event Action<ItemView, bool> DragStateChanged;
+        public event Action<ItemView> DragPreviewChanged;
 
         private void Awake()
         {
@@ -611,6 +635,7 @@ namespace BackpackPrototype
             canvasGroup.blocksRaycasts = false;
             canvasGroup.alpha = 0.5f;
             DragStateChanged?.Invoke(this, true);
+            DragPreviewChanged?.Invoke(this);
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -630,6 +655,7 @@ namespace BackpackPrototype
             {
                 CandidateAnchorCell = null;
                 GridView?.ClearPlacementPreview();
+                DragPreviewChanged?.Invoke(this);
                 return;
             }
 
@@ -643,6 +669,8 @@ namespace BackpackPrototype
                 CandidateAnchorCell = null;
                 GridView?.ClearPlacementPreview();
             }
+
+            DragPreviewChanged?.Invoke(this);
         }
 
         public void OnEndDrag(PointerEventData eventData)
@@ -682,6 +710,7 @@ namespace BackpackPrototype
             }
 
             CandidateAnchorCell = null;
+            DragPreviewChanged?.Invoke(this);
             PlayFailedFeedback();
         }
 

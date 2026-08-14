@@ -6,7 +6,7 @@ using UnityEngine;
 namespace BackpackPrototype
 {
     [Serializable] public sealed class PlayerItemState { public string ItemId; public bool Unlocked; public int Level; public int FragmentCount; }
-    [Serializable] public sealed class PlayerItemSaveData { public int Version; public int Gold; public int Diamond; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
+    [Serializable] public sealed class PlayerItemSaveData { public int Gold; public int Diamond; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
     public enum PlayerItemUpgradeResult { Success, NotFound, Locked, MaxLevel, GoldNotEnough, FragmentsNotEnough }
     public enum PlayerDeckResult { Success, InvalidSlot, InvalidItem, Locked, WrongType, Duplicate, Empty }
 
@@ -17,7 +17,6 @@ namespace BackpackPrototype
         public const int AircraftDeckSlotCount = 3;
         public const int EquipmentDeckSlotCount = 2;
         public const int DeckSlotCount = AircraftDeckSlotCount + EquipmentDeckSlotCount;
-        private const int CurrentSaveVersion = 2;
         [SerializeField] private PlayerItemCatalog catalog;
         private PlayerItemSaveData data;
         public static PlayerItemSystem Instance { get; private set; }
@@ -122,10 +121,11 @@ namespace BackpackPrototype
                     {
                         data.Items.Add(new PlayerItemState { ItemId = item.ItemId, Unlocked = true, Level = MaximumLevel, FragmentCount = 0 });
                     }
-                    // The prototype begins with its complete collection available.  Version 2
-                    // repairs historical saves that kept newly-added equipment locked or below
-                    // the maximum level, which otherwise makes EnsureDeck clear those slots.
-                    else if (data.Version < CurrentSaveVersion)
+                    // Do not trust a persisted progression state here. This prototype starts
+                    // with, and always reloads, its complete catalog unlocked at maximum level.
+                    // This also prevents EnsureDeck from clearing a valid equipment deck slot
+                    // when an earlier run persisted an incorrect locked state.
+                    else if (!state.Unlocked || state.Level != MaximumLevel)
                     {
                         state.Unlocked = true;
                         state.Level = MaximumLevel;
@@ -133,7 +133,6 @@ namespace BackpackPrototype
                 }
             }
             else if (catalog != null) Debug.LogError(catalogError, catalog);
-            data.Version = CurrentSaveVersion;
             EnsureDeck();
             Save();
         }

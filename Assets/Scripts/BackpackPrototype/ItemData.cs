@@ -11,7 +11,9 @@ namespace BackpackPrototype
     {
         [Header("Player Progress")]
         [SerializeField, FormerlySerializedAs("itemId")] private string id;
-        [SerializeField] private bool initiallyUnlocked = true;
+        // Kept serialized solely so existing ItemData assets retain their layout. PlayerItemSystem
+        // intentionally ignores it: this prototype exposes the entire catalog from the start.
+        [SerializeField, HideInInspector] private bool initiallyUnlocked = true;
         [SerializeField, TextArea(1, 2)] private string unlockRequirementText = "Unlocked by default";
         [SerializeField, Min(0), FormerlySerializedAs("upgradeGoldCost")] private int cost;
         [SerializeField, Min(0), FormerlySerializedAs("upgradeFragmentCost")] private int debris;
@@ -46,7 +48,7 @@ namespace BackpackPrototype
         public float Cd => cd;
         public int Count => Mathf.Max(1, count);
         public int Price => price;
-        public bool InitiallyUnlocked => initiallyUnlocked;
+        public bool InitiallyUnlocked => true;
         public string UnlockRequirementText => unlockRequirementText;
         public Sprite Icon => icon;
         public Color BackgroundColor => backgroundColor;

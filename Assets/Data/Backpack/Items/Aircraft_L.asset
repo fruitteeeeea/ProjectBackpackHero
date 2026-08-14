@@ -12,13 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Aircraft_L
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
-  itemId: aircraft_l
-  itemName: Twin Fighter
-  description: Deploys two balanced fighters in a compact formation.
-  icon: {fileID: 2875208246182030159, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
+  id: aircraft_l
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: Twin Fighter
+  desc: Deploys two balanced fighters in a compact formation.
+  icon: {fileID: 5768624739262165822, guid: 1204ade98cf561e43a32908b931e3f18, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0
-  cooldownDuration: 3
-  spawnCount: 2
+  equipmentColor: {r: 1, g: 1, b: 1, a: 1}
+  equipmentEffects: []
+  cd: 3
+  price: 0
+  count: 2
   shape: {fileID: 11400000, guid: 84129650cb54b4c05ab80593ee53926b, type: 2}
   fighterDefinition: {fileID: 11400000, guid: 33a511e51c88b4d1987a9accec00659b, type: 2}

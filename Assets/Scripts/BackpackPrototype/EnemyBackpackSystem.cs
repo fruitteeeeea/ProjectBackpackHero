@@ -20,7 +20,13 @@ namespace BackpackPrototype
         private EnemyBackpackData defaultData;
 
         [SerializeField]
-        private List<ItemPrefabEntry> itemCatalog = new();
+        private ItemView itemViewPrefab;
+        [SerializeField] private ItemView itemView1x2Prefab;
+        [SerializeField] private ItemView itemView2x1Prefab;
+        [SerializeField] private ItemView itemViewLMissingBottomLeftPrefab;
+        [SerializeField] private ItemView itemViewLMissingBottomRightPrefab;
+        [SerializeField] private ItemView itemViewLMissingTopLeftPrefab;
+        [SerializeField] private ItemView itemViewLMissingTopRightPrefab;
 
         [Header("Read Only Backpack UI")]
         [SerializeField]
@@ -176,8 +182,7 @@ namespace BackpackPrototype
                 BackpackLayoutItem placement =
                     layout[index];
 
-                if (placement.Data == null ||
-                    FindCatalogEntry(placement.Data) == null)
+                if (placement.Data == null)
                 {
                     Debug.LogError(
                         $"敌人背包布局条目 " +
@@ -271,17 +276,15 @@ namespace BackpackPrototype
                 return FindView(item);
             }
 
-            ItemPrefabEntry entry =
-                FindCatalogEntry(item.Data);
-
-            if (entry?.Prefab == null)
+            ItemView prefab = ResolveItemViewPrefab(item.Data);
+            if (item.Data == null || prefab == null)
             {
                 return null;
             }
 
             ItemView view =
                 Instantiate(
-                    entry.Prefab,
+                    prefab,
                     itemLayer,
                     false);
 
@@ -299,20 +302,6 @@ namespace BackpackPrototype
             view.SetInteractionEnabled(false);
             itemViews.Add(view);
             return view;
-        }
-
-        private ItemPrefabEntry FindCatalogEntry(
-            ItemData data)
-        {
-            foreach (ItemPrefabEntry entry in itemCatalog)
-            {
-                if (entry != null && entry.Data == data)
-                {
-                    return entry;
-                }
-            }
-
-            return null;
         }
 
         private ItemView FindView(ItemInstance item)
@@ -397,6 +386,11 @@ namespace BackpackPrototype
             }
         }
 
+        private ItemView ResolveItemViewPrefab(ItemData data) =>
+            ItemViewPrefabSelector.Select(data, itemViewPrefab, itemView1x2Prefab, itemView2x1Prefab,
+                itemViewLMissingBottomLeftPrefab, itemViewLMissingBottomRightPrefab,
+                itemViewLMissingTopLeftPrefab, itemViewLMissingTopRightPrefab);
+
         private bool ValidateConfiguration()
         {
             bool valid =
@@ -407,15 +401,7 @@ namespace BackpackPrototype
                 itemLayer != null &&
                 aircraftSpawnAnchor != null &&
                 collisionCenterAnchor != null &&
-                itemCatalog.Count > 0;
-
-            foreach (ItemPrefabEntry entry in itemCatalog)
-            {
-                valid &=
-                    entry != null &&
-                    entry.Data != null &&
-                    entry.Prefab != null;
-            }
+                itemViewPrefab != null;
 
             if (!valid)
             {

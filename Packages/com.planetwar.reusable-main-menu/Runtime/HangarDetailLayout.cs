@@ -52,7 +52,9 @@ namespace PlanetWar.ReusableMainMenu
             if (actionGroup != null) actionGroup.SetActive(card.IsUnlocked);
             if (previewItem != null)
             {
-                previewItem.Configure(null, card.Kind, card.CardId, card.CardName, card.CardDescription,
+                // Match the source UICardInfo -> ItemCard.Init path: the detail preview uses
+                // the same card presentation configuration as the card that opened it.
+                previewItem.Configure(card.Owner, card.Kind, card.CardId, card.CardName, card.CardDescription,
                     card.Icon, card.LockedIcon, card.IsUnlocked, card.IsEquipped, card.UnlockRank, card.Level);
             }
 

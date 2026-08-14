@@ -103,6 +103,27 @@ public sealed class PlayerItemSystemTests
         Assert.That(system.GetDeckItem(3), Is.SameAs(equipment));
     }
 
+    [Test]
+    public void LegacySave_Equipment_IsUnlockedMaxLevelAndKeptInDeck()
+    {
+        ItemData equipment = NewItem("legacy_equipment");
+        PlayerPrefs.SetString(PlayerItemSystem.SaveKey, JsonUtility.ToJson(new PlayerItemSaveData
+        {
+            Items = new List<PlayerItemState>
+            {
+                new() { ItemId = equipment.ItemId, Unlocked = false, Level = 1 }
+            },
+            DeckItemIds = new List<string> { null, null, null, equipment.ItemId, null }
+        }));
+        PlayerPrefs.Save();
+
+        PlayerItemSystem system = NewSystem(equipment);
+
+        Assert.That(system.IsUnlocked(equipment), Is.True);
+        Assert.That(system.GetLevel(equipment), Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(system.GetDeckItem(3), Is.SameAs(equipment));
+    }
+
     private PlayerItemSystem NewSystem(params ItemData[] items)
     {
         GameObject systemRoot = new GameObject("TestSystem");

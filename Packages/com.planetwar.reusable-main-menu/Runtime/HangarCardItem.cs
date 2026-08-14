@@ -37,6 +37,7 @@ namespace PlanetWar.ReusableMainMenu
         public int UnlockRank => unlockRank;
         public bool IsUnlocked => unlocked;
         public bool IsEquipped => equipped;
+        public HangarView Owner => hangar;
         public int DeckSlot { get; private set; } = -1;
         public bool IsDeckSlot => DeckSlot >= 0;
         public bool IsEmptyDeckSlot { get; private set; }
@@ -138,10 +139,20 @@ namespace PlanetWar.ReusableMainMenu
             var grey = Find(transform, "icon (1)")?.GetComponent<Image>();
             if (normal != null) { normal.sprite = icon; normal.gameObject.SetActive(!IsEmptyDeckSlot); }
             if (grey != null) { grey.sprite = lockedIcon != null ? lockedIcon : icon; grey.gameObject.SetActive(!unlocked); }
-            if (Snapshot.Name != null)
+            Image background = FindCardBackground();
+            if (background != null)
             {
-                var background = Find(transform, "bg")?.GetComponent<Image>();
-                if (background != null) background.color = Snapshot.BackgroundColor;
+                ImageLoader backgroundLoader = background.GetComponent<ImageLoader>();
+                int styleIndex = cardKind == CardKind.Entity ? 0 : 1;
+                if (backgroundLoader != null && backgroundLoader.sprites != null &&
+                    styleIndex < backgroundLoader.sprites.Length)
+                {
+                    // Match the source ItemCard.Refresh() contract: the card's own
+                    // ImageLoader owns its blue / purple / orange card-art variants.
+                    backgroundLoader.Select(styleIndex);
+                    background.color = Color.white;
+                }
+                else if (Snapshot.Name != null) background.color = Snapshot.BackgroundColor;
             }
 
             // Original ItemCardEquip nests both the grey icon and its background under "Lock".
@@ -163,12 +174,11 @@ namespace PlanetWar.ReusableMainMenu
             var slider = Find(transform, "Slider");
             if (slider != null) slider.gameObject.SetActive(unlocked && !IsEmptyDeckSlot);
 
-            // Original ItemCard.Refresh(): objGuide is only enabled for a Spell before the
-            // first rank-1 mission. Every Entity card, including all four initial deck cards,
-            // disables it. The package has no MissionSystem yet, so its fixed original preview
-            // uses the unstarted-mission state.
+            // Target ItemCard.Refresh() enables this only for a Spell before its first tutorial
+            // mission starts. This project has no equivalent mission/onboarding state, so guide
+            // must remain off; otherwise it covers every equipment card's art.
             var guide = Find(transform, "guide");
-            if (guide != null) guide.gameObject.SetActive(cardKind == CardKind.Spell);
+            if (guide != null) guide.gameObject.SetActive(false);
         }
 
         private void OnValidate()
@@ -187,6 +197,15 @@ namespace PlanetWar.ReusableMainMenu
             var parent = Find(transform, parentName);
             var text = parent != null ? parent.GetComponentInChildren<TMP_Text>(true) : null;
             if (text != null) text.text = value;
+        }
+
+        // Original ItemCard's background Image owns ImageLoader.sprites. The direct Image
+        // child is that layer for Deck, Collection and detail-preview templates.
+        private Image FindCardBackground()
+        {
+            Image background = transform.Find("Image")?.GetComponent<Image>();
+            if (background != null) return background;
+            return Find(transform, "bg")?.GetComponent<Image>();
         }
 
         private static Transform Find(Transform root, string name)

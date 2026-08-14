@@ -31,6 +31,7 @@ namespace PlanetWar.ReusableMainMenu
         private IReadOnlyList<HangarItemSnapshot> boundCollection;
         private Action<int, HangarItemSnapshot> replaceDeckSlot;
         private HangarCardItem pendingEquipCard;
+
         public void Show()
         {
             EndEquipSelection();

@@ -379,15 +379,6 @@ namespace BackpackHero.EditorTools
                         "CollisionCenterAnchor")
                     as RectTransform;
 
-            PlayerBackpackSystem playerPrefab =
-                AssetDatabase.LoadAssetAtPath<GameObject>(
-                        PlayerSystemPrefabPath)
-                    .GetComponent<PlayerBackpackSystem>();
-            SerializedObject playerData =
-                new SerializedObject(playerPrefab);
-            SerializedProperty playerCatalog =
-                playerData.FindProperty("itemCatalog");
-
             SerializedObject enemyData =
                 new SerializedObject(system);
             enemyData.FindProperty("defaultData")
@@ -403,34 +394,27 @@ namespace BackpackHero.EditorTools
                     "collisionCenterAnchor")
                 .objectReferenceValue = centerAnchor;
 
-            SerializedProperty enemyCatalog =
-                enemyData.FindProperty("itemCatalog");
-            enemyCatalog.arraySize =
-                playerCatalog.arraySize;
-
-            for (int index = 0;
-                 index < playerCatalog.arraySize;
-                 index++)
-            {
-                SerializedProperty source =
-                    playerCatalog.GetArrayElementAtIndex(
-                        index);
-                SerializedProperty destination =
-                    enemyCatalog.GetArrayElementAtIndex(
-                        index);
-                destination.FindPropertyRelative("data")
-                    .objectReferenceValue =
-                    source.FindPropertyRelative("data")
-                        .objectReferenceValue;
-                destination.FindPropertyRelative(
-                        "prefab")
-                    .objectReferenceValue =
-                    source.FindPropertyRelative(
-                            "prefab")
-                        .objectReferenceValue;
-            }
+            PlayerBackpackSystem playerPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(
+                        PlayerSystemPrefabPath)
+                    .GetComponent<PlayerBackpackSystem>();
+            SerializedObject playerData =
+                new SerializedObject(playerPrefab);
+            CopyItemViewPrefab(playerData, enemyData, "itemViewPrefab");
+            CopyItemViewPrefab(playerData, enemyData, "itemView1x2Prefab");
+            CopyItemViewPrefab(playerData, enemyData, "itemView2x1Prefab");
+            CopyItemViewPrefab(playerData, enemyData, "itemViewLMissingBottomLeftPrefab");
+            CopyItemViewPrefab(playerData, enemyData, "itemViewLMissingBottomRightPrefab");
+            CopyItemViewPrefab(playerData, enemyData, "itemViewLMissingTopLeftPrefab");
+            CopyItemViewPrefab(playerData, enemyData, "itemViewLMissingTopRightPrefab");
 
             enemyData.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void CopyItemViewPrefab(SerializedObject source, SerializedObject destination, string property)
+        {
+            destination.FindProperty(property).objectReferenceValue =
+                source.FindProperty(property).objectReferenceValue;
         }
 
         private static void IntegrateMainScene()

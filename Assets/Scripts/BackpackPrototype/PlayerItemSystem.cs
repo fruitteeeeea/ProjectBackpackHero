@@ -6,7 +6,7 @@ using UnityEngine;
 namespace BackpackPrototype
 {
     [Serializable] public sealed class PlayerItemState { public string ItemId; public bool Unlocked; public int Level; public int FragmentCount; }
-    [Serializable] public sealed class PlayerItemSaveData { public int Gold; public int Diamond; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
+    [Serializable] public sealed class PlayerItemSaveData { public int Version; public int Gold; public int Diamond; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
     public enum PlayerItemUpgradeResult { Success, NotFound, Locked, MaxLevel, GoldNotEnough, FragmentsNotEnough }
     public enum PlayerDeckResult { Success, InvalidSlot, InvalidItem, Locked, WrongType, Duplicate, Empty }
 
@@ -17,6 +17,7 @@ namespace BackpackPrototype
         public const int AircraftDeckSlotCount = 3;
         public const int EquipmentDeckSlotCount = 2;
         public const int DeckSlotCount = AircraftDeckSlotCount + EquipmentDeckSlotCount;
+        private const int CurrentSaveVersion = 2;
         [SerializeField] private PlayerItemCatalog catalog;
         private PlayerItemSaveData data;
         public static PlayerItemSystem Instance { get; private set; }
@@ -115,12 +116,24 @@ namespace BackpackPrototype
             if (catalog != null && catalog.IsValid(out catalogError))
             {
                 foreach (ItemData item in catalog.Items)
-                    if (GetState(item) == null)
+                {
+                    PlayerItemState state = GetState(item);
+                    if (state == null)
                     {
                         data.Items.Add(new PlayerItemState { ItemId = item.ItemId, Unlocked = true, Level = MaximumLevel, FragmentCount = 0 });
                     }
+                    // The prototype begins with its complete collection available.  Version 2
+                    // repairs historical saves that kept newly-added equipment locked or below
+                    // the maximum level, which otherwise makes EnsureDeck clear those slots.
+                    else if (data.Version < CurrentSaveVersion)
+                    {
+                        state.Unlocked = true;
+                        state.Level = MaximumLevel;
+                    }
+                }
             }
             else if (catalog != null) Debug.LogError(catalogError, catalog);
+            data.Version = CurrentSaveVersion;
             EnsureDeck();
             Save();
         }

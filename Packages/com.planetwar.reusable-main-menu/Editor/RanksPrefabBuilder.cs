@@ -209,9 +209,10 @@ namespace PlanetWar.ReusableMainMenu.Editor
             if (lockRoot != null) lockRoot.gameObject.SetActive(!state.unlocked);
             var lockBackground = Find(item.transform, "Lockbg");
             if (lockBackground != null) lockBackground.gameObject.SetActive(!state.unlocked);
-            // Original ItemCard only shows guide for spells before their first unlock mission.
+            // This project has no equivalent onboarding mission state, so guide must never
+            // obscure either aircraft or equipment cards in the baked prefab.
             var guide = Find(item.transform, "guide");
-            if (guide != null) guide.gameObject.SetActive(state.kind == HangarCardItem.CardKind.Spell);
+            if (guide != null) guide.gameObject.SetActive(false);
             // Keep the original authored "Lv" label unchanged; ItemCard.textLevel targets
             // the separate "level" node and only writes the numeric level.
             var levelPrefix = Find(item.transform, "lv")?.GetComponent<TMP_Text>();

@@ -12,12 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Aircraft_Charge
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
-  itemId: aircraft_charge
-  itemName: Dash Fighter
-  description: A fast striker that trades durability for speed.
+  id: aircraft_charge
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: 冲锋飞机
+  desc: 高速突击，牺牲耐久换取机动。
   icon: {fileID: 5743120003231325584, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0
-  cooldownDuration: 1.5
+  equipmentColor: {r: 1, g: 1, b: 1, a: 1}
+  equipmentEffects: []
+  cd: 1.5
+  price: 0
+  count: 1
   shape: {fileID: 11400000, guid: 9cb7d1e77bbeb4d2e8bc5751c1d239a7, type: 2}
   fighterDefinition: {fileID: 11400000, guid: bc8e24684bab14f7c8fb5cefd9c00d9b, type: 2}

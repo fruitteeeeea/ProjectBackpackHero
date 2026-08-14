@@ -203,7 +203,7 @@ MonoBehaviour:
   itemViewLMissingBottomRightPrefab: {fileID: 2060890215293225743, guid: 363c75cb744224d4fae2fbf1f53d6564, type: 3}
   itemViewLMissingTopLeftPrefab: {fileID: 2060890215293225743, guid: b07eee93167a1413cab6cbce611a03fc, type: 3}
   itemViewLMissingTopRightPrefab: {fileID: 2060890215293225743, guid: 499946e6db2054b598bfbe4dc7d5f761, type: 3}
-  rollsPerPreparation: 3
+  rollsPerPreparation: 1
   curveInput: {fileID: 0}
   adjustmentCurve: {fileID: 0}
   aircraftSpawnAnchor: {fileID: 0}

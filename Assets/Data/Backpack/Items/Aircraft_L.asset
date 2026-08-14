@@ -17,8 +17,8 @@ MonoBehaviour:
   unlockRequirementText: Unlocked by default
   cost: 0
   debris: 0
-  name: Twin Fighter
-  desc: Deploys two balanced fighters in a compact formation.
+  name: 双机编队
+  desc: 紧凑编队一次部署两架均衡战机。
   icon: {fileID: 5768624739262165822, guid: 1204ade98cf561e43a32908b931e3f18, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

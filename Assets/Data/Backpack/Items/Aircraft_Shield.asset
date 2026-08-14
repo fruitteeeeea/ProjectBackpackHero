@@ -12,12 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Aircraft_Shield
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
-  itemId: aircraft_shield
-  itemName: Guardian Fighter
-  description: A durable defender built to hold the line.
-  icon: {fileID: -3617167132811397957, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
+  id: aircraft_shield
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: 护盾飞机
+  desc: 高耐久防御机，负责稳固战线。
+  icon: {fileID: 4677714814586562668, guid: 09c84d2fb02194b929bfdf85903d5e5f, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0
-  cooldownDuration: 3.5
+  equipmentColor: {r: 1, g: 1, b: 1, a: 1}
+  equipmentEffects: []
+  cd: 3.5
+  price: 0
+  count: 1
   shape: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
   fighterDefinition: {fileID: 11400000, guid: 705345fd895c9430ba8d0dc3c827fc81, type: 2}

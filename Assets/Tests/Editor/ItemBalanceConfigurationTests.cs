@@ -60,6 +60,8 @@ public sealed class ItemBalanceConfigurationTests
             "Assets/Settings/Battle/Fighters/Fighter_02_Charge.asset");
         FighterDefinition shieldFighter = Load<FighterDefinition>(
             "Assets/Settings/Battle/Fighters/Fighter_03_Shield.asset");
+        ItemData shieldItem = Load<ItemData>(
+            "Assets/Data/Backpack/Items/Aircraft_Shield.asset");
         ProjectileEquipmentEffectDefinition rapidCannon =
             Load<ProjectileEquipmentEffectDefinition>(
                 "Assets/Data/Backpack/EquipmentEffects/" +
@@ -70,6 +72,8 @@ public sealed class ItemBalanceConfigurationTests
             Is.EqualTo(0.8f));
         Assert.That(shieldFighter.TargetingPriority,
             Is.EqualTo(1));
+        Assert.That(shieldItem.Icon,
+            Is.EqualTo(shieldFighter.Sprite));
         Assert.That(rapidCannon.Cooldown,
             Is.EqualTo(0.6f));
     }
@@ -151,10 +155,10 @@ public sealed class ItemBalanceConfigurationTests
     {
         (string path, string name, string description)[] expectedItems =
         {
-            ("Aircraft_Charge.asset", "Dash Fighter", "A fast striker that trades durability for speed."),
-            ("Aircraft_First.asset", "Scout Fighter", "A balanced fighter for reliable frontline damage."),
-            ("Aircraft_L.asset", "Twin Fighter", "Deploys two balanced fighters in a compact formation."),
-            ("Aircraft_Shield.asset", "Guardian Fighter", "A durable defender built to hold the line."),
+            ("Aircraft_Charge.asset", "冲锋飞机", "高速突击，牺牲耐久换取机动。"),
+            ("Aircraft_First.asset", "初号飞机", "均衡的前线战机，提供稳定火力。"),
+            ("Aircraft_L.asset", "双机编队", "紧凑编队一次部署两架均衡战机。"),
+            ("Aircraft_Shield.asset", "护盾飞机", "高耐久防御机，负责稳固战线。"),
             ("Equipment_1x2.asset", "Arc Launcher", "Adds arcing shots to adjacent fighters."),
             ("Equipment_ArcCoil.asset", "Arc Coil", "Adds chain-lightning shots to adjacent fighters."),
             ("Equipment_First.asset", "Blast Module", "Adds explosive shots to adjacent fighters."),

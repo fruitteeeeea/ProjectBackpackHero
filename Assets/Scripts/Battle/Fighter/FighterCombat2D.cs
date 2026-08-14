@@ -81,6 +81,8 @@ namespace BackpackHero.Battle
             EquipmentEffectsController =>
             equipmentEffectsController;
 
+        public event System.Action DefaultAttackFired;
+
         public float EffectiveAttackRange =>
             fighter != null &&
             fighter.Definition != null
@@ -197,6 +199,17 @@ namespace BackpackHero.Battle
         public void ConfigureDefaultFireMode(
             float attackInterval)
         {
+            ConfigureDefaultFireMode(
+                attackInterval,
+                null,
+                null);
+        }
+
+        public void ConfigureDefaultFireMode(
+            float attackInterval,
+            BattleAttack2D attackPrefabOverride,
+            ProjectileFirePattern firePatternOverride)
+        {
             if (fireModeController == null)
             {
                 fireModeController =
@@ -212,8 +225,12 @@ namespace BackpackHero.Battle
             }
 
             fireModeController.ReplaceWithSingleMode(
-                defaultAttackPrefab,
-                defaultFirePattern,
+                attackPrefabOverride != null
+                    ? attackPrefabOverride
+                    : defaultAttackPrefab,
+                firePatternOverride != null
+                    ? firePatternOverride
+                    : defaultFirePattern,
                 attackInterval);
         }
 
@@ -442,11 +459,14 @@ namespace BackpackHero.Battle
                     ? request.AttackPrefab
                     : defaultAttackPrefab;
 
-            FireAttack(
+            if (FireAttack(
                 defaultPrefab,
                 request.Direction,
                 true,
-                ProjectileVisualSource.FighterDefault);
+                ProjectileVisualSource.FighterDefault))
+            {
+                DefaultAttackFired?.Invoke();
+            }
         }
 
         private void HandleEquipmentProjectileShotRequested(
@@ -459,7 +479,7 @@ namespace BackpackHero.Battle
                 ProjectileVisualSource.Equipment);
         }
 
-        private void FireAttack(
+        private bool FireAttack(
             BattleAttack2D requestedPrefab,
             Vector2 fireDirection,
             bool allowRandomProjectileOverride,
@@ -470,20 +490,57 @@ namespace BackpackHero.Battle
                     ? ResolveAttackPrefab(requestedPrefab)
                     : requestedPrefab;
 
+            if (currentTarget == null)
+            {
+                return false;
+            }
+
+            return FireAttackAtPoint(
+                attackPrefab,
+                GetTargetPosition(currentTarget),
+                fireDirection,
+                visualSource);
+        }
+
+        /// <summary>
+        /// 发射一枚不参与随机弹池替换的攻击，并指定其瞄准终点。
+        /// 特殊能力使用它来复用飞机的伤害、速度和阵营结算。
+        /// </summary>
+        public bool FireAttackAtPoint(
+            BattleAttack2D attackPrefab,
+            Vector2 targetPosition,
+            ProjectileVisualSource visualSource =
+                ProjectileVisualSource.FighterDefault)
+        {
+            Vector2 fireDirection = firePoint != null
+                ? targetPosition - (Vector2)firePoint.position
+                : Vector2.zero;
+            return FireAttackAtPoint(
+                attackPrefab,
+                targetPosition,
+                fireDirection,
+                visualSource);
+        }
+
+        private bool FireAttackAtPoint(
+            BattleAttack2D attackPrefab,
+            Vector2 targetPosition,
+            Vector2 fireDirection,
+            ProjectileVisualSource visualSource)
+        {
             if (fighter == null ||
                 fighter.Definition == null ||
                 attackPrefab == null ||
-                firePoint == null ||
-                currentTarget == null)
+                firePoint == null)
             {
                 ReportMissingShootingConfiguration();
-                return;
+                return false;
             }
 
             if (fireDirection.sqrMagnitude <=
                 Mathf.Epsilon)
             {
-                return;
+                return false;
             }
 
             BattleAttack2D attack =
@@ -493,9 +550,6 @@ namespace BackpackHero.Battle
                     Quaternion.FromToRotation(
                         Vector2.up,
                         fireDirection));
-
-            Vector2 targetPosition =
-                GetTargetPosition(currentTarget);
 
             BattleAttackLaunchContext
                 launchContext =
@@ -526,6 +580,7 @@ namespace BackpackHero.Battle
                 GetComponent<FighterFeedbacks>();
 
             feedbacks?.PlayAttack();
+            return true;
         }
 
         private static BattleAttack2D ResolveAttackPrefab(

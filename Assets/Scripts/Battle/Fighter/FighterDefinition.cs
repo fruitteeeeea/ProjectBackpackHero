@@ -52,6 +52,24 @@ namespace BackpackHero.Battle
         [Tooltip("子弹每秒移动的世界单位数。")]
         [SerializeField, Min(0.1f)]
         private float projectileSpeed = 8f;
+
+        [Header("Default Attack Override")]
+        [Tooltip("留空时使用 Fighter Prefab 的默认攻击预制体。")]
+        [SerializeField]
+        private BattleAttack2D defaultAttackPrefab;
+
+        [Tooltip("留空时使用 Fighter Prefab 的默认发射模式。")]
+        [SerializeField]
+        private ProjectileFirePattern defaultFirePattern;
+
+        [Header("Special Abilities")]
+        [Tooltip("飞机死亡时立即触发其 ProjectileImpactEffect2D。")]
+        [SerializeField]
+        private BattleAttack2D deathExplosionAttackPrefab;
+
+        [Tooltip("默认攻击后额外朝同类友军发射的激光攻击。")]
+        [SerializeField]
+        private BattleAttack2D linkedLaserAttackPrefab;
         
         public string DisplayName => displayName;
         public Sprite Sprite => sprite;
@@ -76,6 +94,18 @@ namespace BackpackHero.Battle
 
         public float ProjectileSpeed =>
             projectileSpeed;
+
+        public BattleAttack2D DefaultAttackPrefab =>
+            defaultAttackPrefab;
+
+        public ProjectileFirePattern DefaultFirePattern =>
+            defaultFirePattern;
+
+        public BattleAttack2D DeathExplosionAttackPrefab =>
+            deathExplosionAttackPrefab;
+
+        public BattleAttack2D LinkedLaserAttackPrefab =>
+            linkedLaserAttackPrefab;
 
 #if UNITY_EDITOR
         private void OnValidate()

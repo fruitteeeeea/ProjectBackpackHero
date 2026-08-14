@@ -161,8 +161,22 @@ namespace BackpackHero.Battle
             if (combat != null)
             {
                 combat.ConfigureDefaultFireMode(
-                    fighterDefinition.AttackInterval);
+                    fighterDefinition.AttackInterval,
+                    fighterDefinition.DefaultAttackPrefab,
+                    fighterDefinition.DefaultFirePattern);
             }
+
+            FighterDeathExplosion2D deathExplosion =
+                GetComponent<FighterDeathExplosion2D>() ??
+                gameObject.AddComponent<FighterDeathExplosion2D>();
+            deathExplosion.Configure(
+                fighterDefinition.DeathExplosionAttackPrefab);
+
+            FighterLaserLink2D laserLink =
+                GetComponent<FighterLaserLink2D>() ??
+                gameObject.AddComponent<FighterLaserLink2D>();
+            laserLink.Configure(
+                fighterDefinition.LinkedLaserAttackPrefab);
 
             ConfigureHealthBars();
             SetHealthBarsVisible(false);

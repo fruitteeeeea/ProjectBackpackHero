@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
+  m_Name: Aircraft_Laser
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  id: aircraft_laser
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: 激光飞机
+  desc: 攻击时额外连接两架随机同类友军。
+  icon: {fileID: -5748879822672990182, guid: f107923bcebdb7a45b8f17b47dafb99b, type: 3}
+  backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
+  itemType: 0
+  equipmentColor: {r: 1, g: 1, b: 1, a: 1}
+  equipmentEffects: []
+  cd: 2
+  price: 0
+  count: 3
+  shape: {fileID: 11400000, guid: 59e16f1ad19014e95b41331316bd0263, type: 2}
+  fighterDefinition: {fileID: 11400000, guid: 748a35cc9c334f23ad83f231ba5d004d, type: 2}

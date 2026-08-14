@@ -71,7 +71,7 @@ namespace BackpackPrototype
 
         [Header("Shop Roll")]
         [SerializeField, Min(1)]
-        private int rollsPerPreparation = 3;
+        private int rollsPerPreparation = 1;
 
         [Header("Optional Scene Input")]
         [SerializeField]
@@ -197,6 +197,7 @@ namespace BackpackPrototype
                 return;
             }
 
+            RestoreDeckLayout();
             RebuildBackpackViews();
 
             CacheShopItemScale();
@@ -293,9 +294,78 @@ namespace BackpackPrototype
                 return;
             }
 
-            combatController.RestoreDefaultLayout();
-            RebuildBackpackViews();
-            SetSelectedItem(null);
+            RestoreDeckLayout();
+        }
+
+        private void RestoreDeckLayout()
+        {
+            PlayerItemSystem playerItems = PlayerItemSystem.Instance;
+            if (playerItems == null)
+            {
+                combatController.RestoreDefaultLayout();
+                RebuildBackpackViews();
+                SetSelectedItem(null);
+                return;
+            }
+
+            var layout = new List<BackpackLayoutItem>();
+            var validation = new BackpackController(
+                Backpack.Width,
+                Backpack.Height);
+            int placementId = 0;
+
+            foreach (ItemData item in playerItems.GetDeckItems())
+            {
+                if (item == null ||
+                    !TryFindAvailableCell(
+                        validation,
+                        item,
+                        ref placementId,
+                        out Vector2Int cell))
+                {
+                    continue;
+                }
+
+                layout.Add(new BackpackLayoutItem(
+                    item,
+                    cell,
+                    playerItems.GetLevel(item)));
+            }
+
+            if (!LoadLayout(layout))
+            {
+                combatController.RestoreDefaultLayout();
+                RebuildBackpackViews();
+                SetSelectedItem(null);
+            }
+        }
+
+        private static bool TryFindAvailableCell(
+            BackpackController validation,
+            ItemData item,
+            ref int placementId,
+            out Vector2Int cell)
+        {
+            for (int y = 0; y < validation.Height; y++)
+            {
+                for (int x = 0; x < validation.Width; x++)
+                {
+                    cell = new Vector2Int(x, y);
+                    var candidate = new ItemInstance(
+                        $"deck-layout-{++placementId}",
+                        item,
+                        cell);
+                    if (validation.PlaceItem(candidate, cell))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            cell = default;
+            Debug.LogWarning(
+                $"Player Deck item '{item.ItemName}' does not fit in the default backpack layout.");
+            return false;
         }
 
         /// <summary>

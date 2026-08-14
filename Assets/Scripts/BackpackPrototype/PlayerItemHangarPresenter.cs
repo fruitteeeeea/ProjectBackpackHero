@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using BackpackHero.Battle;
 using BackpackHero.Debugging;
 using PlanetWar.ReusableMainMenu;
@@ -48,9 +49,14 @@ namespace BackpackPrototype
             foreach (ItemData item in system.GetDeckItems())
                 deck.Add(item != null ? BuildSnapshot(item) : default);
 
-            var collection = new List<HangarItemSnapshot>();
-            foreach (ItemData item in system.GetAllItems())
-                if (!system.IsEquipped(item)) collection.Add(BuildSnapshot(item));
+            // Preserve catalog order inside each category, but always expose aircraft before
+            // equipment in the collection.  Progression is currently uniform (all items are
+            // unlocked and max level), so it deliberately does not affect the sort order.
+            var collection = system.GetAllItems()
+                .Where(item => item != null && !system.IsEquipped(item))
+                .OrderBy(item => item.ItemType == ItemType.Aircraft ? 0 : 1)
+                .Select(BuildSnapshot)
+                .ToList();
 
             hangar.BindDeckAndCollection(
                 deck,

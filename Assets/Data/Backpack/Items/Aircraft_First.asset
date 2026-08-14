@@ -12,12 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Aircraft_First
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
-  itemId: aircraft_first
-  itemName: Scout Fighter
-  description: A balanced fighter for reliable frontline damage.
+  id: aircraft_first
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: 初号飞机
+  desc: 均衡的前线战机，提供稳定火力。
   icon: {fileID: 2875208246182030159, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0
-  cooldownDuration: 2
+  equipmentColor: {r: 1, g: 1, b: 1, a: 1}
+  equipmentEffects: []
+  cd: 2
+  price: 0
+  count: 1
   shape: {fileID: 11400000, guid: 779de2dbf4b6144469f76b3c6dc34fda, type: 2}
   fighterDefinition: {fileID: 11400000, guid: 33a511e51c88b4d1987a9accec00659b, type: 2}

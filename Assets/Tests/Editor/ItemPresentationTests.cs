@@ -43,6 +43,46 @@ public sealed class ItemPresentationTests
     }
 
     [Test]
+    public void HangarDetailLayout_RecoversMissingHeaderReferencesWithoutUsingPreviewTexts()
+    {
+        GameObject root = new GameObject("HangarDetail");
+        GameObject cardRoot = new GameObject("Card");
+        try
+        {
+            HangarDetailLayout layout = root.AddComponent<HangarDetailLayout>();
+            GameObject nameBackground = new GameObject("nameBg");
+            nameBackground.transform.SetParent(root.transform);
+            TMP_Text name = NewText(nameBackground.transform, "name");
+            TMP_Text description = NewText(root.transform, "desc");
+            name.gameObject.SetActive(false);
+            description.gameObject.SetActive(false);
+            GameObject preview = new GameObject("ItemCard (1)");
+            preview.transform.SetParent(root.transform);
+            TMP_Text staleName = NewText(preview.transform, "name");
+            TMP_Text staleDescription = NewText(preview.transform, "desc");
+            HangarCardItem card = cardRoot.AddComponent<HangarCardItem>();
+            var snapshot = new HangarItemSnapshot(HangarItemKind.Aircraft,
+                "初号飞机", "均衡的前线战机，提供稳定火力。", null, null, true,
+                1, 0, 0, 0, 2f, 1, null, Color.white, "Unlocked");
+            card.Configure(snapshot);
+
+            layout.ShowPreview(card);
+
+            Assert.That(name.gameObject.activeSelf, Is.True);
+            Assert.That(description.gameObject.activeSelf, Is.True);
+            Assert.That(name.text, Is.EqualTo(snapshot.Name));
+            Assert.That(description.text, Is.EqualTo(snapshot.Description));
+            Assert.That(staleName.text, Is.Not.EqualTo(snapshot.Name));
+            Assert.That(staleDescription.text, Is.Not.EqualTo(snapshot.Description));
+        }
+        finally
+        {
+            Object.DestroyImmediate(cardRoot);
+            Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
     public void HangarCard_OverridesImportedButtonCallbackWithItsOwnHandler()
     {
         GameObject hangarRoot = new GameObject("Hangar");

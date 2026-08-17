@@ -17,8 +17,8 @@ MonoBehaviour:
   unlockRequirementText: Unlocked by default
   cost: 0
   debris: 0
-  name: 爆炸飞机
-  desc: 死亡时在原地引爆，伤害附近敌机。
+  name: Exploder
+  desc: Explodes on death, damaging nearby enemy fighters.
   icon: {fileID: -5239757195476112093, guid: ed9dbf9b829b33b4f9e74aa56b3e98f7, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

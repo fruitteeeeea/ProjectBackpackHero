@@ -17,8 +17,8 @@ MonoBehaviour:
   unlockRequirementText: Unlocked by default
   cost: 0
   debris: 0
-  name: 护盾飞机
-  desc: 高耐久防御机，负责稳固战线。
+  name: Shield Guard
+  desc: A durable defender that holds the frontline.
   icon: {fileID: 4677714814586562668, guid: 09c84d2fb02194b929bfdf85903d5e5f, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

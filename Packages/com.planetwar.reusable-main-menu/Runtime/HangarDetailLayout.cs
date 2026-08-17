@@ -10,6 +10,8 @@ namespace PlanetWar.ReusableMainMenu
     /// </summary>
     public sealed class HangarDetailLayout : MonoBehaviour
     {
+        private static TMP_FontAsset cjkFallbackFont;
+        private static bool resolvedCjkFallbackFont;
         [SerializeField] private GameObject upgradeButton;
         [SerializeField] private GameObject equipButton;
         [SerializeField] private GameObject progressGroup;
@@ -42,13 +44,24 @@ namespace PlanetWar.ReusableMainMenu
         public void ShowPreview(HangarCardItem card)
         {
             if (card == null) return;
+            ResolveTextReferencesIfMissing();
             HangarItemSnapshot snapshot = card.Snapshot;
             // Dynamic cards retain their authoritative values in the snapshot. This avoids a
             // stale serialized CardName/CardDescription from blanking the detail header.
             string displayName = !string.IsNullOrEmpty(snapshot.Name) ? snapshot.Name : card.CardName;
             string description = !string.IsNullOrEmpty(snapshot.Description) ? snapshot.Description : card.CardDescription;
-            if (nameText != null) nameText.text = displayName;
-            if (descriptionText != null) descriptionText.text = description;
+            if (nameText != null)
+            {
+                nameText.gameObject.SetActive(true);
+                ApplyCjkFallbackIfNeeded(nameText, displayName);
+                nameText.text = displayName;
+            }
+            if (descriptionText != null)
+            {
+                descriptionText.gameObject.SetActive(true);
+                ApplyCjkFallbackIfNeeded(descriptionText, description);
+                descriptionText.text = description;
+            }
             if (lockText != null)
             {
                 lockText.gameObject.SetActive(!card.IsUnlocked);
@@ -98,6 +111,76 @@ namespace PlanetWar.ReusableMainMenu
                 if (label == null) label = FindSiblingLabel(text);
                 if (label != null) label.text = attribute.Label;
             }
+        }
+
+        // The imported UICardInfo/UICardSpell each contain a preview ItemCard, whose child
+        // labels use the same names as the panel header. Resolve only missing references and
+        // never select text inside that preview (or the skill-list template).
+        private void ResolveTextReferencesIfMissing()
+        {
+            if (nameText == null) nameText = FindDetailText("name");
+            if (descriptionText == null) descriptionText = FindDetailText("desc");
+        }
+
+        private TMP_Text FindDetailText(string nodeName)
+        {
+            foreach (TMP_Text candidate in GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (candidate == null || candidate.gameObject.name != nodeName ||
+                    IsUnder(candidate.transform, "ItemCard") ||
+                    IsUnder(candidate.transform, "SkillScroll")) continue;
+                return candidate;
+            }
+            return null;
+        }
+
+        private static bool IsUnder(Transform item, string ancestorName)
+        {
+            for (Transform current = item.parent; current != null; current = current.parent)
+                if (current.name == ancestorName || current.name == ancestorName + " (1)") return true;
+            return false;
+        }
+
+        // The imported Hangar font was authored for PlanetWar's English EnName/EnDesc fields.
+        // BackpackHero supplies Chinese ItemData values, so use a Windows CJK font in the editor
+        // and Windows builds when the current TMP asset cannot render the content.
+        private static void ApplyCjkFallbackIfNeeded(TMP_Text text, string content)
+        {
+            if (text == null || string.IsNullOrEmpty(content) || !ContainsCjk(content) ||
+                text.font == null || text.font.HasCharacter(content[0])) return;
+            TMP_FontAsset fallback = GetCjkFallbackFont();
+            if (fallback != null) text.font = fallback;
+        }
+
+        private static TMP_FontAsset GetCjkFallbackFont()
+        {
+            if (resolvedCjkFallbackFont) return cjkFallbackFont;
+            resolvedCjkFallbackFont = true;
+            Font bundledFont = Resources.Load<Font>("Fonts/NotoSansSC-VF");
+            if (bundledFont != null)
+            {
+                cjkFallbackFont = TMP_FontAsset.CreateFontAsset(bundledFont);
+                return cjkFallbackFont;
+            }
+            foreach (string fontName in Font.GetOSInstalledFontNames())
+            {
+                if (!fontName.Contains("Noto Sans SC") && !fontName.Contains("Microsoft YaHei") &&
+                    !fontName.Contains("SimHei")) continue;
+                Font font = Font.CreateDynamicFontFromOSFont(fontName, 32);
+                if (font != null)
+                {
+                    cjkFallbackFont = TMP_FontAsset.CreateFontAsset(font);
+                    break;
+                }
+            }
+            return cjkFallbackFont;
+        }
+
+        private static bool ContainsCjk(string value)
+        {
+            foreach (char character in value)
+                if (character >= '\u4e00' && character <= '\u9fff') return true;
+            return false;
         }
 
         // Older baked MainMenu prefabs did not serialize attributeLabelTexts. Their label is

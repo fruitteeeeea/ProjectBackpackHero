@@ -46,6 +46,8 @@ namespace BackpackPrototype
         private const int CompactShopItemCount = 4;
         private const float ShopHorizontalPadding = 24f;
         private const float CompactShopItemSpacing = 64f;
+        private const float PreferredShopCompositionChance = .6f;
+        private const float PreviousShopItemWeightMultiplier = .1f;
 
         [Header("Backpack UI")]
         [SerializeField]
@@ -448,20 +450,169 @@ namespace BackpackPrototype
                 return false;
             }
 
+            List<ItemData> previousShopItems = GetCurrentShopItemData();
+            List<ItemData> nextShopItems = BuildShopRoll(
+                deckCatalog,
+                previousShopItems);
+
             ClearShopViews();
-
-            for (int index = 0; index < ShopRollItemCount; index++)
+            foreach (ItemData item in nextShopItems)
             {
-                ItemData item =
-                    deckCatalog[
-                        UnityEngine.Random.Range(
-                            0,
-                            deckCatalog.Count)];
-
                 CreateShopItem(item);
             }
 
             SetSelectedItem(null);
+            return true;
+        }
+
+        private List<ItemData> GetCurrentShopItemData()
+        {
+            List<ItemData> currentItems = new();
+            foreach (ItemView view in shopItems)
+            {
+                ItemData data = view?.Instance?.Data;
+                if (data != null)
+                {
+                    currentItems.Add(data);
+                }
+            }
+
+            return currentItems;
+        }
+
+        /// <summary>
+        /// 生成一轮商店候选：60% 概率包含一架飞机和两件装备；
+        /// 上一轮出现过的物品保留为候选，但其权重降至 10%。
+        /// </summary>
+        private static List<ItemData> BuildShopRoll(
+            IReadOnlyList<ItemData> deckCatalog,
+            IReadOnlyCollection<ItemData> previousShopItems)
+        {
+            List<ItemData> selected = new(ShopRollItemCount);
+            List<ItemData> aircraft = new();
+            List<ItemData> equipment = new();
+
+            foreach (ItemData item in deckCatalog)
+            {
+                if (item == null)
+                {
+                    continue;
+                }
+
+                if (item.ItemType == ItemType.Aircraft)
+                {
+                    aircraft.Add(item);
+                }
+                else if (item.ItemType == ItemType.Equipment)
+                {
+                    equipment.Add(item);
+                }
+            }
+
+            bool usePreferredComposition =
+                aircraft.Count > 0 && equipment.Count > 0 &&
+                UnityEngine.Random.value <
+                PreferredShopCompositionChance;
+            if (usePreferredComposition)
+            {
+                AddWeightedItem(aircraft, previousShopItems, selected);
+                AddWeightedItem(equipment, previousShopItems, selected);
+                AddWeightedItem(equipment, previousShopItems, selected);
+            }
+
+            while (selected.Count < ShopRollItemCount)
+            {
+                if (!AddWeightedItem(
+                        deckCatalog,
+                        previousShopItems,
+                        selected))
+                {
+                    break;
+                }
+            }
+
+            return selected;
+        }
+
+        private static bool AddWeightedItem(
+            IReadOnlyList<ItemData> candidates,
+            IReadOnlyCollection<ItemData> previousShopItems,
+            List<ItemData> selected)
+        {
+            float totalWeight = 0f;
+            foreach (ItemData candidate in candidates)
+            {
+                if (CanAddShopItem(candidate, selected))
+                {
+                    totalWeight += WasInPreviousShop(
+                        candidate,
+                        previousShopItems)
+                        ? PreviousShopItemWeightMultiplier
+                        : 1f;
+                }
+            }
+
+            if (totalWeight <= 0f)
+            {
+                return false;
+            }
+
+            float roll = UnityEngine.Random.value * totalWeight;
+            foreach (ItemData candidate in candidates)
+            {
+                if (!CanAddShopItem(candidate, selected))
+                {
+                    continue;
+                }
+
+                roll -= WasInPreviousShop(
+                    candidate,
+                    previousShopItems)
+                    ? PreviousShopItemWeightMultiplier
+                    : 1f;
+                if (roll <= 0f)
+                {
+                    selected.Add(candidate);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool WasInPreviousShop(
+            ItemData candidate,
+            IReadOnlyCollection<ItemData> previousShopItems)
+        {
+            foreach (ItemData previousItem in previousShopItems)
+            {
+                if (previousItem == candidate)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool CanAddShopItem(
+            ItemData candidate,
+            IReadOnlyList<ItemData> selected)
+        {
+            if (candidate == null)
+            {
+                return false;
+            }
+
+            int duplicateCount = 0;
+            foreach (ItemData item in selected)
+            {
+                if (item == candidate && ++duplicateCount >= 2)
+                {
+                    return false;
+                }
+            }
+
             return true;
         }
 

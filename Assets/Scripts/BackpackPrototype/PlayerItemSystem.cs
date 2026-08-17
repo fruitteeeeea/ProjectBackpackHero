@@ -6,13 +6,14 @@ using UnityEngine;
 namespace BackpackPrototype
 {
     [Serializable] public sealed class PlayerItemState { public string ItemId; public bool Unlocked; public int Level; public int FragmentCount; }
-    [Serializable] public sealed class PlayerItemSaveData { public int Gold; public int Diamond; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
+    [Serializable] public sealed class PlayerItemSaveData { public int Gold = 999; public int Diamond = 999; public int CurrencyDefaultsVersion; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
     public enum PlayerItemUpgradeResult { Success, NotFound, Locked, MaxLevel, GoldNotEnough, FragmentsNotEnough }
     public enum PlayerDeckResult { Success, InvalidSlot, InvalidItem, Locked, WrongType, Duplicate, Empty }
 
     public sealed class PlayerItemSystem : MonoBehaviour
     {
         public const string SaveKey = "PlayerItemModel";
+        private const int CurrencyDefaultsVersion = 1;
         public const int MaximumLevel = ItemInstance.MaximumLevel;
         public const int AircraftDeckSlotCount = 3;
         public const int EquipmentDeckSlotCount = 2;
@@ -110,6 +111,18 @@ namespace BackpackPrototype
         private void Load()
         {
             data = string.IsNullOrEmpty(PlayerPrefs.GetString(SaveKey)) ? new PlayerItemSaveData() : JsonUtility.FromJson<PlayerItemSaveData>(PlayerPrefs.GetString(SaveKey)) ?? new PlayerItemSaveData();
+            if (data.CurrencyDefaultsVersion < CurrencyDefaultsVersion)
+            {
+                // Versions before this field was introduced used 0/0 as the implicit first-run
+                // balance. Migrate that uninitialized state once, while preserving any real
+                // non-zero balance and every later spend-down to zero.
+                if (data.Gold == 0 && data.Diamond == 0)
+                {
+                    data.Gold = 999;
+                    data.Diamond = 999;
+                }
+                data.CurrencyDefaultsVersion = CurrencyDefaultsVersion;
+            }
             data.Items ??= new List<PlayerItemState>();
             string catalogError = null;
             if (catalog != null && catalog.IsValid(out catalogError))

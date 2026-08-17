@@ -26,6 +26,7 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private bool equipped;
         [SerializeField] private TMP_Text levelPrefixText;
         [SerializeField] private TMP_Text levelValueText;
+        private Button cardButton;
 
         public CardKind Kind => cardKind;
         public int CardId => cardId;
@@ -69,6 +70,7 @@ namespace PlanetWar.ReusableMainMenu
             equipped = isEquipped;
             unlockRank = requiredRank;
             level = cardLevel;
+            BindCardButton();
             ApplyVisual();
         }
 
@@ -92,6 +94,7 @@ namespace PlanetWar.ReusableMainMenu
             unlocked = true;
             equipped = false;
             level = 0;
+            BindCardButton();
             ApplyVisual();
         }
 
@@ -131,7 +134,25 @@ namespace PlanetWar.ReusableMainMenu
             ApplyVisual();
         }
 
-        private void OnEnable() => ApplyVisual();
+        private void OnEnable()
+        {
+            BindCardButton();
+            ApplyVisual();
+        }
+
+        private void BindCardButton()
+        {
+            // The imported original ItemCard prefabs retain serialized callbacks to their
+            // source-card components. Those targets can be a detail-preview card instead of
+            // the visible runtime card, which opens the panel with blank placeholder data.
+            // Replace the event on the card's actual clickable Image with this instance.
+            cardButton ??= transform.Find("Image")?.GetComponent<Button>();
+            cardButton ??= GetComponentInChildren<Button>(true);
+            if (cardButton == null) return;
+
+            cardButton.onClick = new Button.ButtonClickedEvent();
+            cardButton.onClick.AddListener(onClickItem);
+        }
 
         public void ApplyVisual()
         {

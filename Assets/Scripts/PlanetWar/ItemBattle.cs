@@ -22,12 +22,23 @@ public sealed class ItemBattle : MonoBehaviour
 
     public void SetData(MatchParticipant participant, bool isPlayer)
     {
+        if (participant == null)
+            return;
+
         SetStartPosition(isPlayer);
-        if (participant.Avatar != null)
+        if (participant.Avatar != null && imgHead != null)
             imgHead.sprite = participant.Avatar;
-        textName.text = participant.DisplayName;
-        textRankName.text = participant.Rank;
-        textWinCount.text = participant.Score;
+        if (textName != null)
+            textName.text = participant.DisplayName;
+        if (textRankName != null)
+            textRankName.text = participant.Rank;
+
+        // The migrated prefab exposes both the score label and its numeric value. Previously
+        // only textWinCount was updated, leaving textScore at its authored placeholder.
+        if (textScore != null)
+            textScore.text = participant.Score;
+        if (textWinCount != null)
+            textWinCount.text = participant.Score;
     }
 
     public void RunAnimation()

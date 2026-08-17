@@ -42,8 +42,13 @@ namespace PlanetWar.ReusableMainMenu
         public void ShowPreview(HangarCardItem card)
         {
             if (card == null) return;
-            if (nameText != null) nameText.text = card.CardName;
-            if (descriptionText != null) descriptionText.text = card.CardDescription;
+            HangarItemSnapshot snapshot = card.Snapshot;
+            // Dynamic cards retain their authoritative values in the snapshot. This avoids a
+            // stale serialized CardName/CardDescription from blanking the detail header.
+            string displayName = !string.IsNullOrEmpty(snapshot.Name) ? snapshot.Name : card.CardName;
+            string description = !string.IsNullOrEmpty(snapshot.Description) ? snapshot.Description : card.CardDescription;
+            if (nameText != null) nameText.text = displayName;
+            if (descriptionText != null) descriptionText.text = description;
             if (lockText != null)
             {
                 lockText.gameObject.SetActive(!card.IsUnlocked);
@@ -58,7 +63,6 @@ namespace PlanetWar.ReusableMainMenu
                     card.Icon, card.LockedIcon, card.IsUnlocked, card.IsEquipped, card.UnlockRank, card.Level);
             }
 
-            var snapshot = card.Snapshot;
             if (snapshot.Name != null)
             {
                 ApplyDetailAttributes(snapshot);

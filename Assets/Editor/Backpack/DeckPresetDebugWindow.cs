@@ -49,12 +49,35 @@ namespace BackpackHero.EditorTools
             if (!preset.IsValid(out string error)) EditorGUILayout.HelpBox(error, MessageType.Error);
             string[] labels = { "飞机 1", "飞机 2", "飞机 3", "装备 1", "装备 2" };
             IReadOnlyList<ItemData> slots = preset.Slots;
+            var editedSlots = new List<ItemData>(slots);
+            while (editedSlots.Count < PlayerItemSystem.DeckSlotCount) editedSlots.Add(null);
             for (int index = 0; index < PlayerItemSystem.DeckSlotCount; index++)
             {
-                ItemData item = index < slots.Count ? slots[index] : null;
-                EditorGUILayout.ObjectField(labels[index], item, typeof(ItemData), false);
+                ItemData item = editedSlots[index];
+                ItemData next = (ItemData)EditorGUILayout.ObjectField(labels[index], item, typeof(ItemData), false);
+                if (next == item) continue;
+                if (next != null && !CanAssign(editedSlots, index, next))
+                {
+                    EditorUtility.DisplayDialog("不能设置预设槽位", "物品类型与槽位不匹配，或该物品已在此预设中使用。", "确定");
+                    continue;
+                }
+                Undo.RecordObject(preset, "Edit deck preset");
+                editedSlots[index] = next;
+                preset.SetSlots(editedSlots);
+                EditorUtility.SetDirty(preset);
+                AssetDatabase.SaveAssets();
             }
             if (GUILayout.Button("选中资产")) Selection.activeObject = preset;
+        }
+
+        private static bool CanAssign(IReadOnlyList<ItemData> slots, int slot, ItemData item)
+        {
+            if (!PlayerItemSystem.IsDeckSlotType(item, slot)) return false;
+            for (int index = 0; index < slots.Count; index++)
+            {
+                if (index != slot && slots[index] == item) return false;
+            }
+            return true;
         }
 
         private void DrawAssetActions()
@@ -87,19 +110,48 @@ namespace BackpackHero.EditorTools
                 return;
             }
             PlayerBackpackDebugBridge bridge = PlayerBackpackDebugBridge.Active;
-            bool canApply = selectedPreset != null && bridge != null && BattleFlowController.CurrentPhase == BattlePhase.Preparation;
-            if (bridge == null) EditorGUILayout.HelpBox("未连接玩家背包调试桥。", MessageType.Warning);
-            else if (!canApply) EditorGUILayout.HelpBox("战斗阶段不能读取预设。", MessageType.Warning);
+            PlayerItemSystem playerItems = PlayerItemSystem.Instance;
+            PlayerBackpackSystem playerBackpack = UnityEngine.Object.FindAnyObjectByType<PlayerBackpackSystem>(FindObjectsInactive.Include);
+            bool isBattleScene = playerBackpack != null;
+            bool canApplyPlayer = selectedPreset != null && playerItems != null &&
+                (!isBattleScene || BattleFlowController.CurrentPhase == BattlePhase.Preparation);
+            bool canApplyEnemy = selectedPreset != null && bridge != null &&
+                bridge.EnemyTarget != null && BattleFlowController.CurrentPhase == BattlePhase.Preparation;
 
-            using (new EditorGUI.DisabledScope(!canApply))
+            if (playerItems == null) EditorGUILayout.HelpBox("未找到玩家 Deck 数据。", MessageType.Warning);
+            else if (isBattleScene && !canApplyPlayer) EditorGUILayout.HelpBox("战斗阶段不能读取预设。", MessageType.Warning);
+            else if (!isBattleScene) EditorGUILayout.HelpBox("当前为 Hanger 界面：读取会立即更新并保存玩家 Deck。", MessageType.Info);
+
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("读取到玩家")) bridge.ApplyPlayerDeckPreset(selectedPreset);
-                if (GUILayout.Button("读取到敌人")) bridge.ApplyEnemyDeckPreset(selectedPreset);
+                using (new EditorGUI.DisabledScope(!canApplyPlayer))
+                {
+                    if (GUILayout.Button("读取到玩家")) ApplyToPlayer(selectedPreset, playerItems, playerBackpack);
+                }
+                using (new EditorGUI.DisabledScope(!canApplyEnemy))
+                {
+                    if (GUILayout.Button("读取到敌人")) bridge.ApplyEnemyDeckPreset(selectedPreset);
+                }
             }
 
             if (bridge?.Snapshot.HasTarget == true) DrawRuntimeItems("当前玩家背包", bridge.Snapshot);
             if (bridge?.EnemySnapshot.HasTarget == true) DrawRuntimeItems("当前敌人背包", bridge.EnemySnapshot);
+        }
+
+        private static void ApplyToPlayer(DeckPreset preset, PlayerItemSystem playerItems, PlayerBackpackSystem playerBackpack)
+        {
+            if (playerBackpack != null)
+            {
+                playerBackpack.ApplyDeckPreset(preset);
+                return;
+            }
+
+            if (preset != null && preset.IsValid(out _) &&
+                playerItems.TryApplyDeck(preset.Slots) == PlayerDeckResult.Success)
+            {
+                PlayerItemHangarPresenter presenter = UnityEngine.Object.FindAnyObjectByType<PlayerItemHangarPresenter>(FindObjectsInactive.Include);
+                presenter?.Refresh();
+            }
         }
 
         private void DrawRuntimeItems(string title, PlayerBackpackDebugSnapshot snapshot)

@@ -4,6 +4,7 @@ using TMPro;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 using BackpackPrototype;
 
 public sealed class ItemPresentationTests
@@ -38,6 +39,36 @@ public sealed class ItemPresentationTests
         {
             Object.DestroyImmediate(cardRoot);
             Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
+    public void HangarCard_OverridesImportedButtonCallbackWithItsOwnHandler()
+    {
+        GameObject hangarRoot = new GameObject("Hangar");
+        GameObject cardRoot = new GameObject("Card");
+        try
+        {
+            HangarView hangar = hangarRoot.AddComponent<HangarView>();
+            HangarCardItem card = cardRoot.AddComponent<HangarCardItem>();
+            GameObject clickable = new GameObject("Image", typeof(RectTransform), typeof(Image), typeof(Button));
+            clickable.transform.SetParent(cardRoot.transform);
+            Button button = clickable.GetComponent<Button>();
+            bool staleCallbackWasCalled = false;
+            button.onClick.AddListener(() => staleCallbackWasCalled = true);
+
+            card.Configure(hangar, new HangarItemSnapshot(
+                HangarItemKind.Aircraft, "Scout", "Reliable frontline damage.",
+                null, null, true, 1, 0, 0, 0, 2f, 1, null,
+                Color.white, "Unlocked", itemId: "scout"));
+            button.onClick.Invoke();
+
+            Assert.That(staleCallbackWasCalled, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(cardRoot);
+            Object.DestroyImmediate(hangarRoot);
         }
     }
 

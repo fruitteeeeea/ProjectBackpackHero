@@ -34,7 +34,7 @@ public sealed class PlayerItemSystemTests
 
         Assert.That(system.GetAllItems(), Has.Count.EqualTo(2));
         Assert.That(system.IsUnlocked(aircraft), Is.True);
-        Assert.That(system.GetLevel(equipment), Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(system.GetLevel(equipment), Is.EqualTo(PlayerItemSystem.MaximumLevel));
         system.AddCurrency(8, 3);
         system.AddFragments(aircraft, 5);
 
@@ -55,8 +55,33 @@ public sealed class PlayerItemSystemTests
         system.SetCatalog(NewCatalog(first, added));
 
         Assert.That(system.GetFragments(first), Is.EqualTo(4));
-        Assert.That(system.GetLevel(added), Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(system.GetLevel(added), Is.EqualTo(PlayerItemSystem.MaximumLevel));
         Assert.That(system.IsUnlocked(added), Is.True);
+    }
+
+    [Test]
+    public void PlayerCombatItems_StartAtLocalLevelOneDespiteMaxOutOfMatchLevel()
+    {
+        ItemData item = NewItem("local_level");
+        PlayerItemSystem system = NewSystem(item);
+        GameObject combatRoot = new GameObject("Player Combat");
+        created.Add(combatRoot);
+        BackpackCombatController combat =
+            combatRoot.AddComponent<BackpackCombatController>();
+
+        Assert.That(
+            system.GetLevel(item),
+            Is.EqualTo(PlayerItemSystem.MaximumLevel));
+        Assert.That(ItemInstance.MaximumLevel, Is.EqualTo(3));
+
+        ItemInstance localItem = combat.AddItem(
+            item,
+            Vector2Int.zero);
+
+        Assert.That(localItem, Is.Not.Null);
+        Assert.That(
+            localItem.Level,
+            Is.EqualTo(ItemInstance.DefaultLevel));
     }
 
     [Test]
@@ -120,7 +145,7 @@ public sealed class PlayerItemSystemTests
         PlayerItemSystem system = NewSystem(equipment);
 
         Assert.That(system.IsUnlocked(equipment), Is.True);
-        Assert.That(system.GetLevel(equipment), Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(system.GetLevel(equipment), Is.EqualTo(PlayerItemSystem.MaximumLevel));
         Assert.That(system.GetDeckItem(3), Is.SameAs(equipment));
     }
 
@@ -142,9 +167,9 @@ public sealed class PlayerItemSystemTests
         PlayerItemSystem system = NewSystem(aircraft, equipment);
 
         Assert.That(system.IsUnlocked(aircraft), Is.True);
-        Assert.That(system.GetLevel(aircraft), Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(system.GetLevel(aircraft), Is.EqualTo(PlayerItemSystem.MaximumLevel));
         Assert.That(system.IsUnlocked(equipment), Is.True);
-        Assert.That(system.GetLevel(equipment), Is.EqualTo(ItemInstance.MaximumLevel));
+        Assert.That(system.GetLevel(equipment), Is.EqualTo(PlayerItemSystem.MaximumLevel));
         Assert.That(system.GetFragments(aircraft), Is.EqualTo(6));
         Assert.That(system.GetFragments(equipment), Is.EqualTo(4));
     }

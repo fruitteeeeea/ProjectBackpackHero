@@ -230,12 +230,6 @@ namespace BackpackPrototype
                 return null;
             }
 
-            if (Faction == BattleFaction.Player &&
-                PlayerItemSystem.Instance != null)
-            {
-                level = PlayerItemSystem.Instance.GetLevel(data);
-            }
-
             ItemInstance item =
                 new ItemInstance(
                     $"{Faction.ToString().ToLowerInvariant()}-" +

@@ -14,7 +14,10 @@ namespace BackpackPrototype
     {
         public const string SaveKey = "PlayerItemModel";
         private const int CurrencyDefaultsVersion = 1;
-        public const int MaximumLevel = ItemInstance.MaximumLevel;
+        // Kept separate from ItemInstance.MaximumLevel: this is persistent,
+        // out-of-match progression, while ItemInstance owns the current-run level.
+        public const int DefaultLevel = 1;
+        public const int MaximumLevel = 2;
         public const int AircraftDeckSlotCount = 3;
         public const int EquipmentDeckSlotCount = 2;
         public const int DeckSlotCount = AircraftDeckSlotCount + EquipmentDeckSlotCount;
@@ -53,7 +56,7 @@ namespace BackpackPrototype
 
         public void SetCatalog(PlayerItemCatalog value) { catalog = value; Load(); Changed?.Invoke(); }
         public IReadOnlyList<ItemData> GetAllItems() => catalog?.Items ?? Array.Empty<ItemData>();
-        public int GetLevel(ItemData item) => Mathf.Clamp(GetState(item)?.Level ?? ItemInstance.DefaultLevel, ItemInstance.DefaultLevel, MaximumLevel);
+        public int GetLevel(ItemData item) => Mathf.Clamp(GetState(item)?.Level ?? DefaultLevel, DefaultLevel, MaximumLevel);
         public bool IsUnlocked(ItemData item) => GetState(item)?.Unlocked ?? false;
         public int GetFragments(ItemData item) => GetState(item)?.FragmentCount ?? 0;
         public PlayerItemState GetState(ItemData item) => item == null ? null : data?.Items.FirstOrDefault(x => x.ItemId == item.ItemId);

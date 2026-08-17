@@ -796,6 +796,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1653984211}
   - component: {fileID: 1653984212}
+  - component: {fileID: 1653984213}
   m_Layer: 0
   m_Name: Main Menu Battle Scene Loader
   m_TagString: Untagged
@@ -831,16 +832,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   matchPrefab: {fileID: 0}
-  player:
-    avatar: {fileID: 0}
-    displayName: Commander
-    rank: Bronze I
-    score: 0
-  opponent:
-    avatar: {fileID: 0}
-    displayName: Opponent
-    rank: Bronze I
-    score: 0
+--- !u!114 &1653984213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1653984210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b0e90d3037e41df914c75e2c401bc2e, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.UI.MenuDisplayProfile
+  playerAvatar: {fileID: 21300000, guid: 4ecb7edff1b26b04e88a8f47e4ed430f, type: 3}
+  enemyAvatar: {fileID: 21300000, guid: 44b1737a1cf26424cbde0788b9eee528, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

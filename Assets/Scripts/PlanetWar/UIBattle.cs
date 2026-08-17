@@ -1,5 +1,6 @@
 using System.Collections;
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -23,6 +24,7 @@ public sealed class UIBattle : MonoBehaviour
 
         IsRunning = true;
         gameObject.SetActive(true);
+        ApplySearchPlayerName(player.DisplayName);
         itemMy.SetData(player, true);
         itemOpponent.SetData(opponent, false);
         objSearch.SetActive(true);
@@ -47,6 +49,15 @@ public sealed class UIBattle : MonoBehaviour
     private void LoadBattleScene()
     {
         StartCoroutine(LoadBattleSceneAsync());
+    }
+
+    private void ApplySearchPlayerName(string playerName)
+    {
+        foreach (TMP_Text text in GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (text.text == "player_00000")
+                text.text = playerName;
+        }
     }
 
     private IEnumerator LoadBattleSceneAsync()

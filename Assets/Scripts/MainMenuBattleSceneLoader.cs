@@ -7,14 +7,20 @@ namespace BackpackHero.UI
     public sealed class MainMenuBattleSceneLoader : MonoBehaviour
     {
         [SerializeField] private UIBattle matchPrefab;
-        [SerializeField] private MatchParticipant player = new MatchParticipant("Commander", "Bronze I", "0");
-        [SerializeField] private MatchParticipant opponent = new MatchParticipant("Opponent", "Bronze I", "0");
-
         private MainMenuActionRelay actionRelay;
         private UIBattle matchView;
+        private MenuDisplayProfile displayProfile;
 
         private void Awake()
         {
+            displayProfile = FindFirstObjectByType<MenuDisplayProfile>();
+            if (displayProfile == null)
+            {
+                Debug.LogError("Main menu display profile was not found.", this);
+                enabled = false;
+                return;
+            }
+
             actionRelay = FindFirstObjectByType<MainMenuActionRelay>();
             if (actionRelay == null)
             {
@@ -49,7 +55,7 @@ namespace BackpackHero.UI
         {
             // BottomBattle remains a page-selection action. Only the original central Battle button starts matching.
             if (action == MainMenuAction.Start && matchView != null && !matchView.IsRunning)
-                matchView.BeginMatch(player, opponent);
+                matchView.BeginMatch(displayProfile.CreatePlayer(), displayProfile.CreateOpponent());
         }
     }
 }

@@ -14,8 +14,9 @@ public sealed class MatchParticipant
     public string Rank => rank;
     public string Score => score;
 
-    public MatchParticipant(string displayName, string rank, string score)
+    public MatchParticipant(string displayName, string rank, string score, Sprite avatar = null)
     {
+        this.avatar = avatar;
         this.displayName = displayName;
         this.rank = rank;
         this.score = score;

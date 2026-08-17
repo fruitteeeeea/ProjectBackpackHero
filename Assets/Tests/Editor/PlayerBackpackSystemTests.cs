@@ -33,6 +33,66 @@ public sealed class PlayerBackpackSystemTests
     }
 
     [Test]
+    public void ShopRoll_UsesPreferredCompositionAndNeverReturnsThreeOfOneItem()
+    {
+        ItemShapeData shape = ScriptableObject.CreateInstance<ItemShapeData>();
+        ItemData aircraft = ScriptableObject.CreateInstance<ItemData>();
+        ItemData equipmentOne = ScriptableObject.CreateInstance<ItemData>();
+        ItemData equipmentTwo = ScriptableObject.CreateInstance<ItemData>();
+
+        try
+        {
+            shape.InitializeForTests("One Cell", null, new[] { Vector2Int.zero });
+            aircraft.InitializeForTests("Aircraft", ItemType.Aircraft, 1f, shape);
+            equipmentOne.InitializeForTests("Equipment One", ItemType.Equipment, 1f, shape);
+            equipmentTwo.InitializeForTests("Equipment Two", ItemType.Equipment, 1f, shape);
+            var deck = new List<ItemData>
+            {
+                aircraft,
+                equipmentOne,
+                equipmentTwo,
+            };
+            MethodInfo builder = typeof(PlayerBackpackSystem).GetMethod(
+                "BuildShopRoll",
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.That(builder, Is.Not.Null);
+
+            for (int seed = 0; seed < 100; seed++)
+            {
+                Random.InitState(seed);
+                bool expectsPreferredComposition = Random.value < .6f;
+                Random.InitState(seed);
+                var result = (List<ItemData>)builder.Invoke(
+                    null,
+                    new object[] { deck, new List<ItemData>() });
+
+                Assert.That(result, Has.Count.EqualTo(3));
+                Assert.That(CountItem(result, aircraft), Is.LessThan(3));
+                Assert.That(CountItem(result, equipmentOne), Is.LessThan(3));
+                Assert.That(CountItem(result, equipmentTwo), Is.LessThan(3));
+
+                if (expectsPreferredComposition)
+                {
+                    Assert.That(
+                        CountItemsOfType(result, ItemType.Aircraft),
+                        Is.EqualTo(1));
+                    Assert.That(
+                        CountItemsOfType(result, ItemType.Equipment),
+                        Is.EqualTo(2));
+                }
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(aircraft);
+            Object.DestroyImmediate(equipmentOne);
+            Object.DestroyImmediate(equipmentTwo);
+            Object.DestroyImmediate(shape);
+        }
+    }
+
+    [Test]
     public void CompletePrefab_HasRequiredRuntimeAndUiReferences()
     {
         GameObject prefab =
@@ -868,6 +928,38 @@ public sealed class PlayerBackpackSystemTests
         {
             count++;
             index += value.Length;
+        }
+
+        return count;
+    }
+
+    private static int CountItem(
+        IReadOnlyList<ItemData> items,
+        ItemData expected)
+    {
+        int count = 0;
+        foreach (ItemData item in items)
+        {
+            if (item == expected)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static int CountItemsOfType(
+        IReadOnlyList<ItemData> items,
+        ItemType type)
+    {
+        int count = 0;
+        foreach (ItemData item in items)
+        {
+            if (item != null && item.ItemType == type)
+            {
+                count++;
+            }
         }
 
         return count;

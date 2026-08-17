@@ -222,10 +222,6 @@ namespace BackpackHero.EditorTools
                 controller.RestoreDefaultLayout();
             }
 
-            PlayerBackpackSystem player =
-                Object.FindAnyObjectByType<
-                    PlayerBackpackSystem>(
-                    FindObjectsInactive.Include);
             EnemyBackpackSystem enemy =
                 Object.FindAnyObjectByType<
                     EnemyBackpackSystem>(
@@ -234,17 +230,14 @@ namespace BackpackHero.EditorTools
             using (new EditorGUI.DisabledScope(
                        BattleFlowController.CurrentPhase !=
                        BattlePhase.Preparation ||
-                       player == null ||
-                       !player.IsReady ||
                        enemy == null ||
                        !enemy.IsReady))
             {
                 if (GUILayout.Button(
-                        "敌人复制当前玩家背包",
+                        "敌人重新随机摆放",
                         GUILayout.Height(30f)))
                 {
-                    enemy.CopyLayoutFrom(
-                        player.Backpack);
+                    enemy.RandomizeInitialPlacement();
                 }
             }
         }

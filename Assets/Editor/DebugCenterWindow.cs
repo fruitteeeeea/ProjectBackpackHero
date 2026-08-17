@@ -22,6 +22,7 @@ namespace BackpackHero.EditorTools
         Values,
         SwipeCurve,
         PlayerBackpack,
+        EnemyBackpack,
         Battle,
         TestShooter,
         BackgroundPhysics,
@@ -75,6 +76,9 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.PlayerBackpack, DebugCenterKind.ProgramTest, "玩家背包",
                 () => PlayerBackpackDebugBridge.Active != null && PlayerBackpackDebugBridge.Active.DebugEnabled,
                 () => ScriptableObject.CreateInstance<PlayerBackpackDebugWindow>()),
+            new(DebugCenterTab.EnemyBackpack, DebugCenterKind.ProgramTest, "敌人背包",
+                () => PlayerBackpackDebugBridge.Active?.EnemyTarget != null,
+                () => ScriptableObject.CreateInstance<EnemyBackpackDebugWindow>()),
             new(DebugCenterTab.Battle, DebugCenterKind.ProgramTest, "战斗",
                 () => BattleDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<BattleDebugWindow>()),
@@ -292,6 +296,7 @@ namespace BackpackHero.EditorTools
                 case DebugValueWindow values: values.DrawTab(); break;
                 case HorizontalSwipeCurveDebugWindow swipe: swipe.DrawTab(); break;
                 case PlayerBackpackDebugWindow backpack: backpack.DrawTab(); break;
+                case EnemyBackpackDebugWindow enemyBackpack: enemyBackpack.DrawTab(); break;
                 case BattleDebugWindow battle: battle.DrawTab(); break;
                 case TestShooterDebugWindow shooter: shooter.DrawTab(); break;
                 case BackgroundPhysicsDebugWindow background: background.DrawTab(); break;

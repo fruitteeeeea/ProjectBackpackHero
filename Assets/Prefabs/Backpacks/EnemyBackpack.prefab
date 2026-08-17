@@ -188,6 +188,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.EnemyBackpackSystem
   defaultData: {fileID: 11400000, guid: 18c5dee73e9024014be908bd74015fee, type: 2}
   defaultDeckPreset: {fileID: 11400000, guid: 5df452a095f740ac8474fbfeb42e318d, type: 2}
+  presetPool:
+  - {fileID: 11400000, guid: 5df452a095f740ac8474fbfeb42e318d, type: 2}
+  - {fileID: 11400000, guid: b390c34f5c89428199c3ca7f9d901eab, type: 2}
+  - {fileID: 11400000, guid: e6f4192781de49f083fd802b2cedfa3a, type: 2}
+  - {fileID: 11400000, guid: 3cf3484636ca4b8c9e93e0d59d869454, type: 2}
+  - {fileID: 11400000, guid: 3dbda775d2ba46a7910f07cda583c4a2, type: 2}
+  operationInterval: 1
+  maximumOperations: 4
   itemViewPrefab: {fileID: 2060890215293225743, guid: 0aef8f10a6bc44a55ab5196b3811bb82, type: 3}
   itemView1x2Prefab: {fileID: 2060890215293225743, guid: 630443289b5e6450b8833b7c80c18317, type: 3}
   itemView2x1Prefab: {fileID: 2060890215293225743, guid: aeb6b57bf78e444d6be854b0e01e0986, type: 3}

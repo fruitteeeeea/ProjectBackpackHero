@@ -25,9 +25,6 @@ namespace BackpackPrototype
         private bool debugEnabled = true;
 
         [SerializeField]
-        private bool autoCopyPlayerLayoutToEnemy = true;
-
-        [SerializeField]
         private bool dragCellVisualizationEnabled;
 
         [SerializeField, Min(0.05f)]
@@ -35,7 +32,6 @@ namespace BackpackPrototype
 
         private float nextRefreshTime;
         private BackpackController subscribedPlayerBackpack;
-        private bool pendingAutomaticCopy;
         private PlayerBackpackDebugSnapshot snapshot =
             PlayerBackpackDebugSnapshot.Unavailable(
                 "调试桥尚未初始化。");
@@ -57,9 +53,6 @@ namespace BackpackPrototype
             enemyBackpackSystem;
 
         public bool DebugEnabled => debugEnabled;
-
-        public bool AutoCopyPlayerLayoutToEnemy =>
-            autoCopyPlayerLayoutToEnemy;
 
         public bool DragCellVisualizationEnabled =>
             dragCellVisualizationEnabled;
@@ -109,8 +102,6 @@ namespace BackpackPrototype
             }
 
             RefreshAutoCopySubscription();
-            TryAutomaticCopy();
-
             if (Time.unscaledTime >= nextRefreshTime)
             {
                 RefreshSnapshot();
@@ -164,16 +155,6 @@ namespace BackpackPrototype
             LevelFlowController.EnsureInstance()
                 ?.RequestStartRound();
             RefreshSnapshot();
-        }
-
-        public void SetAutoCopyPlayerLayoutToEnemy(bool enabled)
-        {
-            autoCopyPlayerLayoutToEnemy = enabled;
-            if (enabled)
-            {
-                pendingAutomaticCopy = true;
-                TryAutomaticCopy();
-            }
         }
 
         public bool RefreshShop()
@@ -259,21 +240,6 @@ namespace BackpackPrototype
             if (enemyBackpackSystem == null ||
                 !enemyBackpackSystem
                     .RestoreDefaultData())
-            {
-                return false;
-            }
-
-            RefreshSnapshot();
-            return true;
-        }
-
-        public bool CopyPlayerLayoutToEnemy()
-        {
-            if (!CanModifyPreparation() ||
-                enemyBackpackSystem == null ||
-                !enemyBackpackSystem.IsReady ||
-                !enemyBackpackSystem.CopyLayoutFrom(
-                    playerBackpackSystem.Backpack))
             {
                 return false;
             }
@@ -663,38 +629,19 @@ namespace BackpackPrototype
                 HandlePlayerBackpackChanged;
             subscribedPlayerBackpack.Cleared +=
                 HandlePlayerBackpackCleared;
-            pendingAutomaticCopy = autoCopyPlayerLayoutToEnemy;
         }
 
         private void HandlePlayerBackpackChanged(ItemInstance _)
         {
-            pendingAutomaticCopy = true;
-        }
-
-        private void HandlePlayerBackpackCleared()
-        {
-            pendingAutomaticCopy = true;
-        }
-
-        private void TryAutomaticCopy()
-        {
-            if (!autoCopyPlayerLayoutToEnemy ||
-                !pendingAutomaticCopy ||
-                !CanModifyPreparation() ||
-                enemyBackpackSystem == null ||
-                !enemyBackpackSystem.IsReady ||
-                playerBackpackSystem.Backpack == null)
+            // 玩家一次成功的模型变更立即换取一次敌人反应，但不消耗敌人回合额度。
+            if (CanModifyPreparation())
             {
-                return;
-            }
-
-            if (enemyBackpackSystem.CopyLayoutFrom(
-                    playerBackpackSystem.Backpack))
-            {
-                pendingAutomaticCopy = false;
-                RefreshSnapshot();
+                enemyBackpackSystem?.RequestImmediateReaction();
             }
         }
+
+        private void HandlePlayerBackpackCleared() =>
+            HandlePlayerBackpackChanged(null);
 
         private void OnDisable()
         {

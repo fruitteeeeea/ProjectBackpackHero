@@ -5747,7 +5747,7 @@ MonoBehaviour:
   playerBackpackSystem: {fileID: 519426325}
   enemyBackpackSystem: {fileID: 0}
   debugEnabled: 1
-  autoCopyPlayerLayoutToEnemy: 1
+  dragCellVisualizationEnabled: 0
   refreshInterval: 0.1
 --- !u!4 &1481743114
 Transform:

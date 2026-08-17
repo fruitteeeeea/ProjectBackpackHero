@@ -3,6 +3,33 @@ using UnityEngine;
 
 namespace BackpackHero.Input
 {
+    public sealed class CurveBeaconDragStateModel
+    {
+        public bool IsDraggingBeacon { get; private set; }
+
+        public void Begin(bool beganOnBeacon)
+        {
+            IsDraggingBeacon = beganOnBeacon;
+        }
+
+        public void End()
+        {
+            IsDraggingBeacon = false;
+        }
+
+        public Vector3 ResolvePosition(
+            Vector3 curvePoint,
+            Vector3 currentPosition)
+        {
+            return IsDraggingBeacon
+                ? curvePoint
+                : new Vector3(
+                    curvePoint.x,
+                    currentPosition.y,
+                    currentPosition.z);
+        }
+    }
+
     [DisallowMultipleComponent]
     public sealed class CurveBeaconController : MonoBehaviour
     {
@@ -25,6 +52,7 @@ namespace BackpackHero.Input
         private float originalAlpha = 1f;
         private float currentOpacity = 1f;
         private float lastPointerMotionTime;
+        private readonly CurveBeaconDragStateModel dragState = new();
 
         private void Awake()
         {
@@ -56,6 +84,7 @@ namespace BackpackHero.Input
         {
             UnsubscribeFromInput();
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
+            dragState.End();
         }
 
         private void OnValidate()
@@ -92,6 +121,10 @@ namespace BackpackHero.Input
             input.PointerBegan += HandlePointerBegan;
             input.PointerMoved -= HandlePointerMoved;
             input.PointerMoved += HandlePointerMoved;
+            input.PointerEnded -= HandlePointerEnded;
+            input.PointerEnded += HandlePointerEnded;
+            input.InputEnabledChanged -= HandleInputEnabledChanged;
+            input.InputEnabledChanged += HandleInputEnabledChanged;
         }
 
         private void UnsubscribeFromInput()
@@ -100,24 +133,85 @@ namespace BackpackHero.Input
             {
                 input.PointerBegan -= HandlePointerBegan;
                 input.PointerMoved -= HandlePointerMoved;
+                input.PointerEnded -= HandlePointerEnded;
+                input.InputEnabledChanged -= HandleInputEnabledChanged;
             }
         }
 
         private void HandlePointerBegan(Vector2 screenPosition)
         {
-            UpdateClosestPosition(screenPosition);
+            BeginPointerDrag(screenPosition);
         }
 
         private void HandlePointerMoved(Vector2 screenPosition)
         {
-            UpdateClosestPosition(screenPosition);
+            UpdatePointerDrag(screenPosition);
         }
 
-        private void UpdateClosestPosition(Vector2 screenPosition)
+        private void BeginPointerDrag(Vector2 screenPosition)
+        {
+            lastPointerMotionTime = Time.unscaledTime;
+            SetOpacity(1f);
+            dragState.Begin(IsPointerOnBeacon(screenPosition));
+
+            if (dragState.IsDraggingBeacon)
+            {
+                UpdateClosestPosition(screenPosition);
+            }
+        }
+
+        private void UpdatePointerDrag(Vector2 screenPosition)
         {
             lastPointerMotionTime = Time.unscaledTime;
             SetOpacity(1f);
 
+            if (dragState.IsDraggingBeacon)
+            {
+                UpdateClosestPosition(screenPosition);
+            }
+        }
+
+        private void HandlePointerEnded()
+        {
+            dragState.End();
+        }
+
+        private void HandleInputEnabledChanged(bool isEnabled)
+        {
+            if (!isEnabled)
+            {
+                dragState.End();
+            }
+        }
+
+        private bool IsPointerOnBeacon(Vector2 screenPosition)
+        {
+            if (beaconRenderer == null)
+            {
+                return false;
+            }
+
+            Camera targetCamera = worldCamera != null
+                ? worldCamera
+                : Camera.main;
+
+            if (targetCamera == null)
+            {
+                return false;
+            }
+
+            Ray pointerRay = targetCamera.ScreenPointToRay(screenPosition);
+            Plane beaconPlane = new(
+                targetCamera.transform.forward,
+                beaconRenderer.bounds.center);
+
+            return beaconPlane.Raycast(pointerRay, out float distance) &&
+                beaconRenderer.bounds.Contains(
+                    pointerRay.GetPoint(distance));
+        }
+
+        private void UpdateClosestPosition(Vector2 screenPosition)
+        {
             Camera targetCamera = worldCamera != null
                 ? worldCamera
                 : Camera.main;
@@ -144,7 +238,10 @@ namespace BackpackHero.Input
             if (phase == BattlePhase.Combat)
             {
                 SetOpacity(idleOpacity);
+                return;
             }
+
+            dragState.End();
         }
 
         private void RefreshPosition()
@@ -152,7 +249,9 @@ namespace BackpackHero.Input
             if (curve != null &&
                 curve.TryEvaluatePoint(normalizedTime, out Vector3 point))
             {
-                transform.position = point;
+                transform.position = dragState.ResolvePosition(
+                    point,
+                    transform.position);
             }
         }
 

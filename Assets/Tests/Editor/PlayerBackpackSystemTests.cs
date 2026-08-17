@@ -33,7 +33,7 @@ public sealed class PlayerBackpackSystemTests
     }
 
     [Test]
-    public void ShopRoll_UsesPreferredCompositionAndNeverReturnsThreeOfOneItem()
+    public void ShopRoll_UsesTwoAircraftOneEquipmentCompositionAndNeverReturnsThreeOfOneItem()
     {
         ItemShapeData shape = ScriptableObject.CreateInstance<ItemShapeData>();
         ItemData aircraft = ScriptableObject.CreateInstance<ItemData>();
@@ -76,10 +76,10 @@ public sealed class PlayerBackpackSystemTests
                 {
                     Assert.That(
                         CountItemsOfType(result, ItemType.Aircraft),
-                        Is.EqualTo(1));
+                        Is.EqualTo(2));
                     Assert.That(
                         CountItemsOfType(result, ItemType.Equipment),
-                        Is.EqualTo(2));
+                        Is.EqualTo(1));
                 }
             }
         }

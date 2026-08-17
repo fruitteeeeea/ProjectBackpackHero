@@ -142,8 +142,9 @@ namespace BackpackPrototype
                 source != target &&
                 source.Data != null &&
                 source.Data == target.Data &&
-                source.Level == ItemInstance.DefaultLevel &&
-                target.Level == ItemInstance.DefaultLevel &&
+                source.Level == target.Level &&
+                source.CanUpgrade &&
+                target.CanUpgrade &&
                 items.Contains(target);
         }
 

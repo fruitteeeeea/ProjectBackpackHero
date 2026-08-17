@@ -253,7 +253,8 @@ namespace BackpackPrototype
                     new ItemInstance(
                         $"layout-validation-{index}",
                         placement.Data,
-                        placement.AnchorCell);
+                        placement.AnchorCell,
+                        placement.Level);
 
                 if (!validation.PlaceItem(
                         candidate,
@@ -279,7 +280,7 @@ namespace BackpackPrototype
                     combatController.AddItem(
                         placement.Data,
                         placement.AnchorCell,
-                        GetPlayerItemLevel(placement.Data));
+                        placement.Level);
                 }
             }
             finally
@@ -344,7 +345,7 @@ namespace BackpackPrototype
                     playerItems.GetDeckItems(),
                     Backpack.Width,
                     Backpack.Height,
-                    playerItems.GetLevel,
+                    null,
                     out List<BackpackLayoutItem> layout))
             {
                 Debug.LogError("当前 Deck 无法完整放入背包。", this);
@@ -481,7 +482,7 @@ namespace BackpackPrototype
         }
 
         /// <summary>
-        /// 生成一轮商店候选：60% 概率包含一架飞机和两件装备；
+        /// 生成一轮商店候选：60% 概率包含两架飞机和一件装备；
         /// 上一轮出现过的物品保留为候选，但其权重降至 10%。
         /// </summary>
         private static List<ItemData> BuildShopRoll(
@@ -516,7 +517,7 @@ namespace BackpackPrototype
             if (usePreferredComposition)
             {
                 AddWeightedItem(aircraft, previousShopItems, selected);
-                AddWeightedItem(equipment, previousShopItems, selected);
+                AddWeightedItem(aircraft, previousShopItems, selected);
                 AddWeightedItem(equipment, previousShopItems, selected);
             }
 
@@ -1247,8 +1248,7 @@ namespace BackpackPrototype
                 new ItemInstance(
                     $"shop-item-{++nextItemId}",
                     data,
-                    Vector2Int.zero,
-                    GetPlayerItemLevel(data));
+                    Vector2Int.zero);
 
             view.Bind(
                 instance,
@@ -1290,13 +1290,6 @@ namespace BackpackPrototype
             {
                 RefreshShopInternal();
             }
-        }
-
-        private static int GetPlayerItemLevel(ItemData data)
-        {
-            return PlayerItemSystem.Instance != null
-                ? PlayerItemSystem.Instance.GetLevel(data)
-                : ItemInstance.DefaultLevel;
         }
 
         private ItemView ResolveItemViewPrefab(ItemData data) =>

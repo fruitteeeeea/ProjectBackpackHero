@@ -6,7 +6,11 @@ namespace BackpackPrototype
     public sealed class ItemInstance
     {
         public const int DefaultLevel = 1;
-        public const int MaximumLevel = 2;
+        /// <summary>
+        /// The level of an item instance exists only for the current Sample Scene run.
+        /// PlayerItemSystem stores the separate out-of-match progression level.
+        /// </summary>
+        public const int MaximumLevel = 3;
 
         public ItemInstance(
             string id,

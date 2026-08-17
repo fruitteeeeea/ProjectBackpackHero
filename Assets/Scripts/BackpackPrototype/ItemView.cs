@@ -382,6 +382,85 @@ namespace BackpackPrototype
             PlayPlacedFeedback();
         }
 
+        /// <summary>供非交互式背包操作者播放一次完整的移动反馈。</summary>
+        public void AnimateToBackpackPosition(
+            Vector2Int anchorCell,
+            Action completed = null)
+        {
+            if (GridView == null || rectTransform == null)
+            {
+                completed?.Invoke();
+                return;
+            }
+
+            feedbackTween?.Kill();
+            rectTransform.SetParent(BackpackItemLayer, false);
+            rectTransform.anchorMin = new Vector2(0f, 1f);
+            rectTransform.anchorMax = new Vector2(0f, 1f);
+            rectTransform.pivot = new Vector2(0f, 1f);
+            IsPlacedInBackpack = true;
+            Instance.AnchorCell = anchorCell;
+            Vector2 target = GridView.GetItemAnchoredPosition(anchorCell);
+            feedbackTween = rectTransform.DOAnchorPos(target, .28f)
+                .SetEase(Ease.OutCubic)
+                .OnComplete(() =>
+                {
+                    SetBackpackPosition(anchorCell);
+                    PlayPlacedFeedback();
+                    completed?.Invoke();
+                });
+        }
+
+        /// <summary>供非交互式背包操作者播放一次加入反馈。</summary>
+        public void AnimateSpawnInBackpack(Action completed = null)
+        {
+            if (rectTransform == null)
+            {
+                completed?.Invoke();
+                return;
+            }
+
+            feedbackTween?.Kill();
+            rectTransform.localScale = Vector3.zero;
+            feedbackTween = rectTransform.DOScale(Vector3.one, .24f)
+                .SetEase(Ease.OutBack)
+                .OnComplete(() =>
+                {
+                    PlayPlacedFeedback();
+                    completed?.Invoke();
+                });
+        }
+
+        /// <summary>供非交互式背包操作者播放一次移除反馈。</summary>
+        public void AnimateRemoval(Action completed = null)
+        {
+            if (rectTransform == null)
+            {
+                completed?.Invoke();
+                return;
+            }
+
+            feedbackTween?.Kill();
+            float originalAlpha = canvasGroup != null ? canvasGroup.alpha : 1f;
+            Sequence sequence = DOTween.Sequence();
+            sequence.Join(rectTransform.DOScale(Vector3.zero, .22f)
+                .SetEase(Ease.InBack));
+            if (canvasGroup != null)
+            {
+                sequence.Join(canvasGroup.DOFade(0f, .18f));
+            }
+
+            feedbackTween = sequence.OnComplete(() =>
+            {
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = originalAlpha;
+                }
+
+                completed?.Invoke();
+            });
+        }
+
         /// <summary>供装备触发命中时使用的白闪，不影响冷却完成闪烁。</summary>
         public void PlayTriggeredFeedback()
         {

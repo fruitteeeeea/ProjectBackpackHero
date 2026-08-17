@@ -3,12 +3,18 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1bc3567a0b5e448f9ec9410037045512, type: 3}
   m_Name: DeckPreset_04
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.DeckPreset
   slots:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 31f9b30f4f5746ab8e933c27cd5d3291, type: 2}
+  - {fileID: 11400000, guid: e5ea4fab34d1460d9bbbe3285783fab3, type: 2}
+  - {fileID: 11400000, guid: 6007433df60c04aecab6ba619a64cb26, type: 2}
+  - {fileID: 11400000, guid: daaef9150fc594dd99de956ba14ff6b4, type: 2}
+  - {fileID: 11400000, guid: 1078dec6aa2324917a0dc4f3f01deec3, type: 2}

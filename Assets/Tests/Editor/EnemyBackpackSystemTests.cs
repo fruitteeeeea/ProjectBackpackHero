@@ -122,6 +122,47 @@ public sealed class EnemyBackpackSystemTests
     }
 
     [Test]
+    public void EnemyPrefab_UsesTheFiveSharedDeckPresets()
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(EnemyPrefabPath);
+        EnemyBackpackSystem system = prefab.GetComponent<EnemyBackpackSystem>();
+
+        Assert.That(system, Is.Not.Null);
+        Assert.That(system.PresetPool.Count, Is.EqualTo(5));
+        foreach (DeckPreset preset in system.PresetPool)
+        {
+            Assert.That(preset, Is.Not.Null);
+            Assert.That(preset.IsValid(out _), Is.True);
+        }
+    }
+
+    [Test]
+    public void EnemyLayoutPlanner_BuildsAValidCenteredLayout()
+    {
+        ItemData aircraft = AssetDatabase.LoadAssetAtPath<ItemData>(
+            "Assets/Data/Backpack/Items/Aircraft_First.asset");
+        ItemData equipment = AssetDatabase.LoadAssetAtPath<ItemData>(
+            "Assets/Data/Backpack/Items/Equipment_First.asset");
+
+        Assert.That(EnemyBackpackLayoutPlanner.TryBuild(
+            new[] { aircraft, equipment }, 7, 4, out var layout), Is.True);
+        Assert.That(layout, Has.Count.EqualTo(2));
+
+        BackpackController validation = new(7, 4);
+        foreach (BackpackLayoutItem placement in layout)
+        {
+            Assert.That(validation.PlaceItem(
+                new ItemInstance("test", placement.Data, placement.AnchorCell),
+                placement.AnchorCell), Is.True);
+        }
+
+        foreach (BackpackLayoutItem placement in layout)
+        {
+            Assert.That(placement.AnchorCell.x, Is.InRange(1, 5));
+        }
+    }
+
+    [Test]
     public void EnemyUi_HidesInteractionAndMirrorsMotion()
     {
         GameObject enemyUi =

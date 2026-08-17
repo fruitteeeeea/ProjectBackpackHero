@@ -24,6 +24,14 @@ namespace BackpackHero.EditorTools
             EnemyDataFolder + "/EnemyBackpack_Default.asset";
         private const string MainScenePath =
             "Assets/Scenes/SampleScene.unity";
+        private static readonly string[] DeckPresetPaths =
+        {
+            "Assets/Data/Backpack/DeckPresets/DeckPreset_01.asset",
+            "Assets/Data/Backpack/DeckPresets/DeckPreset_02.asset",
+            "Assets/Data/Backpack/DeckPresets/DeckPreset_03.asset",
+            "Assets/Data/Backpack/DeckPresets/DeckPreset_04.asset",
+            "Assets/Data/Backpack/DeckPresets/DeckPreset_05.asset",
+        };
 
         [MenuItem(
             "Tools/Backpack/Build Complete Enemy Backpack")]
@@ -383,6 +391,15 @@ namespace BackpackHero.EditorTools
                 new SerializedObject(system);
             enemyData.FindProperty("defaultData")
                 .objectReferenceValue = defaultData;
+            SerializedProperty presetPool = enemyData.FindProperty("presetPool");
+            presetPool.arraySize = DeckPresetPaths.Length;
+            for (int index = 0; index < DeckPresetPaths.Length; index++)
+            {
+                presetPool.GetArrayElementAtIndex(index)
+                    .objectReferenceValue =
+                    AssetDatabase.LoadAssetAtPath<DeckPreset>(
+                        DeckPresetPaths[index]);
+            }
             enemyData.FindProperty("gridView")
                 .objectReferenceValue = grid;
             enemyData.FindProperty("itemLayer")

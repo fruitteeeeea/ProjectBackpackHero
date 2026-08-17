@@ -563,7 +563,10 @@ namespace BackpackHero.Battle
                                     fighter.Faction) *
                             LevelDifficultyRuntime
                                 .GetProjectileDamageMultiplier(
-                                    fighter.Faction),
+                                    fighter.Faction) *
+                            (LevelFlowController.Instance?.IsOvertime == true
+                                ? LevelFlowController.OvertimeProjectileDamageMultiplier
+                                : 1f),
                             fighter.Definition
                                 .ProjectileSpeed,
                             -1f,

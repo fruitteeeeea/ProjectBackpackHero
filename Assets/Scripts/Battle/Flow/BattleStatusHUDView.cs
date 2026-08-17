@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,17 +29,28 @@ namespace BackpackHero.Battle
         [SerializeField] private string scoreFormat = "{0}{1}{2}";
         [SerializeField] private string scoreSeparator = " - ";
 
+        [Header("Round Timer")]
+        [SerializeField] private TextMeshProUGUI countdownLabel;
+        [SerializeField] private Color overtimeCountdownColor = Color.red;
+        [SerializeField, Min(0.01f)] private float overtimeBlinkInterval = 0.25f;
+
         private Coroutine phaseFlickerRoutine;
+        private Coroutine overtimeBlinkRoutine;
         private bool hasVisualPhase;
         private bool isCombatVisual;
+        private Color defaultCountdownColor;
 
         private void OnEnable()
         {
             LevelManager.LevelChanged += HandleLevelChanged;
             BattleFlowController.PhaseChanged += HandlePhaseChanged;
             LevelFlowController.MatchStateChanged += RefreshScore;
+            LevelFlowController.RoundTimerStateChanged += RefreshCountdown;
+            if (countdownLabel != null)
+                defaultCountdownColor = countdownLabel.color;
             ApplyPhase(BattleFlowController.CurrentPhase, false);
             RefreshScore();
+            RefreshCountdown();
         }
 
         private void OnDisable()
@@ -46,11 +58,13 @@ namespace BackpackHero.Battle
             LevelManager.LevelChanged -= HandleLevelChanged;
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
             LevelFlowController.MatchStateChanged -= RefreshScore;
+            LevelFlowController.RoundTimerStateChanged -= RefreshCountdown;
             if (phaseFlickerRoutine != null)
             {
                 StopCoroutine(phaseFlickerRoutine);
                 phaseFlickerRoutine = null;
             }
+            StopOvertimeBlink();
         }
 
         private void HandleLevelChanged(int _)
@@ -99,6 +113,63 @@ namespace BackpackHero.Battle
             scoreLabel.text = string.Format(scoreFormat, player, separator, enemy);
         }
 
+        private void RefreshCountdown()
+        {
+            if (countdownLabel == null) return;
+
+            LevelFlowController controller = LevelFlowController.Instance;
+            bool visible = controller != null && controller.IsRoundTimerRunning;
+            countdownLabel.gameObject.SetActive(visible);
+            if (!visible)
+            {
+                StopOvertimeBlink();
+                countdownLabel.color = defaultCountdownColor;
+                return;
+            }
+
+            int seconds = Mathf.CeilToInt(controller.RemainingRoundTime);
+            countdownLabel.text = $"{seconds / 60:00}:{seconds % 60:00}";
+
+            if (controller.IsOvertime)
+            {
+                countdownLabel.color = overtimeCountdownColor;
+                if (overtimeBlinkRoutine == null)
+                    overtimeBlinkRoutine = StartCoroutine(PlayOvertimeBlink());
+            }
+            else
+            {
+                StopOvertimeBlink();
+                countdownLabel.color = defaultCountdownColor;
+            }
+        }
+
+        private IEnumerator PlayOvertimeBlink()
+        {
+            while (countdownLabel != null &&
+                   LevelFlowController.Instance != null &&
+                   LevelFlowController.Instance.IsOvertime &&
+                   LevelFlowController.Instance.IsRoundTimerRunning)
+            {
+                countdownLabel.alpha = 0.25f;
+                yield return new WaitForSecondsRealtime(overtimeBlinkInterval);
+                if (countdownLabel != null) countdownLabel.alpha = 1f;
+                yield return new WaitForSecondsRealtime(overtimeBlinkInterval);
+            }
+
+            if (countdownLabel != null) countdownLabel.alpha = 1f;
+            overtimeBlinkRoutine = null;
+        }
+
+        private void StopOvertimeBlink()
+        {
+            if (overtimeBlinkRoutine != null)
+            {
+                StopCoroutine(overtimeBlinkRoutine);
+                overtimeBlinkRoutine = null;
+            }
+            if (countdownLabel != null) countdownLabel.alpha = 1f;
+        }
+
         private void StartPhaseFlicker()
         {
             if (statusPanel == null) return;
@@ -128,6 +199,7 @@ namespace BackpackHero.Battle
         {
             phaseFlickerInterval = Mathf.Max(0.01f, phaseFlickerInterval);
             phaseFlickerCount = Mathf.Max(1, phaseFlickerCount);
+            overtimeBlinkInterval = Mathf.Max(0.01f, overtimeBlinkInterval);
         }
 #endif
     }

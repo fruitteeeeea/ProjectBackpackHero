@@ -123,7 +123,10 @@ namespace BackpackPrototype
 
                 if (item == null ||
                     !CanCooldown(item) ||
-                    !item.TickCooldown(Time.deltaTime))
+                    !item.TickCooldown(Time.deltaTime *
+                        (LevelFlowController.Instance?.IsOvertime == true
+                            ? LevelFlowController.OvertimeCooldownSpeedMultiplier
+                            : 1f)))
                 {
                     continue;
                 }

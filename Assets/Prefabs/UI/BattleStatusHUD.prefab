@@ -127,6 +127,9 @@ MonoBehaviour:
   phaseFlickerInterval: 0.05
   phaseFlickerCount: 3
   scoreLabel: {fileID: 1503}
+  countdownLabel: {fileID: 8442441474927524272}
+  overtimeCountdownColor: {r: 1, g: 0, b: 0, a: 1}
+  overtimeBlinkInterval: 0.25
   playerScoreColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   enemyScoreColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   scoreSeparatorColor: {r: 1, g: 1, b: 1, a: 1}

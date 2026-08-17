@@ -20,6 +20,9 @@ namespace BackpackPrototype
         private EnemyBackpackData defaultData;
 
         [SerializeField]
+        private DeckPreset defaultDeckPreset;
+
+        [SerializeField]
         private ItemView itemViewPrefab;
         [SerializeField] private ItemView itemView1x2Prefab;
         [SerializeField] private ItemView itemView2x1Prefab;
@@ -51,6 +54,7 @@ namespace BackpackPrototype
         private EnemyBackpackData currentData;
 
         public EnemyBackpackData DefaultData => defaultData;
+        public DeckPreset DefaultDeckPreset => defaultDeckPreset;
         public EnemyBackpackData CurrentData => currentData;
         public bool IsReady => isReady;
         public BackpackController Backpack =>
@@ -120,6 +124,24 @@ namespace BackpackPrototype
             return ApplyLayoutInternal(
                 layout,
                 data);
+        }
+
+        public bool ApplyDeckPreset(DeckPreset preset)
+        {
+            if (preset == null ||
+                !preset.IsValid(out _) ||
+                Backpack == null ||
+                !DeckLayoutBuilder.TryBuild(
+                    preset.Slots,
+                    Backpack.Width,
+                    Backpack.Height,
+                    null,
+                    out List<BackpackLayoutItem> layout))
+            {
+                return false;
+            }
+
+            return ApplyLayoutInternal(layout, null);
         }
 
         /// <summary>
@@ -256,7 +278,9 @@ namespace BackpackPrototype
 
         public bool RestoreDefaultData()
         {
-            return ApplyData(defaultData);
+            return defaultDeckPreset != null
+                ? ApplyDeckPreset(defaultDeckPreset)
+                : ApplyData(defaultData);
         }
 
         private void RebuildViews()
@@ -396,7 +420,7 @@ namespace BackpackPrototype
             bool valid =
                 combatController != null &&
                 fighterSpawner != null &&
-                defaultData != null &&
+                (defaultData != null || defaultDeckPreset != null) &&
                 gridView != null &&
                 itemLayer != null &&
                 aircraftSpawnAnchor != null &&

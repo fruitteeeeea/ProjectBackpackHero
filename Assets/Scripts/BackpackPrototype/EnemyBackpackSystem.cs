@@ -161,15 +161,42 @@ namespace BackpackPrototype
         private bool TryExecuteOperation()
         {
             if (!CanOperate()) return false;
-            // 非满背包绝不移除。满背包时也只给移除一个较低权重，
-            // 更倾向移动或用商店物品替换。
-            int[] actions = IsBackpackFull()
-                ? new[] { 0, 0, 0, 0, 1, 1, 3, 3, 2 }
-                : new[] { 0, 0, 0, 0, 1, 1, 1, 3, 3 };
+            if (shopItems.Count == 0)
+            {
+                RefreshHiddenShop();
+            }
+
+            // 保持商店三件库存：买走物品后，敌人有很高概率先 Roll。
+            if (shopItems.Count < ShopRollItemCount &&
+                UnityEngine.Random.value < .8f &&
+                TryRollShop())
+            {
+                return true;
+            }
+
+            bool canAdd = CanAddAnyShopItem();
+            // 只要还能放入商店物品，绝大多数操作直接拿取。
+            if (canAdd && UnityEngine.Random.value < .85f)
+            {
+                return TryAddShopItem();
+            }
+
+            // 空间受限后才开放合成和移除；两者仍明显低于移动、Roll 和替换。
+            int[] actions = canAdd
+                ? new[] { 1, 1, 1, 1, 1, 0, 0, 5, 5, 3 }
+                : new[] { 0, 0, 0, 0, 0, 0, 5, 5, 3, 3, 4, 2 };
             Shuffle(actions);
             foreach (int action in actions)
             {
-                bool changed = action switch { 0 => TryMoveItem(), 1 => TryAddShopItem(), 2 => TryRemoveItem(), _ => TryReplaceItem() };
+                bool changed = action switch
+                {
+                    0 => TryMoveItem(),
+                    1 => TryAddShopItem(),
+                    2 => TryRemoveItem(),
+                    3 => TryReplaceItem(),
+                    4 => TryMergeItems(),
+                    _ => TryRollShop(),
+                };
                 if (changed) return true;
             }
             return false;
@@ -187,7 +214,46 @@ namespace BackpackPrototype
             if (!EnemyBackpackLayoutPlanner.TryFindPreferredCell(Backpack, new ItemInstance("enemy-cell-check", data, Vector2Int.zero), null, out Vector2Int cell) || combatController.AddItem(data, cell) == null) return false;
             shopItems.RemoveAt(index); return true;
         }
+        private bool TryRollShop()
+        {
+            int oldCount = shopItems.Count;
+            RefreshHiddenShop();
+            return shopItems.Count > 0 || oldCount > 0;
+        }
         private bool TryRemoveItem() => IsBackpackFull() && Items.Count > 0 && combatController.RemoveItem(Items[UnityEngine.Random.Range(0, Items.Count)]);
+        private bool TryMergeItems()
+        {
+            if (Backpack == null || CanAddAnyShopItem()) return false;
+            List<ItemInstance> sources = new();
+            foreach (ItemInstance source in Items)
+            {
+                if (source?.Data == null || source.Level != ItemInstance.DefaultLevel)
+                {
+                    continue;
+                }
+
+                foreach (ItemInstance target in Items)
+                {
+                    if (Backpack.CanMerge(source, target))
+                    {
+                        sources.Add(source);
+                        break;
+                    }
+                }
+            }
+
+            if (sources.Count == 0) return false;
+            ItemInstance chosenSource = sources[UnityEngine.Random.Range(0, sources.Count)];
+            foreach (ItemInstance target in Items)
+            {
+                if (Backpack.CanMerge(chosenSource, target))
+                {
+                    return Backpack.TryMerge(chosenSource, target);
+                }
+            }
+
+            return false;
+        }
         private bool TryReplaceItem()
         {
             if (Items.Count == 0 || shopItems.Count == 0) return false;
@@ -260,6 +326,24 @@ namespace BackpackPrototype
             for (int x = 0; x < Backpack.Width; x++)
                 if (Backpack.GetItemAt(new Vector2Int(x, y)) == null) return false;
             return true;
+        }
+        private bool CanAddAnyShopItem()
+        {
+            if (Backpack == null || shopItems.Count == 0) return false;
+            foreach (ItemData data in shopItems)
+            {
+                if (data == null) continue;
+                if (EnemyBackpackLayoutPlanner.TryFindPreferredCell(
+                        Backpack,
+                        new ItemInstance("enemy-fit-check", data, Vector2Int.zero),
+                        null,
+                        out _))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
         private static void Shuffle(int[] values)
         {

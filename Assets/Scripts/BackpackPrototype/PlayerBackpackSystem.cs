@@ -306,6 +306,27 @@ namespace BackpackPrototype
             RestoreDeckLayout();
         }
 
+        public bool ApplyDeckPreset(DeckPreset preset)
+        {
+            if (!isReady ||
+                BattleFlowController.CurrentPhase != BattlePhase.Preparation ||
+                preset == null ||
+                !preset.IsValid(out _))
+            {
+                return false;
+            }
+
+            PlayerItemSystem items = PlayerItemSystem.Instance;
+            if (items == null ||
+                items.TryApplyDeck(preset.Slots) != PlayerDeckResult.Success)
+            {
+                return false;
+            }
+
+            RestoreDeckLayout();
+            return true;
+        }
+
         private void RestoreDeckLayout()
         {
             PlayerItemSystem playerItems = PlayerItemSystem.Instance;
@@ -317,28 +338,15 @@ namespace BackpackPrototype
                 return;
             }
 
-            var layout = new List<BackpackLayoutItem>();
-            var validation = new BackpackController(
-                Backpack.Width,
-                Backpack.Height);
-            int placementId = 0;
-
-            foreach (ItemData item in playerItems.GetDeckItems())
+            if (!DeckLayoutBuilder.TryBuild(
+                    playerItems.GetDeckItems(),
+                    Backpack.Width,
+                    Backpack.Height,
+                    playerItems.GetLevel,
+                    out List<BackpackLayoutItem> layout))
             {
-                if (item == null ||
-                    !TryFindAvailableCell(
-                        validation,
-                        item,
-                        ref placementId,
-                        out Vector2Int cell))
-                {
-                    continue;
-                }
-
-                layout.Add(new BackpackLayoutItem(
-                    item,
-                    cell,
-                    playerItems.GetLevel(item)));
+                Debug.LogError("当前 Deck 无法完整放入背包。", this);
+                return;
             }
 
             if (!LoadLayout(layout))

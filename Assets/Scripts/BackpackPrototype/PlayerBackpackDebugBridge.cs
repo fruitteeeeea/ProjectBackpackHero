@@ -216,6 +216,31 @@ namespace BackpackPrototype
             return true;
         }
 
+        public bool ApplyPlayerDeckPreset(DeckPreset preset)
+        {
+            if (!CanModifyPreparation() ||
+                !playerBackpackSystem.ApplyDeckPreset(preset))
+            {
+                return false;
+            }
+
+            RefreshSnapshot();
+            return true;
+        }
+
+        public bool ApplyEnemyDeckPreset(DeckPreset preset)
+        {
+            if (!CanModifyPreparation() ||
+                enemyBackpackSystem == null ||
+                !enemyBackpackSystem.ApplyDeckPreset(preset))
+            {
+                return false;
+            }
+
+            RefreshSnapshot();
+            return true;
+        }
+
         public bool ApplyEnemyData(
             EnemyBackpackData data)
         {

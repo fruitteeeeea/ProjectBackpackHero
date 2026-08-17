@@ -17,8 +17,8 @@ MonoBehaviour:
   unlockRequirementText: Unlocked by default
   cost: 0
   debris: 0
-  name: 狙击飞机
-  desc: 超远射程的高伤害单发飞机。
+  name: Sniper
+  desc: A high-damage single-shot fighter with extreme range.
   icon: {fileID: 1392089294744885835, guid: 0897ebf00f07aba4f8d0894d7dec823f, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

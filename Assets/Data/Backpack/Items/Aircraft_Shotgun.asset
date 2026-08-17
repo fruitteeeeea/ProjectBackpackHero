@@ -17,8 +17,8 @@ MonoBehaviour:
   unlockRequirementText: Unlocked by default
   cost: 0
   debris: 0
-  name: 霰弹飞机
-  desc: 近距离发射三发散射子弹。
+  name: Scattershot
+  desc: Fires three spread shots at close range.
   icon: {fileID: -2813064195979843760, guid: 7c89f10bd7e9a44449747e38e6a9ab88, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

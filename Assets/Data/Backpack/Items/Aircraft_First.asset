@@ -17,8 +17,8 @@ MonoBehaviour:
   unlockRequirementText: Unlocked by default
   cost: 0
   debris: 0
-  name: 初号飞机
-  desc: 均衡的前线战机，提供稳定火力。
+  name: Vanguard
+  desc: A balanced frontline fighter with reliable firepower.
   icon: {fileID: 2875208246182030159, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

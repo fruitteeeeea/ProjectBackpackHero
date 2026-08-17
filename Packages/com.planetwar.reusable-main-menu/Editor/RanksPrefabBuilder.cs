@@ -38,7 +38,9 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var deckGuideVisible = fourthDeckPreview != null && Find(fourthDeckPreview, "guide")?.gameObject.activeSelf == true;
                 var deckLevelPrefix = fourthDeckPreview != null ? Find(fourthDeckPreview, "lv")?.GetComponentInChildren<TMP_Text>(true) : null;
                 var deckLabelReferences = firstDeckCard != null && new SerializedObject(firstDeckCard).FindProperty("levelPrefixText").objectReferenceValue != null && new SerializedObject(firstDeckCard).FindProperty("levelValueText").objectReferenceValue != null;
-                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || prefab.transform.Find("UICardView/UICardInfo")?.GetComponent<HangarDetailLayout>() == null))
+                var entityDetails = prefab != null ? prefab.transform.Find("UICardView/UICardInfo")?.GetComponent<HangarDetailLayout>() : null;
+                var spellDetails = prefab != null ? prefab.transform.Find("UICardView/UICardSpell")?.GetComponent<HangarDetailLayout>() : null;
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails)))
                 {
                     Debug.Log("[PlanetWar] Rebuilding MainMenu Hangar with the original static card configuration.");
                     Rebuild();
@@ -261,13 +263,44 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 Find(panel.transform, "btnUpBattle")?.gameObject,
                 Find(panel.transform, "ObjSlider")?.gameObject,
                 Find(panel.transform, "btns")?.gameObject,
-                Find(panel.transform, "name")?.GetComponentInChildren<TMP_Text>(true),
-                Find(panel.transform, "desc")?.GetComponentInChildren<TMP_Text>(true),
+                FindDetailText(panel.transform, "name"),
+                FindDetailText(panel.transform, "desc"),
                 Find(panel.transform, "textLock")?.GetComponent<TMP_Text>(),
                 preview,
                 FindAttributeValues(panel.transform),
                 FindAttributeLabels(panel.transform));
             return layout;
+        }
+
+        // The panel and its embedded ItemCard preview both contain name/desc nodes. The
+        // preview is not the detail header, so bind only text outside it and the skill template.
+        private static TMP_Text FindDetailText(Transform panel, string nodeName)
+        {
+            foreach (TMP_Text candidate in panel.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (candidate == null || candidate.gameObject.name != nodeName ||
+                    IsUnder(candidate.transform, "ItemCard") ||
+                    IsUnder(candidate.transform, "SkillScroll")) continue;
+                return candidate;
+            }
+            return null;
+        }
+
+        private static bool HasActiveDetailHeaderBindings(HangarDetailLayout layout)
+        {
+            if (layout == null) return false;
+            var serialized = new SerializedObject(layout);
+            TMP_Text name = serialized.FindProperty("nameText").objectReferenceValue as TMP_Text;
+            TMP_Text description = serialized.FindProperty("descriptionText").objectReferenceValue as TMP_Text;
+            return name != null && description != null && name.gameObject.activeSelf &&
+                   description.gameObject.activeSelf;
+        }
+
+        private static bool IsUnder(Transform item, string ancestorName)
+        {
+            for (Transform current = item.parent; current != null; current = current.parent)
+                if (current.name == ancestorName || current.name == ancestorName + " (1)") return true;
+            return false;
         }
 
         private static TMP_Text[] FindAttributeValues(Transform panel)

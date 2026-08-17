@@ -11,8 +11,8 @@ namespace BackpackHero.Battle
     [DefaultExecutionOrder(-100)]
     public sealed class LevelFlowController : MonoBehaviour
     {
-        public const int WinsRequired = 3;
-        public const int MaximumRounds = 5;
+        public const int WinsRequired = 2;
+        public const int MaximumRounds = 3;
         private BattleBackpackTarget2D playerTarget;
         private BattleBackpackTarget2D enemyTarget;
         private LevelFlowBannerView bannerView;

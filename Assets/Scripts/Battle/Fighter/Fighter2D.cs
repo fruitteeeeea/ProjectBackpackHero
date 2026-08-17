@@ -232,7 +232,10 @@ namespace BackpackHero.Battle
                 GamePacingDebugRuntime.GetAircraftHealthMultiplier(
                     Faction) *
                 LevelDifficultyRuntime.GetAircraftHealthMultiplier(
-                    Faction));
+                    Faction) *
+                (LevelFlowController.Instance?.IsOvertime == true
+                    ? LevelFlowController.OvertimeAircraftHealthMultiplier
+                    : 1f));
         }
 
         private void ApplyStyleLifetime()

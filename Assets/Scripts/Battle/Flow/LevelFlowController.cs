@@ -13,6 +13,11 @@ namespace BackpackHero.Battle
     {
         public const int WinsRequired = 2;
         public const int MaximumRounds = 3;
+        public const float RoundDurationSeconds = 60f;
+        public const float OvertimeDurationSeconds = 30f;
+        public const float OvertimeCooldownSpeedMultiplier = 1.5f;
+        public const float OvertimeAircraftHealthMultiplier = 0.8f;
+        public const float OvertimeProjectileDamageMultiplier = 1.5f;
         private BattleBackpackTarget2D playerTarget;
         private BattleBackpackTarget2D enemyTarget;
         private LevelFlowBannerView bannerView;
@@ -26,6 +31,8 @@ namespace BackpackHero.Battle
         private int playerWins;
         private int enemyWins;
         private bool isMatchComplete;
+        private float remainingRoundTime;
+        private bool isOvertime;
 
         public static LevelFlowController Instance { get; private set; }
         public static int CurrentRound =>
@@ -36,10 +43,15 @@ namespace BackpackHero.Battle
         public int EnemyWins => enemyWins;
         public bool IsMatchComplete => isMatchComplete;
         public bool IsShowingBanner => bannerRoutine != null;
+        public float RemainingRoundTime => remainingRoundTime;
+        public bool IsOvertime => isOvertime;
+        public bool IsRoundTimerRunning =>
+            BattleFlowController.IsCombatPhase && !showingResult;
 
         public static event Action<int> RoundStarted;
         public static event Action<string> ResultShown;
         public static event Action MatchStateChanged;
+        public static event Action RoundTimerStateChanged;
 
         [RuntimeInitializeOnLoadMethod(
             RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -49,6 +61,7 @@ namespace BackpackHero.Battle
             RoundStarted = null;
             ResultShown = null;
             MatchStateChanged = null;
+            RoundTimerStateChanged = null;
         }
 
         [RuntimeInitializeOnLoadMethod(
@@ -103,6 +116,7 @@ namespace BackpackHero.Battle
         {
             ResolveTargets();
             EnsureBanner();
+            TickRoundTimer();
         }
 
         /// <summary>
@@ -150,6 +164,7 @@ namespace BackpackHero.Battle
             resolutionQueued = false;
             showingResult = false;
             isMatchComplete = false;
+            ResetRoundTimer();
             ResetBackpackHealth();
             BattleFlowController.EnsureInstance()?.SetPhase(BattlePhase.Preparation);
             MatchStateChanged?.Invoke();
@@ -159,8 +174,61 @@ namespace BackpackHero.Battle
         {
             if (phase == BattlePhase.Combat && !showingResult)
             {
+                StartRoundTimer();
                 ShowRoundBanner();
+                return;
             }
+
+            ResetRoundTimer();
+        }
+
+        private void StartRoundTimer()
+        {
+            remainingRoundTime = RoundDurationSeconds;
+            isOvertime = false;
+            RoundTimerStateChanged?.Invoke();
+        }
+
+        private void ResetRoundTimer()
+        {
+            remainingRoundTime = RoundDurationSeconds;
+            isOvertime = false;
+            RoundTimerStateChanged?.Invoke();
+        }
+
+        private void TickRoundTimer()
+        {
+            if (!IsRoundTimerRunning || remainingRoundTime <= 0f)
+            {
+                return;
+            }
+
+            remainingRoundTime = Mathf.Max(
+                0f,
+                remainingRoundTime - Time.deltaTime);
+            RoundTimerStateChanged?.Invoke();
+
+            if (remainingRoundTime > 0f)
+            {
+                return;
+            }
+
+            if (!isOvertime)
+            {
+                isOvertime = true;
+                remainingRoundTime = OvertimeDurationSeconds;
+                RoundTimerStateChanged?.Invoke();
+                return;
+            }
+
+            ResolveOvertimeByHealth();
+        }
+
+        private void ResolveOvertimeByHealth()
+        {
+            float playerHealth = playerTarget?.Health?.CurrentHealth ?? 0f;
+            float enemyHealth = enemyTarget?.Health?.CurrentHealth ?? 0f;
+            ResolveRound(playerHealth >= enemyHealth);
         }
 
         private void ResolveTargets()
@@ -264,26 +332,37 @@ namespace BackpackHero.Battle
             {
                 yield break;
             }
-            hasCompletedRound = true;
-            if (playerWins)
+            ResolveRound(playerWins);
+        }
+
+        private void ResolveRound(bool playerWon)
+        {
+            if (hasCompletedRound || showingResult ||
+                !BattleFlowController.IsCombatPhase)
             {
-                this.playerWins++;
+                return;
+            }
+
+            hasCompletedRound = true;
+            if (playerWon)
+            {
+                playerWins++;
             }
             else
             {
                 enemyWins++;
             }
 
-            isMatchComplete = this.playerWins >= WinsRequired ||
+            isMatchComplete = playerWins >= WinsRequired ||
                 enemyWins >= WinsRequired || currentRound >= MaximumRounds;
             MatchStateChanged?.Invoke();
 
             string result = isMatchComplete
-                ? (this.playerWins > enemyWins ? "关卡胜利" : "关卡失败") +
-                  $" {this.playerWins}:{enemyWins}"
-                : playerWins ? "Player Win" : "Player Lose";
+                ? (playerWins > enemyWins ? "关卡胜利" : "关卡失败") +
+                  $" {playerWins}:{enemyWins}"
+                : playerWon ? "Player Win" : "Player Lose";
             bool playerWonMatch = isMatchComplete &&
-                this.playerWins > enemyWins;
+                playerWins > enemyWins;
             if (isMatchComplete)
             {
                 HideBannerImmediately();
@@ -305,7 +384,7 @@ namespace BackpackHero.Battle
             {
                 ShowResultBanner(
                     result,
-                    playerWins
+                    playerWon
                         ? bannerView != null
                             ? bannerView.WinColor
                             : Color.blue

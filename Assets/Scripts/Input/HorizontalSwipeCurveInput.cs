@@ -28,6 +28,8 @@ namespace BackpackHero.Input
         public event Action<float> ValueChanged;
         public event Action<Vector2> PointerBegan;
         public event Action<Vector2> PointerMoved;
+        public event Action PointerEnded;
+        public event Action<bool> InputEnabledChanged;
 
         /// <summary>
         /// Starts a gesture and reports the screen position only when this
@@ -68,6 +70,8 @@ namespace BackpackHero.Input
             {
                 model.Disable();
             }
+
+            InputEnabledChanged?.Invoke(enabled);
         }
 
         private void Update()
@@ -217,12 +221,19 @@ namespace BackpackHero.Input
         {
             model.End(model.ActivePointerId);
             activePointerKind = PointerKind.None;
+            PointerEnded?.Invoke();
         }
 
         private void CancelGesture()
         {
+            bool hadActivePointer = model.HasActivePointer;
             model.Cancel();
             activePointerKind = PointerKind.None;
+
+            if (hadActivePointer)
+            {
+                PointerEnded?.Invoke();
+            }
         }
 
         private static bool IsPointerOverUi(int pointerId)

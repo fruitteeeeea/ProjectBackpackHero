@@ -224,6 +224,26 @@ namespace BackpackPrototype
         private bool TryMergeItems()
         {
             if (Backpack == null || CanAddAnyShopItem()) return false;
+
+            // 无法贴近任何飞机的装备价值较低：优先把它合并进同类、
+            // 已经能为飞机提供效果的装备，保留更有战术价值的那一份。
+            foreach (ItemInstance source in Items)
+            {
+                if (!IsStrandedEquipment(source))
+                {
+                    continue;
+                }
+
+                foreach (ItemInstance target in Items)
+                {
+                    if (Backpack.CanMerge(source, target) &&
+                        CountAdjacentAircraft(target, target.AnchorCell) > 0)
+                    {
+                        return Backpack.TryMerge(source, target);
+                    }
+                }
+            }
+
             List<ItemInstance> sources = new();
             foreach (ItemInstance source in Items)
             {
@@ -344,6 +364,63 @@ namespace BackpackPrototype
             }
 
             return false;
+        }
+        private bool IsStrandedEquipment(ItemInstance item)
+        {
+            return item?.Data?.ItemType == ItemType.Equipment &&
+                   item.Level == ItemInstance.DefaultLevel &&
+                   CountAdjacentAircraft(item, item.AnchorCell) == 0 &&
+                   !CanPlaceAdjacentToAircraft(item);
+        }
+        private bool CanPlaceAdjacentToAircraft(ItemInstance item)
+        {
+            for (int y = 0; y < Backpack.Height; y++)
+            {
+                for (int x = 0; x < Backpack.Width; x++)
+                {
+                    Vector2Int cell = new(x, y);
+                    if (Backpack.CanPlace(item, cell, item) &&
+                        CountAdjacentAircraft(item, cell) > 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+        private int CountAdjacentAircraft(
+            ItemInstance equipment,
+            Vector2Int anchorCell)
+        {
+            if (equipment?.Data?.ItemType != ItemType.Equipment)
+            {
+                return 0;
+            }
+
+            var aircraft = new HashSet<ItemInstance>();
+            Vector2Int[] directions =
+            {
+                Vector2Int.up,
+                Vector2Int.down,
+                Vector2Int.left,
+                Vector2Int.right,
+            };
+            foreach (Vector2Int offset in equipment.Data.ShapeOffsets)
+            {
+                Vector2Int occupiedCell = anchorCell + offset;
+                foreach (Vector2Int direction in directions)
+                {
+                    ItemInstance adjacent =
+                        Backpack.GetItemAt(occupiedCell + direction);
+                    if (adjacent?.Data?.ItemType == ItemType.Aircraft)
+                    {
+                        aircraft.Add(adjacent);
+                    }
+                }
+            }
+
+            return aircraft.Count;
         }
         private static void Shuffle(int[] values)
         {

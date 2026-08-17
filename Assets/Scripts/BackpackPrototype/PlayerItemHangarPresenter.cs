@@ -27,6 +27,14 @@ namespace BackpackPrototype
             Refresh();
         }
 
+        private void Start()
+        {
+            // The menu sample's Hangar page is initially inactive. Refresh again after the
+            // scene's Start phase so its serialized card hierarchy is always available on the
+            // first visit, including when the presenter was created before the scene loaded.
+            Refresh();
+        }
+
         private void OnDisable()
         {
             if (system != null) system.Changed -= Refresh;

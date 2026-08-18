@@ -657,7 +657,7 @@ namespace BackpackHero.Battle
                     attackRange,
                     targetLayerMask);
 
-            HurtBox2D nearestFighter = null;
+            HurtBox2D selectedFighter = null;
             HurtBox2D nearestBackpack = null;
 
             int bestFighterPriority = int.MinValue;
@@ -667,6 +667,9 @@ namespace BackpackHero.Battle
 
             float bestFighterDistanceSquared =
                 float.PositiveInfinity;
+
+            float farthestFighterDistanceSquared =
+                float.NegativeInfinity;
 
             float nearestBackpackDistanceSquared =
                 float.PositiveInfinity;
@@ -707,6 +710,20 @@ namespace BackpackHero.Battle
                     int targetingPriority =
                         GetTargetingPriority(candidate);
 
+                    if (fighter.Definition.TargetingMode ==
+                        FighterTargetSelectionMode.FarthestFighter)
+                    {
+                        if (IsFartherFighterCandidate(
+                                distanceSquared,
+                                farthestFighterDistanceSquared))
+                        {
+                            selectedFighter = candidate;
+                            farthestFighterDistanceSquared = distanceSquared;
+                        }
+
+                        continue;
+                    }
+
                     if (IsPreferredFighterCandidate(
                             targetingPriority,
                             alignment,
@@ -715,7 +732,7 @@ namespace BackpackHero.Battle
                             bestFighterAlignment,
                             bestFighterDistanceSquared))
                     {
-                        nearestFighter =
+                        selectedFighter =
                             candidate;
 
                         bestFighterPriority =
@@ -745,8 +762,8 @@ namespace BackpackHero.Battle
             }
 
             currentTarget =
-                nearestFighter != null
-                    ? nearestFighter
+                selectedFighter != null
+                    ? selectedFighter
                     : nearestBackpack;
         }
 
@@ -789,6 +806,11 @@ namespace BackpackHero.Battle
                    candidateDistanceSquared <
                    currentDistanceSquared;
         }
+
+        private static bool IsFartherFighterCandidate(
+            float candidateDistanceSquared,
+            float currentDistanceSquared) =>
+            candidateDistanceSquared > currentDistanceSquared;
 
         private bool TryGetFighterAlignment(
             HurtBox2D candidate,

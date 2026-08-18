@@ -35,6 +35,9 @@ namespace BackpackHero.Battle
         private readonly List<ProjectileEffectRuntime>
             projectileEffects = new();
 
+        private readonly HashSet<LaserLinkEquipmentEffectDefinition>
+            laserLinkEffects = new();
+
         private float remainingSharedCooldown;
         private int nextProjectileEffectIndex;
 
@@ -43,6 +46,13 @@ namespace BackpackHero.Battle
         public int ProjectileEffectCount =>
             projectileEffects.Count;
 
+        public IReadOnlyCollection<LaserLinkEquipmentEffectDefinition>
+            LaserLinkEffects => laserLinkEffects;
+
+        public bool HasLaserLinkEffect(
+            LaserLinkEquipmentEffectDefinition effect) =>
+            effect != null && laserLinkEffects.Contains(effect);
+
         /// <summary>
         /// 以传入顺序建立效果，因此重复装备会保留各自的独立状态。
         /// </summary>
@@ -50,11 +60,19 @@ namespace BackpackHero.Battle
             IEnumerable<EquipmentEffectDefinition> effects)
         {
             projectileEffects.Clear();
+            laserLinkEffects.Clear();
 
             if (effects != null)
             {
                 foreach (EquipmentEffectDefinition effect in effects)
                 {
+                    if (effect is LaserLinkEquipmentEffectDefinition laserLink &&
+                        laserLink.LaserAttackPrefab != null)
+                    {
+                        laserLinkEffects.Add(laserLink);
+                        continue;
+                    }
+
                     if (effect is not
                         ProjectileEquipmentEffectDefinition projectile ||
                         projectile.ProjectilePrefab == null)

@@ -2,6 +2,12 @@ using UnityEngine;
 
 namespace BackpackHero.Battle
 {
+    public enum FighterTargetSelectionMode
+    {
+        Standard,
+        FarthestFighter,
+    }
+
     [CreateAssetMenu(
         fileName = "New Fighter",
         menuName = "Battle/Fighter Definition")]
@@ -40,6 +46,10 @@ namespace BackpackHero.Battle
         [Tooltip("索敌时的目标优先级；数值越高越会被其他飞机优先锁定。")]
         [SerializeField, Min(0)]
         private int targetingPriority;
+
+        [Tooltip("标准：按优先级、朝向和距离选择；最远敌机：选择索敌范围内最远的敌方飞机。")]
+        [SerializeField]
+        private FighterTargetSelectionMode targetingMode;
         
         [Tooltip("两次发射之间的时间间隔，单位为秒。")]
         [SerializeField, Min(0.1f)]
@@ -67,9 +77,6 @@ namespace BackpackHero.Battle
         [SerializeField]
         private BattleAttack2D deathExplosionAttackPrefab;
 
-        [Tooltip("默认攻击后额外朝同类友军发射的激光攻击。")]
-        [SerializeField]
-        private BattleAttack2D linkedLaserAttackPrefab;
         
         public string DisplayName => displayName;
         public Sprite Sprite => sprite;
@@ -85,6 +92,9 @@ namespace BackpackHero.Battle
 
         public int TargetingPriority =>
             targetingPriority;
+
+        public FighterTargetSelectionMode TargetingMode =>
+            targetingMode;
         
         public float AttackInterval =>
             attackInterval;
@@ -103,9 +113,6 @@ namespace BackpackHero.Battle
 
         public BattleAttack2D DeathExplosionAttackPrefab =>
             deathExplosionAttackPrefab;
-
-        public BattleAttack2D LinkedLaserAttackPrefab =>
-            linkedLaserAttackPrefab;
 
 #if UNITY_EDITOR
         private void OnValidate()

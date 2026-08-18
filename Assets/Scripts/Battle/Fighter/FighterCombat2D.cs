@@ -499,7 +499,9 @@ namespace BackpackHero.Battle
                 attackPrefab,
                 GetTargetPosition(currentTarget),
                 fireDirection,
-                visualSource);
+                visualSource,
+                currentTarget.TargetType ==
+                BattleTargetType.Backpack);
         }
 
         /// <summary>
@@ -519,14 +521,16 @@ namespace BackpackHero.Battle
                 attackPrefab,
                 targetPosition,
                 fireDirection,
-                visualSource);
+                visualSource,
+                false);
         }
 
         private bool FireAttackAtPoint(
             BattleAttack2D attackPrefab,
             Vector2 targetPosition,
             Vector2 fireDirection,
-            ProjectileVisualSource visualSource)
+            ProjectileVisualSource visualSource,
+            bool canDamageBackpack)
         {
             if (fighter == null ||
                 fighter.Definition == null ||
@@ -575,7 +579,8 @@ namespace BackpackHero.Battle
                             transform.position,
                             transform.up,
                             targetPosition,
-                            visualSource);
+                            visualSource,
+                            canDamageBackpack);
 
             attack.Initialize(launchContext);
 

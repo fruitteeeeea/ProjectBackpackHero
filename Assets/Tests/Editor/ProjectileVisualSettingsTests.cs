@@ -127,6 +127,26 @@ public sealed class ProjectileVisualSettingsTests
             Is.EqualTo(ProjectileVisualSource.Equipment));
     }
 
+    [Test]
+    public void LaunchContext_CanDisableBackpackDamage()
+    {
+        BattleAttackLaunchContext blockedContext =
+            BattleAttackLaunchContext.WithAimPoint(
+                BattleFaction.Player,
+                1f,
+                1f,
+                -1f,
+                Vector2.zero,
+                Vector2.up,
+                Vector2.zero,
+                Vector2.up,
+                Vector2.right,
+                canDamageBackpack: false);
+
+        Assert.That(blockedContext.CanDamageBackpack,
+            Is.False);
+    }
+
     private static ProjectileVisualSettings LoadSettings()
     {
         ProjectileVisualSettings settings =

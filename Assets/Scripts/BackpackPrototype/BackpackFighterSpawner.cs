@@ -155,7 +155,7 @@ namespace BackpackPrototype
                 new SpawnRequest(
                     aircraftItem,
                     triggeringEquipment,
-                    ResolveCurveValue(curveValue)));
+                    curveValue));
 
             if (spawnCoroutine == null)
             {
@@ -376,7 +376,8 @@ namespace BackpackPrototype
                         start,
                         curveEnd,
                         directionOffset),
-                    request.CurveValue ?? 0f,
+                    ResolveCurveValue(
+                        request.CurveValue),
                     maximumBendDistance);
             }
 

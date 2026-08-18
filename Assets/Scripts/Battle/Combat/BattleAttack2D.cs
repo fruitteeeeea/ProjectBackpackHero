@@ -29,6 +29,11 @@ namespace BackpackHero.Battle
         public Vector2 ShooterForward { get; }
         public bool HasAimPoint { get; }
         public Vector2 AimPoint { get; }
+        /// <summary>
+        /// 本次攻击是否允许伤害背包。
+        /// 飞机锁定非背包目标时设为false，避免流弹擦到背包。
+        /// </summary>
+        public bool CanDamageBackpack { get; }
         public ProjectileVisualSource VisualSource { get; }
 
         public BattleAttackLaunchContext(
@@ -43,7 +48,8 @@ namespace BackpackHero.Battle
             bool hasAimPoint,
             Vector2 aimPoint,
             ProjectileVisualSource visualSource =
-                ProjectileVisualSource.FighterDefault)
+                ProjectileVisualSource.FighterDefault,
+            bool canDamageBackpack = true)
         {
             Faction = faction;
             Damage = Mathf.Max(0f, damage);
@@ -59,6 +65,7 @@ namespace BackpackHero.Battle
                 FireDirection);
             HasAimPoint = hasAimPoint;
             AimPoint = aimPoint;
+            CanDamageBackpack = canDamageBackpack;
             VisualSource = visualSource;
         }
 
@@ -74,7 +81,8 @@ namespace BackpackHero.Battle
                 Vector2 shooterForward,
                 Vector2 aimPoint,
                 ProjectileVisualSource visualSource =
-                    ProjectileVisualSource.FighterDefault)
+                    ProjectileVisualSource.FighterDefault,
+                bool canDamageBackpack = true)
         {
             return new BattleAttackLaunchContext(
                 faction,
@@ -87,7 +95,8 @@ namespace BackpackHero.Battle
                 shooterForward,
                 true,
                 aimPoint,
-                visualSource);
+                visualSource,
+                canDamageBackpack);
         }
 
         public static BattleAttackLaunchContext
@@ -101,7 +110,8 @@ namespace BackpackHero.Battle
                 Vector2 shooterPosition,
                 Vector2 shooterForward,
                 ProjectileVisualSource visualSource =
-                    ProjectileVisualSource.FighterDefault)
+                    ProjectileVisualSource.FighterDefault,
+                bool canDamageBackpack = true)
         {
             return new BattleAttackLaunchContext(
                 faction,
@@ -114,7 +124,8 @@ namespace BackpackHero.Battle
                 shooterForward,
                 false,
                 Vector2.zero,
-                visualSource);
+                visualSource,
+                canDamageBackpack);
         }
 
         private static Vector2 GetSafeDirection(

@@ -17,13 +17,13 @@ MonoBehaviour:
   baseColor: {r: 1, g: 1, b: 1, a: 1}
   baseSpeed: 3
   maximumHealth: 8
-  attackRange: 6.5
-  targetingArcAngle: 90
+  attackRange: 2.5
+  targetingArcAngle: 45
   targetingPriority: 0
+  targetingMode: 1
   attackInterval: 1
   projectileDamage: 0.5
   projectileSpeed: 12
   defaultAttackPrefab: {fileID: 1000000000000000004, guid: c42b9321adc84edca9697e69ce3a6282, type: 3}
   defaultFirePattern: {fileID: 11400000, guid: f153d3da6f524da7b50b0582a278524b, type: 2}
   deathExplosionAttackPrefab: {fileID: 0}
-  linkedLaserAttackPrefab: {fileID: 1000000000000000004, guid: c42b9321adc84edca9697e69ce3a6282, type: 3}

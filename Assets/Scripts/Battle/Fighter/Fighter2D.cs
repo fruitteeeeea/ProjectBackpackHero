@@ -172,11 +172,10 @@ namespace BackpackHero.Battle
             deathExplosion.Configure(
                 fighterDefinition.DeathExplosionAttackPrefab);
 
-            FighterLaserLink2D laserLink =
-                GetComponent<FighterLaserLink2D>() ??
-                gameObject.AddComponent<FighterLaserLink2D>();
-            laserLink.Configure(
-                fighterDefinition.LinkedLaserAttackPrefab);
+            if (GetComponent<FighterEquipmentLaserLink2D>() == null)
+            {
+                gameObject.AddComponent<FighterEquipmentLaserLink2D>();
+            }
 
             ConfigureHealthBars();
             SetHealthBarsVisible(false);

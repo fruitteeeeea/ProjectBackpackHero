@@ -26,7 +26,7 @@ public sealed class ItemBalanceConfigurationTests
             "Aircraft_Laser.asset",
             "Fighter_06_Laser.asset",
             "激光飞机", 2f, 3,
-            3f, 8, 6.5f, 90f, 1f, 0.5f, 12f,
+            3f, 8, 2.5f, 45f, 1f, 0.5f, 12f,
             "ItemShape_L_MissingTopRight.asset");
         AssertAircraft(
             "Aircraft_Shotgun.asset",
@@ -46,8 +46,8 @@ public sealed class ItemBalanceConfigurationTests
             Is.TypeOf<Projectile2D>());
         Assert.That(laser.DefaultAttackPrefab,
             Is.TypeOf<LaserBeamAttack2D>());
-        Assert.That(laser.LinkedLaserAttackPrefab,
-            Is.TypeOf<LaserBeamAttack2D>());
+        Assert.That(laser.TargetingMode,
+            Is.EqualTo(FighterTargetSelectionMode.FarthestFighter));
         Assert.That(shotgun.DefaultFirePattern,
             Is.TypeOf<SpreadProjectileFirePattern>());
     }
@@ -99,6 +99,7 @@ public sealed class ItemBalanceConfigurationTests
             "Equipment_First.asset",
             "Equipment_RapidCannon.asset",
             "Equipment_WaveEmitter.asset",
+            "Equipment_LaserLink.asset",
         };
         Color aircraftOrange =
             new Color(1f, 0.8f, 0.5019608f, 1f);
@@ -164,6 +165,7 @@ public sealed class ItemBalanceConfigurationTests
             ("Equipment_First.asset", "Blast Module", "Adds explosive shots to adjacent fighters."),
             ("Equipment_RapidCannon.asset", "Rapid Cannon", "Adds rapid straight shots to adjacent fighters."),
             ("Equipment_WaveEmitter.asset", "Wave Emitter", "Adds weaving wave shots to adjacent fighters."),
+            ("Equipment_LaserLink.asset", "Laser Link Module", "Fires lasers at all allied fighters with this module."),
         };
 
         foreach ((string path, string name, string description) expected in expectedItems)
@@ -226,6 +228,50 @@ public sealed class ItemBalanceConfigurationTests
         T asset = AssetDatabase.LoadAssetAtPath<T>(path);
         Assert.That(asset, Is.Not.Null, path);
         return asset;
+    }
+
+    [Test]
+    public void TargetSelection_FarthestModePrefersGreaterDistance()
+    {
+        MethodInfo method = typeof(FighterCombat2D).GetMethod(
+            "IsFartherFighterCandidate",
+            BindingFlags.Static | BindingFlags.NonPublic);
+
+        Assert.That(method, Is.Not.Null);
+        Assert.That((bool)method.Invoke(null, new object[] { 9f, 4f }),
+            Is.True);
+        Assert.That((bool)method.Invoke(null, new object[] { 4f, 9f }),
+            Is.False);
+    }
+
+    [Test]
+    public void LaserLinkEquipmentAsset_UsesConfiguredLaserEffect()
+    {
+        ItemData equipment = Load<ItemData>(
+            "Assets/Data/Backpack/Items/Equipment_LaserLink.asset");
+        LaserLinkEquipmentEffectDefinition effect = Load<
+            LaserLinkEquipmentEffectDefinition>(
+            "Assets/Data/Backpack/EquipmentEffects/" +
+            "EquipmentEffect_LaserLink.asset");
+
+        Assert.That(equipment.ItemId, Is.EqualTo("equipment_laser_link"));
+        Assert.That(equipment.CooldownDuration, Is.EqualTo(3f));
+        Assert.That(equipment.Shape.ShapeOffsets.Count, Is.EqualTo(2));
+        Assert.That(equipment.EquipmentEffects, Is.EqualTo(new[] { effect }));
+        Assert.That(effect.Cooldown, Is.EqualTo(0.8f));
+        Assert.That(effect.LaserAttackPrefab, Is.TypeOf<LaserBeamAttack2D>());
+    }
+
+    [Test]
+    public void PlayerItemCatalog_ContainsLaserLinkEquipment()
+    {
+        PlayerItemCatalog catalog = Load<PlayerItemCatalog>(
+            "Assets/Resources/PlayerItemCatalog.asset");
+
+        Assert.That(catalog.Items, Has.Member(
+            Load<ItemData>(
+                "Assets/Data/Backpack/Items/Equipment_LaserLink.asset")));
+        Assert.That(catalog.IsValid(out string error), Is.True, error);
     }
 
     private static void AssertAircraft(

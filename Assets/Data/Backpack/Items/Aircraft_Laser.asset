@@ -18,7 +18,7 @@ MonoBehaviour:
   cost: 0
   debris: 0
   name: Laser Link
-  desc: Links to two random allied fighters of the same type when attacking.
+  desc: Targets the farthest enemy fighter within its attack range.
   icon: {fileID: -5748879822672990182, guid: f107923bcebdb7a45b8f17b47dafb99b, type: 3}
   backgroundColor: {r: 1, g: 0.8, b: 0.5019608, a: 1}
   itemType: 0

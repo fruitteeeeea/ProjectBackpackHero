@@ -1,4 +1,5 @@
 using BackpackHero.Debugging;
+using BackpackPrototype;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -31,6 +32,7 @@ namespace BackpackHero.Battle
         
         private FighterDefinition definition;
         private bool isDying;
+        private ItemInstance damageSourceItem;
 
         public FighterDefinition Definition =>
             definition;
@@ -59,6 +61,8 @@ namespace BackpackHero.Battle
         public bool IsAlive =>
             health != null &&
             !health.IsDead;
+        public ItemInstance DamageSourceItem => damageSourceItem;
+        public void SetDamageSourceItem(ItemInstance item) => damageSourceItem = item;
 
         private void Awake()
         {

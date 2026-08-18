@@ -99,7 +99,8 @@ namespace BackpackHero.Battle
         /// </summary>
         public bool ReceiveHit(
             float damage,
-            BattleFaction attackerFaction)
+            BattleFaction attackerFaction,
+            BattleDamageSource damageSource = default)
         {
             if (damage <= 0f)
             {
@@ -129,7 +130,19 @@ namespace BackpackHero.Battle
                 return false;
             }
 
+            float healthBeforeDamage = targetHealth.CurrentHealth;
             targetHealth.DecreaseHealth(damage);
+            float actualDamage = healthBeforeDamage - targetHealth.CurrentHealth;
+            if (actualDamage > 0f)
+            {
+                DamageStatisticsRuntime.RecordHit(
+                    attackerFaction,
+                    damageSource,
+                    damage,
+                    actualDamage,
+                    targetHealth.IsDead &&
+                    targetHealth.GetComponent<Fighter2D>() != null);
+            }
             return true;
         }
 

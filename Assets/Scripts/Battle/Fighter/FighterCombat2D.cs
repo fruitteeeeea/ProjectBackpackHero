@@ -60,6 +60,7 @@ namespace BackpackHero.Battle
             Vector2.up;
 
         private bool hasReportedMissingShootingConfiguration;
+        private ItemInstance aircraftItem;
         
         public HurtBox2D CurrentTarget =>
             currentTarget;
@@ -156,10 +157,10 @@ namespace BackpackHero.Battle
             if (equipmentEffectsController != null)
             {
                 equipmentEffectsController
-                    .ProjectileShotRequested -=
+                    .ProjectileShotRequestedWithSource -=
                     HandleEquipmentProjectileShotRequested;
                 equipmentEffectsController
-                    .ProjectileShotRequested +=
+                    .ProjectileShotRequestedWithSource +=
                     HandleEquipmentProjectileShotRequested;
                 equipmentEffectsController.ResetCooldowns();
             }
@@ -176,7 +177,7 @@ namespace BackpackHero.Battle
             if (equipmentEffectsController != null)
             {
                 equipmentEffectsController
-                    .ProjectileShotRequested -=
+                    .ProjectileShotRequestedWithSource -=
                     HandleEquipmentProjectileShotRequested;
             }
 
@@ -245,6 +246,9 @@ namespace BackpackHero.Battle
 
             equipmentEffectsController?.Configure(effects);
         }
+
+        public void ConfigureEquipmentEffects(IEnumerable<(EquipmentEffectDefinition Effect, ItemInstance Item)> effects) => equipmentEffectsController?.Configure(effects);
+        public void SetDamageSourceItem(ItemInstance item) => aircraftItem = item;
 
         /// <summary>移除飞机自身的默认子弹，仅保留装备效果子弹。</summary>
         public void DisableDefaultFireMode()
@@ -469,21 +473,22 @@ namespace BackpackHero.Battle
             }
         }
 
-        private void HandleEquipmentProjectileShotRequested(
-            BattleAttack2D projectilePrefab)
+        private void HandleEquipmentProjectileShotRequested(BattleAttack2D projectilePrefab, ItemInstance item)
         {
             FireAttack(
                 projectilePrefab,
                 transform.up,
                 false,
-                ProjectileVisualSource.Equipment);
+                ProjectileVisualSource.Equipment,
+                item);
         }
 
         private bool FireAttack(
             BattleAttack2D requestedPrefab,
             Vector2 fireDirection,
             bool allowRandomProjectileOverride,
-            ProjectileVisualSource visualSource)
+            ProjectileVisualSource visualSource,
+            ItemInstance sourceItem = null)
         {
             BattleAttack2D attackPrefab =
                 allowRandomProjectileOverride
@@ -500,8 +505,8 @@ namespace BackpackHero.Battle
                 GetTargetPosition(currentTarget),
                 fireDirection,
                 visualSource,
-                currentTarget.TargetType ==
-                BattleTargetType.Backpack);
+                currentTarget.TargetType == BattleTargetType.Backpack,
+                sourceItem ?? aircraftItem);
         }
 
         /// <summary>
@@ -511,8 +516,8 @@ namespace BackpackHero.Battle
         public bool FireAttackAtPoint(
             BattleAttack2D attackPrefab,
             Vector2 targetPosition,
-            ProjectileVisualSource visualSource =
-                ProjectileVisualSource.FighterDefault)
+            ProjectileVisualSource visualSource = ProjectileVisualSource.FighterDefault,
+            ItemInstance sourceItem = null)
         {
             Vector2 fireDirection = firePoint != null
                 ? targetPosition - (Vector2)firePoint.position
@@ -522,7 +527,8 @@ namespace BackpackHero.Battle
                 targetPosition,
                 fireDirection,
                 visualSource,
-                false);
+                false,
+                sourceItem ?? aircraftItem);
         }
 
         private bool FireAttackAtPoint(
@@ -530,7 +536,8 @@ namespace BackpackHero.Battle
             Vector2 targetPosition,
             Vector2 fireDirection,
             ProjectileVisualSource visualSource,
-            bool canDamageBackpack)
+            bool canDamageBackpack,
+            ItemInstance sourceItem = null)
         {
             if (fighter == null ||
                 fighter.Definition == null ||
@@ -580,7 +587,8 @@ namespace BackpackHero.Battle
                             transform.up,
                             targetPosition,
                             visualSource,
-                            canDamageBackpack);
+                            canDamageBackpack,
+                            new BattleDamageSource(sourceItem));
 
             attack.Initialize(launchContext);
 

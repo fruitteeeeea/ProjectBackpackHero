@@ -18,40 +18,47 @@ namespace BackpackHero.Battle
         {
             public ProjectileEffectRuntime(
                 BattleAttack2D newProjectilePrefab,
-                float newCooldown)
+                float newCooldown,
+                ItemInstance newItem)
             {
                 ProjectilePrefab = newProjectilePrefab;
                 Cooldown = Mathf.Max(
                     ProjectileEquipmentEffectDefinition
                         .MinimumCooldown,
                     newCooldown);
+                Item = newItem;
             }
 
             public BattleAttack2D ProjectilePrefab { get; }
             public float Cooldown { get; }
+            public ItemInstance Item { get; }
             public float RemainingCooldown { get; set; }
         }
 
         private readonly List<ProjectileEffectRuntime>
             projectileEffects = new();
 
-        private readonly HashSet<LaserLinkEquipmentEffectDefinition>
+        private readonly List<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item)>
             laserLinkEffects = new();
 
         private float remainingSharedCooldown;
         private int nextProjectileEffectIndex;
 
+        /// <summary>兼容既有调用方的装备子弹请求事件。</summary>
         public event Action<BattleAttack2D> ProjectileShotRequested;
+
+        /// <summary>携带触发该攻击的装备实例，供伤害归因使用。</summary>
+        public event Action<BattleAttack2D, ItemInstance> ProjectileShotRequestedWithSource;
 
         public int ProjectileEffectCount =>
             projectileEffects.Count;
 
-        public IReadOnlyCollection<LaserLinkEquipmentEffectDefinition>
+        public IReadOnlyCollection<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item)>
             LaserLinkEffects => laserLinkEffects;
 
         public bool HasLaserLinkEffect(
             LaserLinkEquipmentEffectDefinition effect) =>
-            effect != null && laserLinkEffects.Contains(effect);
+            effect != null && laserLinkEffects.Exists(x => x.Effect == effect);
 
         /// <summary>
         /// 以传入顺序建立效果，因此重复装备会保留各自的独立状态。
@@ -69,7 +76,7 @@ namespace BackpackHero.Battle
                     if (effect is LaserLinkEquipmentEffectDefinition laserLink &&
                         laserLink.LaserAttackPrefab != null)
                     {
-                        laserLinkEffects.Add(laserLink);
+                        laserLinkEffects.Add((laserLink, null));
                         continue;
                     }
 
@@ -83,10 +90,24 @@ namespace BackpackHero.Battle
                     projectileEffects.Add(
                         new ProjectileEffectRuntime(
                             projectile.ProjectilePrefab,
-                            projectile.Cooldown));
+                            projectile.Cooldown,
+                            null));
                 }
             }
 
+            ResetCooldowns();
+        }
+
+        public void Configure(IEnumerable<(EquipmentEffectDefinition Effect, ItemInstance Item)> effects)
+        {
+            projectileEffects.Clear();
+            laserLinkEffects.Clear();
+            if (effects != null)
+                foreach ((EquipmentEffectDefinition effect, ItemInstance item) in effects)
+                    if (effect is ProjectileEquipmentEffectDefinition projectile && projectile.ProjectilePrefab != null)
+                        projectileEffects.Add(new ProjectileEffectRuntime(projectile.ProjectilePrefab, projectile.Cooldown, item));
+                    else if (effect is LaserLinkEquipmentEffectDefinition laser && laser.LaserAttackPrefab != null)
+                        laserLinkEffects.Add((laser, item));
             ResetCooldowns();
         }
 
@@ -137,8 +158,9 @@ namespace BackpackHero.Battle
                     SharedProjectileInterval;
                 nextProjectileEffectIndex =
                     (index + 1) % projectileEffects.Count;
-                ProjectileShotRequested?.Invoke(
-                    effect.ProjectilePrefab);
+                ProjectileShotRequested?.Invoke(effect.ProjectilePrefab);
+                ProjectileShotRequestedWithSource?.Invoke(
+                    effect.ProjectilePrefab, effect.Item);
                 return true;
             }
 

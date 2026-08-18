@@ -1,4 +1,5 @@
 using BackpackHero.Debugging;
+using BackpackPrototype;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -63,7 +64,8 @@ namespace BackpackHero.Battle
                     fighter.Faction) *
                 LevelDifficultyRuntime.GetProjectileDamageMultiplier(
                     fighter.Faction);
-            impact.ResolveImpact(null, transform.position, fighter.Faction, damage);
+            impact.ResolveImpact(null, transform.position, fighter.Faction, damage,
+                new BattleDamageSource(fighter.DamageSourceItem));
             Destroy(attack.gameObject);
         }
     }

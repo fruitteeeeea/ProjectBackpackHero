@@ -1,4 +1,5 @@
 using UnityEngine;
+using BackpackPrototype;
 
 namespace BackpackHero.Battle
 {
@@ -10,6 +11,14 @@ namespace BackpackHero.Battle
     {
         public abstract void Initialize(
             BattleAttackLaunchContext context);
+    }
+
+    /// <summary>背包物品造成攻击时保留的归属；空值表示独立测试攻击。</summary>
+    public readonly struct BattleDamageSource
+    {
+        public BattleDamageSource(ItemInstance item) => Item = item;
+        public ItemInstance Item { get; }
+        public bool HasBackpackItem => Item != null && Item.Data != null;
     }
 
     /// <summary>
@@ -35,6 +44,7 @@ namespace BackpackHero.Battle
         /// </summary>
         public bool CanDamageBackpack { get; }
         public ProjectileVisualSource VisualSource { get; }
+        public BattleDamageSource DamageSource { get; }
 
         public BattleAttackLaunchContext(
             BattleFaction faction,
@@ -49,7 +59,8 @@ namespace BackpackHero.Battle
             Vector2 aimPoint,
             ProjectileVisualSource visualSource =
                 ProjectileVisualSource.FighterDefault,
-            bool canDamageBackpack = true)
+            bool canDamageBackpack = true,
+            BattleDamageSource damageSource = default)
         {
             Faction = faction;
             Damage = Mathf.Max(0f, damage);
@@ -67,6 +78,7 @@ namespace BackpackHero.Battle
             AimPoint = aimPoint;
             CanDamageBackpack = canDamageBackpack;
             VisualSource = visualSource;
+            DamageSource = damageSource;
         }
 
         public static BattleAttackLaunchContext
@@ -82,7 +94,8 @@ namespace BackpackHero.Battle
                 Vector2 aimPoint,
                 ProjectileVisualSource visualSource =
                     ProjectileVisualSource.FighterDefault,
-                bool canDamageBackpack = true)
+                bool canDamageBackpack = true,
+                BattleDamageSource damageSource = default)
         {
             return new BattleAttackLaunchContext(
                 faction,
@@ -96,7 +109,8 @@ namespace BackpackHero.Battle
                 true,
                 aimPoint,
                 visualSource,
-                canDamageBackpack);
+                canDamageBackpack,
+                damageSource);
         }
 
         public static BattleAttackLaunchContext
@@ -111,7 +125,8 @@ namespace BackpackHero.Battle
                 Vector2 shooterForward,
                 ProjectileVisualSource visualSource =
                     ProjectileVisualSource.FighterDefault,
-                bool canDamageBackpack = true)
+                bool canDamageBackpack = true,
+                BattleDamageSource damageSource = default)
         {
             return new BattleAttackLaunchContext(
                 faction,
@@ -125,7 +140,8 @@ namespace BackpackHero.Battle
                 false,
                 Vector2.zero,
                 visualSource,
-                canDamageBackpack);
+                canDamageBackpack,
+                damageSource);
         }
 
         private static Vector2 GetSafeDirection(

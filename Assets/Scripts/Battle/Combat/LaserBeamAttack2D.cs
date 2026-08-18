@@ -276,7 +276,8 @@ namespace BackpackHero.Battle
             damageResolver.Resolve(
                 damageArea,
                 launchContext.Faction,
-                launchContext.Damage);
+                launchContext.Damage,
+                launchContext.DamageSource);
         }
 
         private void FindReferences()

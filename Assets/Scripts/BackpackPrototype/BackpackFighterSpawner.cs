@@ -340,6 +340,7 @@ namespace BackpackPrototype
                 faction == BattleFaction.Player
                     ? playerColor
                     : enemyColor);
+            fighter.SetDamageSourceItem(request.Item);
 
             fighterObject.name =
                 $"{faction} - {definition.DisplayName}";
@@ -350,6 +351,7 @@ namespace BackpackPrototype
             {
                 fighterCombat.SetAttackRangeOffset(
                     attackRangeOffset);
+                fighterCombat.SetDamageSourceItem(request.Item);
             }
 
             if (fighterObject.TryGetComponent(
@@ -448,7 +450,7 @@ namespace BackpackPrototype
                 return;
             }
 
-            var effects = new List<EquipmentEffectDefinition>();
+            var effects = new List<(EquipmentEffectDefinition Effect, ItemInstance Item)>();
 
             foreach (ItemInstance equipment in GetEquipmentItems(
                          aircraftItem,
@@ -464,7 +466,7 @@ namespace BackpackPrototype
                 {
                     if (effect != null)
                     {
-                        effects.Add(effect);
+                        effects.Add((effect, equipment));
                     }
                 }
             }

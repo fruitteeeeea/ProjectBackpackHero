@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: EquipmentEffect_LaserLink
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.LaserLinkEquipmentEffectDefinition
   laserAttackPrefab: {fileID: 1000000000000000004, guid: c42b9321adc84edca9697e69ce3a6282, type: 3}
-  cooldown: 0.8
+  cooldown: 3

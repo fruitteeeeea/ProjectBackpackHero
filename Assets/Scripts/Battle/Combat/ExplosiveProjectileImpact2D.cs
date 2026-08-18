@@ -7,6 +7,7 @@ namespace BackpackHero.Battle
     public sealed class ExplosiveProjectileImpact2D : ProjectileImpactEffect2D
     {
         [SerializeField, Min(0f)] private float radius = 1.5f;
+        [SerializeField, Range(0f, 1f)] private float areaDamageMultiplier = 1f;
         [Header("Visual")]
         [SerializeField] private ParticleSystem impactVfxPrefab;
         [SerializeField, Min(0.01f)] private float impactVfxScale = 1f;
@@ -18,6 +19,7 @@ namespace BackpackHero.Battle
         [SerializeField] private CircleDamageArea2D damageArea;
 
         public float Radius => radius;
+        public float AreaDamageMultiplier => areaDamageMultiplier;
 
         private void Awake() => FindReferences();
 
@@ -35,7 +37,11 @@ namespace BackpackHero.Battle
             }
 
             damageArea.Configure(impactPosition, radius);
-            damageResolver.Resolve(damageArea, attackerFaction, damage, damageSource);
+            damageResolver.Resolve(
+                damageArea,
+                attackerFaction,
+                damage * areaDamageMultiplier,
+                damageSource);
 
             if (impactVfxPrefab != null)
             {

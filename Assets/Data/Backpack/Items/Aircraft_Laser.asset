@@ -26,6 +26,6 @@ MonoBehaviour:
   equipmentEffects: []
   cd: 2
   price: 0
-  count: 3
-  shape: {fileID: 11400000, guid: 59e16f1ad19014e95b41331316bd0263, type: 2}
+  count: 1
+  shape: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
   fighterDefinition: {fileID: 11400000, guid: 748a35cc9c334f23ad83f231ba5d004d, type: 2}

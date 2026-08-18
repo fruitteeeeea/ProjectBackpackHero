@@ -5741,8 +5741,9 @@ GameObject:
   - component: {fileID: 3467361283264820130}
   - component: {fileID: 9105111604320274969}
   - component: {fileID: 1964546238975714444}
+  - component: {fileID: 4412040176154283847}
   m_Layer: 5
-  m_Name: BackpackBackground (1)
+  m_Name: BackpackSpaceShip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5805,6 +5806,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4412040176154283847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4944040439591053688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2a6d8ef15c4adca8897f1249e63b70, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.BackpackSpaceShipPhaseFade
+  targetImage: {fileID: 1964546238975714444}
 --- !u!1 &5129536159992397055
 GameObject:
   m_ObjectHideFlags: 0

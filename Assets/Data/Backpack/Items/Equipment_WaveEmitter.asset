@@ -12,15 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Equipment_WaveEmitter
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
-  itemId: equipment_wave_emitter
-  itemName: Wave Emitter
-  description: Adds weaving wave shots to adjacent fighters.
-  icon: {fileID: 6671908658173119883, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
+  id: equipment_wave_emitter
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: Wave Emitter
+  desc: Adds weaving wave shots to adjacent fighters.
+  icon: {fileID: 14782359304653084, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
   backgroundColor: {r: 0.65882355, g: 0.33333334, b: 0.96862745, a: 1}
   itemType: 1
   equipmentColor: {r: 0.20784314, g: 0.07450981, b: 0.3019608, a: 1}
   equipmentEffects:
   - {fileID: 11400000, guid: 43dfdabb0d2ac4caf8300a1bc67dceec, type: 2}
-  cooldownDuration: 3
+  cd: 3
+  price: 0
+  count: 1
   shape: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
   fighterDefinition: {fileID: 0}

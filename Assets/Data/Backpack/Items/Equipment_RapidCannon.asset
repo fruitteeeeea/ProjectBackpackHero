@@ -12,16 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Equipment_RapidCannon
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
-  itemId: equipment_rapid_cannon
-  itemName: Rapid Cannon
-  description: Adds rapid straight shots to adjacent fighters.
-  icon: {fileID: 6671908658173119883, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
+  id: equipment_rapid_cannon
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: Rapid Cannon
+  desc: Adds rapid straight shots to adjacent fighters.
+  icon: {fileID: -6718607614054143092, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
   backgroundColor: {r: 0.65882355, g: 0.33333334, b: 0.96862745, a: 1}
   itemType: 1
   equipmentColor: {r: 0.20784314, g: 0.07450981, b: 0.3019608, a: 1}
   equipmentEffects:
   - {fileID: 11400000, guid: 3f2fe1d09cbdc41bab1957a17541cc37, type: 2}
-  cooldownDuration: 2.5
-  spawnCount: 1
+  cd: 2.5
+  price: 0
+  count: 1
   shape: {fileID: 11400000, guid: 70bef0369e3574ab2af4034accad292e, type: 2}
   fighterDefinition: {fileID: 0}

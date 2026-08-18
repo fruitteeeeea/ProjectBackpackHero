@@ -12,16 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Equipment_First
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
-  itemId: equipment_first
-  itemName: Blast Module
-  description: Adds explosive shots to adjacent fighters.
-  icon: {fileID: 6671908658173119883, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
+  id: equipment_first
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
+  name: Blast Module
+  desc: Adds explosive shots to adjacent fighters.
+  icon: {fileID: 2807156655363898334, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
   backgroundColor: {r: 0.65882355, g: 0.33333334, b: 0.96862745, a: 1}
   itemType: 1
   equipmentColor: {r: 0.20784314, g: 0.07450981, b: 0.3019608, a: 1}
   equipmentEffects:
   - {fileID: 11400000, guid: c6ab3a41d3e44a4f9e657d9502e7c9ee, type: 2}
-  cooldownDuration: 4
-  spawnCount: 1
+  cd: 4
+  price: 0
+  count: 1
   shape: {fileID: 11400000, guid: 70bef0369e3574ab2af4034accad292e, type: 2}
   fighterDefinition: {fileID: 0}

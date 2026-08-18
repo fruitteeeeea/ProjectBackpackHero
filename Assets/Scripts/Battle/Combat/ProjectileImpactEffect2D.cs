@@ -12,6 +12,7 @@ namespace BackpackHero.Battle
             HurtBox2D initialTarget,
             Vector2 impactPosition,
             BattleFaction attackerFaction,
-            float damage);
+            float damage,
+            BattleDamageSource damageSource = default);
     }
 }

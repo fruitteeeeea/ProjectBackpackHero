@@ -25,7 +25,8 @@ namespace BackpackHero.Battle
             HurtBox2D initialTarget,
             Vector2 impactPosition,
             BattleFaction attackerFaction,
-            float damage)
+            float damage,
+            BattleDamageSource damageSource = default)
         {
             FindReferences();
             if (damageResolver == null || damageArea == null)
@@ -34,7 +35,7 @@ namespace BackpackHero.Battle
             }
 
             damageArea.Configure(impactPosition, radius);
-            damageResolver.Resolve(damageArea, attackerFaction, damage);
+            damageResolver.Resolve(damageArea, attackerFaction, damage, damageSource);
 
             if (impactVfxPrefab != null)
             {

@@ -19,7 +19,8 @@ namespace BackpackHero.Battle
         public int Resolve(
             DamageArea2D damageArea,
             BattleFaction attackerFaction,
-            float damage)
+            float damage,
+            BattleDamageSource damageSource = default)
         {
             if (damageArea == null ||
                 damage <= 0f)
@@ -40,7 +41,8 @@ namespace BackpackHero.Battle
             {
                 if (!hurtBox.ReceiveHit(
                         damage,
-                        attackerFaction))
+                        attackerFaction,
+                        damageSource))
                 {
                     continue;
                 }

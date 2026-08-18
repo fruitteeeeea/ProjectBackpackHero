@@ -18,6 +18,7 @@ namespace BackpackHero.Battle
         private ProjectileImpactEffect2D impactEffect;
         private bool hasHitTarget;
         private bool canDamageBackpack = true;
+        private BattleDamageSource damageSource;
 
         public float Damage =>
             damage;
@@ -47,7 +48,8 @@ namespace BackpackHero.Battle
         public void Initialize(
             BattleFaction faction,
             float newDamage,
-            bool newCanDamageBackpack = true)
+            bool newCanDamageBackpack = true,
+            BattleDamageSource newDamageSource = default)
         {
             if (factionMember == null)
             {
@@ -58,6 +60,7 @@ namespace BackpackHero.Battle
             factionMember.SetFaction(faction);
             damage = Mathf.Max(0f, newDamage);
             canDamageBackpack = newCanDamageBackpack;
+            damageSource = newDamageSource;
 
             ConfigureLayer(faction);
             hasHitTarget = false;
@@ -116,13 +119,15 @@ namespace BackpackHero.Battle
                     hurtBox,
                     transform.position,
                     Faction,
-                    damage);
+                    damage,
+                    damageSource);
             }
             else
             {
                 causedDamage = hurtBox.ReceiveHit(
                     damage,
-                    Faction);
+                    Faction,
+                    damageSource);
             }
 
             if (!causedDamage)

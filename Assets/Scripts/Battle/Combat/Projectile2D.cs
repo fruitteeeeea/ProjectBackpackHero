@@ -61,7 +61,8 @@ namespace BackpackHero.Battle
                 context.FireDirection,
                 trajectoryContext,
                 context.VisualSource,
-                context.CanDamageBackpack);
+                context.CanDamageBackpack,
+                context.DamageSource);
 
             LifetimeAndScreenBounds2D lifetime =
                 GetComponent<LifetimeAndScreenBounds2D>();
@@ -117,7 +118,8 @@ namespace BackpackHero.Battle
             ProjectileTrajectoryLaunchContext context,
             ProjectileVisualSource visualSource =
                 ProjectileVisualSource.FighterDefault,
-            bool canDamageBackpack = true)
+            bool canDamageBackpack = true,
+            BattleDamageSource damageSource = default)
         {
             FindReferences();
 
@@ -147,7 +149,8 @@ namespace BackpackHero.Battle
             hitBox.Initialize(
                 faction,
                 damage,
-                canDamageBackpack);
+                canDamageBackpack,
+                damageSource);
 
             visualController?.Apply(faction, visualSource);
 

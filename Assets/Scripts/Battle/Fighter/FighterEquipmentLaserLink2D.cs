@@ -44,14 +44,14 @@ namespace BackpackHero.Battle
                 return;
             }
 
-            foreach (LaserLinkEquipmentEffectDefinition effect in
+            foreach ((LaserLinkEquipmentEffectDefinition effect, ItemInstance item) in
                      equipmentEffects.LaserLinkEffects)
             {
-                FireLinks(effect);
+                FireLinks(effect, item);
             }
         }
 
-        private void FireLinks(LaserLinkEquipmentEffectDefinition effect)
+        private void FireLinks(LaserLinkEquipmentEffectDefinition effect, ItemInstance item)
         {
             if (effect?.LaserAttackPrefab == null)
             {
@@ -82,7 +82,9 @@ namespace BackpackHero.Battle
             {
                 combat.FireAttackAtPoint(
                     effect.LaserAttackPrefab,
-                    candidates[index].transform.position);
+                    candidates[index].transform.position,
+                    ProjectileVisualSource.Equipment,
+                    item);
             }
         }
     }

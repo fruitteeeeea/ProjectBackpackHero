@@ -27,7 +27,8 @@ namespace BackpackHero.Battle
             HurtBox2D initialTarget,
             Vector2 impactPosition,
             BattleFaction attackerFaction,
-            float damage)
+            float damage,
+            BattleDamageSource damageSource = default)
         {
             FindReferences();
             if (initialTarget == null || damageResolver == null || damageArea == null)
@@ -46,7 +47,7 @@ namespace BackpackHero.Battle
             hitHealth.Add(initialHealth);
 
             // 初始目标按普通子弹的基础伤害结算一次。
-            initialTarget.ReceiveHit(damage, attackerFaction);
+            initialTarget.ReceiveHit(damage, attackerFaction, damageSource);
 
             for (int index = 0; index < maximumExtraTargets; index++)
             {
@@ -64,7 +65,8 @@ namespace BackpackHero.Battle
 
                 if (!nextTarget.ReceiveHit(
                         damage * chainDamageMultiplier,
-                        attackerFaction))
+                        attackerFaction,
+                        damageSource))
                 {
                     hitHealth.Add(nextHealth);
                     continue;

@@ -7,9 +7,12 @@ namespace BackpackHero.Battle
     [DisallowMultipleComponent]
     public sealed class FighterEquipmentLaserLink2D : MonoBehaviour
     {
-        private const int MaximumLinkedTargets = 6;
+        private const int MaximumLinkedTargets = 3;
 
         private readonly List<Fighter2D> candidates = new();
+        private readonly Dictionary<
+            (LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item),
+            float> nextFireTimes = new();
         private Fighter2D fighter;
         private FighterCombat2D combat;
         private FighterEquipmentEffects2D equipmentEffects;
@@ -35,6 +38,8 @@ namespace BackpackHero.Battle
             {
                 combat.DefaultAttackFired -= HandleDefaultAttackFired;
             }
+
+            nextFireTimes.Clear();
         }
 
         private void HandleDefaultAttackFired()
@@ -58,6 +63,13 @@ namespace BackpackHero.Battle
                 return;
             }
 
+            var effectKey = (effect, item);
+            if (nextFireTimes.TryGetValue(effectKey, out float nextFireTime) &&
+                Time.time < nextFireTime)
+            {
+                return;
+            }
+
             candidates.Clear();
             foreach (Fighter2D candidate in FindObjectsByType<Fighter2D>(
                          FindObjectsInactive.Exclude,
@@ -77,7 +89,25 @@ namespace BackpackHero.Battle
                 }
             }
 
+            candidates.Sort((left, right) =>
+            {
+                float leftDistance = (left.transform.position - transform.position)
+                    .sqrMagnitude;
+                float rightDistance = (right.transform.position - transform.position)
+                    .sqrMagnitude;
+                int distanceComparison = rightDistance.CompareTo(leftDistance);
+                return distanceComparison != 0
+                    ? distanceComparison
+                    : left.GetEntityId().CompareTo(right.GetEntityId());
+            });
+
             int targetCount = Mathf.Min(MaximumLinkedTargets, candidates.Count);
+            if (targetCount == 0)
+            {
+                return;
+            }
+
+            nextFireTimes[effectKey] = Time.time + effect.Cooldown;
             for (int index = 0; index < targetCount; index++)
             {
                 combat.FireAttackAtPoint(

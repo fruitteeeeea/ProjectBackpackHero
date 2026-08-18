@@ -18,7 +18,7 @@ MonoBehaviour:
   cost: 0
   debris: 0
   name: Laser Link Module
-  desc: Fires lasers at all allied fighters with this module.
+  desc: Fires lasers at up to 3 farthest linked allies every 3 seconds.
   icon: {fileID: -9119529322078027158, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
   backgroundColor: {r: 0.65882355, g: 0.33333334, b: 0.96862745, a: 1}
   itemType: 1

@@ -25,15 +25,15 @@ public sealed class ItemBalanceConfigurationTests
         AssertAircraft(
             "Aircraft_Laser.asset",
             "Fighter_06_Laser.asset",
-            "激光飞机", 2f, 3,
+            "激光飞机", 2f, 1,
             3f, 8, 2.5f, 45f, 1f, 0.5f, 12f,
-            "ItemShape_L_MissingTopRight.asset");
+            "ItemShape_1x2.asset");
         AssertAircraft(
             "Aircraft_Shotgun.asset",
             "Fighter_07_Shotgun.asset",
-            "霰弹飞机", 2.5f, 1,
+            "霰弹飞机", 2f, 1,
             2.5f, 16, 1.5f, 40f, 1f, 0.8f, 8f,
-            "ItemShape_L_MissingBottomRight.asset");
+            "ItemShape_2x1.asset");
 
         FighterDefinition explosive = Load<FighterDefinition>(
             "Assets/Settings/Battle/Fighters/Fighter_04_Explosive.asset");
@@ -152,6 +152,30 @@ public sealed class ItemBalanceConfigurationTests
     }
 
     [Test]
+    public void RebalancedAircraftAssets_SelectMatchingVisualShells()
+    {
+        ItemData laser = Load<ItemData>(
+            "Assets/Data/Backpack/Items/Aircraft_Laser.asset");
+        ItemData shotgun = Load<ItemData>(
+            "Assets/Data/Backpack/Items/Aircraft_Shotgun.asset");
+        ItemView fallback = Load<ItemView>(
+            "Assets/Prefabs/BackpackUI/Items/Item_1x1.prefab");
+        ItemView vertical = Load<ItemView>(
+            "Assets/Prefabs/BackpackUI/Items/Item_1x2.prefab");
+        ItemView horizontal = Load<ItemView>(
+            "Assets/Prefabs/BackpackUI/Items/Item_2x1.prefab");
+
+        Assert.That(ItemViewPrefabSelector.Select(
+                laser, fallback, vertical, horizontal,
+                null, null, null, null),
+            Is.SameAs(vertical));
+        Assert.That(ItemViewPrefabSelector.Select(
+                shotgun, fallback, vertical, horizontal,
+                null, null, null, null),
+            Is.SameAs(horizontal));
+    }
+
+    [Test]
     public void ItemAssets_ProvideShortDisplayNamesAndDescriptions()
     {
         (string path, string name, string description)[] expectedItems =
@@ -165,7 +189,7 @@ public sealed class ItemBalanceConfigurationTests
             ("Equipment_First.asset", "Blast Module", "Adds explosive shots to adjacent fighters."),
             ("Equipment_RapidCannon.asset", "Rapid Cannon", "Adds rapid straight shots to adjacent fighters."),
             ("Equipment_WaveEmitter.asset", "Wave Emitter", "Adds weaving wave shots to adjacent fighters."),
-            ("Equipment_LaserLink.asset", "Laser Link Module", "Fires lasers at all allied fighters with this module."),
+            ("Equipment_LaserLink.asset", "Laser Link Module", "Fires lasers at up to 3 farthest linked allies every 3 seconds."),
         };
 
         foreach ((string path, string name, string description) expected in expectedItems)
@@ -191,6 +215,10 @@ public sealed class ItemBalanceConfigurationTests
             explosivePrefab.GetComponent<
                 ExplosiveProjectileImpact2D>().Radius,
             Is.EqualTo(0.8f));
+        Assert.That(
+            explosivePrefab.GetComponent<
+                ExplosiveProjectileImpact2D>().AreaDamageMultiplier,
+            Is.EqualTo(0.5f));
         Assert.That(
             lightningPrefab.GetComponent<
                 ChainLightningProjectileImpact2D>()
@@ -258,7 +286,7 @@ public sealed class ItemBalanceConfigurationTests
         Assert.That(equipment.CooldownDuration, Is.EqualTo(3f));
         Assert.That(equipment.Shape.ShapeOffsets.Count, Is.EqualTo(2));
         Assert.That(equipment.EquipmentEffects, Is.EqualTo(new[] { effect }));
-        Assert.That(effect.Cooldown, Is.EqualTo(0.8f));
+        Assert.That(effect.Cooldown, Is.EqualTo(3f));
         Assert.That(effect.LaserAttackPrefab, Is.TypeOf<LaserBeamAttack2D>());
     }
 

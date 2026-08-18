@@ -91,7 +91,7 @@ MonoBehaviour:
   cell: {x: 3, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &570655151145887981
@@ -185,7 +185,7 @@ MonoBehaviour:
   cell: {x: 6, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &935668241917857136
@@ -279,7 +279,7 @@ MonoBehaviour:
   cell: {x: 0, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &972205980720166418
@@ -373,7 +373,7 @@ MonoBehaviour:
   cell: {x: 5, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &1176464520086085261
@@ -467,7 +467,7 @@ MonoBehaviour:
   cell: {x: 1, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &1306270778968185977
@@ -636,7 +636,7 @@ MonoBehaviour:
   cell: {x: 4, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &1437460189662339552
@@ -840,7 +840,7 @@ MonoBehaviour:
   cell: {x: 4, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &2213161723420461964
@@ -1009,7 +1009,7 @@ MonoBehaviour:
   cell: {x: 6, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &2501496396639260671
@@ -1103,7 +1103,7 @@ MonoBehaviour:
   cell: {x: 5, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &2587467368295010606
@@ -1272,7 +1272,7 @@ MonoBehaviour:
   cell: {x: 4, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &3268738241395328396
@@ -1538,7 +1538,7 @@ MonoBehaviour:
   cell: {x: 2, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &3467293811523304842
@@ -2855,7 +2855,7 @@ MonoBehaviour:
   cell: {x: 1, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &4763457267163666727
@@ -3024,7 +3024,7 @@ MonoBehaviour:
   cell: {x: 2, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &4846496782763439288
@@ -3193,7 +3193,7 @@ MonoBehaviour:
   cell: {x: 3, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &5414205829242603927
@@ -3351,7 +3351,7 @@ MonoBehaviour:
   cell: {x: 2, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &5706281554047331075
@@ -3445,7 +3445,7 @@ MonoBehaviour:
   cell: {x: 1, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &5951151459957280421
@@ -3539,7 +3539,7 @@ MonoBehaviour:
   cell: {x: 5, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &6031966404818007948
@@ -3708,7 +3708,7 @@ MonoBehaviour:
   cell: {x: 0, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &6364387485559031542
@@ -3802,7 +3802,7 @@ MonoBehaviour:
   cell: {x: 0, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &6417704630606456793
@@ -3896,7 +3896,7 @@ MonoBehaviour:
   cell: {x: 5, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &6624281145516306686
@@ -5056,7 +5056,7 @@ MonoBehaviour:
   cell: {x: 0, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &7190677553428877960
@@ -5283,7 +5283,7 @@ MonoBehaviour:
   cell: {x: 6, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &7283894949796946800
@@ -5442,7 +5442,7 @@ MonoBehaviour:
   cell: {x: 4, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &7336027679492113280
@@ -5902,7 +5902,7 @@ MonoBehaviour:
   cell: {x: 3, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &7956268081162781341
@@ -5996,7 +5996,7 @@ MonoBehaviour:
   cell: {x: 2, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &8360266495918824936
@@ -6276,7 +6276,7 @@ MonoBehaviour:
   cell: {x: 6, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &8804080933355889708
@@ -6370,7 +6370,7 @@ MonoBehaviour:
   cell: {x: 3, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &9041626304562111114
@@ -6464,6 +6464,6 @@ MonoBehaviour:
   cell: {x: 1, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 1, g: 0.5, b: 0.5, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}

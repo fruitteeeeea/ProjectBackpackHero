@@ -270,7 +270,7 @@ RectTransform:
   m_GameObject: {fileID: 323999025150315502}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -333,7 +333,7 @@ MonoBehaviour:
   cell: {x: 3, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &472950657940779643
@@ -364,7 +364,7 @@ RectTransform:
   m_GameObject: {fileID: 472950657940779643}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -427,7 +427,7 @@ MonoBehaviour:
   cell: {x: 3, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &481380586140599609
@@ -458,7 +458,7 @@ RectTransform:
   m_GameObject: {fileID: 481380586140599609}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -521,7 +521,7 @@ MonoBehaviour:
   cell: {x: 4, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &711388568355250251
@@ -552,7 +552,7 @@ RectTransform:
   m_GameObject: {fileID: 711388568355250251}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -615,7 +615,7 @@ MonoBehaviour:
   cell: {x: 6, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &900000000000000001
@@ -1641,7 +1641,7 @@ RectTransform:
   m_GameObject: {fileID: 1174292294538782207}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -1704,7 +1704,7 @@ MonoBehaviour:
   cell: {x: 6, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &1192053033991085555
@@ -1735,7 +1735,7 @@ RectTransform:
   m_GameObject: {fileID: 1192053033991085555}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -1798,7 +1798,7 @@ MonoBehaviour:
   cell: {x: 0, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &1421151327066222687
@@ -1829,7 +1829,7 @@ RectTransform:
   m_GameObject: {fileID: 1421151327066222687}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -1892,7 +1892,7 @@ MonoBehaviour:
   cell: {x: 2, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &1446943323711331399
@@ -1923,7 +1923,7 @@ RectTransform:
   m_GameObject: {fileID: 1446943323711331399}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -1986,7 +1986,7 @@ MonoBehaviour:
   cell: {x: 2, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &1634700968881809474
@@ -2207,7 +2207,7 @@ RectTransform:
   m_GameObject: {fileID: 2783960697300100238}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -2270,7 +2270,7 @@ MonoBehaviour:
   cell: {x: 5, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &2788672142752010752
@@ -2301,7 +2301,7 @@ RectTransform:
   m_GameObject: {fileID: 2788672142752010752}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -2364,7 +2364,7 @@ MonoBehaviour:
   cell: {x: 0, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &2802839967882337311
@@ -2395,7 +2395,7 @@ RectTransform:
   m_GameObject: {fileID: 2802839967882337311}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -2458,7 +2458,7 @@ MonoBehaviour:
   cell: {x: 5, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &3016497781814737088
@@ -3632,7 +3632,7 @@ RectTransform:
   m_GameObject: {fileID: 3321270309942020953}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -3695,7 +3695,7 @@ MonoBehaviour:
   cell: {x: 4, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &3459351731134546438
@@ -3797,7 +3797,7 @@ RectTransform:
   m_GameObject: {fileID: 3533366936588384470}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -3860,7 +3860,7 @@ MonoBehaviour:
   cell: {x: 0, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &3722349923703765162
@@ -4161,7 +4161,7 @@ RectTransform:
   m_GameObject: {fileID: 4043731376889062547}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -4224,7 +4224,7 @@ MonoBehaviour:
   cell: {x: 5, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &4221090864646636113
@@ -4255,7 +4255,7 @@ RectTransform:
   m_GameObject: {fileID: 4221090864646636113}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -4318,7 +4318,7 @@ MonoBehaviour:
   cell: {x: 1, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &4305083512522113850
@@ -4349,7 +4349,7 @@ RectTransform:
   m_GameObject: {fileID: 4305083512522113850}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -4412,7 +4412,7 @@ MonoBehaviour:
   cell: {x: 1, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &4371190969465336848
@@ -5569,7 +5569,7 @@ RectTransform:
   m_GameObject: {fileID: 4575963483435123030}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -5632,7 +5632,7 @@ MonoBehaviour:
   cell: {x: 4, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &4634990078576426760
@@ -5663,7 +5663,7 @@ RectTransform:
   m_GameObject: {fileID: 4634990078576426760}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -5726,7 +5726,7 @@ MonoBehaviour:
   cell: {x: 6, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &5129536159992397055
@@ -5829,7 +5829,7 @@ RectTransform:
   m_GameObject: {fileID: 6042641316771992016}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -5892,7 +5892,7 @@ MonoBehaviour:
   cell: {x: 2, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &6135319697281001003
@@ -5923,7 +5923,7 @@ RectTransform:
   m_GameObject: {fileID: 6135319697281001003}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -5986,7 +5986,7 @@ MonoBehaviour:
   cell: {x: 1, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &6167963866822899465
@@ -6017,7 +6017,7 @@ RectTransform:
   m_GameObject: {fileID: 6167963866822899465}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -6080,7 +6080,7 @@ MonoBehaviour:
   cell: {x: 4, y: 3}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &6205112296452640822
@@ -6111,7 +6111,7 @@ RectTransform:
   m_GameObject: {fileID: 6205112296452640822}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -6174,7 +6174,7 @@ MonoBehaviour:
   cell: {x: 3, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &6572209384173180601
@@ -6392,7 +6392,7 @@ RectTransform:
   m_GameObject: {fileID: 7023440218075914830}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -6455,7 +6455,7 @@ MonoBehaviour:
   cell: {x: 1, y: 1}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &7036686045135600625
@@ -6486,7 +6486,7 @@ RectTransform:
   m_GameObject: {fileID: 7036686045135600625}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -6549,7 +6549,7 @@ MonoBehaviour:
   cell: {x: 1, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &7512273871636133360
@@ -6734,7 +6734,7 @@ RectTransform:
   m_GameObject: {fileID: 7674695379503087245}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -6797,7 +6797,7 @@ MonoBehaviour:
   cell: {x: 3, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &7932199268033279103
@@ -6828,7 +6828,7 @@ RectTransform:
   m_GameObject: {fileID: 7932199268033279103}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -6891,7 +6891,7 @@ MonoBehaviour:
   cell: {x: 5, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &8194546073912621957
@@ -6997,7 +6997,7 @@ RectTransform:
   m_GameObject: {fileID: 8299984437980730608}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -7060,7 +7060,7 @@ MonoBehaviour:
   cell: {x: 6, y: 2}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &8438709856819319793
@@ -7091,7 +7091,7 @@ RectTransform:
   m_GameObject: {fileID: 8438709856819319793}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2055030556410843291}
@@ -7154,7 +7154,7 @@ MonoBehaviour:
   cell: {x: 0, y: 0}
   background: {fileID: 0}
   label: {fileID: 0}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  defaultColor: {r: 0.45, g: 0.85, b: 1, a: 1}
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
 --- !u!1 &8874880688359761263

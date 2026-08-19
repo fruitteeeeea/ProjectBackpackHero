@@ -220,6 +220,43 @@ public sealed class ItemBalanceConfigurationTests
     }
 
     [Test]
+    public void EquipmentAssets_UseConfiguredBarShapesAndVisualShells()
+    {
+        ItemShapeData vertical = Load<ItemShapeData>(
+            "Assets/Data/Backpack/ItemShapes/ItemShape_1x2.asset");
+        ItemShapeData horizontal = Load<ItemShapeData>(
+            "Assets/Data/Backpack/ItemShapes/ItemShape_2x1.asset");
+        ItemView fallback = Load<ItemView>(
+            "Assets/Prefabs/BackpackUI/Items/Item_1x1.prefab");
+        ItemView verticalPrefab = Load<ItemView>(
+            "Assets/Prefabs/BackpackUI/Items/Item_1x2.prefab");
+        ItemView horizontalPrefab = Load<ItemView>(
+            "Assets/Prefabs/BackpackUI/Items/Item_2x1.prefab");
+
+        Assert.That(vertical.ShapeOffsets, Is.EqualTo(new[]
+        {
+            new Vector2Int(0, 0), new Vector2Int(0, 1),
+        }));
+        Assert.That(horizontal.ShapeOffsets, Is.EqualTo(new[]
+        {
+            new Vector2Int(0, 0), new Vector2Int(1, 0),
+        }));
+
+        AssertEquipmentBarShape("Equipment_First.asset", horizontal,
+            horizontalPrefab, fallback, verticalPrefab, horizontalPrefab);
+        AssertEquipmentBarShape("Equipment_RapidCannon.asset", vertical,
+            verticalPrefab, fallback, verticalPrefab, horizontalPrefab);
+        AssertEquipmentBarShape("Equipment_ArcCoil.asset", vertical,
+            verticalPrefab, fallback, verticalPrefab, horizontalPrefab);
+        AssertEquipmentBarShape("Equipment_1x2.asset", vertical,
+            verticalPrefab, fallback, verticalPrefab, horizontalPrefab);
+        AssertEquipmentBarShape("Equipment_LaserLink.asset", vertical,
+            verticalPrefab, fallback, verticalPrefab, horizontalPrefab);
+        AssertEquipmentBarShape("Equipment_WaveEmitter.asset", vertical,
+            verticalPrefab, fallback, verticalPrefab, horizontalPrefab);
+    }
+
+    [Test]
     public void ItemAssets_ProvideShortDisplayNamesAndDescriptions()
     {
         (string path, string name, string description)[] expectedItems =
@@ -382,5 +419,25 @@ public sealed class ItemBalanceConfigurationTests
         Assert.That(fighter.ProjectileDamage, Is.EqualTo(damage));
         Assert.That(fighter.ProjectileSpeed, Is.EqualTo(projectileSpeed));
         Assert.That(fighter.TargetingPriority, Is.Zero);
+    }
+
+    private static void AssertEquipmentBarShape(
+        string itemFile,
+        ItemShapeData expectedShape,
+        ItemView expectedPrefab,
+        ItemView fallback,
+        ItemView verticalPrefab,
+        ItemView horizontalPrefab)
+    {
+        ItemData equipment = Load<ItemData>(
+            "Assets/Data/Backpack/Items/" + itemFile);
+
+        Assert.That(equipment.ItemType, Is.EqualTo(ItemType.Equipment),
+            itemFile);
+        Assert.That(equipment.Shape, Is.SameAs(expectedShape), itemFile);
+        Assert.That(ItemViewPrefabSelector.Select(
+                equipment, fallback, verticalPrefab, horizontalPrefab,
+                null, null, null, null),
+            Is.SameAs(expectedPrefab), itemFile);
     }
 }

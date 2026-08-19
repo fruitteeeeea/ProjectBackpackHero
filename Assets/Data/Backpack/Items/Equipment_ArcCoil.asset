@@ -23,5 +23,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 88a5268bb1a8d42cc85c14b7adb3ea1b, type: 2}
   cooldownDuration: 3.5
   spawnCount: 1
-  shape: {fileID: 11400000, guid: 84129650cb54b4c05ab80593ee53926b, type: 2}
+  shape: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
   fighterDefinition: {fileID: 0}

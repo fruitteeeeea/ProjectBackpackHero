@@ -28,5 +28,5 @@ MonoBehaviour:
   cd: 4
   price: 0
   count: 1
-  shape: {fileID: 11400000, guid: 70bef0369e3574ab2af4034accad292e, type: 2}
+  shape: {fileID: 11400000, guid: 779de2dbf4b6144469f76b3c6dc34fda, type: 2}
   fighterDefinition: {fileID: 0}

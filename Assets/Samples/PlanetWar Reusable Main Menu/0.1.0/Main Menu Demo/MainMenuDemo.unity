@@ -317,6 +317,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -124.30005
       objectReference: {fileID: 0}
+    - target: {fileID: 2000000013, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000000013, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2000000015, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
       value: 1801810542
@@ -344,6 +352,22 @@ PrefabInstance:
     - target: {fileID: 2000000089, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -134.15002
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000000137, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 380
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000000137, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 160
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000000137, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000000137, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -183
       objectReference: {fileID: 0}
     - target: {fileID: 2000000155, guid: c0479bd71b0942609077b8704250e5ad, type: 3}
       propertyPath: m_AnchorMax.x
@@ -677,6 +701,8 @@ MonoBehaviour:
   targetCamera: {fileID: 0}
   cameraDistance: 13
   backgroundRenderer: {fileID: 1091849340}
+  overtimeNebulaColor: {r: 0.42, g: 0.02, b: 0.16, a: 1}
+  overtimeTransitionDuration: 1
 --- !u!212 &1091849340
 SpriteRenderer:
   serializedVersion: 3
@@ -842,7 +868,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0e90d3037e41df914c75e2c401bc2e, type: 3}
-  m_Name: ''
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.UI.MenuDisplayProfile
   playerAvatar: {fileID: 21300000, guid: 4ecb7edff1b26b04e88a8f47e4ed430f, type: 3}
   enemyAvatar: {fileID: 21300000, guid: 44b1737a1cf26424cbde0788b9eee528, type: 3}

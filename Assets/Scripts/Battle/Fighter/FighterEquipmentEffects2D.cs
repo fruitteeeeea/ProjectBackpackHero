@@ -19,26 +19,30 @@ namespace BackpackHero.Battle
             public ProjectileEffectRuntime(
                 BattleAttack2D newProjectilePrefab,
                 float newCooldown,
-                ItemInstance newItem)
+                ItemInstance newItem,
+                float equipmentItemModifier)
             {
                 ProjectilePrefab = newProjectilePrefab;
-                Cooldown = Mathf.Max(
-                    ProjectileEquipmentEffectDefinition
-                        .MinimumCooldown,
-                    newCooldown);
+                Cooldown = newCooldown / Mathf.Max(
+                    ItemData.MinimumEquipmentItemModifier,
+                    equipmentItemModifier);
                 Item = newItem;
+                EquipmentItemModifier = Mathf.Max(
+                    ItemData.MinimumEquipmentItemModifier,
+                    equipmentItemModifier);
             }
 
             public BattleAttack2D ProjectilePrefab { get; }
             public float Cooldown { get; }
             public ItemInstance Item { get; }
+            public float EquipmentItemModifier { get; }
             public float RemainingCooldown { get; set; }
         }
 
         private readonly List<ProjectileEffectRuntime>
             projectileEffects = new();
 
-        private readonly List<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item)>
+        private readonly List<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float EquipmentItemModifier)>
             laserLinkEffects = new();
 
         private float remainingSharedCooldown;
@@ -48,12 +52,12 @@ namespace BackpackHero.Battle
         public event Action<BattleAttack2D> ProjectileShotRequested;
 
         /// <summary>携带触发该攻击的装备实例，供伤害归因使用。</summary>
-        public event Action<BattleAttack2D, ItemInstance> ProjectileShotRequestedWithSource;
+        public event Action<BattleAttack2D, ItemInstance, float> ProjectileShotRequestedWithSource;
 
         public int ProjectileEffectCount =>
             projectileEffects.Count;
 
-        public IReadOnlyCollection<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item)>
+        public IReadOnlyCollection<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float EquipmentItemModifier)>
             LaserLinkEffects => laserLinkEffects;
 
         public bool HasLaserLinkEffect(
@@ -76,7 +80,7 @@ namespace BackpackHero.Battle
                     if (effect is LaserLinkEquipmentEffectDefinition laserLink &&
                         laserLink.LaserAttackPrefab != null)
                     {
-                        laserLinkEffects.Add((laserLink, null));
+                        laserLinkEffects.Add((laserLink, null, 1f));
                         continue;
                     }
 
@@ -91,23 +95,35 @@ namespace BackpackHero.Battle
                         new ProjectileEffectRuntime(
                             projectile.ProjectilePrefab,
                             projectile.Cooldown,
-                            null));
+                            null,
+                            1f));
                 }
             }
 
             ResetCooldowns();
         }
 
-        public void Configure(IEnumerable<(EquipmentEffectDefinition Effect, ItemInstance Item)> effects)
+        public void Configure(
+            IEnumerable<(EquipmentEffectDefinition Effect, ItemInstance Item)> effects,
+            float equipmentItemModifier = 1f)
         {
             projectileEffects.Clear();
             laserLinkEffects.Clear();
             if (effects != null)
                 foreach ((EquipmentEffectDefinition effect, ItemInstance item) in effects)
                     if (effect is ProjectileEquipmentEffectDefinition projectile && projectile.ProjectilePrefab != null)
-                        projectileEffects.Add(new ProjectileEffectRuntime(projectile.ProjectilePrefab, projectile.Cooldown, item));
+                        projectileEffects.Add(new ProjectileEffectRuntime(
+                            projectile.ProjectilePrefab,
+                            projectile.Cooldown,
+                            item,
+                            equipmentItemModifier));
                     else if (effect is LaserLinkEquipmentEffectDefinition laser && laser.LaserAttackPrefab != null)
-                        laserLinkEffects.Add((laser, item));
+                        laserLinkEffects.Add((
+                            laser,
+                            item,
+                            Mathf.Max(
+                                ItemData.MinimumEquipmentItemModifier,
+                                equipmentItemModifier)));
             ResetCooldowns();
         }
 
@@ -160,7 +176,9 @@ namespace BackpackHero.Battle
                     (index + 1) % projectileEffects.Count;
                 ProjectileShotRequested?.Invoke(effect.ProjectilePrefab);
                 ProjectileShotRequestedWithSource?.Invoke(
-                    effect.ProjectilePrefab, effect.Item);
+                    effect.ProjectilePrefab,
+                    effect.Item,
+                    effect.EquipmentItemModifier);
                 return true;
             }
 

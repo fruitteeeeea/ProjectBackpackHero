@@ -27,5 +27,6 @@ MonoBehaviour:
   cd: 2
   price: 0
   count: 1
+  equipmentItemModifier: 1
   shape: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
   fighterDefinition: {fileID: 11400000, guid: 748a35cc9c334f23ad83f231ba5d004d, type: 2}

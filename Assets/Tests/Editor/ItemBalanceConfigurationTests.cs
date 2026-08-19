@@ -76,6 +76,50 @@ public sealed class ItemBalanceConfigurationTests
             Is.EqualTo(shieldFighter.Sprite));
         Assert.That(rapidCannon.Cooldown,
             Is.EqualTo(0.6f));
+        Assert.That(lAircraft.EquipmentItemModifier,
+            Is.EqualTo(1f));
+    }
+
+    [Test]
+    public void AircraftItems_DefaultEquipmentModifiersAreOne()
+    {
+        string[] paths =
+        {
+            "Aircraft_Charge.asset",
+            "Aircraft_Explosive.asset",
+            "Aircraft_First.asset",
+            "Aircraft_L.asset",
+            "Aircraft_Laser.asset",
+            "Aircraft_Shield.asset",
+            "Aircraft_Shotgun.asset",
+            "Aircraft_Sniper.asset",
+        };
+
+        foreach (string path in paths)
+        {
+            ItemData aircraft = Load<ItemData>(
+                "Assets/Data/Backpack/Items/" + path);
+            Assert.That(aircraft.EquipmentItemModifier,
+                Is.EqualTo(1f), path);
+        }
+    }
+
+    [Test]
+    public void AircraftEquipmentModifier_ClampsToMinimum()
+    {
+        ItemData aircraft = ScriptableObject.CreateInstance<ItemData>();
+        try
+        {
+            aircraft.InitializeForTests("Aircraft", ItemType.Aircraft, 1f, null);
+            aircraft.SetEquipmentItemModifierForTests(0f);
+
+            Assert.That(aircraft.EquipmentItemModifier,
+                Is.EqualTo(ItemData.MinimumEquipmentItemModifier));
+        }
+        finally
+        {
+            Object.DestroyImmediate(aircraft);
+        }
     }
 
     [Test]

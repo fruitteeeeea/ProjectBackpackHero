@@ -9,6 +9,7 @@ namespace BackpackPrototype
     [CreateAssetMenu(menuName = "Backpack Prototype/Item Data")]
     public sealed class ItemData : ScriptableObject
     {
+        public const float MinimumEquipmentItemModifier = 0.1f;
         [Header("Player Progress")]
         [SerializeField, FormerlySerializedAs("itemId")] private string id;
         // Kept serialized solely so existing ItemData assets retain their layout. PlayerItemSystem
@@ -35,6 +36,10 @@ namespace BackpackPrototype
 
         [Header("Aircraft Spawn")]
         [SerializeField, Min(1), FormerlySerializedAs("spawnCount")] private int count = 1;
+        [InspectorName("装备物品修正")]
+        [Tooltip("生成的飞机从临近装备获得的攻击修正。装备攻击冷却除以此值，伤害和速度乘以此值。")]
+        [SerializeField, Min(MinimumEquipmentItemModifier)]
+        private float equipmentItemModifier = 1f;
         [SerializeField] private ItemShapeData shape;
 
         [Header("Battle")]
@@ -47,6 +52,10 @@ namespace BackpackPrototype
         public int Debris => debris;
         public float Cd => cd;
         public int Count => Mathf.Max(1, count);
+        public float EquipmentItemModifier =>
+            itemType == ItemType.Aircraft
+                ? Mathf.Max(MinimumEquipmentItemModifier, equipmentItemModifier)
+                : 1f;
         public int Price => price;
         public bool InitiallyUnlocked => true;
         public string UnlockRequirementText => unlockRequirementText;
@@ -89,6 +98,12 @@ namespace BackpackPrototype
                 if (effect != null) equipmentEffects.Add(effect);
         }
 
+        public void SetEquipmentItemModifierForTests(float value)
+        {
+            equipmentItemModifier = value;
+            OnValidate();
+        }
+
         public void ConfigurePlayerProgressForTests(string testItemId, int goldCost = 0, int fragmentCost = 0)
         {
             id = testItemId;
@@ -105,6 +120,9 @@ namespace BackpackPrototype
             price = Mathf.Max(0, price);
             cd = Mathf.Max(0.01f, cd);
             count = itemType == ItemType.Equipment ? 1 : Mathf.Max(1, count);
+            equipmentItemModifier = Mathf.Max(
+                MinimumEquipmentItemModifier,
+                equipmentItemModifier);
         }
     }
 }

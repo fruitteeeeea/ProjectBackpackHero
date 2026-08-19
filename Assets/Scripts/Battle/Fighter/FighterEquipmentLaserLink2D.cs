@@ -49,14 +49,17 @@ namespace BackpackHero.Battle
                 return;
             }
 
-            foreach ((LaserLinkEquipmentEffectDefinition effect, ItemInstance item) in
+            foreach ((LaserLinkEquipmentEffectDefinition effect, ItemInstance item, float equipmentItemModifier) in
                      equipmentEffects.LaserLinkEffects)
             {
-                FireLinks(effect, item);
+                FireLinks(effect, item, equipmentItemModifier);
             }
         }
 
-        private void FireLinks(LaserLinkEquipmentEffectDefinition effect, ItemInstance item)
+        private void FireLinks(
+            LaserLinkEquipmentEffectDefinition effect,
+            ItemInstance item,
+            float equipmentItemModifier)
         {
             if (effect?.LaserAttackPrefab == null)
             {
@@ -107,14 +110,18 @@ namespace BackpackHero.Battle
                 return;
             }
 
-            nextFireTimes[effectKey] = Time.time + effect.Cooldown;
+            float modifier = Mathf.Max(
+                ItemData.MinimumEquipmentItemModifier,
+                equipmentItemModifier);
+            nextFireTimes[effectKey] = Time.time + effect.Cooldown / modifier;
             for (int index = 0; index < targetCount; index++)
             {
                 combat.FireAttackAtPoint(
                     effect.LaserAttackPrefab,
                     candidates[index].transform.position,
                     ProjectileVisualSource.Equipment,
-                    item);
+                    item,
+                    modifier);
             }
         }
     }

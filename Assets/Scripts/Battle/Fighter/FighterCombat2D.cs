@@ -247,7 +247,10 @@ namespace BackpackHero.Battle
             equipmentEffectsController?.Configure(effects);
         }
 
-        public void ConfigureEquipmentEffects(IEnumerable<(EquipmentEffectDefinition Effect, ItemInstance Item)> effects) => equipmentEffectsController?.Configure(effects);
+        public void ConfigureEquipmentEffects(
+            IEnumerable<(EquipmentEffectDefinition Effect, ItemInstance Item)> effects,
+            float equipmentItemModifier = 1f) =>
+            equipmentEffectsController?.Configure(effects, equipmentItemModifier);
         public void SetDamageSourceItem(ItemInstance item) => aircraftItem = item;
 
         /// <summary>移除飞机自身的默认子弹，仅保留装备效果子弹。</summary>
@@ -473,14 +476,18 @@ namespace BackpackHero.Battle
             }
         }
 
-        private void HandleEquipmentProjectileShotRequested(BattleAttack2D projectilePrefab, ItemInstance item)
+        private void HandleEquipmentProjectileShotRequested(
+            BattleAttack2D projectilePrefab,
+            ItemInstance item,
+            float equipmentItemModifier)
         {
             FireAttack(
                 projectilePrefab,
                 transform.up,
                 false,
                 ProjectileVisualSource.Equipment,
-                item);
+                item,
+                equipmentItemModifier);
         }
 
         private bool FireAttack(
@@ -488,7 +495,8 @@ namespace BackpackHero.Battle
             Vector2 fireDirection,
             bool allowRandomProjectileOverride,
             ProjectileVisualSource visualSource,
-            ItemInstance sourceItem = null)
+            ItemInstance sourceItem = null,
+            float equipmentItemModifier = 1f)
         {
             BattleAttack2D attackPrefab =
                 allowRandomProjectileOverride
@@ -506,7 +514,8 @@ namespace BackpackHero.Battle
                 fireDirection,
                 visualSource,
                 currentTarget.TargetType == BattleTargetType.Backpack,
-                sourceItem ?? aircraftItem);
+                sourceItem ?? aircraftItem,
+                equipmentItemModifier);
         }
 
         /// <summary>
@@ -517,7 +526,8 @@ namespace BackpackHero.Battle
             BattleAttack2D attackPrefab,
             Vector2 targetPosition,
             ProjectileVisualSource visualSource = ProjectileVisualSource.FighterDefault,
-            ItemInstance sourceItem = null)
+            ItemInstance sourceItem = null,
+            float equipmentItemModifier = 1f)
         {
             Vector2 fireDirection = firePoint != null
                 ? targetPosition - (Vector2)firePoint.position
@@ -528,7 +538,8 @@ namespace BackpackHero.Battle
                 fireDirection,
                 visualSource,
                 false,
-                sourceItem ?? aircraftItem);
+                sourceItem ?? aircraftItem,
+                equipmentItemModifier);
         }
 
         private bool FireAttackAtPoint(
@@ -537,7 +548,8 @@ namespace BackpackHero.Battle
             Vector2 fireDirection,
             ProjectileVisualSource visualSource,
             bool canDamageBackpack,
-            ItemInstance sourceItem = null)
+            ItemInstance sourceItem = null,
+            float equipmentItemModifier = 1f)
         {
             if (fighter == null ||
                 fighter.Definition == null ||
@@ -562,6 +574,10 @@ namespace BackpackHero.Battle
                         Vector2.up,
                         fireDirection));
 
+            float attackModifier = Mathf.Max(
+                ItemData.MinimumEquipmentItemModifier,
+                equipmentItemModifier);
+
             BattleAttackLaunchContext
                 launchContext =
                     BattleAttackLaunchContext
@@ -569,6 +585,7 @@ namespace BackpackHero.Battle
                             fighter.Faction,
                             fighter.Definition
                                 .ProjectileDamage *
+                            attackModifier *
                             GamePacingDebugRuntime
                                 .GetProjectileDamageMultiplier(
                                     fighter.Faction) *
@@ -579,7 +596,8 @@ namespace BackpackHero.Battle
                                 ? LevelFlowController.OvertimeProjectileDamageMultiplier
                                 : 1f),
                             fighter.Definition
-                                .ProjectileSpeed,
+                                .ProjectileSpeed *
+                            attackModifier,
                             -1f,
                             firePoint.position,
                             fireDirection,

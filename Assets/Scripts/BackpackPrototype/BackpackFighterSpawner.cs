@@ -471,7 +471,9 @@ namespace BackpackPrototype
                 }
             }
 
-            fighterCombat.ConfigureEquipmentEffects(effects);
+            fighterCombat.ConfigureEquipmentEffects(
+                effects,
+                aircraftItem.Data.EquipmentItemModifier);
             if (triggeringEquipment != null)
             {
                 fighterCombat.DisableDefaultFireMode();

@@ -3,8 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\mac\\Documents\\GitHub\\ProjectBackpackHero\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{07F75D03-A015-53E4-97FB-D4C7B4BC2FDE}|Assembly-CSharp.csproj|c:\\users\\mac\\documents\\github\\projectbackpackhero\\assets\\samples\\planetwar reusable main menu\\0.1.0\\main menu demo\\mainmenudemobootstrap.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{07F75D03-A015-53E4-97FB-D4C7B4BC2FDE}|Assembly-CSharp.csproj|solutionrelative:assets\\samples\\planetwar reusable main menu\\0.1.0\\main menu demo\\mainmenudemobootstrap.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{90F0A99A-C104-909C-A254-3B201E137962}|PlanetWar.ReusableMainMenu.Runtime.csproj|c:\\users\\mac\\documents\\github\\projectbackpackhero\\packages\\com.planetwar.reusable-main-menu\\runtime\\mainmenuview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{90F0A99A-C104-909C-A254-3B201E137962}|PlanetWar.ReusableMainMenu.Runtime.csproj|solutionrelative:packages\\com.planetwar.reusable-main-menu\\runtime\\mainmenuview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\mac\\Documents\\GitHub\\ProjectBackpackHero\\Assets\\Samples\\PlanetWar Reusable Main Menu\\0.1.0\\Main Menu Demo\\MainMenuDemoBootstrap.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assets\\Samples\\PlanetWar Reusable Main Menu\\0.1.0\\Main Menu Demo\\MainMenuDemoBootstrap.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -19,15 +23,26 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "MainMenuView.cs",
+              "DocumentMoniker": "C:\\Users\\mac\\Documents\\GitHub\\ProjectBackpackHero\\Packages\\com.planetwar.reusable-main-menu\\Runtime\\MainMenuView.cs",
+              "RelativeDocumentMoniker": "Packages\\com.planetwar.reusable-main-menu\\Runtime\\MainMenuView.cs",
+              "ToolTip": "C:\\Users\\mac\\Documents\\GitHub\\ProjectBackpackHero\\Packages\\com.planetwar.reusable-main-menu\\Runtime\\MainMenuView.cs",
+              "RelativeToolTip": "Packages\\com.planetwar.reusable-main-menu\\Runtime\\MainMenuView.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAADwvyoAAABoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-19T08:33:13.231Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "MainMenuDemoBootstrap.cs",
               "DocumentMoniker": "C:\\Users\\mac\\Documents\\GitHub\\ProjectBackpackHero\\Assets\\Samples\\PlanetWar Reusable Main Menu\\0.1.0\\Main Menu Demo\\MainMenuDemoBootstrap.cs",
               "RelativeDocumentMoniker": "Assets\\Samples\\PlanetWar Reusable Main Menu\\0.1.0\\Main Menu Demo\\MainMenuDemoBootstrap.cs",
               "ToolTip": "C:\\Users\\mac\\Documents\\GitHub\\ProjectBackpackHero\\Assets\\Samples\\PlanetWar Reusable Main Menu\\0.1.0\\Main Menu Demo\\MainMenuDemoBootstrap.cs",
               "RelativeToolTip": "Assets\\Samples\\PlanetWar Reusable Main Menu\\0.1.0\\Main Menu Demo\\MainMenuDemoBootstrap.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAADwvw8AAABaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-11T08:12:38.501Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-11T08:12:38.501Z"
             }
           ]
         }

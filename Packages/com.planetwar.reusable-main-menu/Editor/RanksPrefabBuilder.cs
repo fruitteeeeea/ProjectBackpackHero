@@ -19,7 +19,9 @@ namespace PlanetWar.ReusableMainMenu.Editor
         private const string OriginalHangarEquipItemPath = Package + "/Prefabs/HangarOriginal/ItemCardEquip.prefab";
         private const string OriginalEntityDetailsPath = Package + "/Prefabs/HangarOriginal/Details/UICardInfo.prefab";
         private const string OriginalSpellDetailsPath = Package + "/Prefabs/HangarOriginal/Details/UICardSpell.prefab";
+        private const string OriginalRankInfoPagePath = Package + "/Prefabs/RankInfoOriginal/UIRankInfo.prefab";
         private const string Art = Package + "/Art/Ranks/";
+        private const string RankInfoArt = Package + "/Art/RankInfo/";
         private const string HangarArt = Package + "/Art/Hangar/Icon/";
         private static TMP_FontAsset textFont;
 
@@ -40,7 +42,12 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var deckLabelReferences = firstDeckCard != null && new SerializedObject(firstDeckCard).FindProperty("levelPrefixText").objectReferenceValue != null && new SerializedObject(firstDeckCard).FindProperty("levelValueText").objectReferenceValue != null;
                 var entityDetails = prefab != null ? prefab.transform.Find("UICardView/UICardInfo")?.GetComponent<HangarDetailLayout>() : null;
                 var spellDetails = prefab != null ? prefab.transform.Find("UICardView/UICardSpell")?.GetComponent<HangarDetailLayout>() : null;
-                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails)))
+                var rankInfo = prefab != null ? prefab.transform.Find("UIRankInfo")?.GetComponent<RankInfoView>() : null;
+                var controllerForInfo = prefab != null ? prefab.GetComponent<MainMenuPageController>() : null;
+                var rankInfoPageBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("rankInfoPage").objectReferenceValue != null;
+                var bottomBarBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("bottomBar").objectReferenceValue != null;
+                var rankInfoReady = rankInfo != null && rankInfo.scroll != null && rankInfo.itemRankMain != null && rankInfo.itemRankReward != null && rankInfo.btnOffset != null && rankInfo.entries != null && rankInfo.entries.Length >= 12 && rankInfo.scroll.scrollRect != null && rankInfo.scroll.content != null && rankInfo.scroll.viewport != null && rankInfoPageBound && bottomBarBound;
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !rankInfoReady))
                 {
                     Debug.Log("[PlanetWar] Rebuilding MainMenu Hangar with the original static card configuration.");
                     Rebuild();
@@ -59,6 +66,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var existing = root.transform.Find("UIRankList");
                 if (existing != null) UnityEngine.Object.DestroyImmediate(existing.gameObject);
                 BuildFromOriginal(root);
+                BuildRankInfoFromOriginal(root);
                 BuildHangarFromOriginal(root);
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }
@@ -115,6 +123,242 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var buttons = bottom != null ? bottom.GetComponentsInChildren<Button>(true) : new Button[0];
                 Array.Sort(buttons, (left, right) => left.transform.position.x.CompareTo(right.transform.position.x));
                 Set(controller, "tabTargets", Array.ConvertAll(buttons, button => button.transform));
+        }
+
+        private static void BuildRankInfoFromOriginal(GameObject root)
+        {
+            var existing = root.transform.Find("UIRankInfo");
+            if (existing != null) UnityEngine.Object.DestroyImmediate(existing.gameObject);
+
+            var original = PrefabUtility.LoadPrefabContents(OriginalRankInfoPagePath);
+            if (original == null) throw new InvalidOperationException("UIRankInfo original prefab is missing.");
+            var page = UnityEngine.Object.Instantiate(original);
+            PrefabUtility.UnloadPrefabContents(original);
+            page.name = "UIRankInfo";
+            page.transform.SetParent(root.transform, false);
+            page.SetActive(false);
+            RemoveMissingScripts(page);
+
+            var view = page.GetComponent<RankInfoView>() ?? page.AddComponent<RankInfoView>();
+            var scrollRoot = Find(page.transform, "Scroll View");
+            var scrollRect = scrollRoot != null ? scrollRoot.GetComponent<ScrollRect>() : null;
+            var content = scrollRect != null ? scrollRect.content : null;
+            var viewport = scrollRect != null ? scrollRect.viewport : null;
+            var scroll = scrollRoot != null
+                ? scrollRoot.GetComponent<RankInfoScrollView>() ?? scrollRoot.gameObject.AddComponent<RankInfoScrollView>()
+                : null;
+
+            var itemMain = Find(page.transform, "ItemRankMain")?.gameObject;
+            var itemReward = Find(page.transform, "ItemRankReward")?.gameObject;
+            ConfigureRankInfoMainItem(itemMain);
+            ConfigureRankInfoRewardItem(itemReward);
+            if (itemMain != null) itemMain.SetActive(false);
+            if (itemReward != null) itemReward.SetActive(false);
+
+            if (scroll != null)
+            {
+                scroll.scrollRect = scrollRect;
+                scroll.content = content;
+                scroll.viewport = viewport;
+                scroll.visibilityMargin = 500f;
+                scroll.ignoreLayoutRebuild = true;
+                scroll.enableVirtualization = true;
+            }
+
+            view.scroll = scroll;
+            view.itemRankMain = itemMain;
+            view.itemRankReward = itemReward;
+            view.btnOffset = Find(page.transform, "Button (Legacy)")?.gameObject;
+            view.entries = CreateRankInfoEntries();
+            view.currentMissionId = 1003;
+            view.currentPlayerRankPoint = 220;
+            EditorUtility.SetDirty(view);
+
+            BindRankInfoButton(page, "btnBack", view.OnClickClose);
+            BindRankInfoButton(page, "Button (Legacy)", view.OnClickOffset);
+
+            var controller = root.GetComponent<MainMenuPageController>() ?? root.AddComponent<MainMenuPageController>();
+            Set(controller, "rankInfoPage", view);
+            var bottom = root.GetComponentInChildren<UIMainBottom>(true);
+            if (bottom != null)
+            {
+                Set(controller, "bottomBar", bottom.gameObject);
+                page.transform.SetSiblingIndex(bottom.transform.GetSiblingIndex());
+            }
+        }
+
+        private static void ConfigureRankInfoMainItem(GameObject root)
+        {
+            if (root == null) return;
+            var view = root.GetComponent<RankInfoItemMainView>() ?? root.AddComponent<RankInfoItemMainView>();
+            var title = FindDirectChild(root.transform, "title");
+            var icon = FindDirectChild(root.transform, "icon");
+            var reward = FindDirectChild(root.transform, "reward");
+            var slider = FindDirectChild(root.transform, "Slider");
+
+            view.txtName = FindDirectChild(title, "name")?.GetComponent<TextMeshProUGUI>();
+            view.txtIconName = FindDirectChild(icon, "name")?.GetComponent<TextMeshProUGUI>();
+            view.txtPoint = FindDirectChild(title, "Scroe")?.GetComponent<TextMeshProUGUI>();
+            view.imgIcon = icon != null ? icon.GetComponent<UnityEngine.UI.Image>() : null;
+            view.imgBlack = FindDirectChild(icon, "black")?.GetComponent<UnityEngine.UI.Image>();
+            view.rewardContainer = reward;
+            var item = FindDirectChild(reward, "item");
+            view.itemReward = item != null ? item.gameObject : null;
+            if (item != null) ConfigureRankInfoRewardItemView(item.gameObject);
+            view.sliderRank = slider != null ? ConfigureRankInfoSlider(slider.gameObject) : null;
+            EditorUtility.SetDirty(view);
+        }
+
+        private static void ConfigureRankInfoRewardItem(GameObject root)
+        {
+            if (root == null) return;
+            var view = root.GetComponent<RankInfoItemRewardView>() ?? root.AddComponent<RankInfoItemRewardView>();
+            var reward = FindDirectChild(root.transform, "reward");
+            var slider = FindDirectChild(root.transform, "Slider");
+
+            view.rewardContainer = reward;
+            var item = FindDirectChild(reward, "item");
+            view.itemReward = item != null ? item.gameObject : null;
+            if (item != null) ConfigureRankInfoRewardItemView(item.gameObject);
+            view.sliderRank = slider != null ? ConfigureRankInfoSlider(slider.gameObject) : null;
+            view.txtPoint = FindDirectChild(root.transform, "point")?.GetComponent<TextMeshProUGUI>();
+            view.bg = FindDirectChild(root.transform, "Image (1)")?.GetComponent<UnityEngine.UI.Image>();
+            view.redPoint = FindDirectChild(root.transform, "RedPoint")?.gameObject;
+            EditorUtility.SetDirty(view);
+        }
+
+        private static void ConfigureRankInfoRewardItemView(GameObject root)
+        {
+            if (root == null) return;
+            var view = root.GetComponent<RankInfoRewardItemView>() ?? root.AddComponent<RankInfoRewardItemView>();
+            view.icon = FindDirectChild(root.transform, "icon")?.GetComponent<UnityEngine.UI.Image>();
+            view.resIcon = FindDirectChild(root.transform, "res")?.GetComponent<UnityEngine.UI.Image>();
+            view.packIcon = FindDirectChild(root.transform, "pack")?.GetComponent<UnityEngine.UI.Image>();
+            view.countText = FindDirectChild(root.transform, "count")?.GetComponent<TextMeshProUGUI>();
+            view.claimedMark = FindDirectChild(root.transform, "check")?.gameObject;
+            EditorUtility.SetDirty(view);
+        }
+
+        private static RankInfoSlider ConfigureRankInfoSlider(GameObject root)
+        {
+            if (root == null) return null;
+            var slider = root.GetComponent<RankInfoSlider>() ?? root.AddComponent<RankInfoSlider>();
+            slider.sliderProgress = root.GetComponent<Slider>();
+            slider.txtProgress = Find(root.transform, "value")?.GetComponent<TextMeshProUGUI>();
+            slider.objSlideArea = Find(root.transform, "Handle Slide Area")?.gameObject;
+            EditorUtility.SetDirty(slider);
+            return slider;
+        }
+
+        private static void BindRankInfoButton(GameObject page, string buttonName, UnityEngine.Events.UnityAction action)
+        {
+            var button = Find(page.transform, buttonName)?.GetComponent<Button>();
+            if (button == null || action == null) return;
+            button.onClick = new Button.ButtonClickedEvent();
+            UnityEventTools.AddPersistentListener(button.onClick, action);
+        }
+
+        private static RankInfoEntry[] CreateRankInfoEntries()
+        {
+            var rankIcons = new[]
+            {
+                RankInfoSprite("icon_huizhang_1.png"), RankInfoSprite("icon_huizhang_2.png"),
+                RankInfoSprite("icon_huizhang_3.png"), RankInfoSprite("icon_huizhang_4.png"),
+                RankInfoSprite("icon_huizhang_5.png"), RankInfoSprite("icon_huizhang_6.png"),
+                RankInfoSprite("icon_huizhang_7.png"), RankInfoSprite("icon_huizhang_8.png")
+            };
+            var lockedIcons = new[]
+            {
+                RankInfoSprite("icon_huizhang_1_bai.png"), RankInfoSprite("icon_huizhang_2_bai.png"),
+                RankInfoSprite("icon_huizhang_3_bai.png"), RankInfoSprite("icon_huizhang_4_bai.png"),
+                RankInfoSprite("icon_huizhang_5_bai.png"), RankInfoSprite("icon_huizhang_6_bai.png"),
+                RankInfoSprite("icon_huizhang_7_bai.png"), RankInfoSprite("icon_huizhang_8_bai.png")
+            };
+
+            RankInfoEntry Entry(int id, int level, int score, int type, string enName, int[] unlockIds, RankInfoReward[] rewards)
+            {
+                return new RankInfoEntry
+                {
+                    id = id,
+                    level = level,
+                    score = score,
+                    type = type,
+                    enName = enName,
+                    unlockIds = unlockIds,
+                    rewards = rewards,
+                    iconSprite = rankIcons[(id - 1001) % rankIcons.Length],
+                    lockedIconSprite = lockedIcons[(id - 1001) % lockedIcons.Length]
+                };
+            }
+
+            RankInfoReward Reward(int id, int count)
+            {
+                return new RankInfoReward
+                {
+                    icon = null,
+                    count = count,
+                    displayName = id.ToString(),
+                    isPack = id >= 10001
+                };
+            }
+
+            RankInfoReward[] UnlockRewards(int[] ids)
+            {
+                var result = new RankInfoReward[ids.Length];
+                for (var i = 0; i < ids.Length; i++)
+                {
+                    result[i] = new RankInfoReward
+                    {
+                        icon = HangarSprite(IconForUnlock(ids[i])),
+                        count = 0,
+                        displayName = ids[i].ToString(),
+                        isPack = false
+                    };
+                }
+                return result;
+            }
+
+            return new[]
+            {
+                Entry(1001, 1, 50, 0, "Glow Belt", new[] { 1005, 2005 }, UnlockRewards(new[] { 1005, 2005 })),
+                Entry(1002, 1, 120, 1, "Glow Belt", new int[0], new[] { Reward(5001, 100) }),
+                Entry(1003, 2, 200, 0, "Pale Cluster", new[] { 1006, 2003 }, UnlockRewards(new[] { 1006, 2003 })),
+                Entry(1004, 2, 400, 1, "Pale Cluster", new int[0], new[] { Reward(10001, 5) }),
+                Entry(1005, 2, 650, 1, "Pale Cluster", new int[0], new[] { Reward(5001, 200) }),
+                Entry(1006, 3, 1000, 0, "Swift Zone", new[] { 1008, 2001 }, UnlockRewards(new[] { 1008, 2001 })),
+                Entry(1007, 3, 1500, 1, "Swift Zone", new int[0], new[] { Reward(5001, 100), Reward(10001, 5) }),
+                Entry(1008, 3, 2000, 1, "Swift Zone", new int[0], new[] { Reward(5001, 150), Reward(10001, 5) }),
+                Entry(1009, 3, 2500, 1, "Swift Zone", new int[0], new[] { Reward(5001, 200), Reward(10001, 5) }),
+                Entry(1010, 3, 3000, 1, "Swift Zone", new int[0], new[] { Reward(5001, 300), Reward(10001, 5) }),
+                Entry(1011, 4, 3600, 0, "Deep Outpost", new[] { 1101, 2006 }, UnlockRewards(new[] { 1101, 2006 })),
+                Entry(1012, 4, 4500, 1, "Deep Outpost", new int[0], new[] { Reward(5001, 100), Reward(10001, 5), Reward(10002, 1) })
+            };
+        }
+
+        private static string IconForUnlock(int id)
+        {
+            switch (id)
+            {
+                case 1005: return "icon_feichuan_5";
+                case 1006: return "icon_feichuan_6";
+                case 1008: return "icon_feichuan_8";
+                case 1101: return "icon_feichuan_9";
+                case 2001: return "icon_jineng_1";
+                case 2003: return "icon_jineng_3";
+                case 2005: return "icon_jineng_5";
+                case 2006: return "icon_jineng_6";
+                default: return null;
+            }
+        }
+
+        private static Sprite RankInfoSprite(string file) => AssetDatabase.LoadAssetAtPath<Sprite>(RankInfoArt + file);
+
+        private static Transform FindDirectChild(Transform parent, string name)
+        {
+            if (parent == null) return null;
+            foreach (Transform child in parent)
+                if (child.name == name) return child;
+            return null;
         }
 
         private static void BuildHangarFromOriginal(GameObject root)

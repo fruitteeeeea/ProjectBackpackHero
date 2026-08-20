@@ -34,7 +34,7 @@ namespace BackpackHero.Battle
 
         [Header("Beam Shape")]
         [SerializeField, Min(0.001f)]
-        private float visualWidth = 0.2f;
+        private float visualWidth = 0.14f;
 
         [SerializeField, Min(0.001f)]
         private float damageWidth = 0.16f;
@@ -67,7 +67,7 @@ namespace BackpackHero.Battle
         private float holdDuration = 0.2f;
 
         [SerializeField, Min(0f)]
-        private float fadeOutDuration = 0.3f;
+        private float fadeOutDuration = 0.2f;
 
         [SerializeField]
         private Ease fadeInEase = Ease.Linear;

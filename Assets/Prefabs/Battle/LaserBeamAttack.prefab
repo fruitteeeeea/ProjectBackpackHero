@@ -79,7 +79,7 @@ MonoBehaviour:
   damageResolver: {fileID: 1000000000000000003}
   visualSettings: {fileID: 11400000, guid: a7c4e1f9b2d3486ca05e7d3f8b9c6142, type: 2}
   damageArea: {fileID: 1000000000000000002}
-  visualWidth: 0.2
+  visualWidth: 0.14
   damageWidth: 0.16
   startPadding: 0
   endPadding: 0
@@ -89,7 +89,7 @@ MonoBehaviour:
   sortingOrder: 30
   fadeInDuration: 0.1
   holdDuration: 0.2
-  fadeOutDuration: 0.3
+  fadeOutDuration: 0.2
   fadeInEase: 1
   fadeOutEase: 1
 --- !u!1 &2000000000000000000

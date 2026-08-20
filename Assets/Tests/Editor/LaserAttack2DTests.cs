@@ -134,8 +134,16 @@ public sealed class LaserAttack2DTests
             0.2f);
         AssertSerializedFloat(
             serializedAttack,
+            "visualWidth",
+            0.14f);
+        AssertSerializedFloat(
+            serializedAttack,
+            "damageWidth",
+            0.16f);
+        AssertSerializedFloat(
+            serializedAttack,
             "fadeOutDuration",
-            0.3f);
+            0.2f);
     }
 
     [Test]

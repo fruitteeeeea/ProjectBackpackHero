@@ -1,3 +1,4 @@
+using BackpackHero.Debugging;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -58,9 +59,12 @@ namespace BackpackPrototype
                 return;
             }
 
-            background.color = canPlace
-                ? legalPreviewColor
-                : illegalPreviewColor;
+            BackpackVisualSettings settings =
+                BackpackVisualDebugRuntime.CurrentSettings;
+            background.color = settings.OverridesEnabled
+                ? (canPlace ? settings.LegalPreviewColor :
+                    settings.IllegalPreviewColor)
+                : (canPlace ? legalPreviewColor : illegalPreviewColor);
         }
 
         public void ClearPreview()

@@ -31,6 +31,7 @@ namespace BackpackHero.EditorTools
         LevelDifficulty,
         StyleTendency,
         AircraftVisual,
+        BackpackVisual,
         DeckPresets
         ,DamageStatistics
     }
@@ -96,6 +97,9 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.AircraftVisual, DebugCenterKind.ProgramTest, "飞机视觉动效",
                 () => AircraftVisualDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<AircraftVisualDebugWindow>()),
+            new(DebugCenterTab.BackpackVisual, DebugCenterKind.ProgramTest, "背包动效",
+                () => BackpackVisualDebugRuntime.Instance != null,
+                () => ScriptableObject.CreateInstance<BackpackVisualDebugWindow>()),
             new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
                 () => GamePacingDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<GamePacingDebugWindow>(), true),
@@ -312,6 +316,7 @@ namespace BackpackHero.EditorTools
                 case StyleTendencyDebugWindow styleTendency: styleTendency.DrawTab(); break;
                 case LevelDebugWindow level: level.DrawTab(); break;
                 case AircraftVisualDebugWindow aircraftVisual: aircraftVisual.DrawTab(); break;
+                case BackpackVisualDebugWindow backpackVisual: backpackVisual.DrawTab(); break;
                 case LevelDifficultyDebugWindow levelDifficulty: levelDifficulty.DrawTab(); break;
                 case DeckPresetDebugWindow deckPresets: deckPresets.DrawTab(); break;
                 case DamageStatisticsDebugWindow damageStatistics: damageStatistics.DrawTab(); break;

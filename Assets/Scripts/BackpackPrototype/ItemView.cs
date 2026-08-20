@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using BackpackHero.Battle;
+using BackpackHero.Debugging;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -44,6 +45,7 @@ namespace BackpackPrototype
         private Tween cooldownFlashTween;
         private Tween mergeFlashTween;
         private Tween shopTransitionTween;
+        private bool mergeHighlightActive;
         private float cooldownFlashAmount;
         private float mergeFlashAmount;
         private bool isDragging;
@@ -227,6 +229,8 @@ namespace BackpackPrototype
             Vector2 spacing,
             BackpackCombatController combatController = null)
         {
+            BackpackVisualDebugRuntime.SettingsChanged -=
+                HandleBackpackVisualSettingsChanged;
             if (Backpack != null)
             {
                 Backpack.ItemLevelChanged -= HandleItemLevelChanged;
@@ -299,6 +303,8 @@ namespace BackpackPrototype
 
             RefreshLevelLabel();
             CacheDeletePreviewColors();
+            BackpackVisualDebugRuntime.SettingsChanged +=
+                HandleBackpackVisualSettingsChanged;
         }
 
         public void SetShopDropZone(RectTransform shopDropZone)
@@ -329,6 +335,7 @@ namespace BackpackPrototype
             Vector3? startWorldPosition = null)
         {
             shopTransitionTween?.Kill();
+            float duration = GetBackpackVisualSettings().ShopFlightDuration;
             if (startWorldPosition.HasValue)
             {
                 rectTransform.position = startWorldPosition.Value;
@@ -340,19 +347,20 @@ namespace BackpackPrototype
             IsPlacedInBackpack = false;
 
             shopTransitionTween = DOTween.Sequence()
-                .Join(rectTransform.DOAnchorPos(anchoredPosition, .32f)
+                .Join(rectTransform.DOAnchorPos(anchoredPosition, duration)
                     .SetEase(Ease.OutCubic))
-                .Join(rectTransform.DOScale(scale, .32f)
+                .Join(rectTransform.DOScale(scale, duration)
                     .SetEase(Ease.OutBack))
                 .Join(rectTransform.DOLocalRotate(
                     Vector3.zero,
-                    .32f,
+                    duration,
                     RotateMode.FastBeyond360)
                     .SetEase(Ease.OutCubic));
         }
 
         public void SetMergeHighlight(bool highlighted)
         {
+            mergeHighlightActive = highlighted;
             mergeFlashTween?.Kill();
 
             if (!highlighted)
@@ -362,7 +370,8 @@ namespace BackpackPrototype
                 return;
             }
 
-            mergeFlashAmount = 0.18f;
+            BackpackVisualSettings settings = GetBackpackVisualSettings();
+            mergeFlashAmount = settings.MergeFlashMinimum;
             ApplyFlashAmount();
             mergeFlashTween = DOTween.To(
                     () => mergeFlashAmount,
@@ -371,8 +380,8 @@ namespace BackpackPrototype
                         mergeFlashAmount = value;
                         ApplyFlashAmount();
                     },
-                    0.62f,
-                    0.7f)
+                    settings.MergeFlashMaximum,
+                    settings.MergeFlashCycleDuration)
                 .SetEase(Ease.InOutSine)
                 .SetLoops(-1, LoopType.Yoyo);
         }
@@ -786,7 +795,7 @@ namespace BackpackPrototype
                 eventData.pressEventCamera);
 
             canvasGroup.blocksRaycasts = false;
-            canvasGroup.alpha = 0.5f;
+            canvasGroup.alpha = GetBackpackVisualSettings().DragOpacity;
             DragStateChanged?.Invoke(this, true);
             DragPreviewChanged?.Invoke(this);
         }
@@ -1095,7 +1104,9 @@ namespace BackpackPrototype
                 rectTransform.TransformPoint(rectTransform.rect.center);
             placementFeedbackActive = true;
 
-            rectTransform.localScale = placementFeedbackScale * 1.17f;
+            BackpackVisualSettings settings = GetBackpackVisualSettings();
+            rectTransform.localScale = placementFeedbackScale *
+                settings.PlacementScaleMultiplier;
             KeepPlacementFeedbackCenterFixed();
 
             float rotation = 0f;
@@ -1107,7 +1118,7 @@ namespace BackpackPrototype
                         rotation = value;
                         SetPlacementFeedbackRotation(value);
                     },
-                    10f,
+                    settings.PlacementPositiveRotationDegrees,
                     0.04f)
                 .SetEase(Ease.OutQuad));
             feedbackSequence.Append(DOTween.To(
@@ -1117,7 +1128,7 @@ namespace BackpackPrototype
                         rotation = value;
                         SetPlacementFeedbackRotation(value);
                     },
-                    -6f,
+                    settings.PlacementNegativeRotationDegrees,
                     0.05f)
                 .SetEase(Ease.InOutQuad));
             feedbackSequence.Append(DOTween.To(
@@ -1135,7 +1146,7 @@ namespace BackpackPrototype
                     value => rectTransform.localScale = value,
                     placementFeedbackScale,
                     0.17f)
-                .SetEase(Ease.OutElastic, 0.8f, 0.28f));
+                .SetEase(settings.GetPlacementScaleDotweenEase(), 0.8f, 0.28f));
 
             feedbackTween = feedbackSequence
                 .OnUpdate(KeepPlacementFeedbackCenterFixed)
@@ -1208,7 +1219,27 @@ namespace BackpackPrototype
             cooldownFlashTween?.Kill();
             mergeFlashTween?.Kill();
             shopTransitionTween?.Kill();
+            BackpackVisualDebugRuntime.SettingsChanged -=
+                HandleBackpackVisualSettingsChanged;
             ReleaseCooldownMaterials();
+        }
+
+        private static BackpackVisualSettings GetBackpackVisualSettings()
+        {
+            BackpackVisualSettings settings =
+                BackpackVisualDebugRuntime.CurrentSettings;
+            return settings.OverridesEnabled
+                ? settings
+                : BackpackVisualSettings.Default;
+        }
+
+        private void HandleBackpackVisualSettingsChanged(
+            BackpackVisualSettings _)
+        {
+            if (mergeHighlightActive)
+            {
+                SetMergeHighlight(true);
+            }
         }
 
         private void EnsureLevelLabel()

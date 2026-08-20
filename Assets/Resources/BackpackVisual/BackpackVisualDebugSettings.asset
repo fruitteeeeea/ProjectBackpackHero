@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d4ea6a7a2a84d88a8c5704ace4a1df2, type: 3}
+  m_Name: BackpackVisualDebugSettings
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.BackpackVisualDebugSettings
+  overridesEnabled: 1
+  dragOpacity: 0.5
+  legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
+  illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}
+  mergeFlashMinimum: 0.18
+  mergeFlashMaximum: 0.62
+  mergeFlashCycleDuration: 0.25
+  placementScaleMultiplier: 1.17
+  placementPositiveRotationDegrees: 0
+  placementNegativeRotationDegrees: 0
+  placementScaleEase: 0
+  shopFlightDuration: 0.32

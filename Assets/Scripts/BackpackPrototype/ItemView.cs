@@ -1095,7 +1095,7 @@ namespace BackpackPrototype
                 rectTransform.TransformPoint(rectTransform.rect.center);
             placementFeedbackActive = true;
 
-            rectTransform.localScale = placementFeedbackScale * 1.25f;
+            rectTransform.localScale = placementFeedbackScale * 1.17f;
             KeepPlacementFeedbackCenterFixed();
 
             float rotation = 0f;
@@ -1107,8 +1107,8 @@ namespace BackpackPrototype
                         rotation = value;
                         SetPlacementFeedbackRotation(value);
                     },
-                    14f,
-                    0.055f)
+                    10f,
+                    0.04f)
                 .SetEase(Ease.OutQuad));
             feedbackSequence.Append(DOTween.To(
                     () => rotation,
@@ -1117,8 +1117,8 @@ namespace BackpackPrototype
                         rotation = value;
                         SetPlacementFeedbackRotation(value);
                     },
-                    -9f,
-                    0.07f)
+                    -6f,
+                    0.05f)
                 .SetEase(Ease.InOutQuad));
             feedbackSequence.Append(DOTween.To(
                     () => rotation,
@@ -1128,13 +1128,13 @@ namespace BackpackPrototype
                         SetPlacementFeedbackRotation(value);
                     },
                     0f,
-                    0.075f)
+                    0.055f)
                 .SetEase(Ease.OutQuad));
             feedbackSequence.Join(DOTween.To(
                     () => rectTransform.localScale,
                     value => rectTransform.localScale = value,
                     placementFeedbackScale,
-                    0.24f)
+                    0.17f)
                 .SetEase(Ease.OutElastic, 0.8f, 0.28f));
 
             feedbackTween = feedbackSequence

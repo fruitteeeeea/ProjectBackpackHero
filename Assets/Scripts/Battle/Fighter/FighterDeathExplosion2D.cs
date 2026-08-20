@@ -60,6 +60,7 @@ namespace BackpackHero.Battle
             }
 
             float damage = fighter.Definition.ProjectileDamage *
+                fighter.ProgressionDamageMultiplier *
                 GamePacingDebugRuntime.GetProjectileDamageMultiplier(
                     fighter.Faction) *
                 LevelDifficultyRuntime.GetProjectileDamageMultiplier(

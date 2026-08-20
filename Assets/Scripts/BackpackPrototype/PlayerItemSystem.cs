@@ -6,7 +6,7 @@ using UnityEngine;
 namespace BackpackPrototype
 {
     [Serializable] public sealed class PlayerItemState { public string ItemId; public bool Unlocked; public int Level; public int FragmentCount; }
-    [Serializable] public sealed class PlayerItemSaveData { public int Gold = 999; public int Diamond = 999; public int CurrencyDefaultsVersion; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
+    [Serializable] public sealed class PlayerItemSaveData { public int Gold = 999; public int Diamond = 999; public int CurrencyDefaultsVersion; public int ProgressionVersion; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
     public enum PlayerItemUpgradeResult { Success, NotFound, Locked, MaxLevel, GoldNotEnough, FragmentsNotEnough }
     public enum PlayerDeckResult { Success, InvalidSlot, InvalidItem, Locked, WrongType, Duplicate, Empty }
 
@@ -14,10 +14,11 @@ namespace BackpackPrototype
     {
         public const string SaveKey = "PlayerItemModel";
         private const int CurrencyDefaultsVersion = 1;
+        private const int CurrentProgressionVersion = 1;
         // Kept separate from ItemInstance.MaximumLevel: this is persistent,
         // out-of-match progression, while ItemInstance owns the current-run level.
         public const int DefaultLevel = 1;
-        public const int MaximumLevel = 2;
+        public const int MaximumLevel = 10;
         public const int AircraftDeckSlotCount = 3;
         public const int EquipmentDeckSlotCount = 2;
         public const int DeckSlotCount = AircraftDeckSlotCount + EquipmentDeckSlotCount;
@@ -59,6 +60,10 @@ namespace BackpackPrototype
         public int GetLevel(ItemData item) => Mathf.Clamp(GetState(item)?.Level ?? DefaultLevel, DefaultLevel, MaximumLevel);
         public bool IsUnlocked(ItemData item) => GetState(item)?.Unlocked ?? false;
         public int GetFragments(ItemData item) => GetState(item)?.FragmentCount ?? 0;
+        public int GetUpgradeFragmentCost(ItemData item) =>
+            item == null || GetLevel(item) >= MaximumLevel
+                ? 0
+                : item.GetUpgradeFragmentCost(GetLevel(item));
         public PlayerItemState GetState(ItemData item) => item == null ? null : data?.Items.FirstOrDefault(x => x.ItemId == item.ItemId);
         public IReadOnlyList<ItemData> GetDeckItems()
         {
@@ -126,9 +131,11 @@ namespace BackpackPrototype
             if (state == null) return PlayerItemUpgradeResult.NotFound;
             if (!state.Unlocked) return PlayerItemUpgradeResult.Locked;
             if (state.Level >= MaximumLevel) return PlayerItemUpgradeResult.MaxLevel;
-            if (data.Gold < item.UpgradeGoldCost) return PlayerItemUpgradeResult.GoldNotEnough;
-            if (state.FragmentCount < item.UpgradeFragmentCost) return PlayerItemUpgradeResult.FragmentsNotEnough;
-            data.Gold -= item.UpgradeGoldCost; state.FragmentCount -= item.UpgradeFragmentCost; state.Level++; SaveAndNotify();
+            int fragments = item.GetUpgradeFragmentCost(state.Level);
+            if (state.FragmentCount < fragments) return PlayerItemUpgradeResult.FragmentsNotEnough;
+            state.FragmentCount -= fragments;
+            state.Level++;
+            SaveAndNotify();
             return PlayerItemUpgradeResult.Success;
         }
 
@@ -151,6 +158,7 @@ namespace BackpackPrototype
             string catalogError = null;
             if (catalog != null && catalog.IsValid(out catalogError))
             {
+                bool migrateToLevelTen = data.ProgressionVersion < CurrentProgressionVersion;
                 foreach (ItemData item in catalog.Items)
                 {
                     PlayerItemState state = GetState(item);
@@ -158,16 +166,17 @@ namespace BackpackPrototype
                     {
                         data.Items.Add(new PlayerItemState { ItemId = item.ItemId, Unlocked = true, Level = MaximumLevel, FragmentCount = 0 });
                     }
-                    // Do not trust a persisted progression state here. This prototype starts
-                    // with, and always reloads, its complete catalog unlocked at maximum level.
-                    // This also prevents EnsureDeck from clearing a valid equipment deck slot
-                    // when an earlier run persisted an incorrect locked state.
-                    else if (!state.Unlocked || state.Level != MaximumLevel)
+                    else if (migrateToLevelTen)
                     {
                         state.Unlocked = true;
                         state.Level = MaximumLevel;
                     }
+                    else
+                    {
+                        state.Level = Mathf.Clamp(state.Level, DefaultLevel, MaximumLevel);
+                    }
                 }
+                if (migrateToLevelTen) data.ProgressionVersion = CurrentProgressionVersion;
             }
             else if (catalog != null) Debug.LogError(catalogError, catalog);
             EnsureDeck();

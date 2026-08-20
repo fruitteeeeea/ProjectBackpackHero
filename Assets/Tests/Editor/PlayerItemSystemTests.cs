@@ -82,6 +82,8 @@ public sealed class PlayerItemSystemTests
         Assert.That(
             localItem.Level,
             Is.EqualTo(ItemInstance.DefaultLevel));
+        Assert.That(localItem.ProgressionLevel,
+            Is.EqualTo(PlayerItemSystem.MaximumLevel));
     }
 
     [Test]
@@ -96,21 +98,18 @@ public sealed class PlayerItemSystemTests
     }
 
     [Test]
-    public void TryUpgrade_UsesGoldAndSameItemFragments_AndDoesNotChangeOnFailure()
+    public void TryUpgrade_UsesOnlySameItemFragments_AndDoesNotChangeOnFailure()
     {
-        ItemData item = NewItem("upgrade", 10, 3);
+        ItemData item = NewItem("upgrade");
         PlayerItemSystem system = NewSystem(item);
         PlayerItemState state = system.GetState(item);
         state.Level = 1;
-        system.AddCurrency(10);
-        system.AddFragments(item, 3);
+        system.AddFragments(item, 2);
 
         Assert.That(system.TryUpgrade(item), Is.EqualTo(PlayerItemUpgradeResult.Success));
-        Assert.That(system.Gold, Is.Zero);
         Assert.That(system.GetFragments(item), Is.Zero);
         Assert.That(system.GetLevel(item), Is.EqualTo(2));
-        Assert.That(system.TryUpgrade(item), Is.EqualTo(PlayerItemUpgradeResult.MaxLevel));
-        Assert.That(system.Gold, Is.Zero);
+        Assert.That(system.TryUpgrade(item), Is.EqualTo(PlayerItemUpgradeResult.FragmentsNotEnough));
     }
 
     [Test]
@@ -150,16 +149,17 @@ public sealed class PlayerItemSystemTests
     }
 
     [Test]
-    public void PersistedSave_AlwaysRestoresEveryCatalogItemToUnlockedMaxLevel()
+    public void PersistedCurrentSave_PreservesProgression()
     {
         ItemData aircraft = NewItem("current_aircraft", type: ItemType.Aircraft);
         ItemData equipment = NewItem("current_equipment");
         PlayerPrefs.SetString(PlayerItemSystem.SaveKey, JsonUtility.ToJson(new PlayerItemSaveData
         {
+            ProgressionVersion = 1,
             Items = new List<PlayerItemState>
             {
-                new() { ItemId = aircraft.ItemId, Unlocked = false, Level = 1, FragmentCount = 6 },
-                new() { ItemId = equipment.ItemId, Unlocked = true, Level = 1, FragmentCount = 4 }
+                new() { ItemId = aircraft.ItemId, Unlocked = true, Level = 3, FragmentCount = 6 },
+                new() { ItemId = equipment.ItemId, Unlocked = true, Level = 4, FragmentCount = 4 }
             }
         }));
         PlayerPrefs.Save();
@@ -167,11 +167,27 @@ public sealed class PlayerItemSystemTests
         PlayerItemSystem system = NewSystem(aircraft, equipment);
 
         Assert.That(system.IsUnlocked(aircraft), Is.True);
-        Assert.That(system.GetLevel(aircraft), Is.EqualTo(PlayerItemSystem.MaximumLevel));
+        Assert.That(system.GetLevel(aircraft), Is.EqualTo(3));
         Assert.That(system.IsUnlocked(equipment), Is.True);
-        Assert.That(system.GetLevel(equipment), Is.EqualTo(PlayerItemSystem.MaximumLevel));
+        Assert.That(system.GetLevel(equipment), Is.EqualTo(4));
         Assert.That(system.GetFragments(aircraft), Is.EqualTo(6));
         Assert.That(system.GetFragments(equipment), Is.EqualTo(4));
+    }
+
+    [Test]
+    public void ProgressionCostAndMultipliers_InterpolateAcrossTenLevels()
+    {
+        ItemData aircraft = NewItem("curves", type: ItemType.Aircraft);
+        aircraft.SetOutOfMatchProgressionForTests(2, 100,
+            new Vector2(1f, 1.4f), new Vector2(1f, 1.4f),
+            new Vector2(1f, 0.8f));
+
+        Assert.That(aircraft.GetUpgradeFragmentCost(1), Is.EqualTo(2));
+        Assert.That(aircraft.GetUpgradeFragmentCost(3), Is.EqualTo(26));
+        Assert.That(aircraft.GetUpgradeFragmentCost(9), Is.EqualTo(100));
+        Assert.That(aircraft.GetAircraftHealthMultiplierForProgressionLevel(1), Is.EqualTo(1f));
+        Assert.That(aircraft.GetAircraftDamageMultiplierForProgressionLevel(10), Is.EqualTo(1.4f));
+        Assert.That(aircraft.GetEquipmentIntervalMultiplierForProgressionLevel(10), Is.EqualTo(1f));
     }
 
     private PlayerItemSystem NewSystem(params ItemData[] items)

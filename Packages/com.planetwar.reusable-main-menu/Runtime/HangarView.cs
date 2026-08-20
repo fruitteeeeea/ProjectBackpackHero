@@ -30,7 +30,9 @@ namespace PlanetWar.ReusableMainMenu
         private IReadOnlyList<HangarItemSnapshot> boundDeck;
         private IReadOnlyList<HangarItemSnapshot> boundCollection;
         private Action<int, HangarItemSnapshot> replaceDeckSlot;
+        private Action<HangarItemSnapshot> upgradeItem;
         private HangarCardItem pendingEquipCard;
+        private HangarCardItem activeDetailCard;
 
         public void Show()
         {
@@ -44,7 +46,7 @@ namespace PlanetWar.ReusableMainMenu
             }
             if (boundDeck != null)
             {
-                BindDeckAndCollection(boundDeck, boundCollection, boundGold, boundDiamond, replaceDeckSlot);
+                BindDeckAndCollection(boundDeck, boundCollection, boundGold, boundDiamond, replaceDeckSlot, upgradeItem);
                 HideDetails();
                 return;
             }
@@ -80,6 +82,7 @@ namespace PlanetWar.ReusableMainMenu
             }
             if (goldText != null) goldText.text = gold.ToString();
             if (diamondText != null) diamondText.text = diamond.ToString();
+            RefreshOpenDetails();
         }
 
         public void BindDeckAndCollection(
@@ -87,17 +90,20 @@ namespace PlanetWar.ReusableMainMenu
             IReadOnlyList<HangarItemSnapshot> collection,
             int gold,
             int diamond,
-            Action<int, HangarItemSnapshot> replaceSlot)
+            Action<int, HangarItemSnapshot> replaceSlot,
+            Action<HangarItemSnapshot> upgrade = null)
         {
             boundDeck = deck;
             boundCollection = collection;
             boundGold = gold;
             boundDiamond = diamond;
             replaceDeckSlot = replaceSlot;
+            upgradeItem = upgrade;
             BindDeckCards(deck);
             BindCollectionCards(collection);
             if (goldText != null) goldText.text = gold.ToString();
             if (diamondText != null) diamondText.text = diamond.ToString();
+            RefreshOpenDetails();
         }
 
         public void HandleCardClick(HangarCardItem card)
@@ -143,20 +149,24 @@ namespace PlanetWar.ReusableMainMenu
         public void ShowEntityDetails(HangarCardItem card)
         {
             HideDetails();
+            activeDetailCard = card;
             MoveDetailToOverlay(entityDetails);
             if (entityDetails != null) entityDetails.SetActive(true);
             ShowDetailMask(entityDetails);
             ApplyOriginalPreviewLayout(entityDetails, entityLayout, card);
+            ConfigureUpgradeButton(entityDetails, card);
             ConfigureEquipButton(entityDetails, card);
         }
 
         public void ShowSpellDetails(HangarCardItem card)
         {
             HideDetails();
+            activeDetailCard = card;
             MoveDetailToOverlay(spellDetails);
             if (spellDetails != null) spellDetails.SetActive(true);
             ShowDetailMask(spellDetails);
             ApplyOriginalPreviewLayout(spellDetails, spellLayout, card);
+            ConfigureUpgradeButton(spellDetails, card);
             ConfigureEquipButton(spellDetails, card);
         }
 
@@ -167,6 +177,7 @@ namespace PlanetWar.ReusableMainMenu
             if (detailMask != null) detailMask.SetActive(false);
             RestoreDetailParent(entityDetails, ref entityDetailsParent, entityDetailsSiblingIndex);
             RestoreDetailParent(spellDetails, ref spellDetailsParent, spellDetailsSiblingIndex);
+            activeDetailCard = null;
         }
 
         private void BindDeckCards(IReadOnlyList<HangarItemSnapshot> deck)
@@ -230,6 +241,28 @@ namespace PlanetWar.ReusableMainMenu
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => BeginEquipSelection(card));
             button.gameObject.SetActive(card != null && !card.IsDeckSlot && card.IsUnlocked);
+        }
+
+        private void ConfigureUpgradeButton(GameObject panel, HangarCardItem card)
+        {
+            Transform buttonTransform = Find(panel != null ? panel.transform : null, "btnUpgrade");
+            Button button = buttonTransform != null ? buttonTransform.GetComponent<Button>() : null;
+            if (button == null) return;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => upgradeItem?.Invoke(card.Snapshot));
+        }
+
+        private void RefreshOpenDetails()
+        {
+            if (activeDetailCard == null) return;
+            GameObject panel = activeDetailCard.Kind == HangarCardItem.CardKind.Spell
+                ? spellDetails : entityDetails;
+            HangarDetailLayout layout = activeDetailCard.Kind == HangarCardItem.CardKind.Spell
+                ? spellLayout : entityLayout;
+            if (panel == null || !panel.activeSelf) return;
+            ApplyOriginalPreviewLayout(panel, layout, activeDetailCard);
+            ConfigureUpgradeButton(panel, activeDetailCard);
+            ConfigureEquipButton(panel, activeDetailCard);
         }
 
         // The source project's UICardInfo/UICardSpell are modal views. UIManager puts a

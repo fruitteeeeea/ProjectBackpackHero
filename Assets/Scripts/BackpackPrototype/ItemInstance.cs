@@ -31,6 +31,8 @@ namespace BackpackPrototype
         public ItemData Data { get; }
         public Vector2Int AnchorCell { get; set; }
         public int Level { get; private set; }
+        /// <summary>Persistent Lv.1-10 progression captured for this player-owned runtime item.</summary>
+        public int ProgressionLevel { get; private set; } = PlayerItemSystem.DefaultLevel;
         public bool CanUpgrade => Level < MaximumLevel;
 
         public bool IsCoolingDown { get; private set; }
@@ -102,6 +104,9 @@ namespace BackpackPrototype
                     ? Data.GetEquipmentEffectIntervalReductionForLevel(
                         Level)
                     : 0f;
+            float progressionMultiplier = Data != null
+                ? Data.GetEquipmentIntervalMultiplierForProgressionLevel(ProgressionLevel)
+                : 1f;
 
             if (effect is
                 ProjectileEquipmentEffectDefinition projectile)
@@ -109,7 +114,7 @@ namespace BackpackPrototype
                 return Mathf.Max(
                     ProjectileEquipmentEffectDefinition
                         .MinimumCooldown,
-                    projectile.Cooldown - reduction);
+                    (projectile.Cooldown - reduction) * progressionMultiplier);
             }
 
             if (effect is
@@ -118,7 +123,7 @@ namespace BackpackPrototype
                 return Mathf.Max(
                     LaserLinkEquipmentEffectDefinition
                         .MinimumCooldown,
-                    laser.Cooldown - reduction);
+                    (laser.Cooldown - reduction) * progressionMultiplier);
             }
 
             return 0f;
@@ -194,6 +199,13 @@ namespace BackpackPrototype
             }
 
             return true;
+        }
+
+        public void SetProgressionLevel(int level)
+        {
+            ProgressionLevel = Mathf.Clamp(level,
+                PlayerItemSystem.DefaultLevel,
+                PlayerItemSystem.MaximumLevel);
         }
 
         private float CalculateActiveCooldownDuration()

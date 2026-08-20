@@ -583,8 +583,9 @@ namespace BackpackHero.Battle
                     BattleAttackLaunchContext
                         .WithAimPoint(
                             fighter.Faction,
-                            fighter.Definition
+                        fighter.Definition
                                 .ProjectileDamage *
+                            fighter.ProgressionDamageMultiplier *
                             attackModifier *
                             GamePacingDebugRuntime
                                 .GetProjectileDamageMultiplier(

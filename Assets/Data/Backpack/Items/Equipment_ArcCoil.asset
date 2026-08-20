@@ -12,6 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Equipment_ArcCoil
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  upgradeFragmentsLevel1: 2
+  upgradeFragmentsLevel9: 100
+  aircraftHealthMultiplierRange: {x: 1, y: 1.4}
+  aircraftDamageMultiplierRange: {x: 1, y: 1.4}
+  equipmentIntervalMultiplierRange: {x: 1, y: 0.8}
   itemId: equipment_arc_coil
   itemName: Arc Coil
   description: Adds chain-lightning shots to adjacent fighters.

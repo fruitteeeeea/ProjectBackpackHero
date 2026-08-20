@@ -177,6 +177,36 @@ public sealed class ItemBalanceConfigurationTests
     }
 
     [Test]
+    public void ItemAssets_UseDefaultOutOfMatchProgressionCurves()
+    {
+        string[] paths =
+        {
+            "Aircraft_Charge.asset", "Aircraft_Explosive.asset",
+            "Aircraft_First.asset", "Aircraft_L.asset", "Aircraft_Laser.asset",
+            "Aircraft_Shield.asset", "Aircraft_Shotgun.asset", "Aircraft_Sniper.asset",
+            "Equipment_1x2.asset", "Equipment_ArcCoil.asset", "Equipment_First.asset",
+            "Equipment_LaserLink.asset", "Equipment_RapidCannon.asset", "Equipment_WaveEmitter.asset",
+        };
+
+        foreach (string path in paths)
+        {
+            ItemData item = Load<ItemData>("Assets/Data/Backpack/Items/" + path);
+            Assert.That(item.GetUpgradeFragmentCost(1), Is.EqualTo(2), path);
+            Assert.That(item.GetUpgradeFragmentCost(3), Is.EqualTo(26), path);
+            Assert.That(item.GetUpgradeFragmentCost(9), Is.EqualTo(100), path);
+            if (item.ItemType == ItemType.Aircraft)
+            {
+                Assert.That(item.GetAircraftHealthMultiplierForProgressionLevel(10), Is.EqualTo(1.4f), path);
+                Assert.That(item.GetAircraftDamageMultiplierForProgressionLevel(10), Is.EqualTo(1.4f), path);
+            }
+            else
+            {
+                Assert.That(item.GetEquipmentIntervalMultiplierForProgressionLevel(10), Is.EqualTo(0.8f), path);
+            }
+        }
+    }
+
+    [Test]
     public void ItemAssets_UseConfiguredAircraftAndEquipmentColors()
     {
         ItemData waveEmitter = Load<ItemData>(

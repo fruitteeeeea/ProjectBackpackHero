@@ -339,7 +339,15 @@ namespace BackpackPrototype
                 faction,
                 faction == BattleFaction.Player
                     ? playerColor
-                    : enemyColor);
+                    : enemyColor,
+                faction == BattleFaction.Player
+                    ? request.Item.Data.GetAircraftHealthMultiplierForProgressionLevel(
+                        request.Item.ProgressionLevel)
+                    : 1f,
+                faction == BattleFaction.Player
+                    ? request.Item.Data.GetAircraftDamageMultiplierForProgressionLevel(
+                        request.Item.ProgressionLevel)
+                    : 1f);
             fighter.SetDamageSourceItem(request.Item);
 
             fighterObject.name =

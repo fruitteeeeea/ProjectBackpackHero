@@ -283,6 +283,31 @@ public sealed class FighterEquipmentEffects2DTests
             Object.DestroyImmediate(equipmentData);
         }
     }
+
+    [Test]
+    public void ItemInstance_ScalesEquipmentEffectCooldownByOutOfMatchProgression()
+    {
+        ProjectileEquipmentEffectDefinition projectile =
+            ScriptableObject.CreateInstance<ProjectileEquipmentEffectDefinition>();
+        ItemData equipmentData = ScriptableObject.CreateInstance<ItemData>();
+        try
+        {
+            projectile.InitializeForTests(null, 1f);
+            equipmentData.InitializeForTests("Equipment", ItemType.Equipment, 3f, null);
+            equipmentData.SetOutOfMatchProgressionForTests(2, 100,
+                new Vector2(1f, 1.4f), new Vector2(1f, 1.4f),
+                new Vector2(1f, 0.8f));
+            ItemInstance item = new ItemInstance("equipment", equipmentData, Vector2Int.zero);
+            item.SetProgressionLevel(PlayerItemSystem.MaximumLevel);
+
+            Assert.That(item.GetEquipmentEffectCooldown(projectile), Is.EqualTo(0.8f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(projectile);
+            Object.DestroyImmediate(equipmentData);
+        }
+    }
 }
 
 public sealed class EquipmentEffectTestAttack : BattleAttack2D

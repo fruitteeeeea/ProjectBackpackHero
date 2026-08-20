@@ -33,6 +33,8 @@ namespace BackpackHero.Battle
         private FighterDefinition definition;
         private bool isDying;
         private ItemInstance damageSourceItem;
+        private float progressionHealthMultiplier = 1f;
+        private float progressionDamageMultiplier = 1f;
 
         public FighterDefinition Definition =>
             definition;
@@ -62,6 +64,7 @@ namespace BackpackHero.Battle
             health != null &&
             !health.IsDead;
         public ItemInstance DamageSourceItem => damageSourceItem;
+        public float ProgressionDamageMultiplier => progressionDamageMultiplier;
         public void SetDamageSourceItem(ItemInstance item) => damageSourceItem = item;
 
         private void Awake()
@@ -129,7 +132,9 @@ namespace BackpackHero.Battle
         public void Initialize(
             FighterDefinition fighterDefinition,
             BattleFaction faction,
-            Color factionColor)
+            Color factionColor,
+            float healthMultiplier = 1f,
+            float damageMultiplier = 1f)
         {
             if (fighterDefinition == null)
             {
@@ -142,6 +147,8 @@ namespace BackpackHero.Battle
 
             definition = fighterDefinition;
             isDying = false;
+            progressionHealthMultiplier = Mathf.Max(0.01f, healthMultiplier);
+            progressionDamageMultiplier = Mathf.Max(0.01f, damageMultiplier);
             
             factionMember.SetFaction(faction);
             
@@ -232,6 +239,7 @@ namespace BackpackHero.Battle
 
             health.SetMaximumHealthAndFill(
                 definition.MaximumHealth *
+                progressionHealthMultiplier *
                 GamePacingDebugRuntime.GetAircraftHealthMultiplier(
                     Faction) *
                 LevelDifficultyRuntime.GetAircraftHealthMultiplier(

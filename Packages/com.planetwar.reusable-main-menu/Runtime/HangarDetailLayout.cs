@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace PlanetWar.ReusableMainMenu
 {
@@ -24,6 +25,8 @@ namespace PlanetWar.ReusableMainMenu
         // in display order, rather than inferred from hierarchy names.
         [SerializeField] private TMP_Text[] attributeValueTexts;
         [SerializeField] private TMP_Text[] attributeLabelTexts;
+        [SerializeField] private Slider progressionSlider;
+        [SerializeField] private TMP_Text progressionText;
 
         public void Configure(GameObject upgrade, GameObject equip, GameObject progress, GameObject actions,
             TMP_Text name, TMP_Text description, TMP_Text lockLabel, HangarCardItem preview,
@@ -82,6 +85,7 @@ namespace PlanetWar.ReusableMainMenu
                 if (lockText != null) lockText.text = snapshot.Unlocked ? string.Empty : string.IsNullOrEmpty(snapshot.UnlockRequirementText) ? "Locked" : snapshot.UnlockRequirementText;
                 if (upgradeButton != null) upgradeButton.SetActive(snapshot.Unlocked && !snapshot.IsMaxLevel && snapshot.Fragments >= snapshot.RequiredFragments);
                 if (progressGroup != null) progressGroup.SetActive(snapshot.Unlocked && !snapshot.IsMaxLevel);
+                ApplyProgression(snapshot);
                 if (equipButton != null) equipButton.SetActive(false);
                 return;
             }
@@ -90,6 +94,20 @@ namespace PlanetWar.ReusableMainMenu
             if (upgradeButton != null) upgradeButton.SetActive(false);
             if (progressGroup != null) progressGroup.SetActive(card.IsUnlocked);
             if (equipButton != null) equipButton.SetActive(card.IsUnlocked && !card.IsEquipped);
+        }
+
+        private void ApplyProgression(HangarItemSnapshot snapshot)
+        {
+            if (progressionSlider == null && progressGroup != null)
+                progressionSlider = progressGroup.GetComponentInChildren<Slider>(true);
+            if (progressionText == null && progressGroup != null)
+                progressionText = progressGroup.GetComponentInChildren<TMP_Text>(true);
+            if (progressionSlider != null)
+                progressionSlider.value = snapshot.RequiredFragments <= 0 ? 0f :
+                    Mathf.Clamp01(snapshot.Fragments / (float)snapshot.RequiredFragments);
+            if (progressionText != null)
+                progressionText.text = snapshot.IsMaxLevel ? "Max" :
+                    $"{snapshot.Fragments}/{snapshot.RequiredFragments}";
         }
 
         private void ApplyDetailAttributes(HangarItemSnapshot snapshot)

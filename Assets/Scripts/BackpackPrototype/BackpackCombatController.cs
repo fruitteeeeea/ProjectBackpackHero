@@ -241,6 +241,8 @@ namespace BackpackPrototype
                     cell,
                     level);
 
+            ApplyPlayerProgression(item);
+
             if (!backpack.PlaceItem(item, cell))
             {
                 return null;
@@ -260,6 +262,8 @@ namespace BackpackPrototype
             Vector2Int cell)
         {
             EnsureBackpack();
+
+            ApplyPlayerProgression(item);
 
             bool placed =
                 backpack.PlaceItem(item, cell);
@@ -372,6 +376,20 @@ namespace BackpackPrototype
                 ? ItemType.Aircraft
                 : ItemType.Equipment) &&
             item.Data.CanEnterCooldown;
+
+        private void ApplyPlayerProgression(ItemInstance item)
+        {
+            if (item?.Data == null || Faction != BattleFaction.Player)
+            {
+                return;
+            }
+
+            PlayerItemSystem progression = PlayerItemSystem.Instance;
+            if (progression != null)
+            {
+                item.SetProgressionLevel(progression.GetLevel(item.Data));
+            }
+        }
 
         private void EnsureBackpack()
         {

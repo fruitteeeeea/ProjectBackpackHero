@@ -71,7 +71,8 @@ namespace BackpackPrototype
                 collection,
                 system.Gold,
                 system.Diamond,
-                HandleDeckReplacement);
+                HandleDeckReplacement,
+                HandleUpgrade);
         }
 
         private void HandleDeckReplacement(int slot, HangarItemSnapshot snapshot)
@@ -83,20 +84,34 @@ namespace BackpackPrototype
             system.TryEquipDeckSlot(slot, item);
         }
 
+        private void HandleUpgrade(HangarItemSnapshot snapshot)
+        {
+            if (system == null || string.IsNullOrEmpty(snapshot.ItemId)) return;
+            system.TryUpgrade(FindItem(snapshot.ItemId));
+        }
+
+        private ItemData FindItem(string itemId)
+        {
+            foreach (ItemData candidate in system.GetAllItems())
+                if (candidate != null && candidate.ItemId == itemId) return candidate;
+            return null;
+        }
+
         private HangarItemSnapshot BuildSnapshot(ItemData item)
         {
             int level = system.GetLevel(item);
             return new HangarItemSnapshot(
                 item.ItemType == ItemType.Aircraft ? HangarItemKind.Aircraft : HangarItemKind.Equipment,
                 item.ItemName, item.Description, item.Icon, item.Icon, system.IsUnlocked(item), level,
-                system.GetFragments(item), item.UpgradeFragmentCost, item.UpgradeGoldCost,
+                system.GetFragments(item), system.GetUpgradeFragmentCost(item), 0,
                 item.CooldownDuration, item.SpawnCount, null, item.BackgroundColor,
-                item.UnlockRequirementText, BuildDetailAttributes(item), item.ItemId);
+                item.UnlockRequirementText, BuildDetailAttributes(item, level), item.ItemId,
+                PlayerItemSystem.MaximumLevel);
         }
 
-        private static HangarDetailAttribute[] BuildDetailAttributes(ItemData item)
+        private static HangarDetailAttribute[] BuildDetailAttributes(ItemData item, int level)
         {
-            if (item.ItemType == ItemType.Equipment) return BuildEquipmentDetailAttributes(item);
+            if (item.ItemType == ItemType.Equipment) return BuildEquipmentDetailAttributes(item, level);
             if (item.FighterDefinition == null) return null;
             FighterDefinition fighter = item.FighterDefinition;
             // The migrated UICardInfo prefab serializes its six visible rows in this order:
@@ -104,8 +119,16 @@ namespace BackpackPrototype
             // PlanetWar textAttList order, so values must follow the actual prefab layout.
             return new[]
             {
-                new HangarDetailAttribute("Attack", GetDisplayedAircraftDamage(fighter).ToString("0.#")),
-                new HangarDetailAttribute("HP", fighter.MaximumHealth.ToString()),
+                new HangarDetailAttribute("Attack", FormatWithNext(
+                    GetDisplayedAircraftDamage(fighter) * item.GetAircraftDamageMultiplierForProgressionLevel(level),
+                    level < PlayerItemSystem.MaximumLevel
+                        ? GetDisplayedAircraftDamage(fighter) * item.GetAircraftDamageMultiplierForProgressionLevel(level + 1)
+                        : 0f)),
+                new HangarDetailAttribute("HP", FormatWithNext(
+                    fighter.MaximumHealth * item.GetAircraftHealthMultiplierForProgressionLevel(level),
+                    level < PlayerItemSystem.MaximumLevel
+                        ? fighter.MaximumHealth * item.GetAircraftHealthMultiplierForProgressionLevel(level + 1)
+                        : 0f)),
                 new HangarDetailAttribute("Attack Speed", fighter.AttackInterval.ToString("0.##") + "s"),
                 new HangarDetailAttribute("Firing Range", fighter.AttackRange.ToString("0.#")),
                 new HangarDetailAttribute("CD", item.Cd.ToString("0.##") + "s"),
@@ -124,7 +147,7 @@ namespace BackpackPrototype
                    GamePacingDebugRuntime.GetDamageFloatingTextMagicNumber();
         }
 
-        private static HangarDetailAttribute[] BuildEquipmentDetailAttributes(ItemData item)
+        private static HangarDetailAttribute[] BuildEquipmentDetailAttributes(ItemData item, int level)
         {
             float range = 0f, damage = 0f, interval = 0f;
             bool hasStats = false;
@@ -141,8 +164,24 @@ namespace BackpackPrototype
                 new HangarDetailAttribute("冷却", item.Cd.ToString("0.##") + "s"),
                 new HangarDetailAttribute("作用范围", range.ToString("0.#"), hasStats && range > 0f),
                 new HangarDetailAttribute("伤害", damage.ToString("0.#"), hasStats && damage > 0f),
-                new HangarDetailAttribute("效果间隔", interval.ToString("0.##") + "s", hasStats && interval > 0f)
+                new HangarDetailAttribute("效果间隔", FormatIntervalWithNext(item, interval, level), hasStats && interval > 0f)
             };
+        }
+
+        private static string FormatWithNext(float value, float next)
+        {
+            string text = value.ToString("0.#");
+            return next > 0f && !Mathf.Approximately(value, next)
+                ? $"{text} (+{(next - value):0.#})"
+                : text;
+        }
+
+        private static string FormatIntervalWithNext(ItemData item, float interval, int level)
+        {
+            float value = interval * item.GetEquipmentIntervalMultiplierForProgressionLevel(level);
+            if (level >= PlayerItemSystem.MaximumLevel) return value.ToString("0.##") + "s";
+            float next = interval * item.GetEquipmentIntervalMultiplierForProgressionLevel(level + 1);
+            return $"{value:0.##}s ({next - value:+0.##;-0.##;0}s)";
         }
 
     }

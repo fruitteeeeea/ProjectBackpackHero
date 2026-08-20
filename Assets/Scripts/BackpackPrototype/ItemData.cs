@@ -19,6 +19,18 @@ namespace BackpackPrototype
         [SerializeField, Min(0), FormerlySerializedAs("upgradeGoldCost")] private int cost;
         [SerializeField, Min(0), FormerlySerializedAs("upgradeFragmentCost")] private int debris;
 
+        [Header("Out-of-Match Progression")]
+        [Tooltip("Lv.1 -> Lv.2 的碎片消耗。")]
+        [SerializeField, Min(0)] private int upgradeFragmentsLevel1 = 2;
+        [Tooltip("Lv.9 -> Lv.10 的碎片消耗。中间等级按线性曲线向下取整。")]
+        [SerializeField, Min(0)] private int upgradeFragmentsLevel9 = 100;
+        [Tooltip("飞机 Lv.1/Lv.10 的生命倍率。")]
+        [SerializeField] private Vector2 aircraftHealthMultiplierRange = new(1f, 1.4f);
+        [Tooltip("飞机 Lv.1/Lv.10 的伤害倍率。")]
+        [SerializeField] private Vector2 aircraftDamageMultiplierRange = new(1f, 1.4f);
+        [Tooltip("装备 Lv.1/Lv.10 的射击间隔倍率。")]
+        [SerializeField] private Vector2 equipmentIntervalMultiplierRange = new(1f, 0.8f);
+
         [SerializeField, FormerlySerializedAs("itemName")] private string name = "Item";
         [SerializeField, TextArea(2, 5), FormerlySerializedAs("description")] private string desc = "Item description";
         [SerializeField] private Sprite icon;
@@ -60,6 +72,8 @@ namespace BackpackPrototype
         public string Desc => desc;
         public int Cost => cost;
         public int Debris => debris;
+        public int UpgradeFragmentsLevel1 => Mathf.Max(0, upgradeFragmentsLevel1);
+        public int UpgradeFragmentsLevel9 => Mathf.Max(0, upgradeFragmentsLevel9);
         public float Cd => cd;
         public int Count => Mathf.Max(1, count);
         public float EquipmentItemModifier =>
@@ -97,6 +111,32 @@ namespace BackpackPrototype
         public string Description => Desc;
         public float CooldownDuration => Cd;
         public int SpawnCount => Count;
+
+        public int GetUpgradeFragmentCost(int fromLevel)
+        {
+            const int firstUpgradeLevel = 1;
+            const int lastUpgradeLevel = PlayerItemSystem.MaximumLevel - 1;
+            int level = Mathf.Clamp(fromLevel, firstUpgradeLevel, lastUpgradeLevel);
+            float progress = (level - firstUpgradeLevel) /
+                (float)(lastUpgradeLevel - firstUpgradeLevel);
+            return Mathf.FloorToInt(Mathf.Lerp(
+                UpgradeFragmentsLevel1, UpgradeFragmentsLevel9, progress));
+        }
+
+        public float GetAircraftHealthMultiplierForProgressionLevel(int level) =>
+            itemType == ItemType.Aircraft
+                ? GetProgressionMultiplier(aircraftHealthMultiplierRange, level)
+                : 1f;
+
+        public float GetAircraftDamageMultiplierForProgressionLevel(int level) =>
+            itemType == ItemType.Aircraft
+                ? GetProgressionMultiplier(aircraftDamageMultiplierRange, level)
+                : 1f;
+
+        public float GetEquipmentIntervalMultiplierForProgressionLevel(int level) =>
+            itemType == ItemType.Equipment
+                ? GetProgressionMultiplier(equipmentIntervalMultiplierRange, level)
+                : 1f;
 
         public float GetAircraftCooldownReductionForLevel(int level)
         {
@@ -166,11 +206,29 @@ namespace BackpackPrototype
             OnValidate();
         }
 
+        public void SetOutOfMatchProgressionForTests(
+            int levelOneFragments, int levelNineFragments,
+            Vector2 aircraftHealthRange, Vector2 aircraftDamageRange,
+            Vector2 equipmentIntervalRange)
+        {
+            upgradeFragmentsLevel1 = levelOneFragments;
+            upgradeFragmentsLevel9 = levelNineFragments;
+            aircraftHealthMultiplierRange = aircraftHealthRange;
+            aircraftDamageMultiplierRange = aircraftDamageRange;
+            equipmentIntervalMultiplierRange = equipmentIntervalRange;
+            OnValidate();
+        }
+
         private void OnValidate()
         {
             id = id?.Trim();
             cost = Mathf.Max(0, cost);
             debris = Mathf.Max(0, debris);
+            upgradeFragmentsLevel1 = Mathf.Max(0, upgradeFragmentsLevel1);
+            upgradeFragmentsLevel9 = Mathf.Max(upgradeFragmentsLevel1, upgradeFragmentsLevel9);
+            aircraftHealthMultiplierRange = ClampMultiplierRange(aircraftHealthMultiplierRange);
+            aircraftDamageMultiplierRange = ClampMultiplierRange(aircraftDamageMultiplierRange);
+            equipmentIntervalMultiplierRange = ClampMultiplierRange(equipmentIntervalMultiplierRange);
             price = Mathf.Max(0, price);
             cd = Mathf.Max(0.01f, cd);
             count = itemType == ItemType.Equipment ? 1 : Mathf.Max(1, count);
@@ -182,5 +240,16 @@ namespace BackpackPrototype
             equipmentEffectIntervalReductionLevel2 = Mathf.Max(0f, equipmentEffectIntervalReductionLevel2);
             equipmentEffectIntervalReductionLevel3 = Mathf.Max(0f, equipmentEffectIntervalReductionLevel3);
         }
+
+        private static float GetProgressionMultiplier(Vector2 range, int level)
+        {
+            float progress = (Mathf.Clamp(level, PlayerItemSystem.DefaultLevel,
+                PlayerItemSystem.MaximumLevel) - PlayerItemSystem.DefaultLevel) /
+                (float)(PlayerItemSystem.MaximumLevel - PlayerItemSystem.DefaultLevel);
+            return Mathf.Lerp(range.x, range.y, progress);
+        }
+
+        private static Vector2 ClampMultiplierRange(Vector2 range) =>
+            new(Mathf.Max(0.01f, range.x), Mathf.Max(0.01f, range.y));
     }
 }

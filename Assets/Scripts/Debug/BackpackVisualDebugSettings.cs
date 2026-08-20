@@ -20,6 +20,12 @@ namespace BackpackHero.Debugging
         [SerializeField, Min(BackpackVisualSettings.MinimumShopFlightDuration)] private float shopFlightDuration = .32f;
         [SerializeField] private Color levelFontColor = Color.white;
         [SerializeField, Min(BackpackVisualSettings.MinimumLevelFontSize)] private float levelFontSize = 16f;
+        [SerializeField] private bool aircraftGlowEnabled = true;
+        [SerializeField] private Color aircraftGlowColor = Color.white;
+        [SerializeField, Range(0f, 1f)] private float aircraftGlowMinimumIntensity = .12f;
+        [SerializeField, Range(0f, 1f)] private float aircraftGlowMaximumIntensity = .45f;
+        [SerializeField, Min(BackpackVisualSettings.MinimumAircraftGlowCycleDuration)] private float aircraftGlowCycleDuration = 1.2f;
+        [SerializeField, Min(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth)] private float aircraftGlowEdgeWidth = 8f;
 
         public void SetValues(BackpackVisualSettings values)
         {
@@ -37,6 +43,12 @@ namespace BackpackHero.Debugging
             shopFlightDuration = values.ShopFlightDuration;
             levelFontColor = values.LevelFontColor;
             levelFontSize = values.LevelFontSize;
+            aircraftGlowEnabled = values.AircraftGlowEnabled;
+            aircraftGlowColor = values.AircraftGlowColor;
+            aircraftGlowMinimumIntensity = values.AircraftGlowMinimumIntensity;
+            aircraftGlowMaximumIntensity = values.AircraftGlowMaximumIntensity;
+            aircraftGlowCycleDuration = values.AircraftGlowCycleDuration;
+            aircraftGlowEdgeWidth = values.AircraftGlowEdgeWidth;
         }
 
         public BackpackVisualSettings GetValues() => new(
@@ -44,7 +56,10 @@ namespace BackpackHero.Debugging
             mergeFlashMinimum, mergeFlashMaximum, mergeFlashCycleDuration,
             placementScaleMultiplier, placementPositiveRotationDegrees,
             placementNegativeRotationDegrees, placementScaleEase,
-            shopFlightDuration, levelFontColor, levelFontSize);
+            shopFlightDuration, levelFontColor, levelFontSize,
+            aircraftGlowEnabled, aircraftGlowColor,
+            aircraftGlowMinimumIntensity, aircraftGlowMaximumIntensity,
+            aircraftGlowCycleDuration, aircraftGlowEdgeWidth);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

@@ -131,13 +131,36 @@ namespace BackpackHero.EditorTools
                 BackpackVisualSettings.MinimumLevelFontSize,
                 EditorGUILayout.FloatField("等级字体大小", current.LevelFontSize));
 
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("底板高亮", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("开启后所有物品按等级配色；仅玩家背包内的飞机在准备阶段显示呼吸光晕。",
+                MessageType.None);
+            bool aircraftGlowEnabled = EditorGUILayout.Toggle("启用底板高亮",
+                current.AircraftGlowEnabled);
+            Color aircraftGlowColor = EditorGUILayout.ColorField("光晕颜色",
+                current.AircraftGlowColor);
+            float aircraftGlowMinimumIntensity = EditorGUILayout.Slider(
+                "最小强度", current.AircraftGlowMinimumIntensity, 0f, 1f);
+            float aircraftGlowMaximumIntensity = EditorGUILayout.Slider(
+                "最大强度", current.AircraftGlowMaximumIntensity, 0f, 1f);
+            float aircraftGlowCycleDuration = Mathf.Max(
+                BackpackVisualSettings.MinimumAircraftGlowCycleDuration,
+                EditorGUILayout.FloatField("呼吸周期（秒）",
+                    current.AircraftGlowCycleDuration));
+            float aircraftGlowEdgeWidth = Mathf.Max(
+                BackpackVisualSettings.MinimumAircraftGlowEdgeWidth,
+                EditorGUILayout.FloatField("边缘宽度", current.AircraftGlowEdgeWidth));
+
             draft.Value = new BackpackVisualSettings(
                 current.OverridesEnabled, dragOpacity, legalPreviewColor,
                 illegalPreviewColor, mergeFlashMinimum, mergeFlashMaximum,
                 mergeFlashCycleDuration, placementScaleMultiplier,
                 placementPositiveRotationDegrees,
                 placementNegativeRotationDegrees, placementScaleEase,
-                shopFlightDuration, levelFontColor, levelFontSize);
+                shopFlightDuration, levelFontColor, levelFontSize,
+                aircraftGlowEnabled, aircraftGlowColor,
+                aircraftGlowMinimumIntensity, aircraftGlowMaximumIntensity,
+                aircraftGlowCycleDuration, aircraftGlowEdgeWidth);
         }
 
         private void DrawPersistence(BackpackVisualDebugRuntime runtime)

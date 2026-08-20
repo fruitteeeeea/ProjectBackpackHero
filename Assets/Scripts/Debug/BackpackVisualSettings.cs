@@ -20,6 +20,8 @@ namespace BackpackHero.Debugging
         public const float MinimumPlacementScale = 1f;
         public const float MinimumShopFlightDuration = 0.01f;
         public const float MinimumLevelFontSize = 0.01f;
+        public const float MinimumAircraftGlowCycleDuration = 0.01f;
+        public const float MinimumAircraftGlowEdgeWidth = 0f;
 
         public static BackpackVisualSettings Default => new(
             true, .5f,
@@ -27,7 +29,8 @@ namespace BackpackHero.Debugging
             new Color(.86f, .22f, .18f, 1f),
             .18f, .62f, .7f,
             1.17f, 10f, -6f, BackpackPlacementScaleEase.OutElastic,
-            .32f, Color.white, 16f);
+            .32f, Color.white, 16f,
+            true, Color.white, .12f, .45f, 1.2f, 8f);
 
         public BackpackVisualSettings(
             bool overridesEnabled,
@@ -43,7 +46,13 @@ namespace BackpackHero.Debugging
             BackpackPlacementScaleEase placementScaleEase,
             float shopFlightDuration,
             Color levelFontColor,
-            float levelFontSize)
+            float levelFontSize,
+            bool aircraftGlowEnabled,
+            Color aircraftGlowColor,
+            float aircraftGlowMinimumIntensity,
+            float aircraftGlowMaximumIntensity,
+            float aircraftGlowCycleDuration,
+            float aircraftGlowEdgeWidth)
         {
             OverridesEnabled = overridesEnabled;
             DragOpacity = Mathf.Clamp(dragOpacity, MinimumDragOpacity,
@@ -63,6 +72,16 @@ namespace BackpackHero.Debugging
                 shopFlightDuration);
             LevelFontColor = levelFontColor;
             LevelFontSize = Mathf.Max(MinimumLevelFontSize, levelFontSize);
+            AircraftGlowEnabled = aircraftGlowEnabled;
+            AircraftGlowColor = aircraftGlowColor;
+            AircraftGlowMinimumIntensity = Mathf.Clamp01(
+                aircraftGlowMinimumIntensity);
+            AircraftGlowMaximumIntensity = Mathf.Clamp01(
+                aircraftGlowMaximumIntensity);
+            AircraftGlowCycleDuration = Mathf.Max(
+                MinimumAircraftGlowCycleDuration, aircraftGlowCycleDuration);
+            AircraftGlowEdgeWidth = Mathf.Max(MinimumAircraftGlowEdgeWidth,
+                aircraftGlowEdgeWidth);
         }
 
         public bool OverridesEnabled { get; }
@@ -79,6 +98,12 @@ namespace BackpackHero.Debugging
         public float ShopFlightDuration { get; }
         public Color LevelFontColor { get; }
         public float LevelFontSize { get; }
+        public bool AircraftGlowEnabled { get; }
+        public Color AircraftGlowColor { get; }
+        public float AircraftGlowMinimumIntensity { get; }
+        public float AircraftGlowMaximumIntensity { get; }
+        public float AircraftGlowCycleDuration { get; }
+        public float AircraftGlowEdgeWidth { get; }
         public bool UsesFactionLevelColor => !OverridesEnabled ||
             IsWhiteRgb(LevelFontColor);
 
@@ -92,7 +117,10 @@ namespace BackpackHero.Debugging
             MergeFlashMinimum, MergeFlashMaximum, MergeFlashCycleDuration,
             PlacementScaleMultiplier, PlacementPositiveRotationDegrees,
             PlacementNegativeRotationDegrees, PlacementScaleEase,
-            ShopFlightDuration, LevelFontColor, LevelFontSize);
+            ShopFlightDuration, LevelFontColor, LevelFontSize,
+            AircraftGlowEnabled, AircraftGlowColor,
+            AircraftGlowMinimumIntensity, AircraftGlowMaximumIntensity,
+            AircraftGlowCycleDuration, AircraftGlowEdgeWidth);
 
         private static bool IsWhiteRgb(Color color) =>
             Mathf.Approximately(color.r, 1f) &&
@@ -117,7 +145,17 @@ namespace BackpackHero.Debugging
             PlacementScaleEase == other.PlacementScaleEase &&
             Mathf.Approximately(ShopFlightDuration, other.ShopFlightDuration) &&
             LevelFontColor.Equals(other.LevelFontColor) &&
-            Mathf.Approximately(LevelFontSize, other.LevelFontSize);
+            Mathf.Approximately(LevelFontSize, other.LevelFontSize) &&
+            AircraftGlowEnabled == other.AircraftGlowEnabled &&
+            AircraftGlowColor.Equals(other.AircraftGlowColor) &&
+            Mathf.Approximately(AircraftGlowMinimumIntensity,
+                other.AircraftGlowMinimumIntensity) &&
+            Mathf.Approximately(AircraftGlowMaximumIntensity,
+                other.AircraftGlowMaximumIntensity) &&
+            Mathf.Approximately(AircraftGlowCycleDuration,
+                other.AircraftGlowCycleDuration) &&
+            Mathf.Approximately(AircraftGlowEdgeWidth,
+                other.AircraftGlowEdgeWidth);
 
         public override bool Equals(object obj) =>
             obj is BackpackVisualSettings other && Equals(other);
@@ -139,7 +177,13 @@ namespace BackpackHero.Debugging
                 hash = (hash * 31) + (int)PlacementScaleEase;
                 hash = (hash * 31) + ShopFlightDuration.GetHashCode();
                 hash = (hash * 31) + LevelFontColor.GetHashCode();
-                return (hash * 31) + LevelFontSize.GetHashCode();
+                hash = (hash * 31) + LevelFontSize.GetHashCode();
+                hash = (hash * 31) + (AircraftGlowEnabled ? 1 : 0);
+                hash = (hash * 31) + AircraftGlowColor.GetHashCode();
+                hash = (hash * 31) + AircraftGlowMinimumIntensity.GetHashCode();
+                hash = (hash * 31) + AircraftGlowMaximumIntensity.GetHashCode();
+                hash = (hash * 31) + AircraftGlowCycleDuration.GetHashCode();
+                return (hash * 31) + AircraftGlowEdgeWidth.GetHashCode();
             }
         }
     }

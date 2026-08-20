@@ -1,4 +1,6 @@
 using BackpackHero.Debugging;
+using BackpackHero.Battle;
+using BackpackPrototype;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -27,6 +29,12 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(settings.ShopFlightDuration, Is.EqualTo(.32f));
         Assert.That(settings.LevelFontColor, Is.EqualTo(Color.white));
         Assert.That(settings.LevelFontSize, Is.EqualTo(16f));
+        Assert.That(settings.AircraftGlowEnabled, Is.True);
+        Assert.That(settings.AircraftGlowColor, Is.EqualTo(Color.white));
+        Assert.That(settings.AircraftGlowMinimumIntensity, Is.EqualTo(.12f));
+        Assert.That(settings.AircraftGlowMaximumIntensity, Is.EqualTo(.45f));
+        Assert.That(settings.AircraftGlowCycleDuration, Is.EqualTo(1.2f));
+        Assert.That(settings.AircraftGlowEdgeWidth, Is.EqualTo(8f));
     }
 
     [Test]
@@ -36,7 +44,8 @@ public sealed class BackpackVisualSettingsTests
             ScriptableObject.CreateInstance<BackpackVisualDebugSettings>();
         BackpackVisualSettings expected = new(false, -1f, Color.red,
             Color.blue, -1f, 2f, -2f, .5f, 13f, -9f,
-            BackpackPlacementScaleEase.OutCubic, -3f, Color.green, -4f);
+            BackpackPlacementScaleEase.OutCubic, -3f, Color.green, -4f,
+            true, Color.magenta, -1f, 2f, -3f, -4f);
         try
         {
             asset.SetValues(expected);
@@ -61,6 +70,14 @@ public sealed class BackpackVisualSettingsTests
             Assert.That(actual.LevelFontColor, Is.EqualTo(Color.green));
             Assert.That(actual.LevelFontSize,
                 Is.EqualTo(BackpackVisualSettings.MinimumLevelFontSize));
+            Assert.That(actual.AircraftGlowEnabled, Is.True);
+            Assert.That(actual.AircraftGlowColor, Is.EqualTo(Color.magenta));
+            Assert.That(actual.AircraftGlowMinimumIntensity, Is.Zero);
+            Assert.That(actual.AircraftGlowMaximumIntensity, Is.EqualTo(1f));
+            Assert.That(actual.AircraftGlowCycleDuration,
+                Is.EqualTo(BackpackVisualSettings.MinimumAircraftGlowCycleDuration));
+            Assert.That(actual.AircraftGlowEdgeWidth,
+                Is.EqualTo(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth));
             Assert.That(actual.GetPlacementScaleDotweenEase(),
                 Is.EqualTo(DG.Tweening.Ease.OutCubic));
             Assert.That(BackpackVisualSettings.Default
@@ -78,10 +95,12 @@ public sealed class BackpackVisualSettingsTests
         BackpackVisualSettings white = new(true, .5f, Color.yellow,
             Color.magenta, .18f, .62f, .7f, 1.17f, 10f, -6f,
             BackpackPlacementScaleEase.OutElastic, .32f,
-            new Color(1f, 1f, 1f, .2f), 16f);
+            new Color(1f, 1f, 1f, .2f), 16f,
+            true, Color.white, .12f, .45f, 1.2f, 8f);
         BackpackVisualSettings custom = new(true, .5f, Color.yellow,
             Color.magenta, .18f, .62f, .7f, 1.17f, 10f, -6f,
-            BackpackPlacementScaleEase.OutElastic, .32f, Color.green, 16f);
+            BackpackPlacementScaleEase.OutElastic, .32f, Color.green, 16f,
+            true, Color.white, .12f, .45f, 1.2f, 8f);
 
         Assert.That(white.UsesFactionLevelColor, Is.True);
         Assert.That(custom.UsesFactionLevelColor, Is.False);
@@ -101,5 +120,57 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(values.LevelFontColor, Is.EqualTo(Color.white));
         Assert.That(values.LevelFontSize,
             Is.GreaterThanOrEqualTo(BackpackVisualSettings.MinimumLevelFontSize));
+        Assert.That(values.AircraftGlowColor, Is.EqualTo(Color.white));
+        Assert.That(values.AircraftGlowEdgeWidth,
+            Is.GreaterThanOrEqualTo(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth));
+    }
+
+    [Test]
+    public void AircraftGlow_RequiresPlayerBackpackAircraftInPreparation()
+    {
+        Assert.That(ItemView.IsAircraftGlowEligible(true, true,
+            ItemType.Aircraft, true, BattleFaction.Player,
+            BattlePhase.Preparation), Is.True);
+        Assert.That(ItemView.IsAircraftGlowEligible(true, true,
+            ItemType.Aircraft, false, BattleFaction.Player,
+            BattlePhase.Preparation), Is.False);
+        Assert.That(ItemView.IsAircraftGlowEligible(true, true,
+            ItemType.Aircraft, true, BattleFaction.Enemy,
+            BattlePhase.Preparation), Is.False);
+        Assert.That(ItemView.IsAircraftGlowEligible(true, true,
+            ItemType.Equipment, true, BattleFaction.Player,
+            BattlePhase.Preparation), Is.False);
+        Assert.That(ItemView.IsAircraftGlowEligible(true, true,
+            ItemType.Aircraft, true, BattleFaction.Player,
+            BattlePhase.Combat), Is.False);
+        Assert.That(ItemView.IsAircraftGlowEligible(false, true,
+            ItemType.Aircraft, true, BattleFaction.Player,
+            BattlePhase.Preparation), Is.False);
+        Assert.That(ItemView.IsAircraftGlowEligible(true, false,
+            ItemType.Aircraft, true, BattleFaction.Player,
+            BattlePhase.Preparation), Is.False);
+    }
+
+    [Test]
+    public void BottomPlateHighlight_UsesLevelColorsAndHidesOnlyEquipmentLabels()
+    {
+        Color original = Color.red;
+
+        Assert.That(ItemView.GetBottomPlateColor(original, 1, false),
+            Is.EqualTo(original));
+        Assert.That(ItemView.GetBottomPlateColor(original, 1, true),
+            Is.EqualTo(new Color(1f, .8f, .5019608f, 1f)));
+        Assert.That(ItemView.GetBottomPlateColor(original, 2, true),
+            Is.EqualTo(new Color(.5058824f, .7803922f, .5176471f, 1f)));
+        Assert.That(ItemView.GetBottomPlateColor(original, 3, true),
+            Is.EqualTo(new Color(.65882355f, .33333334f, .96862745f, 1f)));
+        Assert.That(ItemView.GetBottomPlateColor(original, 99, true),
+            Is.EqualTo(new Color(.65882355f, .33333334f, .96862745f, 1f)));
+        Assert.That(ItemView.ShouldHideEquipmentLevelLabel(true,
+            ItemType.Equipment), Is.True);
+        Assert.That(ItemView.ShouldHideEquipmentLevelLabel(true,
+            ItemType.Aircraft), Is.False);
+        Assert.That(ItemView.ShouldHideEquipmentLevelLabel(false,
+            ItemType.Equipment), Is.False);
     }
 }

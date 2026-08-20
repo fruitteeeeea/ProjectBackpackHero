@@ -54,6 +54,46 @@ Shader "Backpack/UI/Item Cooldown"
             Vector
         ) = (1, 1, 0, 0)
 
+        _AircraftGlowRenderMode (
+            "Aircraft Glow Render Mode",
+            Range(0, 1)
+        ) = 0
+
+        _AircraftGlowColor (
+            "Aircraft Glow Color",
+            Color
+        ) = (1, 1, 1, 1)
+
+        _AircraftGlowMinimumIntensity (
+            "Aircraft Glow Minimum Intensity",
+            Range(0, 1)
+        ) = 0.12
+
+        _AircraftGlowMaximumIntensity (
+            "Aircraft Glow Maximum Intensity",
+            Range(0, 1)
+        ) = 0.45
+
+        _AircraftGlowCycleDuration (
+            "Aircraft Glow Cycle Duration",
+            Float
+        ) = 1.2
+
+        _AircraftGlowPadding (
+            "Aircraft Glow Padding",
+            Vector
+        ) = (0, 0, 0, 0)
+
+        _AircraftGlowRadiusUV (
+            "Aircraft Glow Radius UV",
+            Vector
+        ) = (0, 0, 0, 0)
+
+        _AircraftGlowUvBounds (
+            "Aircraft Glow UV Bounds",
+            Vector
+        ) = (0, 0, 1, 1)
+
         _StencilComp (
             "Stencil Comparison",
             Float
@@ -161,7 +201,48 @@ Shader "Backpack/UI/Item Cooldown"
             float _GrayOverlayStrength;
             float _PatternOverlayStrength;
             float4 _PatternTiling;
+            float _AircraftGlowRenderMode;
+            fixed4 _AircraftGlowColor;
+            float _AircraftGlowMinimumIntensity;
+            float _AircraftGlowMaximumIntensity;
+            float _AircraftGlowCycleDuration;
+            float4 _AircraftGlowPadding;
+            float4 _AircraftGlowRadiusUV;
+            float4 _AircraftGlowUvBounds;
             float4 _ClipRect;
+
+            float SampleAircraftGlowAlpha(float2 localUv)
+            {
+                float2 inside = step(float2(0.0, 0.0), localUv) *
+                    step(localUv, float2(1.0, 1.0));
+                float2 textureUv = lerp(
+                    _AircraftGlowUvBounds.xy,
+                    _AircraftGlowUvBounds.zw,
+                    localUv);
+                return tex2D(_MainTex, textureUv).a * inside.x * inside.y;
+            }
+
+            float SampleAircraftGlowRing(float2 localUv, float2 radius)
+            {
+                float alpha = 0.0;
+                alpha = max(alpha, SampleAircraftGlowAlpha(
+                    localUv + float2(radius.x, 0.0)));
+                alpha = max(alpha, SampleAircraftGlowAlpha(
+                    localUv + float2(-radius.x, 0.0)));
+                alpha = max(alpha, SampleAircraftGlowAlpha(
+                    localUv + float2(0.0, radius.y)));
+                alpha = max(alpha, SampleAircraftGlowAlpha(
+                    localUv + float2(0.0, -radius.y)));
+                alpha = max(alpha, SampleAircraftGlowAlpha(
+                    localUv + radius));
+                alpha = max(alpha, SampleAircraftGlowAlpha(
+                    localUv - radius));
+                alpha = max(alpha, SampleAircraftGlowAlpha(
+                    localUv + float2(radius.x, -radius.y)));
+                alpha = max(alpha, SampleAircraftGlowAlpha(
+                    localUv + float2(-radius.x, radius.y)));
+                return alpha;
+            }
 
             Varyings Vert(Attributes input)
             {
@@ -186,6 +267,54 @@ Shader "Backpack/UI/Item Cooldown"
                     (tex2D(_MainTex, input.uv) +
                      _TextureSampleAdd) *
                     input.color;
+
+                // 光晕层由 ItemView 在底板后方单独绘制；原始底板和图标
+                // 不会进入这一分支，因此既有冷却、白闪视觉不受影响。
+                if (_AircraftGlowRenderMode > 0.5)
+                {
+                    float cycleDuration =
+                        max(0.01, _AircraftGlowCycleDuration);
+                    float pulse = 0.5 + 0.5 * sin(
+                        6.2831853 * _Time.y / cycleDuration);
+                    float intensity = lerp(
+                        saturate(_AircraftGlowMinimumIntensity),
+                        saturate(_AircraftGlowMaximumIntensity),
+                        pulse);
+
+                    // 光晕层的 Rect 比原底板更大。先将其 UV 还原到原始
+                    // Sprite 坐标，再从 alpha 轮廓向外多次采样；因此 L 型
+                    // 的凹角和不同尺寸的底板均按真实形状渐变，而非按矩形。
+                    float2 padding = max(
+                        float2(0.0001, 0.0001),
+                        _AircraftGlowPadding.xy);
+                    float2 spriteUvSize = max(
+                        float2(0.0001, 0.0001),
+                        _AircraftGlowUvBounds.zw -
+                        _AircraftGlowUvBounds.xy);
+                    float2 childLocalUv = (input.uv -
+                        _AircraftGlowUvBounds.xy) / spriteUvSize;
+                    float2 baseLocalUv = (childLocalUv - padding) /
+                        max(float2(0.0001, 0.0001),
+                            1.0 - padding * 2.0);
+                    float centerAlpha =
+                        SampleAircraftGlowAlpha(baseLocalUv);
+                    float2 radius = max(float2(0.0001, 0.0001),
+                        _AircraftGlowRadiusUV.xy);
+                    float outlineAlpha = max(
+                        SampleAircraftGlowRing(baseLocalUv, radius * .25) * .85,
+                        SampleAircraftGlowRing(baseLocalUv, radius * .5) * .58);
+                    outlineAlpha = max(outlineAlpha,
+                        SampleAircraftGlowRing(baseLocalUv, radius * .75) * .32);
+                    outlineAlpha = max(outlineAlpha,
+                        SampleAircraftGlowRing(baseLocalUv, radius) * .12);
+                    float edgeFade = saturate(outlineAlpha - centerAlpha);
+
+                    spriteColor.rgb = _AircraftGlowColor.rgb;
+                    spriteColor.a = input.color.a *
+                        _AircraftGlowColor.a * intensity * edgeFade;
+                }
+                else
+                {
 
                 float progress =
                     saturate(_CooldownProgress);
@@ -256,6 +385,7 @@ Shader "Backpack/UI/Item Cooldown"
                         spriteColor.rgb,
                         fixed3(1.0, 1.0, 1.0),
                         saturate(_FlashAmount));
+                }
 
                 #ifdef UNITY_UI_CLIP_RECT
                 spriteColor.a *=

@@ -35,6 +35,30 @@ namespace BackpackPrototype
         private static readonly int PatternTilingId =
             Shader.PropertyToID("_PatternTiling");
 
+        private static readonly int AircraftGlowRenderModeId =
+            Shader.PropertyToID("_AircraftGlowRenderMode");
+
+        private static readonly int AircraftGlowColorId =
+            Shader.PropertyToID("_AircraftGlowColor");
+
+        private static readonly int AircraftGlowMinimumIntensityId =
+            Shader.PropertyToID("_AircraftGlowMinimumIntensity");
+
+        private static readonly int AircraftGlowMaximumIntensityId =
+            Shader.PropertyToID("_AircraftGlowMaximumIntensity");
+
+        private static readonly int AircraftGlowCycleDurationId =
+            Shader.PropertyToID("_AircraftGlowCycleDuration");
+
+        private static readonly int AircraftGlowPaddingId =
+            Shader.PropertyToID("_AircraftGlowPadding");
+
+        private static readonly int AircraftGlowRadiusUvId =
+            Shader.PropertyToID("_AircraftGlowRadiusUV");
+
+        private static readonly int AircraftGlowUvBoundsId =
+            Shader.PropertyToID("_AircraftGlowUvBounds");
+
         private RectTransform rectTransform;
         private CanvasGroup canvasGroup;
         private Transform originalParent;
@@ -46,6 +70,7 @@ namespace BackpackPrototype
         private Tween mergeFlashTween;
         private Tween shopTransitionTween;
         private bool mergeHighlightActive;
+        private bool isDeletePreviewActive;
         private float cooldownFlashAmount;
         private float mergeFlashAmount;
         private bool isDragging;
@@ -59,9 +84,7 @@ namespace BackpackPrototype
         private bool placementFeedbackActive;
         private Image[] trashPreviewImages;
         private Color[] trashPreviewColors;
-        private Color defaultBackgroundColor;
         private Color defaultIconColor;
-        private Color defaultLevelLabelColor;
         private float defaultLevelLabelFontSize;
         private bool levelLabelFontSizeCached;
         private bool deletePreviewColorsCached;
@@ -70,6 +93,8 @@ namespace BackpackPrototype
         private Material originalIconMaterial;
         private Material backgroundCooldownMaterial;
         private Material iconCooldownMaterial;
+        private Image aircraftGlowImage;
+        private Material aircraftGlowMaterial;
 
         public ItemInstance Instance { get; private set; }
         public BackpackController Backpack { get; private set; }
@@ -220,6 +245,15 @@ namespace BackpackPrototype
                 CooldownProgress);
         }
 
+        private void LateUpdate()
+        {
+            if (aircraftGlowImage != null &&
+                aircraftGlowImage.gameObject.activeSelf)
+            {
+                SyncAircraftGlowTransform();
+            }
+        }
+
         public void Bind(
             ItemInstance instance,
             BackpackController backpack,
@@ -233,6 +267,7 @@ namespace BackpackPrototype
         {
             BackpackVisualDebugRuntime.SettingsChanged -=
                 HandleBackpackVisualSettingsChanged;
+            BattleFlowController.PhaseChanged -= HandleBattlePhaseChanged;
             if (Backpack != null)
             {
                 Backpack.ItemLevelChanged -= HandleItemLevelChanged;
@@ -247,6 +282,7 @@ namespace BackpackPrototype
             Instance = instance;
             Backpack = backpack;
             GridView = gridView;
+            isDeletePreviewActive = false;
             BackpackItemLayer = backpackItemLayer;
             DragLayer = dragLayer;
             TrashZone = trashZone;
@@ -306,8 +342,11 @@ namespace BackpackPrototype
             CacheLevelLabelFontSize();
             RefreshLevelLabel();
             CacheDeletePreviewColors();
+            RefreshBottomPlateVisual();
             BackpackVisualDebugRuntime.SettingsChanged +=
                 HandleBackpackVisualSettingsChanged;
+            BattleFlowController.PhaseChanged += HandleBattlePhaseChanged;
+            RefreshAircraftGlow();
         }
 
         public void SetShopDropZone(RectTransform shopDropZone)
@@ -329,6 +368,7 @@ namespace BackpackPrototype
             rectTransform.localScale = scale;
             rectTransform.localRotation = Quaternion.identity;
             IsPlacedInBackpack = false;
+            RefreshAircraftGlow();
         }
 
         public void TweenToShopPosition(
@@ -348,6 +388,7 @@ namespace BackpackPrototype
             rectTransform.anchorMax = new Vector2(.5f, .5f);
             rectTransform.pivot = new Vector2(.5f, .5f);
             IsPlacedInBackpack = false;
+            RefreshAircraftGlow();
 
             shopTransitionTween = DOTween.Sequence()
                 .Join(rectTransform.DOAnchorPos(anchoredPosition, duration)
@@ -495,6 +536,7 @@ namespace BackpackPrototype
 
         private void InitializeCooldownMaterials()
         {
+            ReleaseAircraftGlow();
             ReleaseCooldownMaterials();
 
             originalBackgroundMaterial =
@@ -526,7 +568,149 @@ namespace BackpackPrototype
             cooldownFlashAmount = 0f;
             mergeFlashAmount = 0f;
             ApplyFlashAmount();
+            InitializeAircraftGlow();
         }
+
+        private void InitializeAircraftGlow()
+        {
+            if (background == null || backgroundCooldownMaterial == null ||
+                background.sprite == null)
+            {
+                return;
+            }
+
+            GameObject glowObject = new("Aircraft Glow", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(Image));
+            Transform glowParent = transform.parent != null
+                ? transform.parent
+                : transform;
+            glowObject.transform.SetParent(glowParent, false);
+            glowObject.transform.SetSiblingIndex(transform.GetSiblingIndex());
+            aircraftGlowImage = glowObject.GetComponent<Image>();
+            aircraftGlowImage.sprite = background.sprite;
+            aircraftGlowImage.type = background.type;
+            aircraftGlowImage.preserveAspect = background.preserveAspect;
+            aircraftGlowImage.raycastTarget = false;
+            aircraftGlowImage.color = Color.white;
+            aircraftGlowMaterial = new Material(backgroundCooldownMaterial)
+            {
+                name = $"{backgroundCooldownMaterial.name} (Aircraft Glow Runtime)"
+            };
+            aircraftGlowMaterial.SetFloat(AircraftGlowRenderModeId, 1f);
+            aircraftGlowImage.material = aircraftGlowMaterial;
+            RefreshAircraftGlow();
+        }
+
+        private void RefreshAircraftGlow()
+        {
+            if (aircraftGlowImage == null || aircraftGlowMaterial == null)
+            {
+                return;
+            }
+
+            BackpackVisualSettings settings =
+                BackpackVisualDebugRuntime.CurrentSettings;
+            ItemType itemType = Instance != null && Instance.Data != null
+                ? Instance.Data.ItemType
+                : ItemType.Equipment;
+            BattleFaction faction = CombatController == null
+                ? BattleFaction.Player
+                : CombatController.Faction;
+            bool showGlow = !isDragging && IsAircraftGlowEligible(settings.OverridesEnabled,
+                settings.AircraftGlowEnabled, itemType, IsPlacedInBackpack,
+                faction, BattleFlowController.CurrentPhase);
+            aircraftGlowImage.gameObject.SetActive(showGlow);
+            if (!showGlow)
+            {
+                return;
+            }
+
+            aircraftGlowMaterial.SetColor(AircraftGlowColorId,
+                settings.AircraftGlowColor);
+            aircraftGlowMaterial.SetFloat(AircraftGlowMinimumIntensityId,
+                settings.AircraftGlowMinimumIntensity);
+            aircraftGlowMaterial.SetFloat(AircraftGlowMaximumIntensityId,
+                settings.AircraftGlowMaximumIntensity);
+            aircraftGlowMaterial.SetFloat(AircraftGlowCycleDurationId,
+                settings.AircraftGlowCycleDuration);
+
+            float edgeWidth = settings.AircraftGlowEdgeWidth;
+            SyncAircraftGlowTransform();
+            RectTransform glowTransform = aircraftGlowImage.rectTransform;
+            Vector2 baseSize = rectTransform.rect.size;
+            Vector2 expandedSize = baseSize +
+                new Vector2(edgeWidth * 2f, edgeWidth * 2f);
+            aircraftGlowMaterial.SetVector(AircraftGlowPaddingId, new Vector4(
+                expandedSize.x > 0f ? edgeWidth / expandedSize.x : 0f,
+                expandedSize.y > 0f ? edgeWidth / expandedSize.y : 0f,
+                0f, 0f));
+            aircraftGlowMaterial.SetVector(AircraftGlowRadiusUvId, new Vector4(
+                baseSize.x > 0f ? edgeWidth / baseSize.x : 0f,
+                baseSize.y > 0f ? edgeWidth / baseSize.y : 0f,
+                0f, 0f));
+            aircraftGlowMaterial.SetVector(AircraftGlowUvBoundsId,
+                GetSpriteUvBounds(background.sprite));
+        }
+
+        private static Vector4 GetSpriteUvBounds(Sprite sprite)
+        {
+            if (sprite == null || sprite.uv == null || sprite.uv.Length == 0)
+            {
+                return new Vector4(0f, 0f, 1f, 1f);
+            }
+
+            Vector2 min = sprite.uv[0];
+            Vector2 max = min;
+            foreach (Vector2 uv in sprite.uv)
+            {
+                min = Vector2.Min(min, uv);
+                max = Vector2.Max(max, uv);
+            }
+
+            return new Vector4(min.x, min.y, max.x, max.y);
+        }
+
+        private void SyncAircraftGlowTransform()
+        {
+            if (aircraftGlowImage == null || rectTransform == null)
+            {
+                return;
+            }
+
+            RectTransform glowTransform = aircraftGlowImage.rectTransform;
+            Transform targetParent = rectTransform.parent;
+            if (targetParent != null && glowTransform.parent != targetParent)
+            {
+                glowTransform.SetParent(targetParent, false);
+                glowTransform.SetSiblingIndex(rectTransform.GetSiblingIndex());
+            }
+
+            float edgeWidth = BackpackVisualDebugRuntime.CurrentSettings
+                .AircraftGlowEdgeWidth;
+            Vector2 expansion = new Vector2(edgeWidth * 2f, edgeWidth * 2f);
+            glowTransform.anchorMin = rectTransform.anchorMin;
+            glowTransform.anchorMax = rectTransform.anchorMax;
+            glowTransform.pivot = rectTransform.pivot;
+            // ItemView 常用左上 Pivot。仅扩大 sizeDelta 会让光晕只向右下
+            // 偏移；根据 Pivot 平移半个扩展尺寸，使原底板仍位于光晕中心。
+            glowTransform.anchoredPosition = rectTransform.anchoredPosition +
+                Vector2.Scale(rectTransform.pivot * 2f - Vector2.one,
+                    expansion * .5f);
+            glowTransform.sizeDelta = rectTransform.sizeDelta + expansion;
+            glowTransform.localScale = rectTransform.localScale;
+            glowTransform.localRotation = rectTransform.localRotation;
+        }
+
+        public static bool IsAircraftGlowEligible(
+            bool overridesEnabled,
+            bool aircraftGlowEnabled,
+            ItemType itemType,
+            bool isPlacedInBackpack,
+            BattleFaction faction,
+            BattlePhase phase) =>
+            overridesEnabled && aircraftGlowEnabled &&
+            itemType == ItemType.Aircraft && isPlacedInBackpack &&
+            faction == BattleFaction.Player && phase == BattlePhase.Preparation;
 
         private void HandleCooldownCompleted(
             ItemInstance completedItem)
@@ -627,6 +811,7 @@ namespace BackpackPrototype
             if (item == Instance)
             {
                 RefreshLevelLabel();
+                RefreshBottomPlateVisual();
             }
         }
 
@@ -710,6 +895,21 @@ namespace BackpackPrototype
             originalIconMaterial = null;
         }
 
+        private void ReleaseAircraftGlow()
+        {
+            if (aircraftGlowMaterial != null)
+            {
+                Destroy(aircraftGlowMaterial);
+                aircraftGlowMaterial = null;
+            }
+
+            if (aircraftGlowImage != null)
+            {
+                Destroy(aircraftGlowImage.gameObject);
+                aircraftGlowImage = null;
+            }
+        }
+
         private static void ReleaseCooldownMaterial(
             Image targetImage,
             Material runtimeMaterial,
@@ -747,6 +947,7 @@ namespace BackpackPrototype
             rectTransform.anchorMax = new Vector2(0f, 1f);
             rectTransform.pivot = new Vector2(0f, 1f);
             rectTransform.anchoredPosition = GridView.GetItemAnchoredPosition(anchorCell);
+            RefreshAircraftGlow();
         }
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -759,6 +960,7 @@ namespace BackpackPrototype
             }
 
             isDragging = true;
+            RefreshAircraftGlow();
             RequestSelection();
             canDeleteFromTrash = IsPlacedInBackpack;
             originalParent = rectTransform.parent;
@@ -841,6 +1043,7 @@ namespace BackpackPrototype
         public void OnEndDrag(PointerEventData eventData)
         {
             isDragging = false;
+            RefreshAircraftGlow();
             dragPositionTween?.Kill();
             dragPositionTween = null;
             DragStateChanged?.Invoke(this, false);
@@ -1048,14 +1251,8 @@ namespace BackpackPrototype
 
         private void CacheDeletePreviewColors()
         {
-            defaultBackgroundColor = background != null
-                ? background.color
-                : Color.white;
             defaultIconColor = icon != null
                 ? icon.color
-                : Color.white;
-            defaultLevelLabelColor = levelLabel != null
-                ? levelLabel.color
                 : Color.white;
             deletePreviewColorsCached = true;
         }
@@ -1067,13 +1264,8 @@ namespace BackpackPrototype
                 return;
             }
 
-            if (background != null)
-            {
-                background.color = deleting
-                    ? new Color(1f, 0.08f, 0.08f,
-                        defaultBackgroundColor.a)
-                    : defaultBackgroundColor;
-            }
+            isDeletePreviewActive = deleting;
+            RefreshBottomPlateVisual();
 
             if (icon != null)
             {
@@ -1083,13 +1275,7 @@ namespace BackpackPrototype
                     : defaultIconColor;
             }
 
-            if (levelLabel != null)
-            {
-                levelLabel.color = deleting
-                    ? new Color(1f, 0.76f, 0.76f,
-                        defaultLevelLabelColor.a)
-                    : defaultLevelLabelColor;
-            }
+            RefreshLevelLabel();
         }
 
         private void PlayPlacedFeedback()
@@ -1224,6 +1410,8 @@ namespace BackpackPrototype
             shopTransitionTween?.Kill();
             BackpackVisualDebugRuntime.SettingsChanged -=
                 HandleBackpackVisualSettingsChanged;
+            BattleFlowController.PhaseChanged -= HandleBattlePhaseChanged;
+            ReleaseAircraftGlow();
             ReleaseCooldownMaterials();
         }
 
@@ -1240,10 +1428,17 @@ namespace BackpackPrototype
             BackpackVisualSettings _)
         {
             RefreshLevelLabel();
+            RefreshBottomPlateVisual();
+            RefreshAircraftGlow();
             if (mergeHighlightActive)
             {
                 SetMergeHighlight(true);
             }
+        }
+
+        private void HandleBattlePhaseChanged(BattlePhase _)
+        {
+            RefreshAircraftGlow();
         }
 
         private void EnsureLevelLabel()
@@ -1303,6 +1498,10 @@ namespace BackpackPrototype
                 : new Color(1f, 0.34f, 0.12f, 1f);
             BackpackVisualSettings settings =
                 BackpackVisualDebugRuntime.CurrentSettings;
+            bool bottomPlateHighlightEnabled =
+                settings.OverridesEnabled && settings.AircraftGlowEnabled;
+            levelLabel.enabled = !ShouldHideEquipmentLevelLabel(
+                bottomPlateHighlightEnabled, Instance.Data.ItemType);
             bool useFactionColor = settings.UsesFactionLevelColor;
             levelLabel.color = useFactionColor
                 ? factionColor
@@ -1318,7 +1517,55 @@ namespace BackpackPrototype
             levelLabel.outlineColor = isPlayer
                 ? new Color(0.015f, 0.04f, 0.09f, 0.9f)
                 : new Color(0.12f, 0.015f, 0.005f, 0.9f);
+            if (isDeletePreviewActive)
+            {
+                levelLabel.color = new Color(1f, 0.76f, 0.76f,
+                    levelLabel.color.a);
+            }
         }
+
+        private void RefreshBottomPlateVisual()
+        {
+            if (background == null || Instance == null ||
+                Instance.Data == null)
+            {
+                return;
+            }
+
+            BackpackVisualSettings settings =
+                BackpackVisualDebugRuntime.CurrentSettings;
+            Color baseColor = GetBottomPlateColor(
+                Instance.Data.BackgroundColor,
+                Instance.Level,
+                settings.OverridesEnabled && settings.AircraftGlowEnabled);
+            background.color = isDeletePreviewActive
+                ? new Color(1f, 0.08f, 0.08f, baseColor.a)
+                : baseColor;
+        }
+
+        public static Color GetBottomPlateColor(
+            Color originalColor,
+            int itemLevel,
+            bool bottomPlateHighlightEnabled)
+        {
+            if (!bottomPlateHighlightEnabled)
+            {
+                return originalColor;
+            }
+
+            return Mathf.Clamp(itemLevel, ItemInstance.DefaultLevel,
+                ItemInstance.MaximumLevel) switch
+            {
+                1 => new Color(1f, .8f, .5019608f, 1f),
+                2 => new Color(.5058824f, .7803922f, .5176471f, 1f),
+                _ => new Color(.65882355f, .33333334f, .96862745f, 1f)
+            };
+        }
+
+        public static bool ShouldHideEquipmentLevelLabel(
+            bool bottomPlateHighlightEnabled,
+            ItemType itemType) =>
+            bottomPlateHighlightEnabled && itemType == ItemType.Equipment;
 
         private void CacheLevelLabelFontSize()
         {

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbe3572aaf6e4b6b90d897cb6ee56a91, type: 3}
+  m_Name: AircraftVisualDebugSettings
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.AircraftVisualDebugSettings
+  aircraftVisualOverridesEnabled: 1
+  attackScaleTween: 0
+  hitRotationShakeTween: 0
+  hitParticles: 1
+  hitWhiteFlash: 1
+  hitParticlesStartSpeed: 5.5
+  hitParticlesTexture: {fileID: 2800000, guid: 30ca206fdcf588648943f2923b9563fe, type: 3}
+  hitParticlesStartSize: 0.5
+  hitParticlesBurstCount: 3
+  deathRotationTween: 0
+  deathScaleTween: 0
+  deathExplosionParticles: 1
+  deathFlashParticles: 1
+  aircraftLifetimeEnabled: 0
+  deathExplosionParticlesStartSpeed: 8.8
+  deathExplosionParticlesTexture: {fileID: 2800000, guid: 30ca206fdcf588648943f2923b9563fe, type: 3}
+  deathExplosionParticlesStartSize: 2.5
+  deathExplosionParticlesBurstCount: 12
+  deathFlashParticlesStartSpeed: 0
+  deathFlashParticlesTexture: {fileID: 2800000, guid: 40d8dc5b52189426ea1a744ea9cea461, type: 3}
+  deathFlashParticlesStartSize: 3
+  deathFlashParticlesBurstCount: 1
+  explosiveImpactRangeMultiplier: 0.5

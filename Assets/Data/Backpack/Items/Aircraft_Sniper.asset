@@ -12,16 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Aircraft_Sniper
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
-  upgradeFragmentsLevel1: 2
-  upgradeFragmentsLevel9: 100
-  aircraftHealthMultiplierRange: {x: 1, y: 1.4}
-  aircraftDamageMultiplierRange: {x: 1, y: 1.4}
-  equipmentIntervalMultiplierRange: {x: 1, y: 0.8}
   id: aircraft_sniper
   initiallyUnlocked: 1
   unlockRequirementText: Unlocked by default
   cost: 0
   debris: 0
+  upgradeFragmentsLevel1: 2
+  upgradeFragmentsLevel9: 100
+  aircraftHealthMultiplierRange: {x: 1, y: 1.4}
+  aircraftDamageMultiplierRange: {x: 1, y: 1.4}
+  equipmentIntervalMultiplierRange: {x: 1, y: 0.8}
   name: Sniper
   desc: A high-damage single-shot fighter with extreme range.
   icon: {fileID: 1392089294744885835, guid: 0897ebf00f07aba4f8d0894d7dec823f, type: 3}
@@ -32,7 +32,7 @@ MonoBehaviour:
   cd: 3.5
   price: 0
   count: 1
-  equipmentItemModifier: 1
+  equipmentItemModifier: 0.2
   shape: {fileID: 11400000, guid: 2fa3334394efd48cb99dfc925ea989e4, type: 2}
   aircraftCooldownReductionLevel2: 0.2
   aircraftCooldownReductionLevel3: 0.4

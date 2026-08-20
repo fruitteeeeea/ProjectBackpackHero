@@ -9,6 +9,7 @@ Shader "BackpackHero/Graphics/Neon Sprite Outline"
         [Toggle] _OuterOutlineOnly ("仅外轮廓", Float) = 1.0
         _CoreColor ("Core Color", Color) = (0.72, 0.78, 0.86, 1.0)
         _CoreIntensity ("Core Intensity", Range(0.0, 1.0)) = 0.35
+        [PerRendererData] _FlashAmount ("Flash Amount", Range(0.0, 1.0)) = 0.0
         [HideInInspector] _Color ("Tint", Color) = (1, 1, 1, 1)
         [HideInInspector] _Flip ("Flip", Vector) = (1, 1, 1, 1)
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1, 1, 1, 1)
@@ -64,6 +65,7 @@ Shader "BackpackHero/Graphics/Neon Sprite Outline"
                 float _OuterOutlineOnly;
                 float4 _CoreColor;
                 float _CoreIntensity;
+                float _FlashAmount;
                 float4 _Color;
             CBUFFER_END
 
@@ -130,6 +132,11 @@ Shader "BackpackHero/Graphics/Neon Sprite Outline"
                     fullGlowColor,
                     outerOutlineOnlyColor,
                     saturate(_OuterOutlineOnly)) * input.color.rgb;
+
+                // 受击闪白通过 MaterialPropertyBlock 按 Renderer 单独驱动，
+                // 不改变共享材质，也不影响阵营的基础 Tint。
+                color = lerp(color, float3(1.0, 1.0, 1.0),
+                    saturate(_FlashAmount));
 
                 return half4(color, alpha);
             }

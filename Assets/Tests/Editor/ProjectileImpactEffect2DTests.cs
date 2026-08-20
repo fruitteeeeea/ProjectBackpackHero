@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using BackpackHero.Battle;
+using BackpackHero.Debugging;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -81,6 +82,109 @@ public sealed class ProjectileImpactEffect2DTests
         Assert.That(nearby.CurrentHealth, Is.EqualTo(8f));
         Assert.That(friendly.CurrentHealth, Is.EqualTo(10f));
         Assert.That(outside.CurrentHealth, Is.EqualTo(10f));
+    }
+
+    [Test]
+    public void Explosion_EffectiveRadiusDefaultsToAuthoredRadius()
+    {
+        ExplosiveProjectileImpact2D effect =
+            CreateImpactObject<ExplosiveProjectileImpact2D>(
+                "Explosion");
+
+        Assert.That(effect.EffectiveRadius, Is.EqualTo(effect.Radius));
+    }
+
+    [Test]
+    public void Explosion_GlobalRangeMultiplierScalesAreaAndVfx()
+    {
+        AircraftVisualDebugRuntime runtime =
+            AircraftVisualDebugRuntime.Instance;
+        AircraftVisualSettings originalSettings = runtime != null
+            ? runtime.Settings
+            : AircraftVisualSettings.Default;
+        if (runtime == null)
+        {
+            runtime = CreateObject("Aircraft Visual Runtime")
+                .AddComponent<AircraftVisualDebugRuntime>();
+        }
+
+        try
+        {
+            runtime.SetSettings(
+                AircraftVisualSettings.Default
+                    .WithExplosiveImpactRangeMultiplier(1.5f));
+            ExplosiveProjectileImpact2D effect =
+                CreateImpactObject<ExplosiveProjectileImpact2D>(
+                    "Explosion");
+            ParticleSystem impactVfxPrefab =
+                CreateObject("Impact VFX")
+                    .AddComponent<ParticleSystem>();
+            typeof(ExplosiveProjectileImpact2D)
+                .GetField(
+                    "impactVfxPrefab",
+                    BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(effect, impactVfxPrefab);
+            Health target = CreateTarget(
+                "Within Expanded Radius",
+                BattleFaction.Enemy,
+                Vector2.right * 2f,
+                1);
+            Physics2D.SyncTransforms();
+
+            HashSet<ParticleSystem> existingParticleSystems = new(
+                Object.FindObjectsByType<ParticleSystem>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None));
+            effect.ResolveImpact(
+                null,
+                Vector2.zero,
+                BattleFaction.Player,
+                2f);
+
+            Assert.That(target.CurrentHealth, Is.EqualTo(8f));
+            ParticleSystem instantiatedVfx = FindNewParticleSystem(
+                existingParticleSystems);
+            Assert.That(instantiatedVfx, Is.Not.Null);
+            createdObjects.Add(instantiatedVfx.gameObject);
+            Assert.That(instantiatedVfx.transform.localScale,
+                Is.EqualTo(Vector3.one * 1.5f));
+        }
+        finally
+        {
+            runtime.SetSettings(originalSettings);
+        }
+    }
+
+    [Test]
+    public void Explosion_DisabledVisualOverridesUseAuthoredRadius()
+    {
+        AircraftVisualDebugRuntime runtime =
+            AircraftVisualDebugRuntime.Instance;
+        AircraftVisualSettings originalSettings = runtime != null
+            ? runtime.Settings
+            : AircraftVisualSettings.Default;
+        if (runtime == null)
+        {
+            runtime = CreateObject("Aircraft Visual Runtime")
+                .AddComponent<AircraftVisualDebugRuntime>();
+        }
+
+        try
+        {
+            runtime.SetSettings(
+                AircraftVisualSettings.Default
+                    .WithExplosiveImpactRangeMultiplier(1.5f)
+                    .WithAircraftVisualOverridesEnabled(false));
+            ExplosiveProjectileImpact2D effect =
+                CreateImpactObject<ExplosiveProjectileImpact2D>(
+                    "Explosion");
+
+            Assert.That(effect.EffectiveRadius, Is.EqualTo(effect.Radius));
+        }
+        finally
+        {
+            runtime.SetSettings(originalSettings);
+        }
     }
 
     [TestCase(BattleFaction.Player, 0.55f, 0.85f, 1f)]
@@ -222,6 +326,23 @@ public sealed class ProjectileImpactEffect2DTests
         target.AddComponent<AreaDamageResolver2D>();
         target.AddComponent<CircleDamageArea2D>();
         return target.AddComponent<T>();
+    }
+
+    private static ParticleSystem FindNewParticleSystem(
+        HashSet<ParticleSystem> existingParticleSystems)
+    {
+        foreach (ParticleSystem candidate in
+                 Object.FindObjectsByType<ParticleSystem>(
+                     FindObjectsInactive.Include,
+                     FindObjectsSortMode.None))
+        {
+            if (!existingParticleSystems.Contains(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
     private Health CreateTarget(

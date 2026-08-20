@@ -116,6 +116,9 @@ namespace BackpackHero.Battle
             GamePacingDebugRuntime.MultipliersChanged +=
                 HandlePacingChanged;
             LevelDifficultyRuntime.Changed += HandleLevelDifficultyChanged;
+            AircraftVisualDebugRuntime.SettingsChanged +=
+                HandleAircraftVisualSettingsChanged;
+            ApplyStyleLifetime();
         }
 
         private void OnDisable()
@@ -123,6 +126,8 @@ namespace BackpackHero.Battle
             GamePacingDebugRuntime.MultipliersChanged -=
                 HandlePacingChanged;
             LevelDifficultyRuntime.Changed -= HandleLevelDifficultyChanged;
+            AircraftVisualDebugRuntime.SettingsChanged -=
+                HandleAircraftVisualSettingsChanged;
         }
 
         /// <summary>
@@ -230,6 +235,12 @@ namespace BackpackHero.Battle
             ApplyPacingHealth();
         }
 
+        private void HandleAircraftVisualSettingsChanged(
+            AircraftVisualSettings _)
+        {
+            ApplyStyleLifetime();
+        }
+
         private void ApplyPacingHealth()
         {
             if (health == null || definition == null)
@@ -255,6 +266,15 @@ namespace BackpackHero.Battle
                 GetComponent<LifetimeAndScreenBounds2D>();
             if (lifetime == null)
             {
+                return;
+            }
+
+            AircraftVisualSettings visualSettings =
+                AircraftVisualDebugRuntime.CurrentSettings;
+            if (visualSettings.AircraftVisualOverridesEnabled &&
+                !visualSettings.AircraftLifetimeEnabled)
+            {
+                lifetime.SetLifetime(0f);
                 return;
             }
 

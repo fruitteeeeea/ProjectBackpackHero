@@ -1,3 +1,4 @@
+using BackpackHero.Debugging;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -19,6 +20,8 @@ namespace BackpackHero.Battle
         [SerializeField] private CircleDamageArea2D damageArea;
 
         public float Radius => radius;
+        public float EffectiveRadius => radius *
+            AircraftVisualDebugRuntime.GetExplosiveImpactRangeMultiplier();
         public float AreaDamageMultiplier => areaDamageMultiplier;
 
         private void Awake() => FindReferences();
@@ -36,7 +39,12 @@ namespace BackpackHero.Battle
                 return false;
             }
 
-            damageArea.Configure(impactPosition, radius);
+            float rangeMultiplier =
+                AircraftVisualDebugRuntime
+                    .GetExplosiveImpactRangeMultiplier();
+            damageArea.Configure(
+                impactPosition,
+                radius * rangeMultiplier);
             damageResolver.Resolve(
                 damageArea,
                 attackerFaction,
@@ -51,7 +59,7 @@ namespace BackpackHero.Battle
                     impactVfxPrefab.transform.rotation);
 
                 impactVfx.transform.localScale =
-                    Vector3.one * impactVfxScale;
+                    Vector3.one * impactVfxScale * rangeMultiplier;
 
                 ApplyFactionColor(impactVfx, attackerFaction);
             }

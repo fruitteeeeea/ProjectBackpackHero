@@ -19,6 +19,7 @@ namespace BackpackHero.Debugging
         public const float MinimumFlashDuration = 0.01f;
         public const float MinimumPlacementScale = 1f;
         public const float MinimumShopFlightDuration = 0.01f;
+        public const float MinimumLevelFontSize = 0.01f;
 
         public static BackpackVisualSettings Default => new(
             true, .5f,
@@ -26,7 +27,7 @@ namespace BackpackHero.Debugging
             new Color(.86f, .22f, .18f, 1f),
             .18f, .62f, .7f,
             1.17f, 10f, -6f, BackpackPlacementScaleEase.OutElastic,
-            .32f);
+            .32f, Color.white, 16f);
 
         public BackpackVisualSettings(
             bool overridesEnabled,
@@ -40,7 +41,9 @@ namespace BackpackHero.Debugging
             float placementPositiveRotationDegrees,
             float placementNegativeRotationDegrees,
             BackpackPlacementScaleEase placementScaleEase,
-            float shopFlightDuration)
+            float shopFlightDuration,
+            Color levelFontColor,
+            float levelFontSize)
         {
             OverridesEnabled = overridesEnabled;
             DragOpacity = Mathf.Clamp(dragOpacity, MinimumDragOpacity,
@@ -58,6 +61,8 @@ namespace BackpackHero.Debugging
             PlacementScaleEase = placementScaleEase;
             ShopFlightDuration = Mathf.Max(MinimumShopFlightDuration,
                 shopFlightDuration);
+            LevelFontColor = levelFontColor;
+            LevelFontSize = Mathf.Max(MinimumLevelFontSize, levelFontSize);
         }
 
         public bool OverridesEnabled { get; }
@@ -72,6 +77,10 @@ namespace BackpackHero.Debugging
         public float PlacementNegativeRotationDegrees { get; }
         public BackpackPlacementScaleEase PlacementScaleEase { get; }
         public float ShopFlightDuration { get; }
+        public Color LevelFontColor { get; }
+        public float LevelFontSize { get; }
+        public bool UsesFactionLevelColor => !OverridesEnabled ||
+            IsWhiteRgb(LevelFontColor);
 
         public Ease GetPlacementScaleDotweenEase() =>
             PlacementScaleEase == BackpackPlacementScaleEase.OutCubic
@@ -83,7 +92,12 @@ namespace BackpackHero.Debugging
             MergeFlashMinimum, MergeFlashMaximum, MergeFlashCycleDuration,
             PlacementScaleMultiplier, PlacementPositiveRotationDegrees,
             PlacementNegativeRotationDegrees, PlacementScaleEase,
-            ShopFlightDuration);
+            ShopFlightDuration, LevelFontColor, LevelFontSize);
+
+        private static bool IsWhiteRgb(Color color) =>
+            Mathf.Approximately(color.r, 1f) &&
+            Mathf.Approximately(color.g, 1f) &&
+            Mathf.Approximately(color.b, 1f);
 
         public bool Equals(BackpackVisualSettings other) =>
             OverridesEnabled == other.OverridesEnabled &&
@@ -101,7 +115,9 @@ namespace BackpackHero.Debugging
             Mathf.Approximately(PlacementNegativeRotationDegrees,
                 other.PlacementNegativeRotationDegrees) &&
             PlacementScaleEase == other.PlacementScaleEase &&
-            Mathf.Approximately(ShopFlightDuration, other.ShopFlightDuration);
+            Mathf.Approximately(ShopFlightDuration, other.ShopFlightDuration) &&
+            LevelFontColor.Equals(other.LevelFontColor) &&
+            Mathf.Approximately(LevelFontSize, other.LevelFontSize);
 
         public override bool Equals(object obj) =>
             obj is BackpackVisualSettings other && Equals(other);
@@ -121,7 +137,9 @@ namespace BackpackHero.Debugging
                 hash = (hash * 31) + PlacementPositiveRotationDegrees.GetHashCode();
                 hash = (hash * 31) + PlacementNegativeRotationDegrees.GetHashCode();
                 hash = (hash * 31) + (int)PlacementScaleEase;
-                return (hash * 31) + ShopFlightDuration.GetHashCode();
+                hash = (hash * 31) + ShopFlightDuration.GetHashCode();
+                hash = (hash * 31) + LevelFontColor.GetHashCode();
+                return (hash * 31) + LevelFontSize.GetHashCode();
             }
         }
     }

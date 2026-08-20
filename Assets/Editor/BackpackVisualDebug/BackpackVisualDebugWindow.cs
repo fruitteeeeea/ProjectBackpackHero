@@ -123,13 +123,21 @@ namespace BackpackHero.EditorTools
                 BackpackVisualSettings.MinimumShopFlightDuration,
                 EditorGUILayout.FloatField("飞行时间", current.ShopFlightDuration));
 
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("物品等级显示", EditorStyles.boldLabel);
+            Color levelFontColor = EditorGUILayout.ColorField("等级字体颜色",
+                current.LevelFontColor);
+            float levelFontSize = Mathf.Max(
+                BackpackVisualSettings.MinimumLevelFontSize,
+                EditorGUILayout.FloatField("等级字体大小", current.LevelFontSize));
+
             draft.Value = new BackpackVisualSettings(
                 current.OverridesEnabled, dragOpacity, legalPreviewColor,
                 illegalPreviewColor, mergeFlashMinimum, mergeFlashMaximum,
                 mergeFlashCycleDuration, placementScaleMultiplier,
                 placementPositiveRotationDegrees,
                 placementNegativeRotationDegrees, placementScaleEase,
-                shopFlightDuration);
+                shopFlightDuration, levelFontColor, levelFontSize);
         }
 
         private void DrawPersistence(BackpackVisualDebugRuntime runtime)

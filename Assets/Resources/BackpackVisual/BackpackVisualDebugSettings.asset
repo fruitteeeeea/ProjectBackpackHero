@@ -24,3 +24,5 @@ MonoBehaviour:
   placementNegativeRotationDegrees: 0
   placementScaleEase: 0
   shopFlightDuration: 0.32
+  levelFontColor: {r: 1, g: 1, b: 1, a: 1}
+  levelFontSize: 24

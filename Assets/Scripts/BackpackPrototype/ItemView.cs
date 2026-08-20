@@ -62,6 +62,8 @@ namespace BackpackPrototype
         private Color defaultBackgroundColor;
         private Color defaultIconColor;
         private Color defaultLevelLabelColor;
+        private float defaultLevelLabelFontSize;
+        private bool levelLabelFontSizeCached;
         private bool deletePreviewColorsCached;
         
         private Material originalBackgroundMaterial;
@@ -301,6 +303,7 @@ namespace BackpackPrototype
                 itemLabel.text = instance.Data.ItemName;
             }
 
+            CacheLevelLabelFontSize();
             RefreshLevelLabel();
             CacheDeletePreviewColors();
             BackpackVisualDebugRuntime.SettingsChanged +=
@@ -1236,6 +1239,7 @@ namespace BackpackPrototype
         private void HandleBackpackVisualSettingsChanged(
             BackpackVisualSettings _)
         {
+            RefreshLevelLabel();
             if (mergeHighlightActive)
             {
                 SetMergeHighlight(true);
@@ -1294,12 +1298,37 @@ namespace BackpackPrototype
             bool isPlayer = CombatController == null ||
                 CombatController.Faction == BattleFaction.Player;
             levelLabel.text = $"lv.{Instance.Level}";
-            levelLabel.color = isPlayer
+            Color factionColor = isPlayer
                 ? new Color(0.28f, 0.78f, 1f, 1f)
                 : new Color(1f, 0.34f, 0.12f, 1f);
+            BackpackVisualSettings settings =
+                BackpackVisualDebugRuntime.CurrentSettings;
+            bool useFactionColor = settings.UsesFactionLevelColor;
+            levelLabel.color = useFactionColor
+                ? factionColor
+                : settings.LevelFontColor;
+            if (settings.OverridesEnabled)
+            {
+                levelLabel.fontSize = settings.LevelFontSize;
+            }
+            else if (levelLabelFontSizeCached)
+            {
+                levelLabel.fontSize = defaultLevelLabelFontSize;
+            }
             levelLabel.outlineColor = isPlayer
                 ? new Color(0.015f, 0.04f, 0.09f, 0.9f)
                 : new Color(0.12f, 0.015f, 0.005f, 0.9f);
+        }
+
+        private void CacheLevelLabelFontSize()
+        {
+            if (levelLabel == null || levelLabelFontSizeCached)
+            {
+                return;
+            }
+
+            defaultLevelLabelFontSize = levelLabel.fontSize;
+            levelLabelFontSizeCached = true;
         }
 
         private void ResizeToShape(Vector2 cellSize, Vector2 spacing)

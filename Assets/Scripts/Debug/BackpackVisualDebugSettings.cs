@@ -18,6 +18,8 @@ namespace BackpackHero.Debugging
         [SerializeField] private float placementNegativeRotationDegrees = -6f;
         [SerializeField] private BackpackPlacementScaleEase placementScaleEase = BackpackPlacementScaleEase.OutElastic;
         [SerializeField, Min(BackpackVisualSettings.MinimumShopFlightDuration)] private float shopFlightDuration = .32f;
+        [SerializeField] private Color levelFontColor = Color.white;
+        [SerializeField, Min(BackpackVisualSettings.MinimumLevelFontSize)] private float levelFontSize = 16f;
 
         public void SetValues(BackpackVisualSettings values)
         {
@@ -33,6 +35,8 @@ namespace BackpackHero.Debugging
             placementNegativeRotationDegrees = values.PlacementNegativeRotationDegrees;
             placementScaleEase = values.PlacementScaleEase;
             shopFlightDuration = values.ShopFlightDuration;
+            levelFontColor = values.LevelFontColor;
+            levelFontSize = values.LevelFontSize;
         }
 
         public BackpackVisualSettings GetValues() => new(
@@ -40,7 +44,7 @@ namespace BackpackHero.Debugging
             mergeFlashMinimum, mergeFlashMaximum, mergeFlashCycleDuration,
             placementScaleMultiplier, placementPositiveRotationDegrees,
             placementNegativeRotationDegrees, placementScaleEase,
-            shopFlightDuration);
+            shopFlightDuration, levelFontColor, levelFontSize);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

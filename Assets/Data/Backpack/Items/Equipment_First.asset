@@ -29,4 +29,8 @@ MonoBehaviour:
   price: 0
   count: 1
   shape: {fileID: 11400000, guid: 779de2dbf4b6144469f76b3c6dc34fda, type: 2}
+  aircraftCooldownReductionLevel2: 0.2
+  aircraftCooldownReductionLevel3: 0.4
+  equipmentEffectIntervalReductionLevel2: 0.1
+  equipmentEffectIntervalReductionLevel3: 0.2
   fighterDefinition: {fileID: 0}

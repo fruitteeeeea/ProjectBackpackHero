@@ -114,7 +114,9 @@ namespace BackpackHero.Battle
                     if (effect is ProjectileEquipmentEffectDefinition projectile && projectile.ProjectilePrefab != null)
                         projectileEffects.Add(new ProjectileEffectRuntime(
                             projectile.ProjectilePrefab,
-                            projectile.Cooldown,
+                            item != null
+                                ? item.GetEquipmentEffectCooldown(projectile)
+                                : projectile.Cooldown,
                             item,
                             equipmentItemModifier));
                     else if (effect is LaserLinkEquipmentEffectDefinition laser && laser.LaserAttackPrefab != null)

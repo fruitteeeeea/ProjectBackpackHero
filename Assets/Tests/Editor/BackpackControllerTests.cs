@@ -725,6 +725,122 @@ public sealed class BackpackControllerTests
     }
 
     [Test]
+    public void ItemData_DefaultLevelCooldownReductions()
+    {
+        ItemData data = NewData(
+            "level-reductions",
+            ItemType.Aircraft,
+            2f,
+            NewShape(OneCell()));
+
+        Assert.That(
+            data.GetAircraftCooldownReductionForLevel(1),
+            Is.EqualTo(0f));
+        Assert.That(
+            data.GetAircraftCooldownReductionForLevel(2),
+            Is.EqualTo(0.2f));
+        Assert.That(
+            data.GetAircraftCooldownReductionForLevel(3),
+            Is.EqualTo(0.4f));
+        Assert.That(
+            data.GetEquipmentEffectIntervalReductionForLevel(1),
+            Is.EqualTo(0f));
+        Assert.That(
+            data.GetEquipmentEffectIntervalReductionForLevel(2),
+            Is.EqualTo(0.1f));
+        Assert.That(
+            data.GetEquipmentEffectIntervalReductionForLevel(3),
+            Is.EqualTo(0.2f));
+    }
+
+    [Test]
+    public void AircraftEffectiveCooldown_UsesLevelReduction()
+    {
+        ItemData data = NewData(
+            "aircraft-level-cooldown",
+            ItemType.Aircraft,
+            2f,
+            NewShape(OneCell()));
+
+        ItemInstance levelOne = new ItemInstance(
+            "aircraft-lv1", data, Vector2Int.zero, 1);
+        ItemInstance levelTwo = new ItemInstance(
+            "aircraft-lv2", data, Vector2Int.zero, 2);
+        ItemInstance levelThree = new ItemInstance(
+            "aircraft-lv3", data, Vector2Int.zero, 3);
+
+        Assert.That(levelOne.EffectiveCooldownDuration, Is.EqualTo(2f));
+        Assert.That(levelTwo.EffectiveCooldownDuration, Is.EqualTo(1.8f));
+        Assert.That(levelThree.EffectiveCooldownDuration, Is.EqualTo(1.6f));
+    }
+
+    [Test]
+    public void EquipmentEffectiveCooldown_IgnoresLevelReduction()
+    {
+        ItemData data = NewData(
+            "equipment-level-cooldown",
+            ItemType.Equipment,
+            3f,
+            NewShape(OneCell()));
+        ItemInstance equipment = new ItemInstance(
+            "equipment-lv2", data, Vector2Int.zero, 2);
+
+        Assert.That(
+            equipment.EffectiveCooldownDuration,
+            Is.EqualTo(3f));
+    }
+
+    [Test]
+    public void AircraftCooldown_ClampsEffectiveDurationAtMinimum()
+    {
+        ItemData data = NewData(
+            "aircraft-clamp-cooldown",
+            ItemType.Aircraft,
+            0.2f,
+            NewShape(OneCell()));
+        data.SetLevelCooldownReductionsForTests(
+            0.2f,
+            0.4f,
+            0.1f,
+            0.2f);
+
+        ItemInstance levelThree = new ItemInstance(
+            "aircraft-clamp-lv3",
+            data,
+            Vector2Int.zero,
+            3);
+
+        Assert.That(
+            levelThree.EffectiveCooldownDuration,
+            Is.EqualTo(0.01f));
+    }
+
+    [Test]
+    public void TryUpgrade_RecomputesActiveAircraftCooldown()
+    {
+        ItemData data = NewData(
+            "aircraft-upgrade-cooldown",
+            ItemType.Aircraft,
+            2f,
+            NewShape(OneCell()));
+        ItemInstance aircraft = new ItemInstance(
+            "aircraft-upgrade", data, Vector2Int.zero, 1);
+
+        aircraft.BeginCooldown();
+        aircraft.TickCooldown(0.5f);
+
+        Assert.That(
+            aircraft.TryUpgrade(),
+            Is.True);
+        Assert.That(
+            aircraft.Level,
+            Is.EqualTo(2));
+        Assert.That(
+            aircraft.RemainingCooldown,
+            Is.EqualTo(1.35f).Within(0.0001f));
+    }
+
+    [Test]
     public void GetAdjacentAircraftItems_FiltersAndDeduplicates()
     {
         BackpackController backpack = new BackpackController(4, 3);

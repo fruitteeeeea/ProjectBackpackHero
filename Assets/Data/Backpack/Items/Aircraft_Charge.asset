@@ -29,4 +29,8 @@ MonoBehaviour:
   count: 1
   equipmentItemModifier: 1
   shape: {fileID: 11400000, guid: 9cb7d1e77bbeb4d2e8bc5751c1d239a7, type: 2}
+  aircraftCooldownReductionLevel2: 0.2
+  aircraftCooldownReductionLevel3: 0.4
+  equipmentEffectIntervalReductionLevel2: 0.1
+  equipmentEffectIntervalReductionLevel3: 0.2
   fighterDefinition: {fileID: 11400000, guid: bc8e24684bab14f7c8fb5cefd9c00d9b, type: 2}

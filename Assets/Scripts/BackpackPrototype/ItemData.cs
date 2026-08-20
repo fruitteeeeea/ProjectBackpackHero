@@ -42,6 +42,16 @@ namespace BackpackPrototype
         private float equipmentItemModifier = 1f;
         [SerializeField] private ItemShapeData shape;
 
+        [Header("Level Cooldown Reductions")]
+        [Tooltip("飞机物品在 Lv2 时从部署冷却中减去的秒数。")]
+        [SerializeField, Min(0f)] private float aircraftCooldownReductionLevel2 = 0.2f;
+        [Tooltip("飞机物品在 Lv3 时从部署冷却中减去的秒数。")]
+        [SerializeField, Min(0f)] private float aircraftCooldownReductionLevel3 = 0.4f;
+        [Tooltip("装备效果在 Lv2 时从内置射击间隔中减去的秒数。")]
+        [SerializeField, Min(0f)] private float equipmentEffectIntervalReductionLevel2 = 0.1f;
+        [Tooltip("装备效果在 Lv3 时从内置射击间隔中减去的秒数。")]
+        [SerializeField, Min(0f)] private float equipmentEffectIntervalReductionLevel3 = 0.2f;
+
         [Header("Battle")]
         [SerializeField] private FighterDefinition fighterDefinition;
 
@@ -56,6 +66,14 @@ namespace BackpackPrototype
             itemType == ItemType.Aircraft
                 ? Mathf.Max(MinimumEquipmentItemModifier, equipmentItemModifier)
                 : 1f;
+        public float AircraftCooldownReductionLevel2 =>
+            Mathf.Max(0f, aircraftCooldownReductionLevel2);
+        public float AircraftCooldownReductionLevel3 =>
+            Mathf.Max(0f, aircraftCooldownReductionLevel3);
+        public float EquipmentEffectIntervalReductionLevel2 =>
+            Mathf.Max(0f, equipmentEffectIntervalReductionLevel2);
+        public float EquipmentEffectIntervalReductionLevel3 =>
+            Mathf.Max(0f, equipmentEffectIntervalReductionLevel3);
         public int Price => price;
         public bool InitiallyUnlocked => true;
         public string UnlockRequirementText => unlockRequirementText;
@@ -79,6 +97,29 @@ namespace BackpackPrototype
         public string Description => Desc;
         public float CooldownDuration => Cd;
         public int SpawnCount => Count;
+
+        public float GetAircraftCooldownReductionForLevel(int level)
+        {
+            if (level <= 1) return 0f;
+            return level == 2
+                ? AircraftCooldownReductionLevel2
+                : AircraftCooldownReductionLevel3;
+        }
+
+        public float GetEquipmentEffectIntervalReductionForLevel(int level)
+        {
+            if (level <= 1) return 0f;
+            return level == 2
+                ? EquipmentEffectIntervalReductionLevel2
+                : EquipmentEffectIntervalReductionLevel3;
+        }
+
+        public float GetAircraftCooldownDurationForLevel(int level)
+        {
+            return Mathf.Max(
+                0.01f,
+                Cd - GetAircraftCooldownReductionForLevel(level));
+        }
 
         public void InitializeForTests(string testName, ItemType testItemType, float testCooldownDuration, ItemShapeData testShape)
         {
@@ -104,6 +145,19 @@ namespace BackpackPrototype
             OnValidate();
         }
 
+        public void SetLevelCooldownReductionsForTests(
+            float aircraftLevel2,
+            float aircraftLevel3,
+            float equipmentLevel2,
+            float equipmentLevel3)
+        {
+            aircraftCooldownReductionLevel2 = aircraftLevel2;
+            aircraftCooldownReductionLevel3 = aircraftLevel3;
+            equipmentEffectIntervalReductionLevel2 = equipmentLevel2;
+            equipmentEffectIntervalReductionLevel3 = equipmentLevel3;
+            OnValidate();
+        }
+
         public void ConfigurePlayerProgressForTests(string testItemId, int goldCost = 0, int fragmentCost = 0)
         {
             id = testItemId;
@@ -123,6 +177,10 @@ namespace BackpackPrototype
             equipmentItemModifier = Mathf.Max(
                 MinimumEquipmentItemModifier,
                 equipmentItemModifier);
+            aircraftCooldownReductionLevel2 = Mathf.Max(0f, aircraftCooldownReductionLevel2);
+            aircraftCooldownReductionLevel3 = Mathf.Max(0f, aircraftCooldownReductionLevel3);
+            equipmentEffectIntervalReductionLevel2 = Mathf.Max(0f, equipmentEffectIntervalReductionLevel2);
+            equipmentEffectIntervalReductionLevel3 = Mathf.Max(0f, equipmentEffectIntervalReductionLevel3);
         }
     }
 }

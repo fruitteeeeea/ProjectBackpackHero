@@ -183,6 +183,106 @@ public sealed class FighterEquipmentEffects2DTests
             Object.DestroyImmediate(effect);
         }
     }
+
+    [Test]
+    public void ProjectileEffects_ApplyEquipmentLevelIntervalReduction()
+    {
+        var owner = new GameObject("Equipment Effects");
+        var prefab = new GameObject("Projectile");
+        ProjectileEquipmentEffectDefinition effect =
+            ScriptableObject.CreateInstance<ProjectileEquipmentEffectDefinition>();
+        ItemData equipmentData = ScriptableObject.CreateInstance<ItemData>();
+
+        try
+        {
+            BattleAttack2D attack = prefab.AddComponent<EquipmentEffectTestAttack>();
+            effect.InitializeForTests(attack, 0.8f);
+            equipmentData.InitializeForTests(
+                "Equipment",
+                ItemType.Equipment,
+                3f,
+                null);
+            equipmentData.SetEquipmentEffectsForTests(effect);
+
+            ItemInstance equipment = new ItemInstance(
+                "equipment-lv2",
+                equipmentData,
+                Vector2Int.zero,
+                2);
+            FighterEquipmentEffects2D controller =
+                owner.AddComponent<FighterEquipmentEffects2D>();
+
+            controller.Configure(
+                new[]
+                {
+                    (Effect: (EquipmentEffectDefinition)effect,
+                     Item: equipment),
+                },
+                1f);
+
+            Assert.That(controller.Tick(0f), Is.True);
+            Assert.That(controller.Tick(0.69f), Is.False);
+            Assert.That(controller.Tick(0.01f), Is.True);
+        }
+        finally
+        {
+            Object.DestroyImmediate(owner);
+            Object.DestroyImmediate(prefab);
+            Object.DestroyImmediate(effect);
+            Object.DestroyImmediate(equipmentData);
+        }
+    }
+
+    [Test]
+    public void ItemInstance_ScalesEquipmentEffectCooldownByLevel()
+    {
+        ProjectileEquipmentEffectDefinition projectile =
+            ScriptableObject.CreateInstance<ProjectileEquipmentEffectDefinition>();
+        LaserLinkEquipmentEffectDefinition laser =
+            ScriptableObject.CreateInstance<LaserLinkEquipmentEffectDefinition>();
+        ItemData equipmentData = ScriptableObject.CreateInstance<ItemData>();
+
+        try
+        {
+            projectile.InitializeForTests(null, 0.8f);
+            laser.InitializeForTests(null, 3f);
+            equipmentData.InitializeForTests(
+                "Equipment",
+                ItemType.Equipment,
+                3f,
+                null);
+
+            ItemInstance levelTwo = new ItemInstance(
+                "equipment-lv2",
+                equipmentData,
+                Vector2Int.zero,
+                2);
+            ItemInstance levelThree = new ItemInstance(
+                "equipment-lv3",
+                equipmentData,
+                Vector2Int.zero,
+                3);
+
+            Assert.That(
+                levelTwo.GetEquipmentEffectCooldown(projectile),
+                Is.EqualTo(0.7f));
+            Assert.That(
+                levelThree.GetEquipmentEffectCooldown(projectile),
+                Is.EqualTo(0.6f));
+            Assert.That(
+                levelTwo.GetEquipmentEffectCooldown(laser),
+                Is.EqualTo(2.9f));
+            Assert.That(
+                levelThree.GetEquipmentEffectCooldown(laser),
+                Is.EqualTo(2.8f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(projectile);
+            Object.DestroyImmediate(laser);
+            Object.DestroyImmediate(equipmentData);
+        }
+    }
 }
 
 public sealed class EquipmentEffectTestAttack : BattleAttack2D

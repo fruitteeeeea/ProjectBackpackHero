@@ -113,7 +113,11 @@ namespace BackpackHero.Battle
             float modifier = Mathf.Max(
                 ItemData.MinimumEquipmentItemModifier,
                 equipmentItemModifier);
-            nextFireTimes[effectKey] = Time.time + effect.Cooldown / modifier;
+            float effectiveCooldown = item != null
+                ? item.GetEquipmentEffectCooldown(effect)
+                : effect.Cooldown;
+            nextFireTimes[effectKey] =
+                Time.time + effectiveCooldown / modifier;
             for (int index = 0; index < targetCount; index++)
             {
                 combat.FireAttackAtPoint(

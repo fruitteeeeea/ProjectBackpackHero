@@ -38,9 +38,25 @@ namespace BackpackPrototype
         private float activeCooldownDuration;
         private float? runtimeCooldownDuration;
 
-        public float EffectiveCooldownDuration =>
-            runtimeCooldownDuration ??
-            (Data != null ? Data.CooldownDuration : 0f);
+        public float EffectiveCooldownDuration
+        {
+            get
+            {
+                if (runtimeCooldownDuration.HasValue)
+                {
+                    return runtimeCooldownDuration.Value;
+                }
+
+                if (Data == null)
+                {
+                    return 0f;
+                }
+
+                return Data.ItemType == ItemType.Aircraft
+                    ? Data.GetAircraftCooldownDurationForLevel(Level)
+                    : Data.CooldownDuration;
+            }
+        }
 
         public float CooldownProgress
         {
@@ -68,14 +84,44 @@ namespace BackpackPrototype
             }
 
             IsCoolingDown = true;
-            activeCooldownDuration = Mathf.Max(
-                0.01f,
-                EffectiveCooldownDuration *
-                GamePacingDebugRuntime
-                    .GetWhiteboardCooldownMultiplier() /
-                StyleTendencyDebugRuntime
-                    .GetItemCooldownSpeedMultiplier());
+            activeCooldownDuration =
+                CalculateActiveCooldownDuration();
             RemainingCooldown = activeCooldownDuration;
+        }
+
+        public float GetEquipmentEffectCooldown(
+            EquipmentEffectDefinition effect)
+        {
+            if (effect == null)
+            {
+                return 0f;
+            }
+
+            float reduction =
+                Data != null
+                    ? Data.GetEquipmentEffectIntervalReductionForLevel(
+                        Level)
+                    : 0f;
+
+            if (effect is
+                ProjectileEquipmentEffectDefinition projectile)
+            {
+                return Mathf.Max(
+                    ProjectileEquipmentEffectDefinition
+                        .MinimumCooldown,
+                    projectile.Cooldown - reduction);
+            }
+
+            if (effect is
+                LaserLinkEquipmentEffectDefinition laser)
+            {
+                return Mathf.Max(
+                    LaserLinkEquipmentEffectDefinition
+                        .MinimumCooldown,
+                    laser.Cooldown - reduction);
+            }
+
+            return 0f;
         }
 
         public bool TickCooldown(float deltaTime)
@@ -130,8 +176,35 @@ namespace BackpackPrototype
                 return false;
             }
 
+            float previousActiveCooldownDuration =
+                activeCooldownDuration;
             Level++;
+
+            if (IsCoolingDown &&
+                previousActiveCooldownDuration > 0f)
+            {
+                float remainingProgress = Mathf.Clamp01(
+                    RemainingCooldown /
+                    previousActiveCooldownDuration);
+                activeCooldownDuration =
+                    CalculateActiveCooldownDuration();
+                RemainingCooldown =
+                    activeCooldownDuration *
+                    remainingProgress;
+            }
+
             return true;
+        }
+
+        private float CalculateActiveCooldownDuration()
+        {
+            return Mathf.Max(
+                0.01f,
+                EffectiveCooldownDuration *
+                GamePacingDebugRuntime
+                    .GetWhiteboardCooldownMultiplier() /
+                StyleTendencyDebugRuntime
+                    .GetItemCooldownSpeedMultiplier());
         }
     }
 }

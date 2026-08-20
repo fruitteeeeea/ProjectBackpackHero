@@ -123,6 +123,60 @@ public sealed class ItemBalanceConfigurationTests
     }
 
     [Test]
+    public void ItemAssets_UseDefaultLevelCooldownReductions()
+    {
+        string[] aircraftPaths =
+        {
+            "Aircraft_Charge.asset",
+            "Aircraft_Explosive.asset",
+            "Aircraft_First.asset",
+            "Aircraft_L.asset",
+            "Aircraft_Laser.asset",
+            "Aircraft_Shield.asset",
+            "Aircraft_Shotgun.asset",
+            "Aircraft_Sniper.asset",
+        };
+
+        string[] equipmentPaths =
+        {
+            "Equipment_1x2.asset",
+            "Equipment_ArcCoil.asset",
+            "Equipment_First.asset",
+            "Equipment_LaserLink.asset",
+            "Equipment_RapidCannon.asset",
+            "Equipment_WaveEmitter.asset",
+        };
+
+        foreach (string path in aircraftPaths)
+        {
+            ItemData aircraft = Load<ItemData>(
+                "Assets/Data/Backpack/Items/" + path);
+            Assert.That(
+                aircraft.GetAircraftCooldownReductionForLevel(2),
+                Is.EqualTo(0.2f),
+                path);
+            Assert.That(
+                aircraft.GetAircraftCooldownReductionForLevel(3),
+                Is.EqualTo(0.4f),
+                path);
+        }
+
+        foreach (string path in equipmentPaths)
+        {
+            ItemData equipment = Load<ItemData>(
+                "Assets/Data/Backpack/Items/" + path);
+            Assert.That(
+                equipment.GetEquipmentEffectIntervalReductionForLevel(2),
+                Is.EqualTo(0.1f),
+                path);
+            Assert.That(
+                equipment.GetEquipmentEffectIntervalReductionForLevel(3),
+                Is.EqualTo(0.2f),
+                path);
+        }
+    }
+
+    [Test]
     public void ItemAssets_UseConfiguredAircraftAndEquipmentColors()
     {
         ItemData waveEmitter = Load<ItemData>(

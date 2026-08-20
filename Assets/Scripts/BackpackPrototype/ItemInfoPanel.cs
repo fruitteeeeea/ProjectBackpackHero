@@ -1,3 +1,4 @@
+using System.Text;
 using TMPro;
 using UnityEngine;
 
@@ -89,7 +90,8 @@ namespace BackpackPrototype
 
             if (descriptionLabel != null)
             {
-                descriptionLabel.text = data.Description;
+                descriptionLabel.text =
+                    BuildDescription(instance, data);
             }
 
             SetVisible(true);
@@ -132,6 +134,52 @@ namespace BackpackPrototype
             {
                 panelVisual.SetActive(visible);
             }
+        }
+
+        private static string BuildDescription(
+            ItemInstance instance,
+            ItemData data)
+        {
+            var text = new StringBuilder();
+            if (!string.IsNullOrWhiteSpace(data.Description))
+            {
+                text.Append(data.Description);
+            }
+
+            if (data.ItemType == ItemType.Aircraft)
+            {
+                text.AppendLine();
+                text.AppendLine();
+                text.Append("部署冷却：");
+                text.Append(
+                    instance.EffectiveCooldownDuration
+                        .ToString("0.##"));
+                text.Append("s");
+            }
+            else if (data.ItemType == ItemType.Equipment)
+            {
+                foreach (EquipmentEffectDefinition effect
+                         in data.EquipmentEffects)
+                {
+                    if (effect == null)
+                    {
+                        continue;
+                    }
+
+                    text.AppendLine();
+                    text.AppendLine();
+                    text.Append(
+                        effect is LaserLinkEquipmentEffectDefinition
+                            ? "激光间隔："
+                            : "射击间隔：");
+                    text.Append(
+                        instance.GetEquipmentEffectCooldown(effect)
+                            .ToString("0.##"));
+                    text.Append("s");
+                }
+            }
+
+            return text.ToString();
         }
     }
 }

@@ -24,4 +24,8 @@ MonoBehaviour:
   cooldownDuration: 3.5
   spawnCount: 1
   shape: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
+  aircraftCooldownReductionLevel2: 0.2
+  aircraftCooldownReductionLevel3: 0.4
+  equipmentEffectIntervalReductionLevel2: 0.1
+  equipmentEffectIntervalReductionLevel3: 0.2
   fighterDefinition: {fileID: 0}

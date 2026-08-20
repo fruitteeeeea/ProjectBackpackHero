@@ -10,7 +10,7 @@ public class MainBottmChoose : MonoBehaviour
     private readonly List<Tween> tweens = new List<Tween>();
     private static readonly string[] Labels = { "", "Ranks", "Battle", "Hangar", "" };
 
-    public void OnChooseBottom(Transform target, int index)
+    public virtual void OnChooseBottom(Transform target, int index)
     {
         if (target == null || index < 0 || index >= Labels.Length) return;
         foreach (var tween in tweens) tween?.Kill();

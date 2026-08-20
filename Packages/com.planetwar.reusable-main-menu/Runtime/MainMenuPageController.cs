@@ -6,6 +6,11 @@ namespace PlanetWar.ReusableMainMenu
     [DisallowMultipleComponent]
     public sealed class MainMenuPageController : MonoBehaviour
     {
+        private const int LockedPlaceholderTabIndex = 0;
+        private const int RankTabIndex = 1;
+        private const int BattleTabIndex = 2;
+        private const int HangarTabIndex = 3;
+
         [SerializeField] private GameObject mainPage;
         [SerializeField] private RanksView ranksPage;
         [SerializeField] private HangarView hangarPage;
@@ -33,7 +38,7 @@ namespace PlanetWar.ReusableMainMenu
             if (action == MainMenuAction.Rank) ShowRankInfo();
             else if (action == MainMenuAction.BottomRank) ShowRanks();
             else if (action == MainMenuAction.BottomCollection) ShowHangar();
-            else if (action == MainMenuAction.BottomHome || action == MainMenuAction.BottomBattle) ShowBattle(action == MainMenuAction.BottomBattle ? 2 : 0);
+            else if (action == MainMenuAction.BottomHome || action == MainMenuAction.BottomBattle) ShowBattle(action == MainMenuAction.BottomBattle ? BattleTabIndex : LockedPlaceholderTabIndex);
             else if (action >= MainMenuAction.BottomCollection && action <= MainMenuAction.BottomMore) SelectTab((int)action - (int)MainMenuAction.BottomHome);
         }
 
@@ -44,7 +49,7 @@ namespace PlanetWar.ReusableMainMenu
             if (hangarPage != null) hangarPage.gameObject.SetActive(false);
             if (rankInfoPage != null) rankInfoPage.Hide();
             if (ranksPage != null) ranksPage.Show();
-            SelectTab(1);
+            SelectTab(RankTabIndex);
         }
 
         private void ShowRankInfo()
@@ -58,7 +63,7 @@ namespace PlanetWar.ReusableMainMenu
 
         private void OnRankInfoClosed()
         {
-            ShowBattle(0);
+            ShowBattle(BattleTabIndex);
         }
 
         private void ShowBattle(int tabIndex)
@@ -78,7 +83,7 @@ namespace PlanetWar.ReusableMainMenu
             if (ranksPage != null) ranksPage.gameObject.SetActive(false);
             if (rankInfoPage != null) rankInfoPage.Hide();
             if (hangarPage != null) hangarPage.Show();
-            SelectTab(3);
+            SelectTab(HangarTabIndex);
         }
 
         private void SetBottomBarActive(bool active)

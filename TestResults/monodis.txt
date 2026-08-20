@@ -1,0 +1,2 @@
+'D:\unity\Edior\6000.5.3f1\Editor\Data\MonoBleedingEdge\bin\monodis' is not recognized as an internal or external command,
+operable program or batch file.

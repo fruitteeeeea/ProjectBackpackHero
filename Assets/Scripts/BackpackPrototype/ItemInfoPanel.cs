@@ -10,6 +10,7 @@ namespace BackpackPrototype
     /// </summary>
     public sealed class ItemInfoPanel : MonoBehaviour
     {
+        private const string HighlightColor = "#3DDB37";
         [SerializeField]
         private PlayerBackpackSystem playerBackpackSystem;
 
@@ -141,20 +142,15 @@ namespace BackpackPrototype
             ItemData data)
         {
             var text = new StringBuilder();
-            if (!string.IsNullOrWhiteSpace(data.Description))
-            {
-                text.Append(data.Description);
-            }
 
             if (data.ItemType == ItemType.Aircraft)
             {
-                text.AppendLine();
-                text.AppendLine();
-                text.Append("部署冷却：");
-                text.Append(
-                    instance.EffectiveCooldownDuration
-                        .ToString("0.##"));
-                text.Append("s");
+                text.Append("Deploys ");
+                text.Append(data.ItemName);
+                text.Append(" every ");
+                AppendHighlightedDuration(
+                    text, instance.EffectiveCooldownDuration);
+                text.Append(".");
             }
             else if (data.ItemType == ItemType.Equipment)
             {
@@ -166,20 +162,33 @@ namespace BackpackPrototype
                         continue;
                     }
 
-                    text.AppendLine();
-                    text.AppendLine();
-                    text.Append(
-                        effect is LaserLinkEquipmentEffectDefinition
-                            ? "激光间隔："
-                            : "射击间隔：");
-                    text.Append(
-                        instance.GetEquipmentEffectCooldown(effect)
-                            .ToString("0.##"));
-                    text.Append("s");
+                    if (string.IsNullOrWhiteSpace(effect.AttackDisplayName))
+                    {
+                        continue;
+                    }
+
+                    if (text.Length > 0) text.AppendLine();
+                    text.Append("Adjacent aircraft fire ");
+                    text.Append(effect.AttackDisplayName);
+                    text.Append(" every ");
+                    AppendHighlightedDuration(
+                        text, instance.GetEquipmentEffectCooldown(effect));
+                    text.Append(".");
                 }
             }
 
             return text.ToString();
+        }
+
+        private static void AppendHighlightedDuration(
+            StringBuilder text,
+            float duration)
+        {
+            text.Append("<color=");
+            text.Append(HighlightColor);
+            text.Append(">");
+            text.Append(duration.ToString("0.##"));
+            text.Append("s</color>");
         }
     }
 }

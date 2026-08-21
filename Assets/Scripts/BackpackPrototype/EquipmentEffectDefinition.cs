@@ -18,6 +18,16 @@ namespace BackpackPrototype
     public abstract class EquipmentEffectDefinition :
         ScriptableObject
     {
+        [Header("Presentation")]
+        [Tooltip("Player-facing English name for the attack shown in the in-battle item label.")]
+        [SerializeField] private string attackDisplayName;
+
+        /// <summary>
+        /// Player-facing attack name. This must be configured on the effect asset rather
+        /// than inferred from a prefab or asset filename.
+        /// </summary>
+        public string AttackDisplayName => attackDisplayName?.Trim();
+
         /// <summary>Optional Equipment-detail statistics. Effects without numeric values return false.</summary>
         public virtual bool TryGetHangarStats(out EquipmentHangarStats stats)
         {

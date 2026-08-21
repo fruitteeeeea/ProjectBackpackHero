@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4af55d72167d4ce08c5e860b0e508926, type: 3}
   m_Name: EquipmentEffect_ProjectileBezier
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ProjectileEquipmentEffectDefinition
+  attackDisplayName: Curving Missile
   projectilePrefab: {fileID: 8849012164009076744, guid: e95a431ff85c4e1f8c3fe2e09bbfd269, type: 3}
   cooldown: 0.8

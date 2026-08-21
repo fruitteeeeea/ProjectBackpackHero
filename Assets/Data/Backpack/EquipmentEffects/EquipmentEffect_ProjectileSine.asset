@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4af55d72167d4ce08c5e860b0e508926, type: 3}
   m_Name: EquipmentEffect_ProjectileSine
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ProjectileEquipmentEffectDefinition
+  attackDisplayName: Wave Shot
   projectilePrefab: {fileID: 8849012164009076747, guid: d237a9717bbf45e09214f295a82d0a2a, type: 3}
   cooldown: 0.8

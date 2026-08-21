@@ -294,7 +294,10 @@ public sealed class ItemPresentationTests
             Assert.That(name.text, Is.EqualTo(data.ItemName));
             Assert.That(staleName.text, Is.Not.EqualTo(data.ItemName));
             Assert.That(level.text, Is.EqualTo("Lv.1"));
-            Assert.That(description.text, Is.EqualTo(data.Description));
+            Assert.That(description.text, Is.EqualTo(
+                "Adjacent aircraft fire Standard Shot every " +
+                "<color=#3DDB37>0.6s</color>."));
+            Assert.That(description.text, Does.Not.Contain(data.Description));
 
             SetField(item, "isDragging", false);
             panel.RefreshPresentation(item);
@@ -305,6 +308,73 @@ public sealed class ItemPresentationTests
             Object.DestroyImmediate(itemRoot);
             Object.DestroyImmediate(root);
         }
+    }
+
+    [Test]
+    public void ItemInfoPanel_AircraftDescriptionUsesItemNameAndCurrentLevelCooldown()
+    {
+        ItemData data = AssetDatabase.LoadAssetAtPath<ItemData>(
+            "Assets/Data/Backpack/Items/Aircraft_First.asset");
+        ItemInstance item = new(data.ItemId, data, Vector2Int.zero);
+
+        Assert.That(BuildItemInfoDescription(item, data), Is.EqualTo(
+            "Deploys Vanguard every <color=#3DDB37>2s</color>."));
+
+        item.TryUpgrade();
+        Assert.That(BuildItemInfoDescription(item, data), Is.EqualTo(
+            "Deploys Vanguard every <color=#3DDB37>1.8s</color>."));
+
+        item.TryUpgrade();
+        Assert.That(BuildItemInfoDescription(item, data), Is.EqualTo(
+            "Deploys Vanguard every <color=#3DDB37>1.6s</color>."));
+    }
+
+    [Test]
+    public void ItemInfoPanel_EquipmentDescriptionUsesConfiguredNamesAndSkipsBlankNames()
+    {
+        ItemData rapidCannon = AssetDatabase.LoadAssetAtPath<ItemData>(
+            "Assets/Data/Backpack/Items/Equipment_RapidCannon.asset");
+        ItemData laserLink = AssetDatabase.LoadAssetAtPath<ItemData>(
+            "Assets/Data/Backpack/Items/Equipment_LaserLink.asset");
+        ItemData data = ScriptableObject.CreateInstance<ItemData>();
+        ProjectileEquipmentEffectDefinition unnamed =
+            ScriptableObject.CreateInstance<ProjectileEquipmentEffectDefinition>();
+        try
+        {
+            data.InitializeForTests("Dual Module", ItemType.Equipment, 2f, null);
+            data.SetEquipmentEffectsForTests(
+                rapidCannon.EquipmentEffects[0],
+                laserLink.EquipmentEffects[0],
+                unnamed);
+            ItemInstance item = new("dual-module", data, Vector2Int.zero);
+
+            Assert.That(BuildItemInfoDescription(item, data), Is.EqualTo(
+                "Adjacent aircraft fire Standard Shot every " +
+                "<color=#3DDB37>0.6s</color>.\n" +
+                "Adjacent aircraft fire Laser Beam every " +
+                "<color=#3DDB37>3s</color>."));
+
+            item.TryUpgrade();
+            Assert.That(BuildItemInfoDescription(item, data), Does.Contain(
+                "<color=#3DDB37>0.5s</color>"));
+            Assert.That(BuildItemInfoDescription(item, data),
+                Does.Not.Contain("ProjectileEquipmentEffectDefinition"));
+        }
+        finally
+        {
+            Object.DestroyImmediate(unnamed);
+            Object.DestroyImmediate(data);
+        }
+    }
+
+    private static string BuildItemInfoDescription(
+        ItemInstance item,
+        ItemData data)
+    {
+        return (string)typeof(ItemInfoPanel).GetMethod(
+            "BuildDescription",
+            BindingFlags.Static | BindingFlags.NonPublic).Invoke(
+            null, new object[] { item, data });
     }
 
     private static TMP_Text NewText(Transform parent, string name)

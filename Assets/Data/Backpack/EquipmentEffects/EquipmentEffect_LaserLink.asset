@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c3d2f1a8b6e4f7a9c0d123456789abc, type: 3}
   m_Name: EquipmentEffect_LaserLink
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.LaserLinkEquipmentEffectDefinition
+  attackDisplayName: Laser Beam
   laserAttackPrefab: {fileID: 1000000000000000004, guid: c42b9321adc84edca9697e69ce3a6282, type: 3}
   cooldown: 3

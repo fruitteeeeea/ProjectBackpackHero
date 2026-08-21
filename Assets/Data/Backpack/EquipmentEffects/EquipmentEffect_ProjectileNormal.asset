@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4af55d72167d4ce08c5e860b0e508926, type: 3}
   m_Name: EquipmentEffect_ProjectileNormal
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ProjectileEquipmentEffectDefinition
+  attackDisplayName: Standard Shot
   projectilePrefab: {fileID: 9181062788350396426, guid: 6931d63d73f334a0e9b4ee30938152ad, type: 3}
   cooldown: 0.6

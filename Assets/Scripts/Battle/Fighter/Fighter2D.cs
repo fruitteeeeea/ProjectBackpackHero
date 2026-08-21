@@ -16,6 +16,12 @@ namespace BackpackHero.Battle
     
     public sealed class Fighter2D : MonoBehaviour
     {
+        private const float OvertimePenaltyRetryInterval = 1f;
+
+        [Header("Overtime Penalty")]
+        [SerializeField]
+        private BattleAttack2D overtimePenaltyProjectilePrefab;
+
         private SpriteRenderer spriteRenderer;
         private DirectionalMover2D mover;
         private Health health;
@@ -35,6 +41,9 @@ namespace BackpackHero.Battle
         private ItemInstance damageSourceItem;
         private float progressionHealthMultiplier = 1f;
         private float progressionDamageMultiplier = 1f;
+        private LifetimeAndScreenBounds2D lifetime;
+        private bool overtimePenaltyActive;
+        private float overtimePenaltyRetryTimer;
 
         public FighterDefinition Definition =>
             definition;
@@ -97,9 +106,15 @@ namespace BackpackHero.Battle
                 GetComponentsInChildren<
                     WorldSpaceHealthBarFollower2D>(
                     true);
-            
+
+            lifetime = GetComponent<LifetimeAndScreenBounds2D>();
+
             health.Damaged += HandleDamaged;
             health.Died += HandleDied;
+            if (lifetime != null)
+            {
+                lifetime.LifetimeExpired += HandleLifetimeExpired;
+            }
         }
 
         private void OnDestroy()
@@ -108,6 +123,11 @@ namespace BackpackHero.Battle
             {
                 health.Damaged -= HandleDamaged;
                 health.Died -= HandleDied;
+            }
+
+            if (lifetime != null)
+            {
+                lifetime.LifetimeExpired -= HandleLifetimeExpired;
             }
         }
 
@@ -128,6 +148,21 @@ namespace BackpackHero.Battle
             LevelDifficultyRuntime.Changed -= HandleLevelDifficultyChanged;
             AircraftVisualDebugRuntime.SettingsChanged -=
                 HandleAircraftVisualSettingsChanged;
+            StopOvertimePenalty();
+        }
+
+        private void Update()
+        {
+            if (!overtimePenaltyActive || !IsAlive)
+            {
+                return;
+            }
+
+            overtimePenaltyRetryTimer -= Time.deltaTime;
+            if (overtimePenaltyRetryTimer <= 0f)
+            {
+                TryFireOvertimePenalty();
+            }
         }
 
         /// <summary>
@@ -262,8 +297,6 @@ namespace BackpackHero.Battle
 
         private void ApplyStyleLifetime()
         {
-            LifetimeAndScreenBounds2D lifetime =
-                GetComponent<LifetimeAndScreenBounds2D>();
             if (lifetime == null)
             {
                 return;
@@ -271,17 +304,89 @@ namespace BackpackHero.Battle
 
             AircraftVisualSettings visualSettings =
                 AircraftVisualDebugRuntime.CurrentSettings;
-            if (visualSettings.AircraftVisualOverridesEnabled &&
-                !visualSettings.AircraftLifetimeEnabled)
-            {
-                lifetime.SetLifetime(0f);
-                return;
-            }
-
             lifetime.SetLifetime(
                 lifetime.ConfiguredLifetime *
                 StyleTendencyDebugRuntime
                     .GetAircraftLifetimeMultiplier());
+            lifetime.SetDestroyWhenLifetimeExpires(
+                !visualSettings.AircraftVisualOverridesEnabled ||
+                visualSettings.AircraftLifetimeEnabled);
+        }
+
+        private void HandleLifetimeExpired()
+        {
+            if (lifetime == null ||
+                lifetime.DestroyWhenLifetimeExpires ||
+                !IsAlive)
+            {
+                return;
+            }
+
+            overtimePenaltyActive = true;
+            TryFireOvertimePenalty();
+        }
+
+        private void TryFireOvertimePenalty()
+        {
+            overtimePenaltyRetryTimer = OvertimePenaltyRetryInterval;
+
+            if (overtimePenaltyProjectilePrefab == null)
+            {
+                Debug.LogWarning(
+                    $"{name}超时惩罚未发射：缺少贝塞尔子弹Prefab。",
+                    this);
+                return;
+            }
+
+            Fighter2D nearestEnemy = FindNearestLivingEnemy();
+            if (nearestEnemy == null ||
+                !nearestEnemy.TryGetComponent(out FighterCombat2D combat))
+            {
+                return;
+            }
+
+            combat.FireAttackAtPoint(
+                overtimePenaltyProjectilePrefab,
+                transform.position,
+                ProjectileVisualSource.Equipment);
+        }
+
+        private Fighter2D FindNearestLivingEnemy()
+        {
+            Fighter2D nearest = null;
+            float nearestDistanceSquared = float.PositiveInfinity;
+
+            foreach (Fighter2D candidate in
+                     FindObjectsByType<Fighter2D>(
+                         FindObjectsInactive.Exclude))
+            {
+                if (candidate == null ||
+                    candidate == this ||
+                    !candidate.IsAlive ||
+                    candidate.Faction == Faction)
+                {
+                    continue;
+                }
+
+                float distanceSquared =
+                    ((Vector2)(candidate.transform.position -
+                        transform.position)).sqrMagnitude;
+                if (distanceSquared >= nearestDistanceSquared)
+                {
+                    continue;
+                }
+
+                nearest = candidate;
+                nearestDistanceSquared = distanceSquared;
+            }
+
+            return nearest;
+        }
+
+        private void StopOvertimePenalty()
+        {
+            overtimePenaltyActive = false;
+            overtimePenaltyRetryTimer = 0f;
         }
 
         private void ConfigureHealthBars()
@@ -342,6 +447,7 @@ namespace BackpackHero.Battle
             }
 
             isDying = true;
+            StopOvertimePenalty();
 
             DisableCombatInteractions();
             feedbacks?.PlayDeath(Faction);

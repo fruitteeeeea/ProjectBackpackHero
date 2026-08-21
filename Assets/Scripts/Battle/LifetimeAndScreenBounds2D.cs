@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -12,6 +13,9 @@ namespace BackpackHero.Battle
         [SerializeField, Min(0f)]
         private float lifetime = 10f;
 
+        [SerializeField]
+        private bool destroyWhenLifetimeExpires = true;
+
         [Header("Screen Bounds")]
         [SerializeField]
         private bool destroyWhenLeavingScreen = true;
@@ -25,11 +29,22 @@ namespace BackpackHero.Battle
         private float elapsedTime;
         private bool hasEnteredScreen;
 
+        private bool hasLifetimeExpired;
+
         public float Lifetime => lifetime;
         /// <summary>Prefab或场景配置的初始寿命，不会受运行时倍率写入影响。</summary>
         public float ConfiguredLifetime => configuredLifetime;
         public float RemainingLifetime =>
             Mathf.Max(0f, lifetime - elapsedTime);
+        public bool HasLifetimeExpired => hasLifetimeExpired;
+        public bool DestroyWhenLifetimeExpires =>
+            destroyWhenLifetimeExpires;
+
+        /// <summary>
+        /// 在寿命首次到期时触发。即使调用方选择自行处理到期结果，
+        /// 事件也只会触发一次。
+        /// </summary>
+        public event Action LifetimeExpired;
 
         private void Awake()
         {
@@ -58,6 +73,7 @@ namespace BackpackHero.Battle
         public void RestartLifetime()
         {
             elapsedTime = 0f;
+            hasLifetimeExpired = false;
             hasEnteredScreen = false;
             targetCamera = Camera.main;
         }
@@ -67,9 +83,23 @@ namespace BackpackHero.Battle
             lifetime = Mathf.Max(0f, newLifetime);
         }
 
+        /// <summary>
+        /// 设置寿命到期后的默认行为。关闭后仍会正常计时并发出
+        /// LifetimeExpired，由持有者决定后续退场方式。
+        /// </summary>
+        public void SetDestroyWhenLifetimeExpires(bool value)
+        {
+            destroyWhenLifetimeExpires = value;
+
+            if (destroyWhenLifetimeExpires && hasLifetimeExpired)
+            {
+                DestroySelf();
+            }
+        }
+
         private void UpdateLifetime(float deltaTime)
         {
-            if (lifetime <= 0f)
+            if (lifetime <= 0f || hasLifetimeExpired)
             {
                 return;
             }
@@ -78,7 +108,13 @@ namespace BackpackHero.Battle
 
             if (elapsedTime >= lifetime)
             {
-                DestroySelf();
+                hasLifetimeExpired = true;
+                LifetimeExpired?.Invoke();
+
+                if (destroyWhenLifetimeExpires)
+                {
+                    DestroySelf();
+                }
             }
         }
 

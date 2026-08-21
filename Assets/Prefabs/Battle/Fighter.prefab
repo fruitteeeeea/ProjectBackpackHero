@@ -273,6 +273,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46cf12baa609484991da2e223d311a2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.Fighter2D
+  overtimePenaltyProjectilePrefab: {fileID: 8849012164009076744, guid: e95a431ff85c4e1f8c3fe2e09bbfd269, type: 3}
 --- !u!114 &8169230671394209668
 MonoBehaviour:
   m_ObjectHideFlags: 0

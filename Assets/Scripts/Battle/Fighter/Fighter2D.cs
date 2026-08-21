@@ -350,12 +350,6 @@ namespace BackpackHero.Battle
             }
 
             Fighter2D nearestEnemy = FindNearestLivingEnemy();
-            if (nearestEnemy == null ||
-                !nearestEnemy.TryGetComponent(out FighterCombat2D combat))
-            {
-                return;
-            }
-
             AircraftVisualSettings visualSettings =
                 AircraftVisualDebugRuntime.CurrentSettings;
             ProjectileVisualSource visualSource =
@@ -364,11 +358,21 @@ namespace BackpackHero.Battle
                     ? ProjectileVisualSource.OvertimePenalty
                     : ProjectileVisualSource.Equipment;
 
-            combat.FireAttackAtPoint(
+            if (nearestEnemy != null &&
+                nearestEnemy.TryGetComponent(out FighterCombat2D combat) &&
+                combat.FireAttackAtPoint(
+                    overtimePenaltyProjectilePrefab,
+                    transform.position,
+                    visualSource,
+                    countsForDamageStatistics: false))
+            {
+                return;
+            }
+
+            FindEnemyFighterSpawner()?.FireOvertimePenalty(
                 overtimePenaltyProjectilePrefab,
-                transform.position,
-                visualSource,
-                countsForDamageStatistics: false);
+                this,
+                visualSource);
         }
 
         private Fighter2D FindNearestLivingEnemy()
@@ -401,6 +405,25 @@ namespace BackpackHero.Battle
             }
 
             return nearest;
+        }
+
+        private BackpackFighterSpawner FindEnemyFighterSpawner()
+        {
+            foreach (BackpackCombatController controller in
+                     BackpackCombatController.ActiveControllers)
+            {
+                BackpackFighterSpawner spawner =
+                    controller != null
+                        ? controller.FighterSpawner
+                        : null;
+                if (controller != null && controller.Faction != Faction &&
+                    spawner != null && spawner.isActiveAndEnabled)
+                {
+                    return spawner;
+                }
+            }
+
+            return null;
         }
 
         private void StopOvertimePenalty()

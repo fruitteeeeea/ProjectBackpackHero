@@ -132,6 +132,70 @@ namespace BackpackPrototype
             UpdateSpawnPointPosition();
         }
 
+        /// <summary>
+        /// 当场上没有可用敌机时，由背包母舰从飞机生成点发射一颗
+        /// 强制退场子弹。该攻击不归属背包物品，也不进入 DPS 统计。
+        /// </summary>
+        public bool FireOvertimePenalty(
+            BattleAttack2D projectilePrefab,
+            Fighter2D target,
+            ProjectileVisualSource visualSource)
+        {
+            EnsureReferences();
+
+            if (!BattleFlowController.IsCombatPhase ||
+                projectilePrefab == null ||
+                target == null ||
+                !target.IsAlive)
+            {
+                return false;
+            }
+
+            BattleFaction faction = factionMember != null
+                ? factionMember.Faction
+                : BattleFaction.Player;
+            if (faction == target.Faction)
+            {
+                return false;
+            }
+
+            Vector2 origin = (Vector2)SpawnPosition;
+            Vector2 targetPosition = (Vector2)target.transform.position;
+            Vector2 fireDirection = targetPosition - origin;
+            if (fireDirection.sqrMagnitude <= Mathf.Epsilon)
+            {
+                fireDirection = GetDefaultDirection();
+            }
+
+            BattleAttack2D attack = Instantiate(
+                projectilePrefab,
+                origin,
+                Quaternion.FromToRotation(
+                    Vector2.up,
+                    fireDirection));
+            float speed = target.Definition != null
+                ? target.Definition.ProjectileSpeed
+                : 8f;
+
+            attack.Initialize(
+                BattleAttackLaunchContext.WithAimPoint(
+                    faction,
+                    target.CurrentHealth,
+                    speed,
+                    -1f,
+                    origin,
+                    fireDirection,
+                    origin,
+                    GetDefaultDirection(),
+                    targetPosition,
+                    visualSource,
+                    canDamageBackpack: false,
+                    damageSource: new BattleDamageSource(
+                        null,
+                        countsForDamageStatistics: false)));
+            return true;
+        }
+
         public bool RequestSpawn(
             ItemInstance aircraftItem,
             ItemInstance triggeringEquipment = null,

@@ -9,6 +9,49 @@ using BackpackPrototype;
 
 public sealed class ItemPresentationTests
 {
+    [TestCase(false, false, false, true, false)]
+    [TestCase(false, true, true, false, false)]
+    [TestCase(true, false, false, true, false)]
+    [TestCase(true, true, true, false, false)]
+    [TestCase(false, false, false, false, true)]
+    public void HangarDetailLayout_BottomActionsMatchOriginalCardInfoContract(
+        bool equipped, bool enoughFragments, bool expectedUpgrade,
+        bool expectedProgress, bool maxLevel)
+    {
+        GameObject root = new GameObject("HangarDetail");
+        GameObject ownerRoot = new GameObject("Hangar");
+        GameObject cardRoot = new GameObject("Card");
+        try
+        {
+            HangarDetailLayout layout = root.AddComponent<HangarDetailLayout>();
+            GameObject upgrade = new GameObject("Upgrade");
+            GameObject equip = new GameObject("Equip");
+            GameObject progress = new GameObject("Progress");
+            layout.Configure(upgrade, equip, progress, null, null, null, null, null);
+
+            int level = maxLevel ? 10 : 1;
+            int fragments = enoughFragments ? 5 : 4;
+            var snapshot = new HangarItemSnapshot(
+                HangarItemKind.Aircraft, "Scout", "Reliable frontline damage.",
+                null, null, true, level, fragments, 5, 0, 2f, 1, null,
+                Color.white, "Unlocked", itemId: "scout", maximumLevel: 10);
+            HangarCardItem card = cardRoot.AddComponent<HangarCardItem>();
+            card.Configure(ownerRoot.AddComponent<HangarView>(), snapshot, equipped ? 0 : -1);
+
+            layout.ShowPreview(card);
+
+            Assert.That(upgrade.activeSelf, Is.EqualTo(expectedUpgrade));
+            Assert.That(progress.activeSelf, Is.EqualTo(expectedProgress));
+            Assert.That(equip.activeSelf, Is.EqualTo(!equipped));
+        }
+        finally
+        {
+            Object.DestroyImmediate(cardRoot);
+            Object.DestroyImmediate(ownerRoot);
+            Object.DestroyImmediate(root);
+        }
+    }
+
     [Test]
     public void HangarDetailLayout_UsesSnapshotNameAndDescriptionWithoutStats()
     {

@@ -83,10 +83,18 @@ namespace PlanetWar.ReusableMainMenu
             {
                 ApplyDetailAttributes(snapshot);
                 if (lockText != null) lockText.text = snapshot.Unlocked ? string.Empty : string.IsNullOrEmpty(snapshot.UnlockRequirementText) ? "Locked" : snapshot.UnlockRequirementText;
-                if (upgradeButton != null) upgradeButton.SetActive(snapshot.Unlocked && !snapshot.IsMaxLevel && snapshot.Fragments >= snapshot.RequiredFragments);
-                if (progressGroup != null) progressGroup.SetActive(snapshot.Unlocked && !snapshot.IsMaxLevel);
+                // Match the source UICardInfo.Refresh contract: btnUpgrade is visible only
+                // when fragments are sufficient, while ObjSlider is visible only when they
+                // are insufficient. Both live beside Equip in the fixed-width btns row, so
+                // showing them together overflows the panel.
+                bool canUpgrade = snapshot.Unlocked && !snapshot.IsMaxLevel &&
+                    snapshot.Fragments >= snapshot.RequiredFragments;
+                bool showProgress = snapshot.Unlocked && !snapshot.IsMaxLevel && !canUpgrade;
+                bool showEquip = snapshot.Unlocked && !card.IsEquipped;
+                if (upgradeButton != null) upgradeButton.SetActive(canUpgrade);
+                if (progressGroup != null) progressGroup.SetActive(showProgress);
                 ApplyProgression(snapshot);
-                if (equipButton != null) equipButton.SetActive(false);
+                if (equipButton != null) equipButton.SetActive(showEquip);
                 return;
             }
             // Original Refresh: btnUpgrade = isEnoughDebris; objSlider = !isEnoughDebris;

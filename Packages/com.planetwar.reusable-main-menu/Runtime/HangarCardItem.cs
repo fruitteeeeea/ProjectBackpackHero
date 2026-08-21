@@ -52,7 +52,7 @@ namespace PlanetWar.ReusableMainMenu
             Configure(owner,
                 snapshot.Kind == HangarItemKind.Equipment ? CardKind.Spell : CardKind.Entity,
                 0, snapshot.Name, snapshot.Description, snapshot.Icon, snapshot.LockedIcon,
-                snapshot.Unlocked, false, 0, snapshot.Level);
+                snapshot.Unlocked, deckSlot >= 0, 0, snapshot.Level);
         }
 
         public void Configure(HangarView owner, CardKind kind, int id, string displayName,

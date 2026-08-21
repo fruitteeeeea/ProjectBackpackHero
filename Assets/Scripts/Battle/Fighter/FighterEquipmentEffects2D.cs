@@ -97,6 +97,7 @@ namespace BackpackHero.Battle
                             projectile.ProjectilePrefab,
                             projectile.Cooldown,
                             null,
+                            1f,
                             1f));
                 }
             }

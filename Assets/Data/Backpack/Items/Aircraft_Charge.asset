@@ -12,16 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Aircraft_Charge
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
-  upgradeFragmentsLevel1: 2
-  upgradeFragmentsLevel9: 100
-  aircraftHealthMultiplierRange: {x: 1, y: 1.4}
-  aircraftDamageMultiplierRange: {x: 1, y: 1.4}
-  equipmentIntervalMultiplierRange: {x: 1, y: 0.8}
   id: aircraft_charge
   initiallyUnlocked: 1
   unlockRequirementText: Unlocked by default
   cost: 0
   debris: 0
+  upgradeFragmentsLevel1: 2
+  upgradeFragmentsLevel9: 100
+  aircraftHealthMultiplierRange: {x: 1, y: 1.4}
+  aircraftDamageMultiplierRange: {x: 1, y: 1.4}
+  equipmentIntervalMultiplierRange: {x: 1, y: 0.8}
   name: Charger
   desc: A high-speed attacker that trades durability for mobility.
   icon: {fileID: 5743120003231325584, guid: f0b551cbee8fd4d629f583cb06a20794, type: 3}
@@ -29,7 +29,7 @@ MonoBehaviour:
   itemType: 0
   equipmentColor: {r: 1, g: 1, b: 1, a: 1}
   equipmentEffects: []
-  cd: 1.5
+  cd: 1.8
   price: 0
   count: 1
   equipmentItemModifier: 1

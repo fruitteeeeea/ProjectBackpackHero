@@ -32,8 +32,9 @@ namespace BackpackHero.EditorTools
         StyleTendency,
         AircraftVisual,
         BackpackVisual,
-        DeckPresets
-        ,DamageStatistics
+        DeckPresets,
+        DamageStatistics,
+        BackpackStrength
     }
 
     internal sealed class DebugCenterTabDefinition
@@ -114,7 +115,10 @@ namespace BackpackHero.EditorTools
                 () => ScriptableObject.CreateInstance<DeckPresetDebugWindow>()),
             new(DebugCenterTab.DamageStatistics, DebugCenterKind.GameplayDesign, "DPS 检测",
                 () => EditorApplication.isPlaying && DamageStatisticsRuntime.Instance != null,
-                () => ScriptableObject.CreateInstance<DamageStatisticsDebugWindow>())
+                () => ScriptableObject.CreateInstance<DamageStatisticsDebugWindow>()),
+            new(DebugCenterTab.BackpackStrength, DebugCenterKind.GameplayDesign, "场上背包强度",
+                () => EditorApplication.isPlaying && PlayerBackpackDebugBridge.Active != null,
+                () => ScriptableObject.CreateInstance<BackpackStrengthDebugWindow>())
         };
 
         internal static IEnumerable<DebugCenterTabDefinition> GetTabs(DebugCenterKind center)
@@ -320,6 +324,7 @@ namespace BackpackHero.EditorTools
                 case LevelDifficultyDebugWindow levelDifficulty: levelDifficulty.DrawTab(); break;
                 case DeckPresetDebugWindow deckPresets: deckPresets.DrawTab(); break;
                 case DamageStatisticsDebugWindow damageStatistics: damageStatistics.DrawTab(); break;
+                case BackpackStrengthDebugWindow backpackStrength: backpackStrength.DrawTab(); break;
             }
         }
     }

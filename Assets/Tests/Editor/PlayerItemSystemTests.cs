@@ -175,6 +175,59 @@ public sealed class PlayerItemSystemTests
     }
 
     [Test]
+    public void ResetAllProgression_SetsEveryItemToLevelOneAndClearsFragments()
+    {
+        ItemData aircraft = NewItem("reset_aircraft", type: ItemType.Aircraft);
+        ItemData equipment = NewItem("reset_equipment");
+        PlayerItemSystem system = NewSystem(aircraft, equipment);
+        system.AddFragments(aircraft, 7);
+        system.AddFragments(equipment, 3);
+
+        system.ResetAllProgression();
+
+        Assert.That(system.GetLevel(aircraft), Is.EqualTo(PlayerItemSystem.DefaultLevel));
+        Assert.That(system.GetLevel(equipment), Is.EqualTo(PlayerItemSystem.DefaultLevel));
+        Assert.That(system.GetFragments(aircraft), Is.Zero);
+        Assert.That(system.GetFragments(equipment), Is.Zero);
+        Assert.That(system.IsUnlocked(aircraft), Is.True);
+    }
+
+    [Test]
+    public void AddFragmentsToAllAircraft_ChangesOnlyAircraft()
+    {
+        ItemData firstAircraft = NewItem("first_aircraft", type: ItemType.Aircraft);
+        ItemData secondAircraft = NewItem("second_aircraft", type: ItemType.Aircraft);
+        ItemData equipment = NewItem("equipment");
+        PlayerItemSystem system = NewSystem(firstAircraft, secondAircraft, equipment);
+
+        system.AddFragmentsToAllAircraft(5);
+
+        Assert.That(system.GetFragments(firstAircraft), Is.EqualTo(5));
+        Assert.That(system.GetFragments(secondAircraft), Is.EqualTo(5));
+        Assert.That(system.GetFragments(equipment), Is.Zero);
+    }
+
+    [Test]
+    public void RestoreDefaultProgression_UnlocksAndMaxesEveryItemAndClearsFragments()
+    {
+        ItemData aircraft = NewItem("default_aircraft", type: ItemType.Aircraft);
+        ItemData equipment = NewItem("default_equipment");
+        PlayerItemSystem system = NewSystem(aircraft, equipment);
+        system.ResetAllProgression();
+        system.GetState(aircraft).Unlocked = false;
+        system.AddFragments(aircraft, 8);
+        system.AddFragments(equipment, 3);
+
+        system.RestoreDefaultProgression();
+
+        Assert.That(system.IsUnlocked(aircraft), Is.True);
+        Assert.That(system.GetLevel(aircraft), Is.EqualTo(PlayerItemSystem.MaximumLevel));
+        Assert.That(system.GetLevel(equipment), Is.EqualTo(PlayerItemSystem.MaximumLevel));
+        Assert.That(system.GetFragments(aircraft), Is.Zero);
+        Assert.That(system.GetFragments(equipment), Is.Zero);
+    }
+
+    [Test]
     public void ProgressionCostAndMultipliers_InterpolateAcrossTenLevels()
     {
         ItemData aircraft = NewItem("curves", type: ItemType.Aircraft);

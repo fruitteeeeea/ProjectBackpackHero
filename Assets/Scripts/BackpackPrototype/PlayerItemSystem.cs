@@ -125,6 +125,49 @@ namespace BackpackPrototype
         public void AddCurrency(int gold, int diamond = 0) { data.Gold = Mathf.Max(0, data.Gold + gold); data.Diamond = Mathf.Max(0, data.Diamond + diamond); SaveAndNotify(); }
         public void AddFragments(ItemData item, int count) { var state = GetState(item); if (state == null) return; state.FragmentCount = Mathf.Max(0, state.FragmentCount + count); SaveAndNotify(); }
         public void Unlock(ItemData item) { var state = GetState(item); if (state == null || state.Unlocked) return; state.Unlocked = true; SaveAndNotify(); }
+
+        /// <summary>Debug helper: resets every catalog item's level and fragments, keeping its unlock state.</summary>
+        public void ResetAllProgression()
+        {
+            if (data == null) return;
+            foreach (ItemData item in GetAllItems())
+            {
+                PlayerItemState state = GetState(item);
+                if (state == null) continue;
+                state.Level = DefaultLevel;
+                state.FragmentCount = 0;
+            }
+            SaveAndNotify();
+        }
+
+        /// <summary>Debug helper: adds the same number of item-specific fragments to every aircraft.</summary>
+        public void AddFragmentsToAllAircraft(int count)
+        {
+            if (data == null || count <= 0) return;
+            foreach (ItemData item in GetAllItems())
+            {
+                if (item == null || item.ItemType != ItemType.Aircraft) continue;
+                PlayerItemState state = GetState(item);
+                if (state != null) state.FragmentCount = Mathf.Max(0, state.FragmentCount + count);
+            }
+            SaveAndNotify();
+        }
+
+        /// <summary>Debug helper: restores the project's default fully unlocked, max-level collection.</summary>
+        public void RestoreDefaultProgression()
+        {
+            if (data == null) return;
+            foreach (ItemData item in GetAllItems())
+            {
+                PlayerItemState state = GetState(item);
+                if (state == null) continue;
+                state.Unlocked = true;
+                state.Level = MaximumLevel;
+                state.FragmentCount = 0;
+            }
+            SaveAndNotify();
+        }
+
         public PlayerItemUpgradeResult TryUpgrade(ItemData item)
         {
             var state = GetState(item);

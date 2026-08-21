@@ -33,6 +33,7 @@ namespace BackpackHero.EditorTools
         AircraftVisual,
         BackpackVisual,
         DeckPresets,
+        ItemProgression,
         DamageStatistics,
         BackpackStrength
     }
@@ -113,6 +114,9 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.DeckPresets, DebugCenterKind.GameplayDesign, "背包预设",
                 () => true,
                 () => ScriptableObject.CreateInstance<DeckPresetDebugWindow>()),
+            new(DebugCenterTab.ItemProgression, DebugCenterKind.ProgramTest, "物品养成",
+                () => EditorApplication.isPlaying && PlayerItemSystem.Instance != null,
+                () => ScriptableObject.CreateInstance<ItemProgressionDebugWindow>()),
             new(DebugCenterTab.DamageStatistics, DebugCenterKind.GameplayDesign, "DPS 检测",
                 () => EditorApplication.isPlaying && DamageStatisticsRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<DamageStatisticsDebugWindow>()),
@@ -323,6 +327,7 @@ namespace BackpackHero.EditorTools
                 case BackpackVisualDebugWindow backpackVisual: backpackVisual.DrawTab(); break;
                 case LevelDifficultyDebugWindow levelDifficulty: levelDifficulty.DrawTab(); break;
                 case DeckPresetDebugWindow deckPresets: deckPresets.DrawTab(); break;
+                case ItemProgressionDebugWindow itemProgression: itemProgression.DrawTab(); break;
                 case DamageStatisticsDebugWindow damageStatistics: damageStatistics.DrawTab(); break;
                 case BackpackStrengthDebugWindow backpackStrength: backpackStrength.DrawTab(); break;
             }

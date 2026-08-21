@@ -20,29 +20,30 @@ namespace BackpackHero.Battle
                 BattleAttack2D newProjectilePrefab,
                 float newCooldown,
                 ItemInstance newItem,
-                float equipmentItemModifier)
+                float cooldownModifier,
+                float projectileStatModifier)
             {
                 ProjectilePrefab = newProjectilePrefab;
                 Cooldown = newCooldown / Mathf.Max(
                     ItemData.MinimumEquipmentItemModifier,
-                    equipmentItemModifier);
+                    cooldownModifier);
                 Item = newItem;
-                EquipmentItemModifier = Mathf.Max(
+                ProjectileStatModifier = Mathf.Max(
                     ItemData.MinimumEquipmentItemModifier,
-                    equipmentItemModifier);
+                    projectileStatModifier);
             }
 
             public BattleAttack2D ProjectilePrefab { get; }
             public float Cooldown { get; }
             public ItemInstance Item { get; }
-            public float EquipmentItemModifier { get; }
+            public float ProjectileStatModifier { get; }
             public float RemainingCooldown { get; set; }
         }
 
         private readonly List<ProjectileEffectRuntime>
             projectileEffects = new();
 
-        private readonly List<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float EquipmentItemModifier)>
+        private readonly List<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float CooldownModifier, float ProjectileStatModifier)>
             laserLinkEffects = new();
 
         private float remainingSharedCooldown;
@@ -57,7 +58,7 @@ namespace BackpackHero.Battle
         public int ProjectileEffectCount =>
             projectileEffects.Count;
 
-        public IReadOnlyCollection<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float EquipmentItemModifier)>
+        public IReadOnlyCollection<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float CooldownModifier, float ProjectileStatModifier)>
             LaserLinkEffects => laserLinkEffects;
 
         public bool HasLaserLinkEffect(
@@ -80,7 +81,7 @@ namespace BackpackHero.Battle
                     if (effect is LaserLinkEquipmentEffectDefinition laserLink &&
                         laserLink.LaserAttackPrefab != null)
                     {
-                        laserLinkEffects.Add((laserLink, null, 1f));
+                        laserLinkEffects.Add((laserLink, null, 1f, 1f));
                         continue;
                     }
 
@@ -105,7 +106,8 @@ namespace BackpackHero.Battle
 
         public void Configure(
             IEnumerable<(EquipmentEffectDefinition Effect, ItemInstance Item)> effects,
-            float equipmentItemModifier = 1f)
+            float equipmentItemModifier = 1f,
+            bool applyEquipmentItemModifierToProjectileStats = false)
         {
             projectileEffects.Clear();
             laserLinkEffects.Clear();
@@ -118,14 +120,22 @@ namespace BackpackHero.Battle
                                 ? item.GetEquipmentEffectCooldown(projectile)
                                 : projectile.Cooldown,
                             item,
-                            equipmentItemModifier));
+                            equipmentItemModifier,
+                            applyEquipmentItemModifierToProjectileStats
+                                ? equipmentItemModifier
+                                : 1f));
                     else if (effect is LaserLinkEquipmentEffectDefinition laser && laser.LaserAttackPrefab != null)
                         laserLinkEffects.Add((
                             laser,
                             item,
                             Mathf.Max(
                                 ItemData.MinimumEquipmentItemModifier,
-                                equipmentItemModifier)));
+                                equipmentItemModifier),
+                            applyEquipmentItemModifierToProjectileStats
+                                ? Mathf.Max(
+                                    ItemData.MinimumEquipmentItemModifier,
+                                    equipmentItemModifier)
+                                : 1f));
             ResetCooldowns();
         }
 
@@ -180,7 +190,7 @@ namespace BackpackHero.Battle
                 ProjectileShotRequestedWithSource?.Invoke(
                     effect.ProjectilePrefab,
                     effect.Item,
-                    effect.EquipmentItemModifier);
+                    effect.ProjectileStatModifier);
                 return true;
             }
 

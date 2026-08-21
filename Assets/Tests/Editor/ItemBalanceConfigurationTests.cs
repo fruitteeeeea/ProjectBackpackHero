@@ -81,7 +81,7 @@ public sealed class ItemBalanceConfigurationTests
     }
 
     [Test]
-    public void AircraftItems_DefaultEquipmentModifiersAreOne()
+    public void AircraftItems_DefaultEquipmentProjectileStatModifiersAreDisabled()
     {
         string[] paths =
         {
@@ -99,8 +99,8 @@ public sealed class ItemBalanceConfigurationTests
         {
             ItemData aircraft = Load<ItemData>(
                 "Assets/Data/Backpack/Items/" + path);
-            Assert.That(aircraft.EquipmentItemModifier,
-                Is.EqualTo(1f), path);
+            Assert.That(aircraft.ApplyEquipmentItemModifierToProjectileStats,
+                Is.False, path);
         }
     }
 
@@ -115,6 +115,28 @@ public sealed class ItemBalanceConfigurationTests
 
             Assert.That(aircraft.EquipmentItemModifier,
                 Is.EqualTo(ItemData.MinimumEquipmentItemModifier));
+        }
+        finally
+        {
+            Object.DestroyImmediate(aircraft);
+        }
+    }
+
+    [Test]
+    public void AircraftEquipmentProjectileStatModifier_IsDisabledByDefaultAndCanBeEnabled()
+    {
+        ItemData aircraft = ScriptableObject.CreateInstance<ItemData>();
+        try
+        {
+            aircraft.InitializeForTests("Aircraft", ItemType.Aircraft, 1f, null);
+
+            Assert.That(aircraft.ApplyEquipmentItemModifierToProjectileStats,
+                Is.False);
+
+            aircraft.SetApplyEquipmentItemModifierToProjectileStatsForTests(true);
+
+            Assert.That(aircraft.ApplyEquipmentItemModifierToProjectileStats,
+                Is.True);
         }
         finally
         {

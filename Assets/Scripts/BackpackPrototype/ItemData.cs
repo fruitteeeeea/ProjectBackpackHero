@@ -48,10 +48,12 @@ namespace BackpackPrototype
 
         [Header("Aircraft Spawn")]
         [SerializeField, Min(1), FormerlySerializedAs("spawnCount")] private int count = 1;
-        [InspectorName("装备物品修正")]
-        [Tooltip("生成的飞机从临近装备获得的攻击修正。装备攻击冷却除以此值，伤害和速度乘以此值。")]
+        [InspectorName("装备物品修正系数")]
+        [Tooltip("生成的飞机从临近装备获得的攻击修正。装备攻击冷却除以此值；可选地影响投射物伤害和速度。")]
         [SerializeField, Min(MinimumEquipmentItemModifier)]
         private float equipmentItemModifier = 1f;
+        [Tooltip("是否将装备物品修正系数应用到装备投射物的伤害和速度。默认关闭。")]
+        [SerializeField] private bool applyEquipmentItemModifierToProjectileStats;
         [SerializeField] private ItemShapeData shape;
 
         [Header("Level Cooldown Reductions")]
@@ -80,6 +82,9 @@ namespace BackpackPrototype
             itemType == ItemType.Aircraft
                 ? Mathf.Max(MinimumEquipmentItemModifier, equipmentItemModifier)
                 : 1f;
+        public bool ApplyEquipmentItemModifierToProjectileStats =>
+            itemType == ItemType.Aircraft &&
+            applyEquipmentItemModifierToProjectileStats;
         public float AircraftCooldownReductionLevel2 =>
             Mathf.Max(0f, aircraftCooldownReductionLevel2);
         public float AircraftCooldownReductionLevel3 =>
@@ -184,6 +189,10 @@ namespace BackpackPrototype
             equipmentItemModifier = value;
             OnValidate();
         }
+
+        public void SetApplyEquipmentItemModifierToProjectileStatsForTests(
+            bool value) =>
+            applyEquipmentItemModifierToProjectileStats = value;
 
         public void SetLevelCooldownReductionsForTests(
             float aircraftLevel2,

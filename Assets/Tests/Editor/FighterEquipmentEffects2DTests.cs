@@ -151,7 +151,7 @@ public sealed class FighterEquipmentEffects2DTests
     }
 
     [Test]
-    public void ProjectileEffects_ApplyAircraftEquipmentModifierToCooldownAndShot()
+    public void ProjectileEffects_ApplyAircraftEquipmentModifierToCooldown()
     {
         var owner = new GameObject("Equipment Effects");
         var prefab = new GameObject("Projectile");
@@ -164,15 +164,11 @@ public sealed class FighterEquipmentEffects2DTests
             effect.InitializeForTests(attack, 0.8f);
             FighterEquipmentEffects2D controller =
                 owner.AddComponent<FighterEquipmentEffects2D>();
-            float emittedModifier = 0f;
-            controller.ProjectileShotRequestedWithSource +=
-                (_, _, modifier) => emittedModifier = modifier;
             controller.Configure(
                 new[] { (Effect: (EquipmentEffectDefinition)effect, Item: (ItemInstance)null) },
                 0.5f);
 
             Assert.That(controller.Tick(0f), Is.True);
-            Assert.That(emittedModifier, Is.EqualTo(0.5f));
             Assert.That(controller.Tick(1.59f), Is.False);
             Assert.That(controller.Tick(0.01f), Is.True);
         }

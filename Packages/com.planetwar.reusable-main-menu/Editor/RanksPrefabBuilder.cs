@@ -48,7 +48,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var rankInfoPageBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("rankInfoPage").objectReferenceValue != null;
                 var bottomBarBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("bottomBar").objectReferenceValue != null;
                 var rankInfoReady = rankInfo != null && rankInfo.scroll != null && rankInfo.itemRankMain != null && rankInfo.itemRankReward != null && rankInfo.btnOffset != null && rankInfo.entries != null && rankInfo.entries.Length >= 12 && rankInfo.scroll.scrollRect != null && rankInfo.scroll.content != null && rankInfo.scroll.viewport != null && rankInfoPageBound && bottomBarBound;
-                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !rankInfoReady))
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasAttributeAddValueBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !rankInfoReady))
                 {
                     Debug.Log("[PlanetWar] Rebuilding MainMenu Hangar with the original static card configuration.");
                     Rebuild();
@@ -515,7 +515,8 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 Find(panel.transform, "textLock")?.GetComponent<TMP_Text>(),
                 preview,
                 FindAttributeValues(panel.transform),
-                FindAttributeLabels(panel.transform));
+                FindAttributeLabels(panel.transform),
+                FindAttributeAddValues(panel.transform));
             return layout;
         }
 
@@ -541,6 +542,16 @@ namespace PlanetWar.ReusableMainMenu.Editor
             TMP_Text description = serialized.FindProperty("descriptionText").objectReferenceValue as TMP_Text;
             return name != null && description != null && name.gameObject.activeSelf &&
                    description.gameObject.activeSelf;
+        }
+
+        private static bool HasAttributeAddValueBindings(HangarDetailLayout layout)
+        {
+            if (layout == null) return false;
+            var serialized = new SerializedObject(layout);
+            var values = serialized.FindProperty("attributeValueTexts");
+            var additions = serialized.FindProperty("attributeAddValueTexts");
+            return values != null && additions != null && values.arraySize > 0 &&
+                   values.arraySize == additions.arraySize;
         }
 
         private static void ConfigureCardProgressionPresentation(HangarCardItem card)
@@ -605,6 +616,21 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 labels.Add(label);
             }
             return labels.ToArray();
+        }
+
+        private static TMP_Text[] FindAttributeAddValues(Transform panel)
+        {
+            var additions = new List<TMP_Text>();
+            foreach (TMP_Text value in FindAttributeValues(panel))
+            {
+                Transform card = value.transform.parent != null ? value.transform.parent.parent : null;
+                TMP_Text addition = null;
+                if (card != null)
+                    foreach (TMP_Text text in card.GetComponentsInChildren<TMP_Text>(true))
+                        if (text.name == "addVal") { addition = text; break; }
+                additions.Add(addition);
+            }
+            return additions.ToArray();
         }
 
         private readonly struct HangarCardState

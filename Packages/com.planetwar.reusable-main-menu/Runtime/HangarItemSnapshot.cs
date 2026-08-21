@@ -5,9 +5,18 @@ namespace PlanetWar.ReusableMainMenu
     public readonly struct HangarDetailAttribute
     {
         public HangarDetailAttribute(string label, string value, bool visible = true)
-        { Label = label; Value = value; Visible = visible; }
+            : this(label, value, string.Empty, visible) { }
+        public HangarDetailAttribute(string label, string value, string additionalValue,
+            bool visible = true)
+        {
+            Label = label;
+            Value = value;
+            AdditionalValue = additionalValue;
+            Visible = visible;
+        }
         public string Label { get; }
         public string Value { get; }
+        public string AdditionalValue { get; }
         public bool Visible { get; }
     }
     public enum HangarItemKind { Aircraft, Equipment }

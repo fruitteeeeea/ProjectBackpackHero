@@ -23,10 +23,11 @@ public sealed class HangarItemSnapshotTests
     public void DetailAttributes_KeepLabelsValuesAndVisibility()
     {
         var hidden = new HangarDetailAttribute("Damage", "0", false);
-        var visible = new HangarDetailAttribute("Cooldown", "2s");
+        var visible = new HangarDetailAttribute("Cooldown", "2s", "+0.2s");
         Assert.That(hidden.Label, Is.EqualTo("Damage"));
         Assert.That(hidden.Visible, Is.False);
         Assert.That(visible.Value, Is.EqualTo("2s"));
+        Assert.That(visible.AdditionalValue, Is.EqualTo("+0.2s"));
         Assert.That(visible.Visible, Is.True);
     }
 }

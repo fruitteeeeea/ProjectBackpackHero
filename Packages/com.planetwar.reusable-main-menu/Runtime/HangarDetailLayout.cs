@@ -25,12 +25,14 @@ namespace PlanetWar.ReusableMainMenu
         // in display order, rather than inferred from hierarchy names.
         [SerializeField] private TMP_Text[] attributeValueTexts;
         [SerializeField] private TMP_Text[] attributeLabelTexts;
+        [SerializeField] private TMP_Text[] attributeAddValueTexts;
         [SerializeField] private Slider progressionSlider;
         [SerializeField] private TMP_Text progressionText;
 
         public void Configure(GameObject upgrade, GameObject equip, GameObject progress, GameObject actions,
             TMP_Text name, TMP_Text description, TMP_Text lockLabel, HangarCardItem preview,
-            TMP_Text[] attributeValues = null, TMP_Text[] attributeLabels = null)
+            TMP_Text[] attributeValues = null, TMP_Text[] attributeLabels = null,
+            TMP_Text[] attributeAddValues = null)
         {
             upgradeButton = upgrade;
             equipButton = equip;
@@ -42,6 +44,7 @@ namespace PlanetWar.ReusableMainMenu
             previewItem = preview;
             attributeValueTexts = attributeValues;
             attributeLabelTexts = attributeLabels;
+            attributeAddValueTexts = attributeAddValues;
         }
 
         public void ShowPreview(HangarCardItem card)
@@ -139,6 +142,16 @@ namespace PlanetWar.ReusableMainMenu
                     : null;
                 if (label == null) label = FindSiblingLabel(text);
                 if (label != null) label.text = attribute.Label;
+
+                // UICardInfo separates the current value (white val) from the next-level
+                // delta (green addVal). Equipment keeps its existing UICardSpell rendering.
+                if (snapshot.Kind != HangarItemKind.Aircraft) continue;
+                TMP_Text addValue = attributeAddValueTexts != null &&
+                    index < attributeAddValueTexts.Length ? attributeAddValueTexts[index] : null;
+                if (addValue == null) continue;
+                bool hasAddition = !string.IsNullOrEmpty(attribute.AdditionalValue);
+                addValue.gameObject.SetActive(hasAddition);
+                addValue.text = hasAddition ? attribute.AdditionalValue : string.Empty;
             }
         }
 

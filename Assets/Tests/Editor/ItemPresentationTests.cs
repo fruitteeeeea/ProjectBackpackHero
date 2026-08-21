@@ -9,6 +9,56 @@ using BackpackPrototype;
 
 public sealed class ItemPresentationTests
 {
+    [Test]
+    public void HangarDetailLayout_SeparatesAircraftValueAndUpgradeAddition()
+    {
+        GameObject root = new GameObject("HangarDetail");
+        GameObject cardRoot = new GameObject("Card");
+        try
+        {
+            HangarDetailLayout layout = root.AddComponent<HangarDetailLayout>();
+            TMP_Text value = NewText(root.transform, "val");
+            TMP_Text addition = NewText(root.transform, "addVal");
+            TMP_Text unchangedValue = NewText(root.transform, "val");
+            TMP_Text unchangedAddition = NewText(root.transform, "addVal");
+            layout.Configure(null, null, null, null, null, null, null, null,
+                new[] { value, unchangedValue }, null, new[] { addition, unchangedAddition });
+            HangarCardItem card = cardRoot.AddComponent<HangarCardItem>();
+            card.Configure(new HangarItemSnapshot(HangarItemKind.Aircraft, "Scout", "", null,
+                null, true, 1, 0, 5, 0, 1f, 1, null, Color.white, "Unlocked",
+                new[]
+                {
+                    new HangarDetailAttribute("Attack", "13.9", "+0.6"),
+                    new HangarDetailAttribute("Speed", "10")
+                }));
+
+            layout.ShowPreview(card);
+
+            Assert.That(value.text, Is.EqualTo("13.9"));
+            Assert.That(addition.text, Is.EqualTo("+0.6"));
+            Assert.That(addition.gameObject.activeSelf, Is.True);
+            Assert.That(unchangedValue.text, Is.EqualTo("10"));
+            Assert.That(unchangedAddition.gameObject.activeSelf, Is.False);
+
+            card.Configure(new HangarItemSnapshot(HangarItemKind.Aircraft, "Scout", "", null,
+                null, true, 10, 0, 0, 0, 1f, 1, null, Color.white, "Unlocked",
+                new[]
+                {
+                    new HangarDetailAttribute("Attack", "19.3"),
+                    new HangarDetailAttribute("Speed", "10")
+                }, maximumLevel: 10));
+            layout.ShowPreview(card);
+
+            Assert.That(value.text, Is.EqualTo("19.3"));
+            Assert.That(addition.gameObject.activeSelf, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(cardRoot);
+            Object.DestroyImmediate(root);
+        }
+    }
+
     [TestCase(HangarItemKind.Aircraft, 2, 3, 5, 0.6f, "3/5", false)]
     [TestCase(HangarItemKind.Equipment, 4, 8, 5, 1f, "8/5", true)]
     [TestCase(HangarItemKind.Aircraft, 10, 0, 0, 1f, "Max", false)]

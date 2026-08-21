@@ -119,16 +119,16 @@ namespace BackpackPrototype
             // PlanetWar textAttList order, so values must follow the actual prefab layout.
             return new[]
             {
-                new HangarDetailAttribute("Attack", FormatWithNext(
+                CreateAircraftProgressionAttribute("Attack",
                     GetDisplayedAircraftDamage(fighter) * item.GetAircraftDamageMultiplierForProgressionLevel(level),
                     level < PlayerItemSystem.MaximumLevel
                         ? GetDisplayedAircraftDamage(fighter) * item.GetAircraftDamageMultiplierForProgressionLevel(level + 1)
-                        : 0f)),
-                new HangarDetailAttribute("HP", FormatWithNext(
+                        : 0f),
+                CreateAircraftProgressionAttribute("HP",
                     fighter.MaximumHealth * item.GetAircraftHealthMultiplierForProgressionLevel(level),
                     level < PlayerItemSystem.MaximumLevel
                         ? fighter.MaximumHealth * item.GetAircraftHealthMultiplierForProgressionLevel(level + 1)
-                        : 0f)),
+                        : 0f),
                 new HangarDetailAttribute("Attack Speed", fighter.AttackInterval.ToString("0.##") + "s"),
                 new HangarDetailAttribute("Firing Range", fighter.AttackRange.ToString("0.#")),
                 new HangarDetailAttribute("CD", item.Cd.ToString("0.##") + "s"),
@@ -168,12 +168,16 @@ namespace BackpackPrototype
             };
         }
 
-        private static string FormatWithNext(float value, float next)
+        // Mirrors UICardInfo.textAttList/textAddList: current stats stay in val and only
+        // a real next-level difference is emitted to the green addVal field.
+        private static HangarDetailAttribute CreateAircraftProgressionAttribute(string label,
+            float value, float next)
         {
-            string text = value.ToString("0.#");
-            return next > 0f && !Mathf.Approximately(value, next)
-                ? $"{text} (+{(next - value):0.#})"
-                : text;
+            float increase = next - value;
+            return new HangarDetailAttribute(label, value.ToString("0.#"),
+                next > 0f && !Mathf.Approximately(increase, 0f)
+                    ? increase > 0f ? $"+{increase:0.#}" : increase.ToString("0.#")
+                    : string.Empty);
         }
 
         private static string FormatIntervalWithNext(ItemData item, float interval, int level)

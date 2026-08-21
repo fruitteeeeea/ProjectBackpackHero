@@ -1,6 +1,7 @@
 using BackpackHero.Debugging;
 using UnityEditor;
 using UnityEngine;
+using TMPro;
 
 namespace BackpackHero.EditorTools
 {
@@ -17,6 +18,10 @@ namespace BackpackHero.EditorTools
         private readonly DebugDraft<AircraftVisualSettings> draft = new();
         private AircraftVisualDebugSettings settingsTarget;
         private AircraftVisualDebugRuntime lastRuntime;
+        private readonly DebugDraft<FloatingDamageTextVisualSettings>
+            floatingTextDraft = new();
+        private FloatingDamageTextDebugSettings floatingTextSettingsTarget;
+        private FloatingDamageTextDebugRuntime lastFloatingTextRuntime;
         private Vector2 scrollPosition;
 
         internal void DrawTab()
@@ -49,7 +54,153 @@ namespace BackpackHero.EditorTools
             DrawToggles();
             DrawPersistence(runtime);
             DrawParticleAssets();
+            DrawFloatingTextSettings();
             EditorGUILayout.EndScrollView();
+        }
+
+        private void DrawFloatingTextSettings()
+        {
+            FloatingDamageTextDebugRuntime runtime =
+                FloatingDamageTextDebugRuntime.Instance;
+            if (runtime == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "正在等待伤害飘字调试控制器启动。",
+                    MessageType.Warning);
+                return;
+            }
+
+            SyncFloatingTextRuntime(runtime);
+            EditorGUILayout.Space(12f);
+            EditorGUILayout.LabelField("伤害飘字", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "字体与字号独立于“启用飞机视觉调试覆写”总开关。",
+                MessageType.None);
+
+            FloatingDamageTextDebugSettings nextTarget =
+                (FloatingDamageTextDebugSettings)EditorGUILayout.ObjectField(
+                    "保存目标",
+                    floatingTextSettingsTarget,
+                    typeof(FloatingDamageTextDebugSettings),
+                    false);
+            if (nextTarget != floatingTextSettingsTarget)
+            {
+                floatingTextSettingsTarget = nextTarget;
+                floatingTextDraft.Load(floatingTextSettingsTarget != null
+                    ? floatingTextSettingsTarget.GetValues()
+                    : runtime.Settings);
+            }
+
+            EditorGUILayout.LabelField(
+                "资产路径",
+                floatingTextSettingsTarget != null
+                    ? AssetDatabase.GetAssetPath(floatingTextSettingsTarget)
+                    : "未选择（请使用“另存为”创建配置）",
+                EditorStyles.miniLabel);
+            EditorGUILayout.LabelField(
+                "未保存修改",
+                floatingTextDraft.IsDirty ? "是" : "否",
+                EditorStyles.miniLabel);
+
+            FloatingDamageTextVisualSettings current = floatingTextDraft.Value;
+            TMP_FontAsset font = (TMP_FontAsset)EditorGUILayout.ObjectField(
+                "飘字字体",
+                current.Font,
+                typeof(TMP_FontAsset),
+                false);
+            float fontSize = Mathf.Max(
+                FloatingDamageTextVisualSettings.MinimumFontSize,
+                EditorGUILayout.FloatField("字体大小", current.FontSize));
+            floatingTextDraft.Value = new FloatingDamageTextVisualSettings(
+                font,
+                fontSize);
+
+            EditorGUILayout.Space(6f);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("应用到运行时"))
+                {
+                    if (floatingTextSettingsTarget != null)
+                    {
+                        runtime.SetDefaultSettings(floatingTextSettingsTarget);
+                    }
+
+                    runtime.SetSettings(floatingTextDraft.Value);
+                }
+
+                using (new EditorGUI.DisabledScope(
+                           floatingTextSettingsTarget == null ||
+                           !floatingTextDraft.IsDirty))
+                {
+                    if (GUILayout.Button("保存"))
+                    {
+                        SaveFloatingTextToTarget(floatingTextSettingsTarget);
+                    }
+                }
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("另存为"))
+                {
+                    SaveFloatingTextAs(runtime);
+                }
+
+                if (GUILayout.Button("还原"))
+                {
+                    floatingTextDraft.Load(floatingTextSettingsTarget != null
+                        ? floatingTextSettingsTarget.GetValues()
+                        : runtime.Settings);
+                }
+            }
+        }
+
+        private void SyncFloatingTextRuntime(
+            FloatingDamageTextDebugRuntime runtime)
+        {
+            if (runtime == lastFloatingTextRuntime)
+            {
+                return;
+            }
+
+            lastFloatingTextRuntime = runtime;
+            floatingTextSettingsTarget = runtime.DefaultSettings;
+            floatingTextDraft.Load(floatingTextSettingsTarget != null
+                ? floatingTextSettingsTarget.GetValues()
+                : runtime.Settings);
+        }
+
+        private void SaveFloatingTextAs(FloatingDamageTextDebugRuntime runtime)
+        {
+            string path = EditorUtility.SaveFilePanelInProject(
+                "另存为伤害飘字配置",
+                "FloatingDamageTextDebugSettings",
+                "asset",
+                "选择伤害飘字配置位置");
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            FloatingDamageTextDebugSettings newSettings =
+                CreateInstance<FloatingDamageTextDebugSettings>();
+            newSettings.SetValues(floatingTextDraft.Value);
+            AssetDatabase.CreateAsset(newSettings, path);
+            AssetDatabase.SaveAssets();
+            floatingTextSettingsTarget = newSettings;
+            floatingTextDraft.Load(newSettings.GetValues());
+            runtime.SetDefaultSettings(newSettings);
+            runtime.SetSettings(floatingTextDraft.Value);
+        }
+
+        private void SaveFloatingTextToTarget(
+            FloatingDamageTextDebugSettings target)
+        {
+            Undo.RecordObject(target, "保存伤害飘字配置");
+            target.SetValues(floatingTextDraft.Value);
+            EditorUtility.SetDirty(target);
+            AssetDatabase.SaveAssets();
+            floatingTextDraft.Load(target.GetValues());
         }
 
         private void SyncRuntime(AircraftVisualDebugRuntime runtime)

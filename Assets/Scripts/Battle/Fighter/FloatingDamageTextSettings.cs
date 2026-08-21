@@ -1,4 +1,5 @@
 using MoreMountains.Feedbacks;
+using BackpackHero.Debugging;
 using TMPro;
 using UnityEngine;
 
@@ -108,23 +109,35 @@ namespace BackpackHero.Battle
             }
 
             bool isPlayer = faction == BattleFaction.Player;
-            if (floatingTextFont != null)
+            TMP_FontAsset effectiveFont = floatingTextFont;
+            float effectiveFontSize = fontSize;
+            if (FloatingDamageTextDebugRuntime.HasRuntimeSettings)
             {
-                text.font = floatingTextFont;
+                FloatingDamageTextVisualSettings overrides =
+                    FloatingDamageTextDebugRuntime.CurrentSettings;
+                effectiveFont = overrides.Font != null
+                    ? overrides.Font
+                    : effectiveFont;
+                effectiveFontSize = overrides.FontSize;
+            }
+
+            if (effectiveFont != null)
+            {
+                text.font = effectiveFont;
 
                 // The pooled prefabs were authored with a different TMP material.
                 // Ensure the material instance used for this font receives the
                 // outline settings rather than the prefab's previous material.
                 if (text.fontSharedMaterial == null ||
                     text.fontSharedMaterial.mainTexture !=
-                    floatingTextFont.material.mainTexture)
+                    effectiveFont.material.mainTexture)
                 {
-                    text.fontSharedMaterial = floatingTextFont.material;
+                    text.fontSharedMaterial = effectiveFont.material;
                 }
             }
 
             text.color = isPlayer ? playerFaceColor : enemyFaceColor;
-            text.fontSize = fontSize;
+            text.fontSize = effectiveFontSize;
             text.fontStyle = FontStyles.Bold;
             Material textMaterial = text.fontMaterial;
             textMaterial.SetColor(

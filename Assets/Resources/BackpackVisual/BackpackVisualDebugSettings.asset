@@ -26,7 +26,7 @@ MonoBehaviour:
   shopFlightDuration: 0.32
   levelFontColor: {r: 1, g: 1, b: 1, a: 1}
   levelFontSize: 24
-  aircraftGlowEnabled: 1
+  aircraftGlowEnabled: 0
   aircraftGlowColor: {r: 1, g: 1, b: 1, a: 1}
   aircraftGlowMinimumIntensity: 0.12
   aircraftGlowMaximumIntensity: 0.45

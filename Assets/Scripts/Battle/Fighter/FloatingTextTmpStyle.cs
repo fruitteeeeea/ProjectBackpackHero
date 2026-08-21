@@ -1,4 +1,5 @@
 using TMPro;
+using BackpackHero.Debugging;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -30,7 +31,25 @@ namespace BackpackHero.Battle
                 text = GetComponent<TextMeshPro>();
             }
 
+            RefreshStyle();
+            FloatingDamageTextDebugRuntime.SettingsChanged += OnSettingsChanged;
+        }
+
+        private void OnDisable()
+        {
+            FloatingDamageTextDebugRuntime.SettingsChanged -= OnSettingsChanged;
+        }
+
+        /// <summary>供飘字调试面板立即刷新当前可见对象。</summary>
+        public void RefreshStyle()
+        {
             settings?.ApplyTextStyle(text, faction);
+        }
+
+        private void OnSettingsChanged(
+            FloatingDamageTextVisualSettings _)
+        {
+            RefreshStyle();
         }
 
         private void Update()

@@ -183,9 +183,36 @@ namespace BackpackHero.EditorTools
             EditorGUILayout.LabelField(
                 "背包血量",
                 EditorStyles.boldLabel);
+
+            bool canLockBackpackHealth =
+                bridge.CanLockBackpackHealth;
+            bool isBackpackHealthLocked =
+                bridge.BackpacksHealthLocked;
+            using (new EditorGUI.DisabledScope(
+                       !canLockBackpackHealth &&
+                       !isBackpackHealthLocked))
+            {
+                bool requestedLock = EditorGUILayout.Toggle(
+                    "锁定双方背包血量",
+                    isBackpackHealthLocked);
+                if (requestedLock != isBackpackHealthLocked)
+                {
+                    bridge.SetBackpacksHealthLocked(requestedLock);
+                }
+            }
+
+            if (!canLockBackpackHealth &&
+                !isBackpackHealthLocked)
+            {
+                EditorGUILayout.HelpBox(
+                    "仅可在战斗阶段且双方背包均存活时开启。",
+                    MessageType.Info);
+            }
+
             EditorGUILayout.BeginHorizontal();
 
             using (new EditorGUI.DisabledScope(
+                       bridge.BackpacksHealthLocked ||
                        !CanDamageEnemyBackpack(bridge)))
             {
                 if (GUILayout.Button("敌人背包血量 - 25%"))
@@ -196,6 +223,7 @@ namespace BackpackHero.EditorTools
             }
 
             using (new EditorGUI.DisabledScope(
+                       bridge.BackpacksHealthLocked ||
                        !CanDamagePlayerBackpack(bridge)))
             {
                 if (GUILayout.Button("玩家背包血量 - 25%"))

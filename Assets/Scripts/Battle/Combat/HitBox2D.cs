@@ -111,6 +111,14 @@ namespace BackpackHero.Battle
                 return;
             }
 
+            // 初始无敌的飞机会挡住子弹，但不会触发爆炸、连锁等命中效果。
+            if (hurtBox.IsDamageImmune)
+            {
+                hasHitTarget = true;
+                Destroy(gameObject);
+                return;
+            }
+
             bool causedDamage;
 
             if (impactEffect != null)

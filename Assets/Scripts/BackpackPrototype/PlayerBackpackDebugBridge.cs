@@ -27,6 +27,8 @@ namespace BackpackPrototype
         [SerializeField]
         private bool dragCellVisualizationEnabled;
 
+        private bool backpacksHealthLocked;
+
         [SerializeField, Min(0.05f)]
         private float refreshInterval = 0.1f;
 
@@ -57,6 +59,17 @@ namespace BackpackPrototype
         public bool DragCellVisualizationEnabled =>
             dragCellVisualizationEnabled;
 
+        public bool BackpacksHealthLocked =>
+            backpacksHealthLocked;
+
+        public bool CanLockBackpackHealth =>
+            BattleFlowController.IsCombatPhase &&
+            TryGetBackpackTargets(
+                out BattleBackpackTarget2D playerTarget,
+                out BattleBackpackTarget2D enemyTarget) &&
+            playerTarget.IsAlive &&
+            enemyTarget.IsAlive;
+
         public PlayerBackpackDebugSnapshot Snapshot =>
             snapshot;
 
@@ -81,6 +94,7 @@ namespace BackpackPrototype
         {
             Active = this;
             nextRefreshTime = 0f;
+            BattleFlowController.PhaseChanged += HandlePhaseChanged;
         }
 
         private void Update()
@@ -99,6 +113,11 @@ namespace BackpackPrototype
             if (enemyBackpackSystem == null)
             {
                 ResolveEnemyTarget();
+            }
+
+            if (backpacksHealthLocked && !CanLockBackpackHealth)
+            {
+                SetBackpacksHealthLocked(false);
             }
 
             RefreshAutoCopySubscription();
@@ -121,6 +140,34 @@ namespace BackpackPrototype
         public void SetDebugEnabled(bool enabled)
         {
             debugEnabled = enabled;
+            if (!enabled)
+            {
+                SetBackpacksHealthLocked(false);
+            }
+        }
+
+        public bool SetBackpacksHealthLocked(bool locked)
+        {
+            if (!locked)
+            {
+                ApplyBackpackHealthLock(false);
+                backpacksHealthLocked = false;
+                RefreshSnapshot();
+                return true;
+            }
+
+            if (!CanLockBackpackHealth)
+            {
+                ApplyBackpackHealthLock(false);
+                backpacksHealthLocked = false;
+                RefreshSnapshot();
+                return false;
+            }
+
+            ApplyBackpackHealthLock(true);
+            backpacksHealthLocked = true;
+            RefreshSnapshot();
+            return true;
         }
 
         public void SetDragCellVisualizationEnabled(bool enabled)
@@ -320,6 +367,11 @@ namespace BackpackPrototype
         public bool DamagePlayerBackpackByMaximumHealthFraction(
             float fraction)
         {
+            if (backpacksHealthLocked)
+            {
+                return false;
+            }
+
             return TryDamageBackpackByMaximumHealthFraction(
                 playerBackpackSystem,
                 fraction);
@@ -331,6 +383,11 @@ namespace BackpackPrototype
         public bool DamageEnemyBackpackByMaximumHealthFraction(
             float fraction)
         {
+            if (backpacksHealthLocked)
+            {
+                return false;
+            }
+
             return TryDamageBackpackByMaximumHealthFraction(
                 enemyBackpackSystem,
                 fraction);
@@ -367,6 +424,41 @@ namespace BackpackPrototype
             target.Health.DecreaseHealth(
                 target.Health.MaxHealth * fraction);
             return true;
+        }
+
+        private void HandlePhaseChanged(BattlePhase phase)
+        {
+            if (phase != BattlePhase.Combat)
+            {
+                SetBackpacksHealthLocked(false);
+            }
+            else
+            {
+                RefreshSnapshot();
+            }
+        }
+
+        private bool TryGetBackpackTargets(
+            out BattleBackpackTarget2D playerTarget,
+            out BattleBackpackTarget2D enemyTarget)
+        {
+            playerTarget = playerBackpackSystem != null
+                ? playerBackpackSystem.GetComponent<BattleBackpackTarget2D>()
+                : null;
+            enemyTarget = enemyBackpackSystem != null
+                ? enemyBackpackSystem.GetComponent<BattleBackpackTarget2D>()
+                : null;
+
+            return playerTarget != null && enemyTarget != null;
+        }
+
+        private void ApplyBackpackHealthLock(bool locked)
+        {
+            TryGetBackpackTargets(
+                out BattleBackpackTarget2D playerTarget,
+                out BattleBackpackTarget2D enemyTarget);
+            playerTarget?.SetHealthLocked(locked);
+            enemyTarget?.SetHealthLocked(locked);
         }
 
         public void RefreshSnapshot()
@@ -645,6 +737,9 @@ namespace BackpackPrototype
 
         private void OnDisable()
         {
+            BattleFlowController.PhaseChanged -= HandlePhaseChanged;
+            SetBackpacksHealthLocked(false);
+
             if (subscribedPlayerBackpack != null)
             {
                 subscribedPlayerBackpack.ItemAdded -=

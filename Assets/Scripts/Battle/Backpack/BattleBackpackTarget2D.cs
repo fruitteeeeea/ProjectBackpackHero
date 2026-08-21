@@ -35,6 +35,7 @@ namespace BackpackHero.Battle
             healthBarFollowers;
 
         private Renderer[] visualRenderers;
+        private bool healthLocked;
         
         public Health Health =>
             health;
@@ -50,6 +51,16 @@ namespace BackpackHero.Battle
         public bool IsAlive =>
             health != null &&
             !health.IsDead;
+
+        /// <summary>
+        /// 调试功能开启时，阻止该背包接收战斗伤害。
+        /// </summary>
+        public bool IsHealthLocked => healthLocked;
+
+        public void SetHealthLocked(bool locked)
+        {
+            healthLocked = locked;
+        }
 
         private void Awake()
         {

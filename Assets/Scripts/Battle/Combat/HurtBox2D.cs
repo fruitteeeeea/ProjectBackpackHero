@@ -51,6 +51,28 @@ namespace BackpackHero.Battle
             targetHealth != null &&
             !targetHealth.IsDead;
 
+        /// <summary>
+        /// 当前目标是否会拦截伤害但不扣除生命值。
+        /// </summary>
+        public bool IsDamageImmune
+        {
+            get
+            {
+                FindOwnerReferences();
+
+                Fighter2D fighter = targetHealth != null
+                    ? targetHealth.GetComponent<Fighter2D>()
+                    : null;
+
+                BattleBackpackTarget2D backpack = targetHealth != null
+                    ? targetHealth.GetComponent<BattleBackpackTarget2D>()
+                    : null;
+
+                return (fighter != null && fighter.IsInitialInvulnerable) ||
+                       (backpack != null && backpack.IsHealthLocked);
+            }
+        }
+
         private void Awake()
         {
             RefreshOwnerConfiguration();
@@ -120,6 +142,11 @@ namespace BackpackHero.Battle
             }
 
             if (targetHealth.IsDead)
+            {
+                return false;
+            }
+
+            if (IsDamageImmune)
             {
                 return false;
             }

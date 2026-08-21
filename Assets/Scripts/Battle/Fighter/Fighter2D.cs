@@ -18,6 +18,7 @@ namespace BackpackHero.Battle
     {
         private const float OvertimePenaltyRetryInterval = 1f;
         private const float OvertimeDamageMultiplier = 0.1f;
+        private const float InitialInvulnerabilityDuration = 0.8f;
 
         [Header("Overtime Penalty")]
         [SerializeField]
@@ -45,6 +46,7 @@ namespace BackpackHero.Battle
         private LifetimeAndScreenBounds2D lifetime;
         private bool overtimePenaltyActive;
         private float overtimePenaltyRetryTimer;
+        private float initialInvulnerabilityEndsAt;
 
         public FighterDefinition Definition =>
             definition;
@@ -73,6 +75,11 @@ namespace BackpackHero.Battle
         public bool IsAlive =>
             health != null &&
             !health.IsDead;
+        /// <summary>
+        /// 背包飞机生成后的短暂无敌状态。
+        /// </summary>
+        public bool IsInitialInvulnerable =>
+            Time.time < initialInvulnerabilityEndsAt;
         public ItemInstance DamageSourceItem => damageSourceItem;
         public float ProgressionDamageMultiplier => progressionDamageMultiplier;
         /// <summary>
@@ -196,6 +203,8 @@ namespace BackpackHero.Battle
 
             definition = fighterDefinition;
             isDying = false;
+            initialInvulnerabilityEndsAt =
+                Time.time + InitialInvulnerabilityDuration;
             progressionHealthMultiplier = Mathf.Max(0.01f, healthMultiplier);
             progressionDamageMultiplier = Mathf.Max(0.01f, damageMultiplier);
             
@@ -250,7 +259,7 @@ namespace BackpackHero.Battle
         /// </summary>
         public void TakeDamage(float damage)
         {
-            if (!IsAlive || damage <= 0f)
+            if (!IsAlive || IsInitialInvulnerable || damage <= 0f)
             {
                 return;
             }

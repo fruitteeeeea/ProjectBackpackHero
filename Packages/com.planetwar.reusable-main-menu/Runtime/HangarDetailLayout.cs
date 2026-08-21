@@ -75,8 +75,11 @@ namespace PlanetWar.ReusableMainMenu
             {
                 // Match the source UICardInfo -> ItemCard.Init path: the detail preview uses
                 // the same card presentation configuration as the card that opened it.
-                previewItem.Configure(card.Owner, card.Kind, card.CardId, card.CardName, card.CardDescription,
-                    card.Icon, card.LockedIcon, card.IsUnlocked, card.IsEquipped, card.UnlockRank, card.Level);
+                if (snapshot.Name != null)
+                    previewItem.Configure(card.Owner, snapshot, card.IsEquipped ? 0 : -1);
+                else
+                    previewItem.Configure(card.Owner, card.Kind, card.CardId, card.CardName, card.CardDescription,
+                        card.Icon, card.LockedIcon, card.IsUnlocked, card.IsEquipped, card.UnlockRank, card.Level);
             }
 
             if (snapshot.Name != null)

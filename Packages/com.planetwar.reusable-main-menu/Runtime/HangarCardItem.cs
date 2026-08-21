@@ -26,6 +26,12 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private bool equipped;
         [SerializeField] private TMP_Text levelPrefixText;
         [SerializeField] private TMP_Text levelValueText;
+        // These are the direct equivalents of the source ItemCard.sliderUpgrade,
+        // textUpDebris and objUpgrade fields. The prefab builder serializes them from the
+        // original card hierarchy so card progression never depends on ambiguous name lookup.
+        [SerializeField] private Slider progressionSlider;
+        [SerializeField] private TMP_Text fragmentProgressText;
+        [SerializeField] private GameObject upgradeIndicator;
         private Button cardButton;
 
         public CardKind Kind => cardKind;
@@ -134,6 +140,15 @@ namespace PlanetWar.ReusableMainMenu
             ApplyVisual();
         }
 
+        public void ConfigureProgressionPresentation(Slider slider, TMP_Text progressText,
+            GameObject indicator)
+        {
+            progressionSlider = slider;
+            fragmentProgressText = progressText;
+            upgradeIndicator = indicator;
+            ApplyVisual();
+        }
+
         private void OnEnable()
         {
             BindCardButton();
@@ -192,14 +207,61 @@ namespace PlanetWar.ReusableMainMenu
             if (levelValueText != null) levelValueText.text = IsEmptyDeckSlot ? string.Empty : level.ToString();
             var rank = lockRoot != null ? lockRoot.GetComponentInChildren<TMP_Text>(true) : null;
             if (rank != null) rank.text = $"Rank {unlockRank}";
-            var slider = Find(transform, "Slider");
-            if (slider != null) slider.gameObject.SetActive(unlocked && !IsEmptyDeckSlot);
+            ApplyProgressionPresentation();
 
             // Target ItemCard.Refresh() enables this only for a Spell before its first tutorial
             // mission starts. This project has no equivalent mission/onboarding state, so guide
             // must remain off; otherwise it covers every equipment card's art.
             var guide = Find(transform, "guide");
             if (guide != null) guide.gameObject.SetActive(false);
+        }
+
+        private void ApplyProgressionPresentation()
+        {
+            ResolveProgressionPresentationIfMissing();
+            // Static builder placeholders do not carry a live item snapshot. Preserve their
+            // authored slider/indicator state until HangarView binds the runtime item data.
+            if (Snapshot.Name == null)
+            {
+                if (progressionSlider != null)
+                    progressionSlider.gameObject.SetActive(unlocked && !IsEmptyDeckSlot);
+                if (upgradeIndicator != null && IsEmptyDeckSlot)
+                    upgradeIndicator.SetActive(false);
+                return;
+            }
+
+            bool showProgress = Snapshot.Unlocked && !IsEmptyDeckSlot;
+            if (progressionSlider != null)
+            {
+                progressionSlider.gameObject.SetActive(showProgress);
+                if (showProgress)
+                    progressionSlider.value = Snapshot.IsMaxLevel ? 1f :
+                        Snapshot.RequiredFragments > 0
+                            ? Mathf.Clamp01(Snapshot.Fragments / (float)Snapshot.RequiredFragments)
+                            : 0f;
+            }
+            if (fragmentProgressText != null && showProgress)
+                fragmentProgressText.text = Snapshot.IsMaxLevel ? "Max" :
+                    $"{Snapshot.Fragments}/{Snapshot.RequiredFragments}";
+
+            // Match ItemCard.Refresh(): this marker is a fragment-sufficiency cue only.
+            // Detail-page Upgrade availability continues to evaluate its complete conditions.
+            if (upgradeIndicator != null)
+                upgradeIndicator.SetActive(showProgress && !Snapshot.IsMaxLevel &&
+                    Snapshot.RequiredFragments > 0 && Snapshot.Fragments >= Snapshot.RequiredFragments);
+        }
+
+        // Old baked MainMenu prefabs predate the serialized fields above. Resolve only the
+        // original ItemCard's direct Slider hierarchy as a compatibility path; newly rebuilt
+        // cards receive all three references from RanksPrefabBuilder.
+        private void ResolveProgressionPresentationIfMissing()
+        {
+            Transform sliderRoot = progressionSlider != null ? progressionSlider.transform :
+                transform.Find("Slider");
+            if (sliderRoot == null) return;
+            progressionSlider ??= sliderRoot.GetComponent<Slider>();
+            fragmentProgressText ??= sliderRoot.GetComponentInChildren<TMP_Text>(true);
+            upgradeIndicator ??= sliderRoot.Find("Image (2)")?.gameObject;
         }
 
         private void OnValidate()

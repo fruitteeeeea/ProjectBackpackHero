@@ -40,6 +40,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var deckGuideVisible = fourthDeckPreview != null && Find(fourthDeckPreview, "guide")?.gameObject.activeSelf == true;
                 var deckLevelPrefix = fourthDeckPreview != null ? Find(fourthDeckPreview, "lv")?.GetComponentInChildren<TMP_Text>(true) : null;
                 var deckLabelReferences = firstDeckCard != null && new SerializedObject(firstDeckCard).FindProperty("levelPrefixText").objectReferenceValue != null && new SerializedObject(firstDeckCard).FindProperty("levelValueText").objectReferenceValue != null;
+                var deckProgressReferences = firstDeckCard != null && HasProgressionBindings(firstDeckCard);
                 var entityDetails = prefab != null ? prefab.transform.Find("UICardView/UICardInfo")?.GetComponent<HangarDetailLayout>() : null;
                 var spellDetails = prefab != null ? prefab.transform.Find("UICardView/UICardSpell")?.GetComponent<HangarDetailLayout>() : null;
                 var rankInfo = prefab != null ? prefab.transform.Find("UIRankInfo")?.GetComponent<RankInfoView>() : null;
@@ -47,7 +48,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var rankInfoPageBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("rankInfoPage").objectReferenceValue != null;
                 var bottomBarBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("bottomBar").objectReferenceValue != null;
                 var rankInfoReady = rankInfo != null && rankInfo.scroll != null && rankInfo.itemRankMain != null && rankInfo.itemRankReward != null && rankInfo.btnOffset != null && rankInfo.entries != null && rankInfo.entries.Length >= 12 && rankInfo.scroll.scrollRect != null && rankInfo.scroll.content != null && rankInfo.scroll.viewport != null && rankInfoPageBound && bottomBarBound;
-                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !rankInfoReady))
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !rankInfoReady))
                 {
                     Debug.Log("[PlanetWar] Rebuilding MainMenu Hangar with the original static card configuration.");
                     Rebuild();
@@ -464,6 +465,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
             var levelPrefix = Find(item.transform, "lv")?.GetComponent<TMP_Text>();
             var levelText = Find(item.transform, "level")?.GetComponent<TMP_Text>();
             card.ConfigureOriginalLabels(levelPrefix, levelText);
+            ConfigureCardProgressionPresentation(card);
             foreach (var button in item.GetComponentsInChildren<Button>(true))
             {
                 button.onClick = new Button.ButtonClickedEvent();
@@ -502,6 +504,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
             var layout = panel.GetComponent<HangarDetailLayout>() ?? panel.AddComponent<HangarDetailLayout>();
             var previewRoot = Find(panel.transform, "ItemCard (1)") ?? Find(panel.transform, "ItemCard");
             var preview = previewRoot != null ? previewRoot.GetComponent<HangarCardItem>() ?? previewRoot.gameObject.AddComponent<HangarCardItem>() : null;
+            ConfigureCardProgressionPresentation(preview);
             layout.Configure(
                 Find(panel.transform, "btnUpgrade")?.gameObject,
                 Find(panel.transform, "btnUpBattle")?.gameObject,
@@ -538,6 +541,25 @@ namespace PlanetWar.ReusableMainMenu.Editor
             TMP_Text description = serialized.FindProperty("descriptionText").objectReferenceValue as TMP_Text;
             return name != null && description != null && name.gameObject.activeSelf &&
                    description.gameObject.activeSelf;
+        }
+
+        private static void ConfigureCardProgressionPresentation(HangarCardItem card)
+        {
+            if (card == null) return;
+            Transform sliderRoot = FindDirectChild(card.transform, "Slider");
+            Slider slider = sliderRoot != null ? sliderRoot.GetComponent<Slider>() : null;
+            TMP_Text progressText = sliderRoot != null ? sliderRoot.GetComponentInChildren<TMP_Text>(true) : null;
+            // ItemCard.objUpgrade is the authored direct Slider child named "Image (2)".
+            GameObject indicator = FindDirectChild(sliderRoot, "Image (2)")?.gameObject;
+            card.ConfigureProgressionPresentation(slider, progressText, indicator);
+        }
+
+        private static bool HasProgressionBindings(HangarCardItem card)
+        {
+            var serialized = new SerializedObject(card);
+            return serialized.FindProperty("progressionSlider").objectReferenceValue != null &&
+                   serialized.FindProperty("fragmentProgressText").objectReferenceValue != null &&
+                   serialized.FindProperty("upgradeIndicator").objectReferenceValue != null;
         }
 
         private static bool IsUnder(Transform item, string ancestorName)

@@ -9,6 +9,63 @@ using BackpackPrototype;
 
 public sealed class ItemPresentationTests
 {
+    [TestCase(HangarItemKind.Aircraft, 2, 3, 5, 0.6f, "3/5", false)]
+    [TestCase(HangarItemKind.Equipment, 4, 8, 5, 1f, "8/5", true)]
+    [TestCase(HangarItemKind.Aircraft, 10, 0, 0, 1f, "Max", false)]
+    public void HangarCard_UsesItsOwnSnapshotForFragmentProgress(
+        HangarItemKind kind, int level, int fragments, int required, float expectedValue,
+        string expectedText, bool expectedUpgradeIndicator)
+    {
+        GameObject root = new GameObject("Card");
+        try
+        {
+            HangarCardItem card = root.AddComponent<HangarCardItem>();
+            Slider slider = NewProgressSlider(root.transform, out TMP_Text progressText,
+                out GameObject upgradeIndicator);
+            card.ConfigureProgressionPresentation(slider, progressText, upgradeIndicator);
+            card.Configure(new HangarItemSnapshot(kind, "Item", "Description", null, null, true,
+                level, fragments, required, 0, 1f, 1, null, Color.white, "Unlocked",
+                itemId: "item", maximumLevel: 10));
+
+            Assert.That(slider.gameObject.activeSelf, Is.True);
+            Assert.That(slider.value, Is.EqualTo(expectedValue).Within(0.0001f));
+            Assert.That(progressText.text, Is.EqualTo(expectedText));
+            Assert.That(upgradeIndicator.activeSelf, Is.EqualTo(expectedUpgradeIndicator));
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [TestCase(false, false)]
+    [TestCase(true, true)]
+    public void HangarCard_HidesFragmentProgressForLockedCardsAndEmptyDeckSlots(
+        bool emptyDeckSlot, bool expectedEmpty)
+    {
+        GameObject root = new GameObject("Card");
+        GameObject ownerRoot = new GameObject("Hangar");
+        try
+        {
+            HangarCardItem card = root.AddComponent<HangarCardItem>();
+            Slider slider = NewProgressSlider(root.transform, out TMP_Text progressText,
+                out GameObject upgradeIndicator);
+            card.ConfigureProgressionPresentation(slider, progressText, upgradeIndicator);
+            if (emptyDeckSlot)
+                card.ConfigureEmptyDeckSlot(ownerRoot.AddComponent<HangarView>(), 0,
+                    HangarCardItem.CardKind.Entity);
+            else
+                card.Configure(new HangarItemSnapshot(HangarItemKind.Aircraft, "Locked", "", null,
+                    null, false, 1, 5, 5, 0, 1f, 1, null, Color.white, "Locked", itemId: "locked"));
+
+            Assert.That(card.IsEmptyDeckSlot, Is.EqualTo(expectedEmpty));
+            Assert.That(slider.gameObject.activeSelf, Is.False);
+            Assert.That(upgradeIndicator.activeSelf, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(ownerRoot);
+            Object.DestroyImmediate(root);
+        }
+    }
+
     [TestCase(false, false, false, true, false)]
     [TestCase(false, true, true, false, false)]
     [TestCase(true, false, false, true, false)]
@@ -205,6 +262,17 @@ public sealed class ItemPresentationTests
         GameObject textObject = new GameObject(name, typeof(RectTransform));
         textObject.transform.SetParent(parent);
         return textObject.AddComponent<TextMeshProUGUI>();
+    }
+
+    private static Slider NewProgressSlider(Transform parent, out TMP_Text progressText,
+        out GameObject upgradeIndicator)
+    {
+        GameObject sliderRoot = new GameObject("Slider", typeof(RectTransform), typeof(Slider));
+        sliderRoot.transform.SetParent(parent);
+        progressText = NewText(sliderRoot.transform, "Text (TMP)");
+        upgradeIndicator = new GameObject("Image (2)");
+        upgradeIndicator.transform.SetParent(sliderRoot.transform);
+        return sliderRoot.GetComponent<Slider>();
     }
 
     private static void Invoke(object target, string methodName)

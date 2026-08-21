@@ -55,15 +55,23 @@ namespace BackpackHero.EditorTools
                 BackpackStrengthCalculator.Calculate(backpack);
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("飞机物品数量", score.AircraftCount.ToString());
-                EditorGUILayout.LabelField("装备物品数量", score.EquipmentCount.ToString());
-                EditorGUILayout.Space(2f);
                 EditorGUILayout.LabelField(
                     "背包总分",
                     score.TotalScore.ToString("0.##"),
                     EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("飞机物品数量", score.AircraftCount.ToString());
+                EditorGUILayout.LabelField("装备物品数量", score.EquipmentCount.ToString());
+                EditorGUILayout.Space(2f);
                 EditorGUILayout.LabelField("飞机总分", score.AircraftScore.ToString("0.##"));
+                EditorGUILayout.LabelField(
+                    "  Lv.1 / Lv.2 / Lv.3",
+                    $"{score.AircraftLevel1Count} / {score.AircraftLevel2Count} / {score.AircraftLevel3Count}",
+                    EditorStyles.miniLabel);
                 EditorGUILayout.LabelField("物品总分", score.EquipmentScore.ToString("0.##"));
+                EditorGUILayout.LabelField(
+                    "  Lv.1 / Lv.2 / Lv.3",
+                    $"{score.EquipmentLevel1Count} / {score.EquipmentLevel2Count} / {score.EquipmentLevel3Count}",
+                    EditorStyles.miniLabel);
             }
         }
     }

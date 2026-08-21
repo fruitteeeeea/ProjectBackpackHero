@@ -101,6 +101,12 @@ public sealed class BackpackStrengthCalculatorTests
 
         Assert.That(score.AircraftCount, Is.EqualTo(2));
         Assert.That(score.EquipmentCount, Is.EqualTo(1));
+        Assert.That(score.AircraftLevel1Count, Is.EqualTo(1));
+        Assert.That(score.AircraftLevel2Count, Is.Zero);
+        Assert.That(score.AircraftLevel3Count, Is.EqualTo(1));
+        Assert.That(score.EquipmentLevel1Count, Is.Zero);
+        Assert.That(score.EquipmentLevel2Count, Is.EqualTo(1));
+        Assert.That(score.EquipmentLevel3Count, Is.Zero);
         Assert.That(score.AircraftScore, Is.EqualTo(25f));
         Assert.That(score.EquipmentScore, Is.EqualTo(22.5f));
         Assert.That(score.TotalScore, Is.EqualTo(47.5f));

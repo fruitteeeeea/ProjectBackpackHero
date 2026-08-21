@@ -26,6 +26,12 @@ namespace BackpackHero.EditorTools
             float total = source.Sum(x => showRawDamage ? x.RawDamage : x.ActualDamage);
             EditorGUILayout.Space(8); EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
             EditorGUILayout.LabelField("当前总伤害", total.ToString("0.##"));
+            EditorGUILayout.LabelField("击杀敌方飞机数量",
+                DamageStatisticsRuntime.Instance
+                    .GetEnemyAircraftKillCount(faction).ToString());
+            EditorGUILayout.LabelField("我方飞机超时退场数量",
+                DamageStatisticsRuntime.Instance
+                    .GetOvertimeAircraftExitCount(faction).ToString());
             foreach (DamageStatisticsItemCategory category in new[] { DamageStatisticsItemCategory.Aircraft, DamageStatisticsItemCategory.Equipment })
             {
                 EditorGUILayout.LabelField(category == DamageStatisticsItemCategory.Aircraft ? "飞机物品" : "装备物品", EditorStyles.miniBoldLabel);

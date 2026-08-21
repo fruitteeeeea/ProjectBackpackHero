@@ -16,9 +16,20 @@ namespace BackpackHero.Battle
     /// <summary>背包物品造成攻击时保留的归属；空值表示独立测试攻击。</summary>
     public readonly struct BattleDamageSource
     {
-        public BattleDamageSource(ItemInstance item) => Item = item;
+        public BattleDamageSource(
+            ItemInstance item,
+            bool countsForDamageStatistics = true)
+        {
+            Item = item;
+            CountsForDamageStatistics = countsForDamageStatistics;
+        }
+
         public ItemInstance Item { get; }
         public bool HasBackpackItem => Item != null && Item.Data != null;
+        /// <summary>
+        /// 特殊规则攻击可沿用物品伤害结算，但不进入 DPS 排行。
+        /// </summary>
+        public bool CountsForDamageStatistics { get; }
     }
 
     /// <summary>

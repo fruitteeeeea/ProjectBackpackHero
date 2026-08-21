@@ -20,6 +20,7 @@ public sealed class AircraftVisualSettingsTests
         Assert.That(settings.DeathExplosionParticles, Is.True);
         Assert.That(settings.DeathFlashParticles, Is.True);
         Assert.That(settings.AircraftLifetimeEnabled, Is.True);
+        Assert.That(settings.HighlightOvertimePenaltyProjectile, Is.False);
         Assert.That(settings.HitParticlesStartSpeed, Is.EqualTo(8.8f));
         Assert.That(settings.HitParticlesStartSize, Is.EqualTo(0.5f));
         Assert.That(settings.HitParticlesBurstCount, Is.EqualTo(3));
@@ -43,6 +44,7 @@ public sealed class AircraftVisualSettingsTests
             "Assets/Art/Images/VFX/Particles/symbol_02.png");
         AircraftVisualSettings expected = new(
             false, false, true, false, false, true, false, true, false, false,
+            true,
             -1f, texture, -1.5f, -2,
             3.5f, texture, 2.25f, 9,
             -2f, null, -3f, -4,
@@ -56,6 +58,7 @@ public sealed class AircraftVisualSettingsTests
             Assert.That(actual.AttackScaleTween, Is.False);
             Assert.That(actual.HitWhiteFlash, Is.False);
             Assert.That(actual.AircraftLifetimeEnabled, Is.False);
+            Assert.That(actual.HighlightOvertimePenaltyProjectile, Is.True);
             Assert.That(actual.DeathExplosionParticlesStartSpeed,
                 Is.EqualTo(3.5f));
             Assert.That(actual.HitParticlesStartSpeed, Is.Zero);
@@ -116,6 +119,7 @@ public sealed class AircraftVisualSettingsTests
             Is.GreaterThanOrEqualTo(0f));
         Assert.That(values.DeathFlashParticlesBurstCount,
             Is.GreaterThanOrEqualTo(0));
+        Assert.That(values.HighlightOvertimePenaltyProjectile, Is.False);
         Assert.That(values.HitParticlesTexture, Is.Not.Null);
         Assert.That(values.DeathExplosionParticlesTexture, Is.Not.Null);
         Assert.That(values.DeathFlashParticlesTexture, Is.Not.Null);

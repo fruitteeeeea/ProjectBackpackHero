@@ -31,6 +31,8 @@ namespace BackpackHero.Debugging
 
         [Header("Flight")]
         [SerializeField] private bool aircraftLifetimeEnabled = true;
+        [SerializeField]
+        private bool highlightOvertimePenaltyProjectile;
 
         [Header("Death Particles")]
         [SerializeField, Min(0f)]
@@ -65,6 +67,8 @@ namespace BackpackHero.Debugging
             deathExplosionParticles = values.DeathExplosionParticles;
             deathFlashParticles = values.DeathFlashParticles;
             aircraftLifetimeEnabled = values.AircraftLifetimeEnabled;
+            highlightOvertimePenaltyProjectile =
+                values.HighlightOvertimePenaltyProjectile;
             hitParticlesStartSpeed = Mathf.Max(0f,
                 values.HitParticlesStartSpeed);
             hitParticlesTexture = values.HitParticlesTexture;
@@ -104,6 +108,7 @@ namespace BackpackHero.Debugging
             deathExplosionParticles,
             deathFlashParticles,
             aircraftLifetimeEnabled,
+            highlightOvertimePenaltyProjectile,
             Mathf.Max(0f, hitParticlesStartSpeed),
             hitParticlesTexture,
             Mathf.Max(0f, hitParticlesStartSize),

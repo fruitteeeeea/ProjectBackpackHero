@@ -296,6 +296,9 @@ namespace BackpackHero.EditorTools
             bool aircraftLifetimeEnabled = EditorGUILayout.Toggle(
                 "飞机 Lifetime（时间寿命）",
                 current.AircraftLifetimeEnabled);
+            bool highlightOvertimePenaltyProjectile = EditorGUILayout.Toggle(
+                "高亮超时强制退场子弹",
+                current.HighlightOvertimePenaltyProjectile);
 
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("爆炸子弹", EditorStyles.boldLabel);
@@ -316,6 +319,7 @@ namespace BackpackHero.EditorTools
                 deathExplosionParticles,
                 deathFlashParticles,
                 aircraftLifetimeEnabled,
+                highlightOvertimePenaltyProjectile,
                 current.HitParticlesStartSpeed,
                 current.HitParticlesTexture,
                 current.HitParticlesStartSize,
@@ -429,6 +433,7 @@ namespace BackpackHero.EditorTools
                 current.DeathExplosionParticles,
                 current.DeathFlashParticles,
                 current.AircraftLifetimeEnabled,
+                current.HighlightOvertimePenaltyProjectile,
                 hitStartSpeed,
                 hitTexture,
                 hitStartSize,

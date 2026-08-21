@@ -26,6 +26,7 @@ MonoBehaviour:
   deathExplosionParticles: 1
   deathFlashParticles: 1
   aircraftLifetimeEnabled: 0
+  highlightOvertimePenaltyProjectile: 0
   deathExplosionParticlesStartSpeed: 8.8
   deathExplosionParticlesTexture: {fileID: 2800000, guid: 30ca206fdcf588648943f2923b9563fe, type: 3}
   deathExplosionParticlesStartSize: 2.5

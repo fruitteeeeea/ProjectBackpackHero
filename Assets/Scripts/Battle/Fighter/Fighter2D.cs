@@ -17,6 +17,7 @@ namespace BackpackHero.Battle
     public sealed class Fighter2D : MonoBehaviour
     {
         private const float OvertimePenaltyRetryInterval = 1f;
+        private const float OvertimeDamageMultiplier = 0.1f;
 
         [Header("Overtime Penalty")]
         [SerializeField]
@@ -74,6 +75,14 @@ namespace BackpackHero.Battle
             !health.IsDead;
         public ItemInstance DamageSourceItem => damageSourceItem;
         public float ProgressionDamageMultiplier => progressionDamageMultiplier;
+        /// <summary>
+        /// 飞机到达自身寿命上限后进入超时状态，后续造成的伤害降为原本的10%。
+        /// </summary>
+        public float EffectiveDamageMultiplier =>
+            progressionDamageMultiplier *
+            (lifetime != null && lifetime.HasLifetimeExpired
+                ? OvertimeDamageMultiplier
+                : 1f);
         public void SetDamageSourceItem(ItemInstance item) => damageSourceItem = item;
 
         private void Awake()
@@ -315,6 +324,8 @@ namespace BackpackHero.Battle
 
         private void HandleLifetimeExpired()
         {
+            DamageStatisticsRuntime.RecordOvertimeAircraftExit(Faction);
+
             if (lifetime == null ||
                 lifetime.DestroyWhenLifetimeExpires ||
                 !IsAlive)
@@ -345,10 +356,19 @@ namespace BackpackHero.Battle
                 return;
             }
 
+            AircraftVisualSettings visualSettings =
+                AircraftVisualDebugRuntime.CurrentSettings;
+            ProjectileVisualSource visualSource =
+                visualSettings.AircraftVisualOverridesEnabled &&
+                visualSettings.HighlightOvertimePenaltyProjectile
+                    ? ProjectileVisualSource.OvertimePenalty
+                    : ProjectileVisualSource.Equipment;
+
             combat.FireAttackAtPoint(
                 overtimePenaltyProjectilePrefab,
                 transform.position,
-                ProjectileVisualSource.Equipment);
+                visualSource,
+                countsForDamageStatistics: false);
         }
 
         private Fighter2D FindNearestLivingEnemy()

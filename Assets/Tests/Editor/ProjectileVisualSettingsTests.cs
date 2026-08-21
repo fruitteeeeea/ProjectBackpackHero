@@ -35,6 +35,14 @@ public sealed class ProjectileVisualSettingsTests
             settings.GetTrailDuration(
                 ProjectileVisualSource.Equipment),
             Is.EqualTo(0.14f));
+        Assert.That(
+            settings.GetTrailDuration(
+                ProjectileVisualSource.OvertimePenalty),
+            Is.EqualTo(0.2f));
+        Assert.That(settings.GetProjectileColor(
+            BattleFaction.Player,
+            ProjectileVisualSource.OvertimePenalty),
+            Is.EqualTo(new Color(1f, 0.1f, 0.1f, 1f)));
 
         Gradient equipmentGradient = settings.CreateTrailGradient(
             BattleFaction.Player,

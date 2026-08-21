@@ -19,12 +19,14 @@ namespace BackpackHero.Battle
                 return;
             }
 
-            Color factionColor = settings.GetFactionColor(faction);
+            Color projectileColor = settings.GetProjectileColor(
+                faction,
+                source);
 
             foreach (SpriteRenderer spriteRenderer in
                      GetComponentsInChildren<SpriteRenderer>(true))
             {
-                spriteRenderer.color = factionColor;
+                spriteRenderer.color = projectileColor;
             }
 
             foreach (TrailRenderer trailRenderer in

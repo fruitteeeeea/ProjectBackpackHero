@@ -19,6 +19,8 @@ namespace BackpackHero.Battle
         [Header("Trail Colors")]
         [SerializeField] private Color equipmentTipColor =
             new(0.8666667f, 0.7882353f, 0.23137255f, 1f);
+        [SerializeField] private Color overtimePenaltyColor =
+            new(1f, 0.1f, 0.1f, 1f);
         [SerializeField, Range(0f, 1f)] private float trailOpacity =
             0.49019608f;
 
@@ -27,6 +29,8 @@ namespace BackpackHero.Battle
             0.07f;
         [SerializeField, Min(0f)] private float equipmentTrailDuration =
             0.14f;
+        [SerializeField, Min(0f)] private float overtimePenaltyTrailDuration =
+            0.2f;
         [SerializeField, Range(0f, 1f)]
         private float equipmentTipTransition = 0.35f;
 
@@ -43,11 +47,22 @@ namespace BackpackHero.Battle
                 : enemyFactionColor;
         }
 
+        public Color GetProjectileColor(
+            BattleFaction faction,
+            ProjectileVisualSource source) =>
+            source == ProjectileVisualSource.OvertimePenalty
+                ? overtimePenaltyColor
+                : GetFactionColor(faction);
+
         public float GetTrailDuration(ProjectileVisualSource source)
         {
+            if (source == ProjectileVisualSource.OvertimePenalty)
+            {
+                return overtimePenaltyTrailDuration;
+            }
+
             return source == ProjectileVisualSource.Equipment
-                ? equipmentTrailDuration
-                : fighterTrailDuration;
+                ? equipmentTrailDuration : fighterTrailDuration;
         }
 
         public AnimationCurve TrailWidthCurve => trailWidthCurve;
@@ -56,8 +71,20 @@ namespace BackpackHero.Battle
             BattleFaction faction,
             ProjectileVisualSource source)
         {
-            Color factionColor = GetFactionColor(faction);
+            Color factionColor = GetProjectileColor(faction, source);
             Gradient gradient = new();
+
+            if (source == ProjectileVisualSource.OvertimePenalty)
+            {
+                gradient.SetKeys(
+                    new[]
+                    {
+                        new GradientColorKey(overtimePenaltyColor, 0f),
+                        new GradientColorKey(overtimePenaltyColor, 1f),
+                    },
+                    CreateAlphaKeys());
+                return gradient;
+            }
 
             if (source == ProjectileVisualSource.Equipment)
             {
@@ -101,6 +128,9 @@ namespace BackpackHero.Battle
             trailOpacity = Mathf.Clamp01(trailOpacity);
             fighterTrailDuration = Mathf.Max(0f, fighterTrailDuration);
             equipmentTrailDuration = Mathf.Max(0f, equipmentTrailDuration);
+            overtimePenaltyTrailDuration = Mathf.Max(
+                0f,
+                overtimePenaltyTrailDuration);
             equipmentTipTransition = Mathf.Clamp01(equipmentTipTransition);
         }
 #endif

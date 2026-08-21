@@ -527,7 +527,8 @@ namespace BackpackHero.Battle
             Vector2 targetPosition,
             ProjectileVisualSource visualSource = ProjectileVisualSource.FighterDefault,
             ItemInstance sourceItem = null,
-            float equipmentItemModifier = 1f)
+            float equipmentItemModifier = 1f,
+            bool countsForDamageStatistics = true)
         {
             Vector2 fireDirection = firePoint != null
                 ? targetPosition - (Vector2)firePoint.position
@@ -539,7 +540,8 @@ namespace BackpackHero.Battle
                 visualSource,
                 false,
                 sourceItem ?? aircraftItem,
-                equipmentItemModifier);
+                equipmentItemModifier,
+                countsForDamageStatistics);
         }
 
         private bool FireAttackAtPoint(
@@ -549,7 +551,8 @@ namespace BackpackHero.Battle
             ProjectileVisualSource visualSource,
             bool canDamageBackpack,
             ItemInstance sourceItem = null,
-            float equipmentItemModifier = 1f)
+            float equipmentItemModifier = 1f,
+            bool countsForDamageStatistics = true)
         {
             if (fighter == null ||
                 fighter.Definition == null ||
@@ -583,9 +586,9 @@ namespace BackpackHero.Battle
                     BattleAttackLaunchContext
                         .WithAimPoint(
                             fighter.Faction,
-                        fighter.Definition
+                            fighter.Definition
                                 .ProjectileDamage *
-                            fighter.ProgressionDamageMultiplier *
+                            fighter.EffectiveDamageMultiplier *
                             attackModifier *
                             GamePacingDebugRuntime
                                 .GetProjectileDamageMultiplier(
@@ -607,7 +610,9 @@ namespace BackpackHero.Battle
                             targetPosition,
                             visualSource,
                             canDamageBackpack,
-                            new BattleDamageSource(sourceItem));
+                            new BattleDamageSource(
+                                sourceItem,
+                                countsForDamageStatistics));
 
             attack.Initialize(launchContext);
 

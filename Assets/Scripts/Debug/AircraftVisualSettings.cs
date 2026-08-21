@@ -11,6 +11,7 @@ namespace BackpackHero.Debugging
 
         public static AircraftVisualSettings Default => new(
             true, true, true, true, true, true, true, true, true, true,
+            false,
             8.8f, null, 0.5f, 3,
             8.8f, null, 2.5f, 6,
             0f, null, 3f, 1,
@@ -27,6 +28,7 @@ namespace BackpackHero.Debugging
             bool deathExplosionParticles,
             bool deathFlashParticles,
             bool aircraftLifetimeEnabled,
+            bool highlightOvertimePenaltyProjectile,
             float hitParticlesStartSpeed,
             Texture2D hitParticlesTexture,
             float hitParticlesStartSize,
@@ -51,6 +53,8 @@ namespace BackpackHero.Debugging
             DeathExplosionParticles = deathExplosionParticles;
             DeathFlashParticles = deathFlashParticles;
             AircraftLifetimeEnabled = aircraftLifetimeEnabled;
+            HighlightOvertimePenaltyProjectile =
+                highlightOvertimePenaltyProjectile;
             HitParticlesStartSpeed = hitParticlesStartSpeed;
             HitParticlesTexture = hitParticlesTexture;
             HitParticlesStartSize = Mathf.Max(0f, hitParticlesStartSize);
@@ -85,6 +89,7 @@ namespace BackpackHero.Debugging
         public bool DeathExplosionParticles { get; }
         public bool DeathFlashParticles { get; }
         public bool AircraftLifetimeEnabled { get; }
+        public bool HighlightOvertimePenaltyProjectile { get; }
         public float HitParticlesStartSpeed { get; }
         public Texture2D HitParticlesTexture { get; }
         public float HitParticlesStartSize { get; }
@@ -111,6 +116,7 @@ namespace BackpackHero.Debugging
             DeathExplosionParticles,
             DeathFlashParticles,
             AircraftLifetimeEnabled,
+            HighlightOvertimePenaltyProjectile,
             HitParticlesStartSpeed,
             HitParticlesTexture,
             HitParticlesStartSize,
@@ -137,6 +143,7 @@ namespace BackpackHero.Debugging
             DeathExplosionParticles,
             DeathFlashParticles,
             AircraftLifetimeEnabled,
+            HighlightOvertimePenaltyProjectile,
             HitParticlesStartSpeed,
             HitParticlesTexture,
             HitParticlesStartSize,
@@ -162,6 +169,8 @@ namespace BackpackHero.Debugging
             DeathExplosionParticles == other.DeathExplosionParticles &&
             DeathFlashParticles == other.DeathFlashParticles &&
             AircraftLifetimeEnabled == other.AircraftLifetimeEnabled &&
+            HighlightOvertimePenaltyProjectile ==
+                other.HighlightOvertimePenaltyProjectile &&
             Mathf.Approximately(HitParticlesStartSpeed,
                 other.HitParticlesStartSpeed) &&
             HitParticlesTexture == other.HitParticlesTexture &&
@@ -202,6 +211,8 @@ namespace BackpackHero.Debugging
                 hash = (hash * 31) + (DeathExplosionParticles ? 1 : 0);
                 hash = (hash * 31) + (DeathFlashParticles ? 1 : 0);
                 hash = (hash * 31) + (AircraftLifetimeEnabled ? 1 : 0);
+                hash = (hash * 31) +
+                    (HighlightOvertimePenaltyProjectile ? 1 : 0);
                 hash = (hash * 31) + HitParticlesStartSpeed.GetHashCode();
                 hash = (hash * 31) + (HitParticlesTexture != null
                     ? HitParticlesTexture.GetHashCode() : 0);

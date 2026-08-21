@@ -133,7 +133,8 @@ namespace BackpackHero.Battle
             float healthBeforeDamage = targetHealth.CurrentHealth;
             targetHealth.DecreaseHealth(damage);
             float actualDamage = healthBeforeDamage - targetHealth.CurrentHealth;
-            if (actualDamage > 0f)
+            if (actualDamage > 0f &&
+                damageSource.CountsForDamageStatistics)
             {
                 DamageStatisticsRuntime.RecordHit(
                     attackerFaction,

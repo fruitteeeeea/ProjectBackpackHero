@@ -15,9 +15,11 @@ MonoBehaviour:
   playerFactionColor: {r: 0.55, g: 0.85, b: 1, a: 1}
   enemyFactionColor: {r: 1, g: 0.55, b: 0.55, a: 1}
   equipmentTipColor: {r: 0.6903293, g: 1, b: 0.6666667, a: 1}
+  overtimePenaltyColor: {r: 1, g: 0.1, b: 0.1, a: 1}
   trailOpacity: 0.49019608
   fighterTrailDuration: 0.07
   equipmentTrailDuration: 0.14
+  overtimePenaltyTrailDuration: 0.2
   equipmentTipTransition: 0.35
   trailWidthCurve:
     serializedVersion: 2

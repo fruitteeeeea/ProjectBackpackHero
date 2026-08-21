@@ -38,19 +38,18 @@ namespace BackpackHero.EditorTools
                 if (GUILayout.Button("根据当前预设随机摆放初始物品", GUILayout.Height(26f))) enemy.RandomizeInitialPlacement();
                 EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("进行一次背包操作", GUILayout.Height(26f))) enemy.RequestOperation();
-                if (GUILayout.Button("刷新操作次数", GUILayout.Height(26f))) enemy.ResetOperationAllowance();
+                if (GUILayout.Button("重置商店刷新机会", GUILayout.Height(26f))) enemy.ResetShopRollAllowance();
                 EditorGUILayout.EndHorizontal();
 
                 float interval = EditorGUILayout.FloatField("操作间隔（秒）", enemy.OperationInterval);
                 if (!Mathf.Approximately(interval, enemy.OperationInterval)) enemy.SetOperationInterval(interval);
-                int maximum = EditorGUILayout.IntField("最大操作次数", enemy.MaximumOperations);
-                if (maximum != enemy.MaximumOperations) enemy.SetMaximumOperations(maximum);
             }
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField("当前阶段", BattleFlowController.CurrentPhase == BattlePhase.Preparation ? "准备" : "战斗");
-                EditorGUILayout.LabelField("剩余操作次数", $"{enemy.RemainingOperations} / {enemy.MaximumOperations}");
+                EditorGUILayout.LabelField("剩余自动操作次数", $"{enemy.RemainingOperations} / {enemy.MaximumOperations}");
+                EditorGUILayout.LabelField("剩余商店刷新次数", $"{enemy.RemainingShopRolls} / 1");
                 EditorGUILayout.LabelField("操作中", enemy.IsOperationRunning ? "是" : "否");
                 string stock = "（空）";
                 if (enemy.ShopItems.Count > 0)

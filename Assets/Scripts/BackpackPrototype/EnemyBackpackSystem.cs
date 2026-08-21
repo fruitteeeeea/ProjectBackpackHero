@@ -13,6 +13,10 @@ namespace BackpackPrototype
     public sealed class EnemyBackpackSystem : MonoBehaviour
     {
         private const int ShopRollItemCount = 3;
+        private const int ShopRollsPerPreparation = 1;
+        private const int MaximumOperationsPerPreparation = 8;
+        private const float ImmediateReactionMinDelay = .5f;
+        private const float ImmediateReactionMaxDelay = 1f;
         // 移动/加入的位移与放置反馈最长约 .52 秒；留出余量保证串行。
         private const float VisualOperationDuration = .65f;
 
@@ -22,7 +26,6 @@ namespace BackpackPrototype
         [SerializeField] private List<DeckPreset> presetPool = new();
         [Header("Enemy Automation")]
         [SerializeField, Min(.1f)] private float operationInterval = 1f;
-        [SerializeField, Min(0)] private int maximumOperations = 4;
         [Header("Item View")]
         [SerializeField] private ItemView itemViewPrefab;
         [SerializeField] private ItemView itemView1x2Prefab;
@@ -43,8 +46,8 @@ namespace BackpackPrototype
         private BackpackCombatController combatController;
         private BackpackFighterSpawner fighterSpawner;
         private bool isReady, isApplyingData, hasInitialized, operationRunning;
-        private int pendingImmediateOperations, pendingCountedOperations, remainingOperations;
-        private float nextAutomaticOperationTime;
+        private int pendingImmediateOperations, pendingCountedOperations, remainingShopRolls, remainingOperations;
+        private float nextAutomaticOperationTime, nextImmediateOperationTime;
         private EnemyBackpackData currentData;
         private DeckPreset currentDeckPreset;
 
@@ -57,7 +60,8 @@ namespace BackpackPrototype
         public bool IsReady => isReady;
         public bool IsOperationRunning => operationRunning;
         public int RemainingOperations => remainingOperations;
-        public int MaximumOperations => maximumOperations;
+        public int MaximumOperations => MaximumOperationsPerPreparation;
+        public int RemainingShopRolls => remainingShopRolls;
         public float OperationInterval => operationInterval;
         public BackpackController Backpack => combatController != null ? combatController.Backpack : null;
         public IReadOnlyList<ItemInstance> Items => Backpack != null ? Backpack.Items : Array.Empty<ItemInstance>();
@@ -88,9 +92,12 @@ namespace BackpackPrototype
         private void Update()
         {
             if (!CanOperate() || operationRunning) return;
-            if (pendingImmediateOperations > 0) { pendingImmediateOperations--; StartCoroutine(RunOperation(false)); return; }
-            if (pendingCountedOperations > 0) { pendingCountedOperations--; StartCoroutine(RunOperation(true)); return; }
-            if (remainingOperations > 0 && Time.unscaledTime >= nextAutomaticOperationTime) StartCoroutine(RunOperation(true));
+            if (remainingOperations <= 0) return;
+            if (pendingImmediateOperations > 0 && Time.unscaledTime >= nextImmediateOperationTime) { pendingImmediateOperations--; StartCoroutine(RunOperation()); return; }
+            // 等待玩家操作后的反应延迟期间，不允许普通自动操作抢先执行。
+            if (pendingImmediateOperations > 0) return;
+            if (pendingCountedOperations > 0) { pendingCountedOperations--; StartCoroutine(RunOperation()); return; }
+            if (Time.unscaledTime >= nextAutomaticOperationTime) StartCoroutine(RunOperation());
         }
 
         public bool SelectRandomPreset()
@@ -101,7 +108,7 @@ namespace BackpackPrototype
             if (candidates.Count == 0) return false;
             currentDeckPreset = candidates[UnityEngine.Random.Range(0, candidates.Count)];
             currentData = null;
-            ResetOperationAllowance();
+            ResetPreparationState();
             return true;
         }
         public bool SetCurrentDeckPreset(DeckPreset preset)
@@ -109,7 +116,7 @@ namespace BackpackPrototype
             if (preset == null || !preset.IsValid(out _)) return false;
             currentDeckPreset = preset; currentData = null;
             if (BattleFlowController.CurrentPhase == BattlePhase.Preparation) RefreshHiddenShop();
-            ResetOperationAllowance();
+            ResetPreparationState();
             return true;
         }
         public bool RandomizeInitialPlacement()
@@ -137,39 +144,56 @@ namespace BackpackPrototype
         }
         public bool RequestImmediateReaction()
         {
-            if (!CanOperate()) return false;
-            pendingImmediateOperations++; return true;
+            if (!CanOperate() || remainingOperations <= 0) return false;
+            pendingImmediateOperations++;
+            nextImmediateOperationTime = Time.unscaledTime +
+                UnityEngine.Random.Range(
+                    ImmediateReactionMinDelay,
+                    ImmediateReactionMaxDelay);
+            return true;
         }
         public void SetOperationInterval(float value) => operationInterval = Mathf.Max(.1f, value);
-        public void SetMaximumOperations(int value) { maximumOperations = Mathf.Max(0, value); remainingOperations = Mathf.Min(remainingOperations, maximumOperations); }
-        public void ResetOperationAllowance()
+        public void ResetShopRollAllowance() => remainingShopRolls = ShopRollsPerPreparation;
+        public void ResetOperationAllowance() => remainingOperations = MaximumOperationsPerPreparation;
+        private void ResetPreparationState()
         {
-            remainingOperations = maximumOperations;
             pendingCountedOperations = 0;
+            remainingShopRolls = ShopRollsPerPreparation;
+            remainingOperations = MaximumOperationsPerPreparation;
             nextAutomaticOperationTime = Time.unscaledTime + operationInterval;
+            nextImmediateOperationTime = 0f;
         }
         public void SetPresetPoolForTests(IEnumerable<DeckPreset> presets) => presetPool = presets != null ? new List<DeckPreset>(presets) : new List<DeckPreset>();
 
-        private IEnumerator RunOperation(bool countsTowardsLimit)
+        private IEnumerator RunOperation()
         {
             operationRunning = true;
-            bool changed = TryExecuteOperation();
-            if (changed && countsTowardsLimit) remainingOperations = Mathf.Max(0, remainingOperations - 1);
+            if (TryExecuteOperation())
+            {
+                remainingOperations = Mathf.Max(0, remainingOperations - 1);
+            }
             yield return new WaitForSecondsRealtime(VisualOperationDuration);
-            operationRunning = false; nextAutomaticOperationTime = Time.unscaledTime + operationInterval;
+            operationRunning = false;
+            nextAutomaticOperationTime = Time.unscaledTime + operationInterval;
+            if (pendingImmediateOperations > 0)
+            {
+                nextImmediateOperationTime = Time.unscaledTime +
+                    UnityEngine.Random.Range(
+                        ImmediateReactionMinDelay,
+                        ImmediateReactionMaxDelay);
+            }
         }
         private bool TryExecuteOperation()
         {
             if (!CanOperate()) return false;
-            if (shopItems.Count == 0)
+            // 商店必须耗尽才允许刷新，且每个准备阶段仅有一次刷新机会。
+            if (shopItems.Count == 0 && TryRollShop())
             {
-                RefreshHiddenShop();
+                return true;
             }
 
-            // 保持商店三件库存：买走物品后，敌人有很高概率先 Roll。
-            if (shopItems.Count < ShopRollItemCount &&
-                UnityEngine.Random.value < .8f &&
-                TryRollShop())
+            // 新飞机优先于合成：能直接放则直接放；否则先整理出可放置的位置。
+            if (TryAddShopAircraft() || TryMoveItemToMakeRoomForShopAircraft())
             {
                 return true;
             }
@@ -181,10 +205,10 @@ namespace BackpackPrototype
                 return TryAddShopItem();
             }
 
-            // 空间受限后才开放合成和移除；两者仍明显低于移动、Roll 和替换。
+            // 空间受限后，优先把重复物品合成为更高等级；移动仅作为次要整理手段。
             int[] actions = canAdd
                 ? new[] { 1, 1, 1, 1, 1, 0, 0, 5, 5, 3 }
-                : new[] { 0, 0, 0, 0, 0, 0, 5, 5, 3, 3, 4, 2 };
+                : new[] { 4, 4, 4, 4, 4, 4, 0, 0, 0, 5, 3, 2 };
             Shuffle(actions);
             foreach (int action in actions)
             {
@@ -214,16 +238,173 @@ namespace BackpackPrototype
             if (!EnemyBackpackLayoutPlanner.TryFindPreferredCell(Backpack, new ItemInstance("enemy-cell-check", data, Vector2Int.zero), null, out Vector2Int cell) || combatController.AddItem(data, cell) == null) return false;
             shopItems.RemoveAt(index); return true;
         }
+        private bool TryAddShopAircraft()
+        {
+            for (int index = 0; index < shopItems.Count; index++)
+            {
+                ItemData data = shopItems[index];
+                if (data?.ItemType != ItemType.Aircraft)
+                {
+                    continue;
+                }
+
+                ItemInstance check = new("enemy-aircraft-cell-check", data, Vector2Int.zero);
+                if (!EnemyBackpackLayoutPlanner.TryFindPreferredCell(
+                        Backpack,
+                        check,
+                        null,
+                        out Vector2Int cell) ||
+                    combatController.AddItem(data, cell) == null)
+                {
+                    continue;
+                }
+
+                shopItems.RemoveAt(index);
+                return true;
+            }
+
+            return false;
+        }
+        private bool HasShopAircraftPlacementOpportunity()
+        {
+            foreach (ItemData aircraft in shopItems)
+            {
+                if (aircraft?.ItemType != ItemType.Aircraft)
+                {
+                    continue;
+                }
+
+                if (EnemyBackpackLayoutPlanner.TryFindPreferredCell(
+                        Backpack,
+                        new ItemInstance("enemy-aircraft-opportunity", aircraft, Vector2Int.zero),
+                        null,
+                        out _) ||
+                    TryFindMoveToMakeRoomForAircraft(aircraft, out _, out _))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        private bool TryMoveItemToMakeRoomForShopAircraft()
+        {
+            if (Backpack == null || combatController == null)
+            {
+                return false;
+            }
+
+            foreach (ItemData aircraft in shopItems)
+            {
+                if (aircraft?.ItemType != ItemType.Aircraft)
+                {
+                    continue;
+                }
+
+                if (TryFindMoveToMakeRoomForAircraft(
+                        aircraft,
+                        out ItemInstance item,
+                        out Vector2Int destination))
+                {
+                    return combatController.MoveItem(item, destination);
+                }
+            }
+
+            return false;
+        }
+        private bool TryFindMoveToMakeRoomForAircraft(
+            ItemData aircraft,
+            out ItemInstance movedItem,
+            out Vector2Int destination)
+        {
+            movedItem = null;
+            destination = default;
+            foreach (ItemInstance item in Items)
+            {
+                for (int y = 0; y < Backpack.Height; y++)
+                {
+                    for (int x = 0; x < Backpack.Width; x++)
+                    {
+                        Vector2Int candidate = new(x, y);
+                        if (candidate == item.AnchorCell ||
+                            !Backpack.CanPlace(item, candidate, item) ||
+                            !CanPlaceAircraftAfterMove(item, candidate, aircraft))
+                        {
+                            continue;
+                        }
+
+                        movedItem = item;
+                        destination = candidate;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+        private bool CanPlaceAircraftAfterMove(
+            ItemInstance movedItem,
+            Vector2Int destination,
+            ItemData aircraft)
+        {
+            BackpackController validation = new(Backpack.Width, Backpack.Height);
+            int id = 0;
+            foreach (ItemInstance item in Items)
+            {
+                Vector2Int cell = item == movedItem ? destination : item.AnchorCell;
+                if (!validation.PlaceItem(
+                        new ItemInstance($"enemy-aircraft-space-{++id}", item.Data, cell, item.Level),
+                        cell))
+                {
+                    return false;
+                }
+            }
+
+            return EnemyBackpackLayoutPlanner.TryFindPreferredCell(
+                validation,
+                new ItemInstance("enemy-aircraft-space-check", aircraft, Vector2Int.zero),
+                null,
+                out _);
+        }
         private bool TryRollShop()
         {
-            int oldCount = shopItems.Count;
+            if (shopItems.Count != 0 || remainingShopRolls <= 0)
+            {
+                return false;
+            }
+
             RefreshHiddenShop();
-            return shopItems.Count > 0 || oldCount > 0;
+            if (shopItems.Count == 0)
+            {
+                return false;
+            }
+
+            remainingShopRolls--;
+            return true;
         }
         private bool TryRemoveItem() => IsBackpackFull() && Items.Count > 0 && combatController.RemoveItem(Items[UnityEngine.Random.Range(0, Items.Count)]);
         private bool TryMergeItems()
         {
-            if (Backpack == null || CanAddAnyShopItem()) return false;
+            if (Backpack == null ||
+                CanAddAnyShopItem() ||
+                HasShopAircraftPlacementOpportunity()) return false;
+
+            // 飞机直接决定战斗输出与生存；存在可合成的同型飞机时，必定优先升级它。
+            foreach (ItemInstance source in Items)
+            {
+                if (source?.Data?.ItemType != ItemType.Aircraft)
+                {
+                    continue;
+                }
+
+                foreach (ItemInstance target in Items)
+                {
+                    if (Backpack.CanMerge(source, target))
+                    {
+                        return Backpack.TryMerge(source, target);
+                    }
+                }
+            }
 
             // 无法贴近任何飞机的装备价值较低：优先把它合并进同类、
             // 已经能为飞机提供效果的装备，保留更有战术价值的那一份。
@@ -285,13 +466,18 @@ namespace BackpackPrototype
         private void HandlePhaseChanged(BattlePhase phase)
         {
             if (phase == BattlePhase.Preparation) InitializePreparation();
-            else { pendingImmediateOperations = 0; pendingCountedOperations = 0; }
+            else
+            {
+                pendingImmediateOperations = 0;
+                pendingCountedOperations = 0;
+                nextImmediateOperationTime = 0f;
+            }
         }
         private void InitializePreparation()
         {
             if (!CanOperate()) return;
             pendingImmediateOperations = 0;
-            ResetOperationAllowance();
+            ResetPreparationState();
             RefreshHiddenShop();
         }
         private void RefreshHiddenShop()

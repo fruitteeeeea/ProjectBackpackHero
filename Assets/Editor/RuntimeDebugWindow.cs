@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using BackpackHero.Battle;
 
 internal sealed class RuntimeDebugWindow : ScriptableObject
 {
@@ -76,6 +77,10 @@ internal sealed class RuntimeDebugWindow : ScriptableObject
 
         EditorGUILayout.Space();
 
+        DrawRoundTimerControls();
+
+        EditorGUILayout.Space();
+
         if (GUILayout.Button("查找玩家"))
         {
             GameObject player = GameObject.FindWithTag("Player");
@@ -88,6 +93,39 @@ internal sealed class RuntimeDebugWindow : ScriptableObject
             else
             {
                 Debug.LogWarning("未找到带有 Player 标签的对象");
+            }
+        }
+    }
+
+    private static void DrawRoundTimerControls()
+    {
+        EditorGUILayout.LabelField("回合倒计时", EditorStyles.boldLabel);
+        LevelFlowController flow = LevelFlowController.Instance;
+        bool canAdjust = EditorApplication.isPlaying &&
+            flow != null && flow.IsRoundTimerRunning;
+
+        string state = !EditorApplication.isPlaying
+            ? "请进入 Play Mode"
+            : flow == null
+                ? "等待关卡流程控制器"
+                : !flow.IsRoundTimerRunning
+                    ? "仅战斗阶段可调整"
+                    : flow.IsOvertime
+                        ? $"加时 {flow.RemainingRoundTime:0.0} 秒"
+                        : $"常规 {flow.RemainingRoundTime:0.0} 秒";
+        EditorGUILayout.LabelField("当前状态", state);
+
+        using (new EditorGUI.DisabledScope(!canAdjust))
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("-5 秒"))
+            {
+                flow.AdjustRoundTimerForDebug(-5f);
+            }
+
+            if (GUILayout.Button("+5 秒"))
+            {
+                flow.AdjustRoundTimerForDebug(5f);
             }
         }
     }

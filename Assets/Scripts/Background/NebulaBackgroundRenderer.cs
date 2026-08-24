@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using BackpackHero.Battle;
 
 namespace BackpackHero.Background
@@ -21,16 +22,26 @@ namespace BackpackHero.Background
         [SerializeField, Min(0.31f)] private float cameraDistance = DefaultDistance;
         [SerializeField] private SpriteRenderer backgroundRenderer;
         [SerializeField] private Color overtimeNebulaColor = new(0.42f, 0.02f, 0.16f, 1f);
-        [SerializeField, Min(0.01f)] private float overtimeTransitionDuration = 1f;
+        [FormerlySerializedAs("overtimeTransitionDuration")]
+        [SerializeField, Min(0.01f)] private float overtimeColorTransitionDuration = 1f;
+        [SerializeField, Min(0.01f)] private float overtimeSpeedTransitionDuration = 15f;
+        [SerializeField, Min(0.01f)] private float normalTransitionDuration = 1f;
 
         private Material runtimeMaterial;
         private Color normalNebulaColor;
         private float normalSpeed;
+        private bool hasOvertimeVisualState;
+        private bool overtimeVisualState;
+        private Color colorTransitionStart;
+        private float speedTransitionStart;
+        private float colorTransitionElapsed;
+        private float speedTransitionElapsed;
 
         private void OnEnable()
         {
             ResolveReferences();
             CacheRuntimeMaterial();
+            hasOvertimeVisualState = false;
             LevelFlowController.RoundTimerStateChanged += RefreshOvertimeVisual;
             RefreshOvertimeVisual();
             FitToCamera();
@@ -49,6 +60,9 @@ namespace BackpackHero.Background
         private void OnValidate()
         {
             cameraDistance = Mathf.Max(0.31f, cameraDistance);
+            overtimeColorTransitionDuration = Mathf.Max(0.01f, overtimeColorTransitionDuration);
+            overtimeSpeedTransitionDuration = Mathf.Max(0.01f, overtimeSpeedTransitionDuration);
+            normalTransitionDuration = Mathf.Max(0.01f, normalTransitionDuration);
             ResolveReferences();
             FitToCamera();
         }
@@ -97,16 +111,40 @@ namespace BackpackHero.Background
             }
 
             bool overtime = LevelFlowController.Instance?.IsOvertime == true;
-            float transition = Mathf.Clamp01(Time.deltaTime /
-                Mathf.Max(0.01f, overtimeTransitionDuration));
+            if (!hasOvertimeVisualState || overtimeVisualState != overtime)
+            {
+                BeginOvertimeVisualTransition(overtime);
+            }
+
+            float duration = overtime
+                ? overtimeColorTransitionDuration
+                : normalTransitionDuration;
+            colorTransitionElapsed += Time.deltaTime;
             runtimeMaterial.SetColor(ColorBId, Color.Lerp(
-                runtimeMaterial.GetColor(ColorBId),
+                colorTransitionStart,
                 overtime ? overtimeNebulaColor : normalNebulaColor,
-                transition));
+                Mathf.Clamp01(colorTransitionElapsed / duration)));
+
+            duration = overtime
+                ? overtimeSpeedTransitionDuration
+                : normalTransitionDuration;
+            speedTransitionElapsed += Time.deltaTime;
             runtimeMaterial.SetFloat(SpeedId, Mathf.Lerp(
-                runtimeMaterial.GetFloat(SpeedId),
-                overtime ? normalSpeed * LevelFlowController.OvertimeCooldownSpeedMultiplier : normalSpeed,
-                transition));
+                speedTransitionStart,
+                overtime
+                    ? normalSpeed * LevelFlowController.OvertimeCooldownSpeedMultiplier
+                    : normalSpeed,
+                Mathf.Clamp01(speedTransitionElapsed / duration)));
+        }
+
+        private void BeginOvertimeVisualTransition(bool overtime)
+        {
+            hasOvertimeVisualState = true;
+            overtimeVisualState = overtime;
+            colorTransitionStart = runtimeMaterial.GetColor(ColorBId);
+            speedTransitionStart = runtimeMaterial.GetFloat(SpeedId);
+            colorTransitionElapsed = 0f;
+            speedTransitionElapsed = 0f;
         }
 
         private void FitToCamera()

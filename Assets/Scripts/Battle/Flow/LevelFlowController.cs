@@ -48,6 +48,38 @@ namespace BackpackHero.Battle
         public bool IsRoundTimerRunning =>
             BattleFlowController.IsCombatPhase && !showingResult;
 
+        /// <summary>
+        /// Adjusts the active round timer for runtime debugging. Crossing zero applies
+        /// the same transition or resolution that the normal timer would apply.
+        /// </summary>
+        public bool AdjustRoundTimerForDebug(float seconds)
+        {
+            if (!IsRoundTimerRunning || Mathf.Approximately(seconds, 0f))
+            {
+                return false;
+            }
+
+            remainingRoundTime += seconds;
+            if (remainingRoundTime > 0f)
+            {
+                RoundTimerStateChanged?.Invoke();
+                return true;
+            }
+
+            if (!isOvertime)
+            {
+                isOvertime = true;
+                remainingRoundTime = OvertimeDurationSeconds;
+                RoundTimerStateChanged?.Invoke();
+                return true;
+            }
+
+            remainingRoundTime = 0f;
+            RoundTimerStateChanged?.Invoke();
+            ResolveOvertimeByHealth();
+            return true;
+        }
+
         public static event Action<int> RoundStarted;
         public static event Action<string> ResultShown;
         public static event Action MatchStateChanged;
@@ -228,6 +260,11 @@ namespace BackpackHero.Battle
         {
             float playerHealth = playerTarget?.Health?.CurrentHealth ?? 0f;
             float enemyHealth = enemyTarget?.Health?.CurrentHealth ?? 0f;
+            // Overtime ends as soon as its clock expires.  Clear the state before
+            // opening the result banner so all overtime-bound visuals recover now.
+            isOvertime = false;
+            remainingRoundTime = RoundDurationSeconds;
+            RoundTimerStateChanged?.Invoke();
             ResolveRound(playerHealth >= enemyHealth);
         }
 

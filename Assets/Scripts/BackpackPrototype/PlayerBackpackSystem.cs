@@ -141,6 +141,9 @@ namespace BackpackPrototype
         public BackpackFighterSpawner FighterSpawner =>
             fighterSpawner;
 
+        public HorizontalSwipeCurveInput FlightCurveInput =>
+            curveInput;
+
         public RectTransform AircraftSpawnAnchor =>
             aircraftSpawnAnchor;
 
@@ -810,7 +813,9 @@ namespace BackpackPrototype
 
         public void SetFlightCurveValue(float value)
         {
-            fighterSpawner?.SetCurveValue(value);
+            float clampedValue = Mathf.Clamp(value, -1f, 1f);
+            fighterSpawner?.SetCurveValue(clampedValue);
+            adjustmentCurve?.SetCurveValue(clampedValue);
         }
 
         private void HandlePhaseChanged(BattlePhase phase)

@@ -43,6 +43,8 @@ namespace BackpackHero.EditorTools
 
             DrawRandomProjectileToggle();
 
+            DrawRandomFlightCurveControls(bridge);
+
             PlayerBackpackDebugSnapshot snapshot =
                 selectedTarget == 0
                     ? bridge.Snapshot
@@ -106,6 +108,99 @@ namespace BackpackHero.EditorTools
                         MessageType.Warning);
                 }
             }
+        }
+
+        private static void DrawRandomFlightCurveControls(
+            PlayerBackpackDebugBridge bridge)
+        {
+            PlayerRandomFlightCurveController controller =
+                bridge.GetComponent<PlayerRandomFlightCurveController>();
+            if (controller == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "随机航线控制器尚未初始化。",
+                    MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField(
+                "随机航线",
+                EditorStyles.boldLabel);
+
+            using (new EditorGUILayout.VerticalScope(
+                       EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(
+                    "当前模式",
+                    GetRandomFlightCurveModeLabel(controller.Mode));
+
+                EditorGUILayout.BeginHorizontal();
+                DrawRandomFlightCurveModeButton(
+                    controller,
+                    RandomFlightCurveMode.Off,
+                    "关闭随机航线");
+                DrawRandomFlightCurveModeButton(
+                    controller,
+                    RandomFlightCurveMode.Peaceful,
+                    "随机航线 - 平和");
+                DrawRandomFlightCurveModeButton(
+                    controller,
+                    RandomFlightCurveMode.Intense,
+                    "随机航线 - 激烈");
+                EditorGUILayout.EndHorizontal();
+
+                float speed = EditorGUILayout.Slider(
+                    "基础自动调整速度",
+                    controller.BaseAdjustmentSpeed,
+                    0f,
+                    4f);
+                if (!Mathf.Approximately(
+                        speed,
+                        controller.BaseAdjustmentSpeed))
+                {
+                    controller.BaseAdjustmentSpeed = speed;
+                }
+
+                EditorGUILayout.LabelField(
+                    "平和实际速度",
+                    PlayerRandomFlightCurveController
+                        .GetAdjustmentSpeed(
+                            RandomFlightCurveMode.Peaceful,
+                            controller.BaseAdjustmentSpeed)
+                        .ToString("0.##"));
+                EditorGUILayout.LabelField(
+                    "激烈实际速度",
+                    PlayerRandomFlightCurveController
+                        .GetAdjustmentSpeed(
+                            RandomFlightCurveMode.Intense,
+                            controller.BaseAdjustmentSpeed)
+                        .ToString("0.##"));
+            }
+        }
+
+        private static void DrawRandomFlightCurveModeButton(
+            PlayerRandomFlightCurveController controller,
+            RandomFlightCurveMode mode,
+            string label)
+        {
+            GUIStyle style = controller.Mode == mode
+                ? EditorStyles.miniButtonMid
+                : EditorStyles.miniButton;
+            if (GUILayout.Button(label, style, GUILayout.Height(26f)))
+            {
+                controller.SetMode(mode);
+            }
+        }
+
+        private static string GetRandomFlightCurveModeLabel(
+            RandomFlightCurveMode mode)
+        {
+            return mode == RandomFlightCurveMode.Peaceful
+                ? "平和"
+                : mode == RandomFlightCurveMode.Intense
+                    ? "激烈"
+                    : "关闭（手动控制）";
         }
 
         private static void DrawDragCellVisualizationToggle(

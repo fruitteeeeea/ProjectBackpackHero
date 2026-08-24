@@ -85,6 +85,13 @@ namespace BackpackPrototype
 
         private void Awake()
         {
+            if (!TryGetComponent(
+                    out PlayerRandomFlightCurveController _))
+            {
+                gameObject.AddComponent<
+                    PlayerRandomFlightCurveController>();
+            }
+
             ResolveTarget();
             RefreshAutoCopySubscription();
             RefreshSnapshot();

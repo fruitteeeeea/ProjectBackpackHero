@@ -911,6 +911,11 @@ public sealed class PlayerBackpackSystemTests
                 "Assets/Scripts/BackpackPrototype/" +
                 "PlayerBackpackDebugBridge.cs"),
             Does.Not.Contain("using UnityEditor"));
+        Assert.That(
+            File.ReadAllText(
+                "Assets/Scripts/BackpackPrototype/" +
+                "PlayerBackpackSystem.cs"),
+            Does.Contain("adjustmentCurve?.SetCurveValue"));
     }
 
     private static int CountOccurrences(

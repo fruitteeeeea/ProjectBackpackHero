@@ -444,14 +444,17 @@ namespace BackpackPrototype
                         ? enemy.FighterSpawner.SpawnPosition
                         : enemy.transform.position;
 
+                float curveValue = ResolveCurveValue(
+                    request.CurveValue);
+                fighter.SetBattleCurveValue(curveValue);
+
                 curveFollower.BeginCurve(
                     start,
                     RotateEndAroundStart(
                         start,
                         curveEnd,
                         directionOffset),
-                    ResolveCurveValue(
-                        request.CurveValue),
+                    curveValue,
                     maximumBendDistance);
             }
 

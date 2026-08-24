@@ -82,6 +82,11 @@ namespace BackpackHero.Battle
             Time.time < initialInvulnerabilityEndsAt;
         public ItemInstance DamageSourceItem => damageSourceItem;
         public float ProgressionDamageMultiplier => progressionDamageMultiplier;
+
+        /// <summary>
+        /// 本架飞机生成时截取的战斗曲线值。曲线输入之后变化不会影响它。
+        /// </summary>
+        public float BattleCurveValue { get; private set; }
         /// <summary>
         /// 飞机到达自身寿命上限后进入超时状态，后续造成的伤害降为原本的10%。
         /// </summary>
@@ -91,6 +96,11 @@ namespace BackpackHero.Battle
                 ? OvertimeDamageMultiplier
                 : 1f);
         public void SetDamageSourceItem(ItemInstance item) => damageSourceItem = item;
+
+        public void SetBattleCurveValue(float value)
+        {
+            BattleCurveValue = Mathf.Clamp(value, -1f, 1f);
+        }
 
         private void Awake()
         {

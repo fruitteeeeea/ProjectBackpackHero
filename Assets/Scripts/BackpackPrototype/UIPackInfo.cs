@@ -47,7 +47,7 @@ namespace BackpackPrototype
 
             PackDefinition definition = presenter.Packs.GetDefinition(presenter.Packs.GetSlots()[index].Id);
             if (definition == null) { Close(); return; }
-            if (loaderIcon != null) loaderIcon.Select(IconIndex(definition.Id));
+            if (loaderIcon != null) loaderIcon.Select(definition.VisualIndex);
             if (textName != null) textName.text = definition.Name;
             if (textCoin != null) textCoin.text = $"{definition.GoldMin}~{definition.GoldMax}";
             if (textDiamond != null) textDiamond.text = $"{definition.DiamondMin}~{definition.DiamondMax}";
@@ -78,9 +78,19 @@ namespace BackpackPrototype
         void RefreshCountdown()
         {
             if (presenter == null || index < 0) return;
+            PackState state = presenter.Packs.GetSlotState(index);
             int remainingSeconds = presenter.Packs.GetRemainingSeconds(index);
             if (textTime != null) textTime.text = FormatTime(remainingSeconds);
-            if (textStartTime != null) textStartTime.text = FormatTime(remainingSeconds);
+            if (textStartTime != null)
+            {
+                // A not-yet-started pack has no elapsed timer, but its Unlock
+                // button must show the configured duration rather than 00:00:00.
+                PackDefinition definition = presenter.Packs.GetDefinition(presenter.Packs.GetSlots()[index].Id);
+                int startDuration = state == PackState.Start && definition != null
+                    ? definition.OpenSeconds
+                    : remainingSeconds;
+                textStartTime.text = FormatTime(startDuration);
+            }
             if (textOpenCost != null) textOpenCost.text = presenter.Packs.GetSkipDiamondCost(index).ToString();
         }
 
@@ -106,15 +116,6 @@ namespace BackpackPrototype
             gameObject.SetActive(false);
             index = -1;
         }
-
-        static int IconIndex(PackId id) => id switch
-        {
-            PackId.Green => 0,
-            PackId.Blue => 1,
-            PackId.Purple => 2,
-            PackId.Gold => 3,
-            _ => 0
-        };
 
         static string FormatTime(int seconds) => TimeSpan.FromSeconds(seconds).ToString(@"hh\:mm\:ss");
     }

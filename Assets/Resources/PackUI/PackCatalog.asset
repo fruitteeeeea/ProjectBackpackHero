@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ce73923b6f64c1ea0facb4ad5bbf03a, type: 3}
+  m_Name: PackCatalog
+  m_EditorClassIdentifier: 
+  secondsPerDiamond: 60
+  definitions:
+  - id: 10001
+    visualIndex: 0
+    name: Crystal Pack
+    goldMin: 50
+    goldMax: 80
+    diamondMin: 1
+    diamondMax: 3
+    fragmentMin: 10
+    fragmentMax: 15
+    openSeconds: 1200
+    weight: 54
+    spineSkin: 1
+  - id: 10002
+    visualIndex: 1
+    name: Beacon Pack
+    goldMin: 80
+    goldMax: 120
+    diamondMin: 5
+    diamondMax: 7
+    fragmentMin: 20
+    fragmentMax: 35
+    openSeconds: 2400
+    weight: 30
+    spineSkin: 2
+  - id: 10003
+    visualIndex: 2
+    name: Battle Soul Pack
+    goldMin: 200
+    goldMax: 300
+    diamondMin: 20
+    diamondMax: 50
+    fragmentMin: 50
+    fragmentMax: 70
+    openSeconds: 3600
+    weight: 15
+    spineSkin: 3
+  - id: 10004
+    visualIndex: 3
+    name: Star Core Pack
+    goldMin: 800
+    goldMax: 1200
+    diamondMin: 50
+    diamondMax: 100
+    fragmentMin: 120
+    fragmentMax: 150
+    openSeconds: 10800
+    weight: 1
+    spineSkin: 4

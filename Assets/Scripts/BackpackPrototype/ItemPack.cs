@@ -14,7 +14,7 @@ namespace BackpackPrototype
         internal int index;
         public GameObject objEmpty, objPack, objBase, objOpening, objUnLock;
         public ImageLoader loaderIcon, ImgPackIcon;
-        public TextMeshProUGUI textType, textOpeningTime, textOpeningDiamond;
+        public TextMeshProUGUI textType, textTime, textOpeningTime, textOpeningDiamond;
         public SkeletonGraphic skeletonGraphic;
         Image background;
         PackState displayedState = PackState.Empty;
@@ -29,6 +29,7 @@ namespace BackpackPrototype
             objOpening = Find("opening")?.gameObject;
             objUnLock = Find("unLock")?.gameObject;
             textType = TextIn(objBase, "text");
+            textTime = TextIn(objBase, "time");
             textOpeningTime = TextIn(objOpening, "time");
             textOpeningDiamond = TextIn(objOpening, "cost");
             skeletonGraphic = GetComponentInChildren<SkeletonGraphic>(true);
@@ -69,10 +70,17 @@ namespace BackpackPrototype
             if (ImgPackIcon != null) ImgPackIcon.Select(state == PackState.Empty ? 3 : state == PackState.Opening ? 1 : state == PackState.Opened ? 2 : 0);
             if (background != null) background.sprite = Resources.Load<Sprite>($"PackUI/Source/Main/bg_zjm_kabao_{(state == PackState.Empty ? 4 : state == PackState.Opening ? 2 : state == PackState.Opened ? 3 : 1)}");
             if (state == PackState.Empty) { if (skeletonGraphic != null) skeletonGraphic.gameObject.SetActive(false); return; }
-            if (loaderIcon != null) loaderIcon.Select((int)presenter.Packs.GetSlots()[index].Id);
+            if (loaderIcon != null)
+            {
+                PackDefinition definition = presenter.Packs.GetDefinition(presenter.Packs.GetSlots()[index].Id);
+                if (definition != null) loaderIcon.Select(definition.VisualIndex);
+            }
             if (objBase != null) objBase.SetActive(state != PackState.Opening);
             if (objOpening != null) objOpening.SetActive(state == PackState.Opening);
             if (objUnLock != null) objUnLock.SetActive(state == PackState.Locked);
+            // The source main-menu slot intentionally never displays its baked-in
+            // unlock time; timing belongs in the pack detail panel only.
+            if (textTime != null) textTime.gameObject.SetActive(false);
             if (textType != null) textType.text = state == PackState.Start || state == PackState.Locked ? "Unlock" : state == PackState.Opened ? "Open" : "";
             if (skeletonGraphic != null) skeletonGraphic.gameObject.SetActive(state == PackState.Opened);
             if (state == PackState.Opening)

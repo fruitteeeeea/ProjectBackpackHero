@@ -17,22 +17,19 @@ namespace BackpackPrototype
     {
         public const string SaveKey = "PlayerPackModel";
         public const int SlotCount = 4;
-        public const int SecondsPerDiamond = 60;
-        static readonly PackDefinition[] Definitions =
-        {
-            new(PackId.Green, "Green Crystal Pack", 50, 80, 1, 3, 10, 15, 20 * 60, 54, "1"),
-            new(PackId.Blue, "Blue Beacon Pack", 80, 120, 5, 7, 20, 35, 40 * 60, 30, "2"),
-            new(PackId.Purple, "Purple Battle Soul Pack", 200, 300, 20, 50, 50, 70, 60 * 60, 15, "3"),
-            new(PackId.Gold, "Golden Star Core Pack", 800, 1200, 50, 100, 120, 150, 180 * 60, 1, "4"),
-        };
+        const string CatalogResourcePath = "PackUI/PackCatalog";
+        static readonly IReadOnlyList<PackDefinition> EmptyDefinitions = Array.Empty<PackDefinition>();
         PackSaveData data;
+        PackCatalog catalog;
         public static PackSystem Instance { get; private set; }
         public event Action Changed;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)] static void EnsureInstance() { if (Instance != null) return; var go = new GameObject(nameof(PackSystem)); DontDestroyOnLoad(go); go.AddComponent<PackSystem>(); }
-        void Awake() { if (Instance != null && Instance != this) { Destroy(gameObject); return; } Instance = this; DontDestroyOnLoad(gameObject); Load(); if (GetComponent<PackMenuPresenter>() == null) gameObject.AddComponent<PackMenuPresenter>(); }
+        void Awake() { if (Instance != null && Instance != this) { Destroy(gameObject); return; } Instance = this; DontDestroyOnLoad(gameObject); catalog = Resources.Load<PackCatalog>(CatalogResourcePath); if (catalog == null) Debug.LogError($"Pack catalog is missing from Resources/{CatalogResourcePath}.", this); Load(); if (GetComponent<PackMenuPresenter>() == null) gameObject.AddComponent<PackMenuPresenter>(); }
         void OnDestroy() { if (Instance == this) Instance = null; }
+        IReadOnlyList<PackDefinition> Definitions => catalog != null ? catalog.Definitions : EmptyDefinitions;
+        int SecondsPerDiamond => catalog != null ? catalog.SecondsPerDiamond : 60;
         public IReadOnlyList<PackSlotData> GetSlots() => data.Slots;
-        public PackDefinition GetDefinition(PackId id) => Definitions.FirstOrDefault(x => x.Id == id);
+        public PackDefinition GetDefinition(PackId id) => catalog != null ? catalog.GetDefinition(id) : null;
         public bool TryAddPack(PackId id) { int slot = data.Slots.FindIndex(x => !x.HasPack); if (slot < 0 || GetDefinition(id) == null) return false; data.Slots[slot] = new PackSlotData { Id = id, HasPack = true }; SaveAndNotify(); return true; }
         public bool TryAddRandomPack() { int roll = UnityEngine.Random.Range(0, Definitions.Sum(x => x.Weight)); foreach (var d in Definitions) { if (roll < d.Weight) return TryAddPack(d.Id); roll -= d.Weight; } return false; }
         public PackState GetSlotState(int index) { var slot = Slot(index); if (slot == null || !slot.HasPack) return PackState.Empty; if (slot.OpenTimeUtcMs > 0) return GetRemainingSeconds(index) <= 0 ? PackState.Opened : PackState.Opening; for (int i = 0; i < data.Slots.Count; i++) { var other = data.Slots[i]; if (i != index && other.HasPack && other.OpenTimeUtcMs > 0 && GetRemainingSeconds(i) > 0) return PackState.Locked; } return PackState.Start; }
@@ -50,5 +47,4 @@ namespace BackpackPrototype
         void Save() { PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(data)); PlayerPrefs.Save(); }
         void SaveAndNotify() { Save(); Changed?.Invoke(); }
     }
-    public sealed class PackDefinition { public PackId Id { get; } public string Name { get; } public int GoldMin { get; } public int GoldMax { get; } public int DiamondMin { get; } public int DiamondMax { get; } public int FragmentMin { get; } public int FragmentMax { get; } public int OpenSeconds { get; } public int Weight { get; } public string SpineSkin { get; } public PackDefinition(PackId id, string name, int goldMin, int goldMax, int diamondMin, int diamondMax, int fragmentMin, int fragmentMax, int openSeconds, int weight, string spineSkin) { Id=id; Name=name; GoldMin=goldMin; GoldMax=goldMax; DiamondMin=diamondMin; DiamondMax=diamondMax; FragmentMin=fragmentMin; FragmentMax=fragmentMax; OpenSeconds=openSeconds; Weight=weight; SpineSkin=spineSkin; } }
 }

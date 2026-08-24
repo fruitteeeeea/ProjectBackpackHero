@@ -1,4 +1,5 @@
 using System;
+using BackpackHero.Config;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -89,6 +90,22 @@ namespace BackpackHero.Battle
             backpackRoundHealthMultipliers =
                 (float[])source.backpackRoundHealthMultipliers.Clone();
             enemyStages = (EnemyStrengthMultipliers[])source.enemyStages.Clone();
+        }
+
+        /// <summary>Copies the immutable table baseline into this mutable Play Mode container.</summary>
+        public void ApplyConfig(LevelConfig source)
+        {
+            if (source == null) return;
+            playerAircraftHealthMultiplier = Mathf.Max(0.01f, source.PlayerAircraftHealthMultiplier);
+            playerAircraftDamageMultiplier = Mathf.Max(0.01f, source.PlayerAircraftDamageMultiplier);
+            backpackRoundHealthMultipliers = source.BackpackRoundHealthMultipliers != null
+                ? (float[])source.BackpackRoundHealthMultipliers.Clone()
+                : CreateDefaultBackpackRoundHealthMultipliers();
+            enemyStages = source.EnemyStages != null
+                ? (EnemyStrengthMultipliers[])source.EnemyStages.Clone()
+                : CreateDefaultStages();
+            EnsureBackpackRoundMultiplierArray();
+            EnsureStageArray();
         }
 
         public bool ContentEquals(LevelDifficultySettings other)

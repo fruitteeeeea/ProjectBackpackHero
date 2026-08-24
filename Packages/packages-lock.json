@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.code-philosophy.luban": {
+      "version": "file:com.code-philosophy.luban",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.planetwar.reusable-main-menu": {
       "version": "file:com.planetwar.reusable-main-menu",
       "depth": 0,

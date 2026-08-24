@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b763cd29887646c9b860c37e1ceb8cfd, type: 3}
   m_Name: Fighter_03_Shield
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FighterDefinition
+  id: fighter_shield
   displayName: Shield Fighter
   sprite: {fileID: 4677714814586562668, guid: 09c84d2fb02194b929bfdf85903d5e5f, type: 3}
   baseColor: {r: 1, g: 1, b: 1, a: 1}

@@ -1,4 +1,5 @@
 using UnityEngine;
+using BackpackHero.Config;
 
 namespace BackpackHero.Battle
 {
@@ -15,6 +16,7 @@ namespace BackpackHero.Battle
         ScriptableObject
     {
         [Header("Identity")]
+        [SerializeField] private string id;
         [SerializeField]
         private string displayName = "Fighter";
 
@@ -78,32 +80,35 @@ namespace BackpackHero.Battle
         private BattleAttack2D deathExplosionAttackPrefab;
 
         
-        public string DisplayName => displayName;
+        private FighterConfig Config => GameConfigService.TryGetFighter(id, out FighterConfig config) ? config : null;
+
+        public string Id => id;
+        public string DisplayName => Config?.DisplayName ?? displayName;
         public Sprite Sprite => sprite;
         public Color BaseColor => baseColor;
-        public float BaseSpeed => baseSpeed;
-        public int MaximumHealth => maximumHealth;
+        public float BaseSpeed => Mathf.Max(0f, Config?.BaseSpeed ?? baseSpeed);
+        public int MaximumHealth => Mathf.Max(1, Config?.MaximumHealth ?? maximumHealth);
         
         public float AttackRange =>
-            attackRange;
+            Mathf.Max(0.1f, Config?.AttackRange ?? attackRange);
 
         public float TargetingArcAngle =>
-            targetingArcAngle;
+            Mathf.Clamp(Config?.TargetingArcAngle ?? targetingArcAngle, 1f, 360f);
 
         public int TargetingPriority =>
-            targetingPriority;
+            Mathf.Max(0, Config?.TargetingPriority ?? targetingPriority);
 
         public FighterTargetSelectionMode TargetingMode =>
-            targetingMode;
+            Config?.TargetingMode ?? targetingMode;
         
         public float AttackInterval =>
-            attackInterval;
+            Mathf.Max(0.1f, Config?.AttackInterval ?? attackInterval);
 
         public float ProjectileDamage =>
-            projectileDamage;
+            Mathf.Max(0f, Config?.ProjectileDamage ?? projectileDamage);
 
         public float ProjectileSpeed =>
-            projectileSpeed;
+            Mathf.Max(0.1f, Config?.ProjectileSpeed ?? projectileSpeed);
 
         public BattleAttack2D DefaultAttackPrefab =>
             defaultAttackPrefab;

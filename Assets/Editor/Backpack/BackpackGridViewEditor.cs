@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace BackpackHero.EditorTools
 {
     [CustomEditor(typeof(BackpackGridView))]
-    public sealed class BackpackGridViewEditor : Editor
+    public sealed class BackpackGridViewEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b763cd29887646c9b860c37e1ceb8cfd, type: 3}
   m_Name: Fighter_05_Sniper
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FighterDefinition
+  id: fighter_sniper
   displayName: 狙击飞机
   sprite: {fileID: 1392089294744885835, guid: 0897ebf00f07aba4f8d0894d7dec823f, type: 3}
   baseColor: {r: 1, g: 1, b: 1, a: 1}

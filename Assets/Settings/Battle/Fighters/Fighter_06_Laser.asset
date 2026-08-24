@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b763cd29887646c9b860c37e1ceb8cfd, type: 3}
   m_Name: Fighter_06_Laser
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FighterDefinition
+  id: fighter_laser
   displayName: 激光飞机
   sprite: {fileID: -5748879822672990182, guid: f107923bcebdb7a45b8f17b47dafb99b, type: 3}
   baseColor: {r: 1, g: 1, b: 1, a: 1}

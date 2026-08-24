@@ -1,0 +1,93 @@
+[
+  {
+    "id": "fighter_normal",
+    "displayName": "Normal Fighter",
+    "baseSpeed": 3,
+    "maximumHealth": 10,
+    "attackRange": 2,
+    "targetingArcAngle": 30,
+    "targetingPriority": 0,
+    "targetingMode": 0,
+    "attackInterval": 0.5,
+    "projectileDamage": 1,
+    "projectileSpeed": 8
+  },
+  {
+    "id": "fighter_charge",
+    "displayName": "Charge Fighter",
+    "baseSpeed": 4.5,
+    "maximumHealth": 6,
+    "attackRange": 1.5,
+    "targetingArcAngle": 30,
+    "targetingPriority": 0,
+    "targetingMode": 0,
+    "attackInterval": 0.25,
+    "projectileDamage": 0.8,
+    "projectileSpeed": 8
+  },
+  {
+    "id": "fighter_shield",
+    "displayName": "Shield Fighter",
+    "baseSpeed": 2,
+    "maximumHealth": 20,
+    "attackRange": 2.5,
+    "targetingArcAngle": 45,
+    "targetingPriority": 1,
+    "targetingMode": 0,
+    "attackInterval": 1,
+    "projectileDamage": 2,
+    "projectileSpeed": 8
+  },
+  {
+    "id": "fighter_explosive",
+    "displayName": "爆炸飞机",
+    "baseSpeed": 3.8,
+    "maximumHealth": 12,
+    "attackRange": 0.5,
+    "targetingArcAngle": 30,
+    "targetingPriority": 0,
+    "targetingMode": 0,
+    "attackInterval": 0.5,
+    "projectileDamage": 0.8,
+    "projectileSpeed": 8
+  },
+  {
+    "id": "fighter_sniper",
+    "displayName": "狙击飞机",
+    "baseSpeed": 1,
+    "maximumHealth": 6,
+    "attackRange": 6.5,
+    "targetingArcAngle": 45,
+    "targetingPriority": 0,
+    "targetingMode": 0,
+    "attackInterval": 1,
+    "projectileDamage": 2.5,
+    "projectileSpeed": 12
+  },
+  {
+    "id": "fighter_laser",
+    "displayName": "激光飞机",
+    "baseSpeed": 3,
+    "maximumHealth": 8,
+    "attackRange": 2.5,
+    "targetingArcAngle": 45,
+    "targetingPriority": 0,
+    "targetingMode": 1,
+    "attackInterval": 1,
+    "projectileDamage": 0.5,
+    "projectileSpeed": 12
+  },
+  {
+    "id": "fighter_shotgun",
+    "displayName": "霰弹飞机",
+    "baseSpeed": 2.5,
+    "maximumHealth": 16,
+    "attackRange": 1.5,
+    "targetingArcAngle": 40,
+    "targetingPriority": 0,
+    "targetingMode": 0,
+    "attackInterval": 1,
+    "projectileDamage": 0.8,
+    "projectileSpeed": 8
+  }
+]

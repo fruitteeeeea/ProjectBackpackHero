@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BackpackHero.Battle;
+using BackpackHero.Config;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -69,39 +70,41 @@ namespace BackpackPrototype
         [Header("Battle")]
         [SerializeField] private FighterDefinition fighterDefinition;
 
+        private ItemConfig Config => GameConfigService.TryGetItem(id, out ItemConfig config) ? config : null;
+
         public string Id => id;
-        public string Name => name;
-        public string Desc => desc;
-        public int Cost => cost;
-        public int Debris => debris;
-        public int UpgradeFragmentsLevel1 => Mathf.Max(0, upgradeFragmentsLevel1);
-        public int UpgradeFragmentsLevel9 => Mathf.Max(0, upgradeFragmentsLevel9);
-        public float Cd => cd;
-        public int Count => Mathf.Max(1, count);
+        public string Name => Config?.Name ?? name;
+        public string Desc => Config?.Description ?? desc;
+        public int Cost => Mathf.Max(0, Config?.Cost ?? cost);
+        public int Debris => Mathf.Max(0, Config?.Debris ?? debris);
+        public int UpgradeFragmentsLevel1 => Mathf.Max(0, Config?.UpgradeFragmentsLevel1 ?? upgradeFragmentsLevel1);
+        public int UpgradeFragmentsLevel9 => Mathf.Max(0, Config?.UpgradeFragmentsLevel9 ?? upgradeFragmentsLevel9);
+        public float Cd => Mathf.Max(0.01f, Config?.Cooldown ?? cd);
+        public int Count => Mathf.Max(1, Config?.Count ?? count);
         public float EquipmentItemModifier =>
-            itemType == ItemType.Aircraft
-                ? Mathf.Max(MinimumEquipmentItemModifier, equipmentItemModifier)
+            ItemType == ItemType.Aircraft
+                ? Mathf.Max(MinimumEquipmentItemModifier, Config?.EquipmentItemModifier ?? equipmentItemModifier)
                 : 1f;
         public bool ApplyEquipmentItemModifierToProjectileStats =>
-            itemType == ItemType.Aircraft &&
-            applyEquipmentItemModifierToProjectileStats;
+            ItemType == ItemType.Aircraft &&
+            (Config?.ApplyEquipmentItemModifierToProjectileStats ?? applyEquipmentItemModifierToProjectileStats);
         public float AircraftCooldownReductionLevel2 =>
-            Mathf.Max(0f, aircraftCooldownReductionLevel2);
+            Mathf.Max(0f, Config?.AircraftCooldownReductionLevel2 ?? aircraftCooldownReductionLevel2);
         public float AircraftCooldownReductionLevel3 =>
-            Mathf.Max(0f, aircraftCooldownReductionLevel3);
+            Mathf.Max(0f, Config?.AircraftCooldownReductionLevel3 ?? aircraftCooldownReductionLevel3);
         public float EquipmentEffectIntervalReductionLevel2 =>
-            Mathf.Max(0f, equipmentEffectIntervalReductionLevel2);
+            Mathf.Max(0f, Config?.EquipmentEffectIntervalReductionLevel2 ?? equipmentEffectIntervalReductionLevel2);
         public float EquipmentEffectIntervalReductionLevel3 =>
-            Mathf.Max(0f, equipmentEffectIntervalReductionLevel3);
-        public int Price => price;
+            Mathf.Max(0f, Config?.EquipmentEffectIntervalReductionLevel3 ?? equipmentEffectIntervalReductionLevel3);
+        public int Price => Mathf.Max(0, Config?.Price ?? price);
         public bool InitiallyUnlocked => true;
-        public string UnlockRequirementText => unlockRequirementText;
+        public string UnlockRequirementText => Config?.UnlockRequirementText ?? unlockRequirementText;
         public Sprite Icon => icon;
         public Color BackgroundColor => backgroundColor;
-        public ItemType ItemType => itemType;
+        public ItemType ItemType => Config?.ItemType ?? itemType;
         public Color EquipmentColor => equipmentColor;
         public IReadOnlyList<EquipmentEffectDefinition> EquipmentEffects =>
-            itemType == ItemType.Equipment && equipmentEffects != null
+            ItemType == ItemType.Equipment && equipmentEffects != null
                 ? equipmentEffects : Array.Empty<EquipmentEffectDefinition>();
         public ItemShapeData Shape => shape;
         public FighterDefinition FighterDefinition => fighterDefinition;
@@ -129,18 +132,24 @@ namespace BackpackPrototype
         }
 
         public float GetAircraftHealthMultiplierForProgressionLevel(int level) =>
-            itemType == ItemType.Aircraft
-                ? GetProgressionMultiplier(aircraftHealthMultiplierRange, level)
+            ItemType == ItemType.Aircraft
+                ? GetProgressionMultiplier(new Vector2(
+                    Config?.AircraftHealthMultiplierLevel1 ?? aircraftHealthMultiplierRange.x,
+                    Config?.AircraftHealthMultiplierLevel10 ?? aircraftHealthMultiplierRange.y), level)
                 : 1f;
 
         public float GetAircraftDamageMultiplierForProgressionLevel(int level) =>
-            itemType == ItemType.Aircraft
-                ? GetProgressionMultiplier(aircraftDamageMultiplierRange, level)
+            ItemType == ItemType.Aircraft
+                ? GetProgressionMultiplier(new Vector2(
+                    Config?.AircraftDamageMultiplierLevel1 ?? aircraftDamageMultiplierRange.x,
+                    Config?.AircraftDamageMultiplierLevel10 ?? aircraftDamageMultiplierRange.y), level)
                 : 1f;
 
         public float GetEquipmentIntervalMultiplierForProgressionLevel(int level) =>
-            itemType == ItemType.Equipment
-                ? GetProgressionMultiplier(equipmentIntervalMultiplierRange, level)
+            ItemType == ItemType.Equipment
+                ? GetProgressionMultiplier(new Vector2(
+                    Config?.EquipmentIntervalMultiplierLevel1 ?? equipmentIntervalMultiplierRange.x,
+                    Config?.EquipmentIntervalMultiplierLevel10 ?? equipmentIntervalMultiplierRange.y), level)
                 : 1f;
 
         public float GetAircraftCooldownReductionForLevel(int level)

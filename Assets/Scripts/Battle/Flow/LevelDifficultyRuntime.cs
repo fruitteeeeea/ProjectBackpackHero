@@ -1,4 +1,5 @@
 using System;
+using BackpackHero.Config;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -36,6 +37,8 @@ namespace BackpackHero.Battle
             {
                 activeValues = ScriptableObject.CreateInstance<LevelDifficultySettings>();
                 activeValues.CopyFrom(settings);
+                if (GameConfigService.Level != null)
+                    activeValues.ApplyConfig(GameConfigService.Level);
             }
             LevelManager.LevelChanged += HandleLevelChanged;
             LevelFlowController.RoundStarted += HandleRoundStarted;

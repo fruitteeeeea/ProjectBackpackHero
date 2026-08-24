@@ -25,3 +25,9 @@ sysinfo.txt
 *.booproj
 
 .vsconfig
+
+# Downloaded official Luban toolchain; install.ps1 restores this deterministically.
+Tools/Luban/official/
+Tools/Luban/Luban.7z
+Tools/Luban/native-tables/
+Tools/Luban/schema/

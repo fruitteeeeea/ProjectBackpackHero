@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b763cd29887646c9b860c37e1ceb8cfd, type: 3}
   m_Name: Fighter_07_Shotgun
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.FighterDefinition
+  id: fighter_shotgun
   displayName: 霰弹飞机
   sprite: {fileID: -2813064195979843760, guid: 7c89f10bd7e9a44449747e38e6a9ab88, type: 3}
   baseColor: {r: 1, g: 1, b: 1, a: 1}

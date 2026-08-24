@@ -1,0 +1,118 @@
+
+kaika.png
+size: 1930,383
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+1/ka1
+  rotate: true
+  xy: 2, 69
+  size: 312, 409
+  orig: 314, 411
+  offset: 1, 1
+  index: -1
+1/ka2
+  rotate: true
+  xy: 1646, 69
+  size: 312, 65
+  orig: 314, 67
+  offset: 1, 1
+  index: -1
+1/ka3
+  rotate: true
+  xy: 1713, 69
+  size: 312, 65
+  orig: 314, 67
+  offset: 1, 1
+  index: -1
+2/ka1
+  rotate: true
+  xy: 413, 69
+  size: 312, 409
+  orig: 314, 411
+  offset: 1, 1
+  index: -1
+2/ka2
+  rotate: false
+  xy: 2, 2
+  size: 312, 65
+  orig: 314, 67
+  offset: 1, 1
+  index: -1
+2/ka3
+  rotate: false
+  xy: 316, 2
+  size: 312, 65
+  orig: 314, 67
+  offset: 1, 1
+  index: -1
+3/ka1
+  rotate: true
+  xy: 824, 69
+  size: 312, 409
+  orig: 314, 411
+  offset: 1, 1
+  index: -1
+3/ka2
+  rotate: false
+  xy: 630, 2
+  size: 312, 65
+  orig: 314, 67
+  offset: 1, 1
+  index: -1
+3/ka3
+  rotate: false
+  xy: 944, 2
+  size: 312, 65
+  orig: 314, 67
+  offset: 1, 1
+  index: -1
+4/ka1
+  rotate: true
+  xy: 1235, 69
+  size: 312, 409
+  orig: 314, 411
+  offset: 1, 1
+  index: -1
+4/ka2
+  rotate: false
+  xy: 1258, 2
+  size: 312, 65
+  orig: 314, 67
+  offset: 1, 1
+  index: -1
+4/ka3
+  rotate: false
+  xy: 1572, 2
+  size: 312, 65
+  orig: 314, 67
+  offset: 1, 1
+  index: -1
+ef/TX_lz_hq
+  rotate: false
+  xy: 1780, 72
+  size: 124, 112
+  orig: 150, 131
+  offset: 6, 15
+  index: -1
+ef/dd
+  rotate: false
+  xy: 1886, 28
+  size: 42, 42
+  orig: 50, 50
+  offset: 4, 4
+  index: -1
+gdd_02
+  rotate: false
+  xy: 1886, 2
+  size: 25, 24
+  orig: 32, 32
+  offset: 4, 4
+  index: -1
+tx_gxxx
+  rotate: true
+  xy: 1780, 186
+  size: 195, 137
+  orig: 200, 142
+  offset: 3, 3
+  index: -1

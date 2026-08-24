@@ -1,0 +1,20 @@
+
+jiesuo_lizi.png
+size: 42,22
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+1
+  rotate: false
+  xy: 2, 2
+  size: 18, 18
+  orig: 22, 22
+  offset: 2, 2
+  index: -1
+2
+  rotate: false
+  xy: 22, 2
+  size: 18, 18
+  orig: 22, 22
+  offset: 2, 2
+  index: -1

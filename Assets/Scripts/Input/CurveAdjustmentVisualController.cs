@@ -6,21 +6,58 @@ namespace BackpackHero.Input
     public sealed class CurveAdjustmentStateModel
     {
         public bool IsAdjusting { get; private set; }
+        public bool IsWaitingForPulseCompletion { get; private set; }
         public float LastActivityTime { get; private set; }
 
         public void RegisterActivity(float time)
         {
             IsAdjusting = true;
+            IsWaitingForPulseCompletion = false;
             LastActivityTime = time;
         }
 
         public void Update(float time, bool inputEnabled, float idleDelay)
         {
-            if (!inputEnabled ||
-                (IsAdjusting && time >= LastActivityTime + idleDelay))
+            Update(time, inputEnabled, idleDelay, false);
+        }
+
+        public void Update(
+            float time,
+            bool inputEnabled,
+            float idleDelay,
+            bool isPulseActive)
+        {
+            if (!inputEnabled)
             {
                 IsAdjusting = false;
+                IsWaitingForPulseCompletion = false;
+                return;
             }
+
+            if (!IsAdjusting || IsWaitingForPulseCompletion ||
+                time < LastActivityTime + idleDelay)
+            {
+                return;
+            }
+
+            if (isPulseActive)
+            {
+                IsWaitingForPulseCompletion = true;
+                return;
+            }
+
+            IsAdjusting = false;
+        }
+
+        public void CompletePulseWait()
+        {
+            if (!IsWaitingForPulseCompletion)
+            {
+                return;
+            }
+
+            IsWaitingForPulseCompletion = false;
+            IsAdjusting = false;
         }
     }
 
@@ -45,6 +82,7 @@ namespace BackpackHero.Input
         private void OnEnable()
         {
             SubscribeToInput();
+            SubscribeToAdjustmentHighlight();
             BattleFlowController.PhaseChanged += HandlePhaseChanged;
             ResetVisuals();
         }
@@ -52,6 +90,7 @@ namespace BackpackHero.Input
         private void OnDisable()
         {
             UnsubscribeFromInput();
+            UnsubscribeFromAdjustmentHighlight();
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
         }
 
@@ -68,7 +107,11 @@ namespace BackpackHero.Input
 
             bool canAdjust = BattleFlowController.IsCombatPhase &&
                 input != null && input.IsInputEnabled;
-            state.Update(Time.unscaledTime, canAdjust, idleDelay);
+            state.Update(
+                Time.unscaledTime,
+                canAdjust,
+                idleDelay,
+                adjustmentHighlight != null && adjustmentHighlight.IsPulseActive);
 
             float targetVisibility = state.IsAdjusting ? 1f : 0f;
             adjustmentVisibility = Mathf.MoveTowards(
@@ -100,12 +143,36 @@ namespace BackpackHero.Input
             }
         }
 
+        private void SubscribeToAdjustmentHighlight()
+        {
+            if (adjustmentHighlight == null)
+            {
+                return;
+            }
+
+            adjustmentHighlight.PulseCompleted -= HandlePulseCompleted;
+            adjustmentHighlight.PulseCompleted += HandlePulseCompleted;
+        }
+
+        private void UnsubscribeFromAdjustmentHighlight()
+        {
+            if (adjustmentHighlight != null)
+            {
+                adjustmentHighlight.PulseCompleted -= HandlePulseCompleted;
+            }
+        }
+
         private void HandlePointerActivity(Vector2 _)
         {
             if (BattleFlowController.IsCombatPhase)
             {
                 state.RegisterActivity(Time.unscaledTime);
             }
+        }
+
+        private void HandlePulseCompleted()
+        {
+            state.CompletePulseWait();
         }
 
         private void HandlePhaseChanged(BattlePhase phase)

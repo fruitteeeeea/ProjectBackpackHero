@@ -1,3 +1,4 @@
+using System;
 using BackpackHero.Battle;
 using UnityEngine;
 
@@ -34,6 +35,16 @@ namespace BackpackHero.Input
         private static readonly int OpacityId =
             Shader.PropertyToID("_Opacity");
 
+        /// <summary>
+        /// True while the current pulse is travelling or fading at the curve end.
+        /// </summary>
+        public bool IsPulseActive { get; private set; }
+
+        /// <summary>
+        /// Raised when a visible pulse completes its travel and end fade naturally.
+        /// </summary>
+        public event Action PulseCompleted;
+
         public static void CalculatePulseRange(
             float progress,
             float length,
@@ -60,12 +71,23 @@ namespace BackpackHero.Input
                 Mathf.Max(0.01f, fadeTime));
         }
 
+        public static bool IsPulseActiveAtElapsedTime(
+            float elapsedTime,
+            float travelTime,
+            float fadeTime)
+        {
+            return elapsedTime >= 0f &&
+                elapsedTime < Mathf.Max(0.01f, travelTime) +
+                Mathf.Max(0.01f, fadeTime);
+        }
+
         public void SetRuntimeVisibility(float visibility)
         {
             runtimeVisibility = Mathf.Clamp01(visibility);
             if (runtimeVisibility <= 0f)
             {
                 SetPulseVisible(false);
+                SetPulseActive(false, false);
             }
         }
 
@@ -79,6 +101,7 @@ namespace BackpackHero.Input
         private void OnDisable()
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
+            SetPulseActive(false, false);
         }
 
         private void OnValidate()
@@ -101,6 +124,7 @@ namespace BackpackHero.Input
                 !BattleFlowController.IsCombatPhase)
             {
                 SetPulseVisible(false);
+                SetPulseActive(false, false);
                 return;
             }
 
@@ -112,10 +136,12 @@ namespace BackpackHero.Input
             if (phase == BattlePhase.Combat)
             {
                 combatStartTime = Time.time;
+                SetPulseActive(false, false);
                 return;
             }
 
             SetPulseVisible(false);
+            SetPulseActive(false, false);
         }
 
         private void RefreshPulse()
@@ -123,12 +149,14 @@ namespace BackpackHero.Input
             if (curve == null || pulseLineRenderer == null)
             {
                 SetPulseVisible(false);
+                SetPulseActive(false, false);
                 return;
             }
 
             if (runtimeVisibility <= 0f)
             {
                 SetPulseVisible(false);
+                SetPulseActive(false, false);
                 return;
             }
 
@@ -138,9 +166,13 @@ namespace BackpackHero.Input
                 ? Mathf.Repeat(Time.time - combatStartTime, cycleDuration)
                 : 0f;
 
-            if (cycleTime >= activeDuration)
+            if (!IsPulseActiveAtElapsedTime(
+                    cycleTime,
+                    travelDuration,
+                    endFadeDuration))
             {
                 SetPulseVisible(false);
+                SetPulseActive(false, true);
                 return;
             }
 
@@ -168,6 +200,7 @@ namespace BackpackHero.Input
                         out sampledPositions[index]))
                 {
                     SetPulseVisible(false);
+                    SetPulseActive(false, false);
                     return;
                 }
             }
@@ -175,6 +208,7 @@ namespace BackpackHero.Input
             pulseLineRenderer.positionCount = positionCount;
             pulseLineRenderer.SetPositions(sampledPositions);
             pulseLineRenderer.enabled = true;
+            SetPulseActive(true, false);
         }
 
         private void EnsureLineRenderer()
@@ -236,6 +270,19 @@ namespace BackpackHero.Input
             if (pulseLineRenderer != null)
             {
                 pulseLineRenderer.enabled = visible;
+            }
+        }
+
+        private void SetPulseActive(
+            bool isActive,
+            bool notifyCompletion)
+        {
+            bool completed = IsPulseActive && !isActive && notifyCompletion;
+            IsPulseActive = isActive;
+
+            if (completed)
+            {
+                PulseCompleted?.Invoke();
             }
         }
 

@@ -44,4 +44,22 @@ public sealed class BattleCurvePulseRendererTests
         Assert.That(opacity,
             Is.EqualTo(expectedOpacity).Within(0.0001f));
     }
+
+    [TestCase(0f, 2f, 0.25f, true)]
+    [TestCase(2.249f, 2f, 0.25f, true)]
+    [TestCase(2.25f, 2f, 0.25f, false)]
+    [TestCase(2.5f, 2f, 0.25f, false)]
+    public void IsPulseActiveAtElapsedTime_IncludesTheEntireEndFade(
+        float elapsedTime,
+        float travelTime,
+        float fadeTime,
+        bool expectedActive)
+    {
+        bool isActive = BattleCurvePulseRenderer.IsPulseActiveAtElapsedTime(
+            elapsedTime,
+            travelTime,
+            fadeTime);
+
+        Assert.That(isActive, Is.EqualTo(expectedActive));
+    }
 }

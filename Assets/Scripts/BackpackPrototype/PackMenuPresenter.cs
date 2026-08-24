@@ -84,7 +84,8 @@ namespace BackpackPrototype
             backdropRect.anchorMax = Vector2.one;
             backdropRect.offsetMin = backdropRect.offsetMax = Vector2.zero;
             var backdropImage = backdrop.AddComponent<Image>();
-            backdropImage.color = new Color(0f, 0f, 0f, .65f);
+            // Match HangarView's detail mask: black with 150/255 alpha.
+            backdropImage.color = new Color(0f, 0f, 0f, 150f / 255f);
             var backdropButton = backdrop.AddComponent<Button>();
             backdropButton.targetGraphic = backdropImage;
             var root = Instantiate(prefab, canvasRoot);

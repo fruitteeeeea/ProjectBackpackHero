@@ -17,13 +17,13 @@ namespace BackpackHero.Battle
         [SerializeField] private TextMeshProUGUI scoreText;
         [SerializeField] private TextMeshProUGUI deltaText;
         [SerializeField] private Transform rewardRoot;
-        [SerializeField] private OriginalSettlementRewardItem rewardPrefab;
+        [SerializeField] private ItemReward rewardPrefab;
         [SerializeField] private GameObject victoryAnimation;
         [SerializeField] private SkeletonGraphic victorySpine;
         [SerializeField] private Button continueButton;
         [SerializeField] private string mainMenuSceneName = "MainMenuDemo";
 
-        private readonly List<GameObject> rewardInstances = new();
+        private readonly List<ItemReward> rewardInstances = new();
         private void Awake()
         {
             if (continueButton != null)
@@ -66,7 +66,8 @@ namespace BackpackHero.Battle
         {
             for (int index = 0; index < rewardInstances.Count; index++)
             {
-                rewardInstances[index].SetActive(false);
+                rewardInstances[index].ResetForReuse();
+                rewardInstances[index].gameObject.SetActive(false);
             }
 
             if (rewards == null || rewardPrefab == null || rewardRoot == null)
@@ -76,20 +77,19 @@ namespace BackpackHero.Battle
 
             for (int index = 0; index < rewards.Count; index++)
             {
-                OriginalSettlementRewardItem item;
+                ItemReward item;
                 if (index < rewardInstances.Count)
                 {
-                    item = rewardInstances[index]
-                        .GetComponent<OriginalSettlementRewardItem>();
+                    item = rewardInstances[index];
                 }
                 else
                 {
                     item = Instantiate(rewardPrefab, rewardRoot);
-                    rewardInstances.Add(item.gameObject);
+                    rewardInstances.Add(item);
                 }
 
                 item.gameObject.SetActive(true);
-                item.SetData(rewards[index]);
+                item.BindCurrency(rewards[index].Label == "DIAMOND", rewards[index].Amount, false);
             }
         }
 

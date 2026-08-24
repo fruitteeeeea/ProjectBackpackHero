@@ -90,13 +90,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1214814655204842311}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eeb10ebde8bdbdb47b02b07401734d0b, type: 3}
+  m_Script: {fileID: 11500000, guid: 827a2d3acb746704c80024728766b4b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resourceRoot: {fileID: 3375390273476774620}
-  resourceLoader: {fileID: 1563723890039292918}
-  itemIconRoot: {fileID: 8463163673710222947}
-  countText: {fileID: 2784390270222188594}
+  loaderBg: {fileID: 1593519380310705250}
+  textCount: {fileID: 2784390270222188594}
+  textName: {fileID: 8328579931486269118}
+  resLoader: {fileID: 1563723890039292918}
+  imgIcon: {fileID: 3398598640836155495}
+  preScale: 0.5
+  upDuration: 0.1
+  downDuration: 0.5
+  fragmentIconScale: 0.75
 --- !u!114 &1593519380310705250
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -179,7 +184,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: e297aa5978df0f844ad7a74c00f01d65, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9e6a19e2e7565754d89c688e99a769cc, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -203,8 +208,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   image: {fileID: 0}
   sprites:
-  - {fileID: 21300000, guid: e297aa5978df0f844ad7a74c00f01d65, type: 3}
-  - {fileID: 21300000, guid: 4ad2e4f6c8bd2054eb763cff4d890f77, type: 3}
+  - {fileID: 21300000, guid: 9e6a19e2e7565754d89c688e99a769cc, type: 3}
+  - {fileID: 21300000, guid: c4ff61052bc0f6e4ba30b8dea0bf764d, type: 3}
+  - {fileID: 21300000, guid: 2132a46d59db5fc4aa23f582063441fb, type: 3}
 --- !u!1 &4024979652859760480
 GameObject:
   m_ObjectHideFlags: 0
@@ -538,7 +544,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: d664c8b7c97bf734b9766cb724d47625, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 94626eaae8fd01549a9573a29b77277b, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

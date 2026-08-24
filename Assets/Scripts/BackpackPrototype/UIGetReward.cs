@@ -4,6 +4,7 @@ using Spine;
 using Spine.Unity;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BackpackPrototype
 {
@@ -21,12 +22,17 @@ namespace BackpackPrototype
         int index = -1;
         bool waitingForOpen;
         bool settled;
-        readonly List<GameObject> spawned = new();
+        readonly List<ItemReward> spawned = new();
+        Coroutine revealRoutine;
+        Coroutine animationRoutine;
+        ItemReward rewardPrefab;
 
         internal void Initialize(PackMenuPresenter value) => presenter = value;
 
         public void ShowOpen(int slot)
         {
+            StopPresentationRoutines();
+            ResetRewardItems();
             index = slot;
             waitingForOpen = true;
             settled = false;
@@ -83,24 +89,91 @@ namespace BackpackPrototype
             if (root != null) root.gameObject.SetActive(true);
             if (objAnimation != null) objAnimation.SetActive(true);
             if (txtTitle != null) txtTitle.text = "Click to Continue";
-            ShowReward("Gold", reward.Gold);
-            ShowReward("Diamond", reward.Diamond);
-            foreach (KeyValuePair<ItemData, int> pair in reward.Fragments) ShowReward(pair.Key.Name, pair.Value);
+            PlayAnimation(spine);
+
+            List<System.Action<ItemReward>> bindings = new();
+            if (reward.Gold > 0) bindings.Add(item => item.BindCurrency(false, reward.Gold, true));
+            if (reward.Diamond > 0) bindings.Add(item => item.BindCurrency(true, reward.Diamond, true));
+            foreach (KeyValuePair<ItemData, int> pair in reward.Fragments)
+            {
+                ItemData item = pair.Key;
+                int amount = pair.Value;
+                if (item != null && amount > 0) bindings.Add(view => view.BindItemFragment(item, amount, true));
+            }
+
+            revealRoutine = StartCoroutine(RevealRewards(bindings));
+            animationRoutine = StartCoroutine(HideAnimationAfterDelay());
         }
 
-        void ShowReward(string label, int count)
+        IEnumerator RevealRewards(IReadOnlyList<System.Action<ItemReward>> bindings)
         {
-            if (objItem == null || root == null) return;
-            GameObject go = Instantiate(objItem, root);
-            go.name = "ItemReward";
-            go.SetActive(true);
-            TextMeshProUGUI[] texts = go.GetComponentsInChildren<TextMeshProUGUI>(true);
-            foreach (TextMeshProUGUI text in texts)
+            if (root == null) yield break;
+            root.gameObject.SetActive(true);
+            for (int i = 0; i < bindings.Count; i++)
             {
-                if (text.name == "count") text.text = "x" + count;
-                else if (text.name == "name") text.text = label;
+                ItemReward item = GetRewardItem(i);
+                if (item == null) continue;
+                item.gameObject.SetActive(false);
+                bindings[i](item);
+                item.gameObject.SetActive(true);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(root as RectTransform);
+                if (i < bindings.Count - 1) yield return new WaitForSeconds(revealInterval);
             }
-            spawned.Add(go);
+            revealRoutine = null;
+        }
+
+        IEnumerator HideAnimationAfterDelay()
+        {
+            yield return new WaitForSeconds(animInterval);
+            if (objAnimation != null) objAnimation.SetActive(false);
+            animationRoutine = null;
+        }
+
+        ItemReward GetRewardItem(int itemIndex)
+        {
+            if (root == null) return null;
+            if (rewardPrefab == null)
+                rewardPrefab = Resources.Load<ItemReward>("PlanetWar/OriginalSettlement/Prefab/ItemReward");
+            if (rewardPrefab == null) return null;
+
+            while (spawned.Count <= itemIndex)
+            {
+                ItemReward instance = Instantiate(rewardPrefab, root);
+                instance.name = "ItemReward";
+                instance.gameObject.SetActive(false);
+                spawned.Add(instance);
+            }
+            return spawned[itemIndex];
+        }
+
+        void ResetRewardItems()
+        {
+            foreach (ItemReward item in spawned)
+            {
+                if (item == null) continue;
+                item.ResetForReuse();
+                item.gameObject.SetActive(false);
+            }
+        }
+
+        void StopPresentationRoutines()
+        {
+            if (revealRoutine != null) StopCoroutine(revealRoutine);
+            if (animationRoutine != null) StopCoroutine(animationRoutine);
+            revealRoutine = null;
+            animationRoutine = null;
+        }
+
+        void OnDisable()
+        {
+            StopPresentationRoutines();
+            ResetRewardItems();
+        }
+
+        static void PlayAnimation(SkeletonGraphic skeleton)
+        {
+            if (skeleton != null && skeleton.AnimationState != null)
+                skeleton.AnimationState.SetAnimation(0, "animation", false);
         }
 
         void SetPackSkin()

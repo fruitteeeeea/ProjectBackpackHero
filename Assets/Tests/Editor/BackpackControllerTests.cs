@@ -751,6 +751,14 @@ public sealed class BackpackControllerTests
         Assert.That(
             data.GetEquipmentEffectIntervalReductionForLevel(3),
             Is.EqualTo(0.2f));
+
+        data.SetLevelCooldownReductionsForTests(0f, 0f, 2f, 3f);
+        Assert.That(
+            data.GetEquipmentEffectIntervalReductionForLevel(2),
+            Is.EqualTo(1f));
+        Assert.That(
+            data.GetEquipmentEffectIntervalReductionForLevel(3),
+            Is.EqualTo(1f));
     }
 
     [Test]

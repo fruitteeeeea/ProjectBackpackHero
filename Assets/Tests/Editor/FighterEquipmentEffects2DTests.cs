@@ -261,16 +261,16 @@ public sealed class FighterEquipmentEffects2DTests
 
             Assert.That(
                 levelTwo.GetEquipmentEffectCooldown(projectile),
-                Is.EqualTo(0.7f));
+                Is.EqualTo(0.72f));
             Assert.That(
                 levelThree.GetEquipmentEffectCooldown(projectile),
-                Is.EqualTo(0.6f));
+                Is.EqualTo(0.64f));
             Assert.That(
                 levelTwo.GetEquipmentEffectCooldown(laser),
-                Is.EqualTo(2.9f));
+                Is.EqualTo(2.7f));
             Assert.That(
                 levelThree.GetEquipmentEffectCooldown(laser),
-                Is.EqualTo(2.8f));
+                Is.EqualTo(2.4f));
         }
         finally
         {
@@ -293,14 +293,43 @@ public sealed class FighterEquipmentEffects2DTests
             equipmentData.SetOutOfMatchProgressionForTests(2, 100,
                 new Vector2(1f, 1.4f), new Vector2(1f, 1.4f),
                 new Vector2(1f, 0.8f));
-            ItemInstance item = new ItemInstance("equipment", equipmentData, Vector2Int.zero);
+            ItemInstance item = new ItemInstance("equipment", equipmentData, Vector2Int.zero, 3);
             item.SetProgressionLevel(PlayerItemSystem.MaximumLevel);
 
-            Assert.That(item.GetEquipmentEffectCooldown(projectile), Is.EqualTo(0.8f));
+            Assert.That(item.GetEquipmentEffectCooldown(projectile), Is.EqualTo(0.64f));
         }
         finally
         {
             Object.DestroyImmediate(projectile);
+            Object.DestroyImmediate(equipmentData);
+        }
+    }
+
+    [Test]
+    public void ItemInstance_ClampsEquipmentEffectCooldownAtMinimum()
+    {
+        ProjectileEquipmentEffectDefinition projectile =
+            ScriptableObject.CreateInstance<ProjectileEquipmentEffectDefinition>();
+        LaserLinkEquipmentEffectDefinition laser =
+            ScriptableObject.CreateInstance<LaserLinkEquipmentEffectDefinition>();
+        ItemData equipmentData = ScriptableObject.CreateInstance<ItemData>();
+        try
+        {
+            projectile.InitializeForTests(null, 0.1f);
+            laser.InitializeForTests(null, 0.1f);
+            equipmentData.InitializeForTests("Equipment", ItemType.Equipment, 3f, null);
+            equipmentData.SetLevelCooldownReductionsForTests(0f, 0f, 1f, 1f);
+            ItemInstance item = new ItemInstance("equipment", equipmentData, Vector2Int.zero, 2);
+
+            Assert.That(item.GetEquipmentEffectCooldown(projectile), Is.EqualTo(
+                ProjectileEquipmentEffectDefinition.MinimumCooldown));
+            Assert.That(item.GetEquipmentEffectCooldown(laser), Is.EqualTo(
+                LaserLinkEquipmentEffectDefinition.MinimumCooldown));
+        }
+        finally
+        {
+            Object.DestroyImmediate(projectile);
+            Object.DestroyImmediate(laser);
             Object.DestroyImmediate(equipmentData);
         }
     }

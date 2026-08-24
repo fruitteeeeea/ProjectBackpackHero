@@ -62,9 +62,9 @@ namespace BackpackPrototype
         [SerializeField, Min(0f)] private float aircraftCooldownReductionLevel2 = 0.2f;
         [Tooltip("飞机物品在 Lv3 时从部署冷却中减去的秒数。")]
         [SerializeField, Min(0f)] private float aircraftCooldownReductionLevel3 = 0.4f;
-        [Tooltip("装备效果在 Lv2 时从内置射击间隔中减去的秒数。")]
+        [Tooltip("装备效果在 Lv2 时减少的内置射击间隔比例（0-1）。")]
         [SerializeField, Min(0f)] private float equipmentEffectIntervalReductionLevel2 = 0.1f;
-        [Tooltip("装备效果在 Lv3 时从内置射击间隔中减去的秒数。")]
+        [Tooltip("装备效果在 Lv3 时减少的内置射击间隔比例（0-1）。")]
         [SerializeField, Min(0f)] private float equipmentEffectIntervalReductionLevel3 = 0.2f;
 
         [Header("Battle")]
@@ -93,9 +93,9 @@ namespace BackpackPrototype
         public float AircraftCooldownReductionLevel3 =>
             Mathf.Max(0f, Config?.AircraftCooldownReductionLevel3 ?? aircraftCooldownReductionLevel3);
         public float EquipmentEffectIntervalReductionLevel2 =>
-            Mathf.Max(0f, Config?.EquipmentEffectIntervalReductionLevel2 ?? equipmentEffectIntervalReductionLevel2);
+            Mathf.Clamp01(Config?.EquipmentEffectIntervalReductionLevel2 ?? equipmentEffectIntervalReductionLevel2);
         public float EquipmentEffectIntervalReductionLevel3 =>
-            Mathf.Max(0f, Config?.EquipmentEffectIntervalReductionLevel3 ?? equipmentEffectIntervalReductionLevel3);
+            Mathf.Clamp01(Config?.EquipmentEffectIntervalReductionLevel3 ?? equipmentEffectIntervalReductionLevel3);
         public int Price => Mathf.Max(0, Config?.Price ?? price);
         public bool InitiallyUnlocked => true;
         public string UnlockRequirementText => Config?.UnlockRequirementText ?? unlockRequirementText;
@@ -160,6 +160,10 @@ namespace BackpackPrototype
                 : AircraftCooldownReductionLevel3;
         }
 
+        /// <summary>
+        /// Gets the proportion removed from an equipment effect's base interval
+        /// by its in-match level.
+        /// </summary>
         public float GetEquipmentEffectIntervalReductionForLevel(int level)
         {
             if (level <= 1) return 0f;
@@ -255,8 +259,8 @@ namespace BackpackPrototype
                 equipmentItemModifier);
             aircraftCooldownReductionLevel2 = Mathf.Max(0f, aircraftCooldownReductionLevel2);
             aircraftCooldownReductionLevel3 = Mathf.Max(0f, aircraftCooldownReductionLevel3);
-            equipmentEffectIntervalReductionLevel2 = Mathf.Max(0f, equipmentEffectIntervalReductionLevel2);
-            equipmentEffectIntervalReductionLevel3 = Mathf.Max(0f, equipmentEffectIntervalReductionLevel3);
+            equipmentEffectIntervalReductionLevel2 = Mathf.Clamp01(equipmentEffectIntervalReductionLevel2);
+            equipmentEffectIntervalReductionLevel3 = Mathf.Clamp01(equipmentEffectIntervalReductionLevel3);
         }
 
         private static float GetProgressionMultiplier(Vector2 range, int level)

@@ -99,11 +99,12 @@ namespace BackpackPrototype
                 return 0f;
             }
 
-            float reduction =
+            float reductionRate =
                 Data != null
                     ? Data.GetEquipmentEffectIntervalReductionForLevel(
                         Level)
                     : 0f;
+            float inMatchLevelMultiplier = 1f - reductionRate;
             float progressionMultiplier = Data != null
                 ? Data.GetEquipmentIntervalMultiplierForProgressionLevel(ProgressionLevel)
                 : 1f;
@@ -114,7 +115,8 @@ namespace BackpackPrototype
                 return Mathf.Max(
                     ProjectileEquipmentEffectDefinition
                         .MinimumCooldown,
-                    (projectile.Cooldown - reduction) * progressionMultiplier);
+                    projectile.Cooldown * inMatchLevelMultiplier *
+                    progressionMultiplier);
             }
 
             if (effect is
@@ -123,7 +125,8 @@ namespace BackpackPrototype
                 return Mathf.Max(
                     LaserLinkEquipmentEffectDefinition
                         .MinimumCooldown,
-                    (laser.Cooldown - reduction) * progressionMultiplier);
+                    laser.Cooldown * inMatchLevelMultiplier *
+                    progressionMultiplier);
             }
 
             return 0f;

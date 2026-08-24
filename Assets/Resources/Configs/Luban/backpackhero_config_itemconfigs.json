@@ -211,7 +211,7 @@
     "aircraftDamageMultiplierLevel10": 1.4,
     "equipmentIntervalMultiplierLevel1": 1,
     "equipmentIntervalMultiplierLevel10": 0.8,
-    "cooldown": 3,
+    "cooldown": 4,
     "count": 2,
     "equipmentItemModifier": 1,
     "applyEquipmentItemModifierToProjectileStats": false,

@@ -78,19 +78,32 @@ namespace BackpackPrototype
         {
             var prefab = Resources.Load<GameObject>("PackUI/Source/Prefabs/UIPackInfo");
             if (prefab == null) throw new InvalidOperationException("Source UIPackInfo prefab is missing from Resources/PackUI/Source/Prefabs.");
+            var backdrop = CreateUi("PackInfoBackdrop", canvasRoot);
+            var backdropRect = backdrop.GetComponent<RectTransform>();
+            backdropRect.anchorMin = Vector2.zero;
+            backdropRect.anchorMax = Vector2.one;
+            backdropRect.offsetMin = backdropRect.offsetMax = Vector2.zero;
+            var backdropImage = backdrop.AddComponent<Image>();
+            backdropImage.color = new Color(0f, 0f, 0f, .65f);
+            var backdropButton = backdrop.AddComponent<Button>();
+            backdropButton.targetGraphic = backdropImage;
             var root = Instantiate(prefab, canvasRoot);
             var view = root.GetComponent<UIPackInfo>() ?? root.AddComponent<UIPackInfo>();
-            view.Initialize(this);
+            view.Initialize(this, backdrop);
+            backdropButton.onClick.AddListener(view.Close);
+            backdrop.SetActive(false);
             root.SetActive(false);
             return view;
         }
         UIGetReward BuildReward()
         {
-            var root = CreateModal("UIGetReward"); var panel = CreatePanel("content", root.transform); var view = root.AddComponent<UIGetReward>(); view.presenter = this;
-            view.packSpine = TryCreateSpine("packSpine", panel.transform); view.spine = TryCreateSpine("spine", panel.transform);
-            view.root = CreateUi("root", panel.transform).transform; AddVerticalLayout(view.root.gameObject, 6); view.objAnimation = CreateUi("objAnimation", panel.transform).gameObject; view.txtTitle = CreateLabel("txtTitle", panel.transform, "", 20);
-            view.objItem = CreateUi("objItem", view.root).gameObject; view.objItem.AddComponent<ItemReward>(); view.objItem.SetActive(false);
-            var bg = root.GetComponent<Button>(); bg.onClick.AddListener(view.OnClickBg); root.SetActive(false); return view;
+            var prefab = Resources.Load<GameObject>("PackUI/Source/Prefabs/UIGetReward");
+            if (prefab == null) throw new InvalidOperationException("Source UIGetReward prefab is missing from Resources/PackUI/Source/Prefabs.");
+            var root = Instantiate(prefab, canvasRoot);
+            var view = root.GetComponent<UIGetReward>() ?? root.AddComponent<UIGetReward>();
+            view.Initialize(this);
+            root.SetActive(false);
+            return view;
         }
         GameObject CreateModal(string name)
         {
@@ -108,14 +121,4 @@ namespace BackpackPrototype
         { var go = CreateUi(name, parent); var value = go.AddComponent<SkeletonGraphic>(); value.skeletonDataAsset = Resources.Load<SkeletonDataAsset>("PackUI/openPack/kaika_SkeletonData"); if (value.skeletonDataAsset != null) value.Initialize(true); return value; }
         static Transform FindChild(Transform root, string name) { foreach (Transform child in root.GetComponentsInChildren<Transform>(true)) if (child.name == name) return child; return null; }
     }
-    public sealed class UIGetReward : MonoBehaviour
-    {
-        internal PackMenuPresenter presenter; int index = -1; bool opening;
-        public GameObject objItem, objAnimation; public Transform root; public SkeletonGraphic packSpine, spine; public TextMeshProUGUI txtTitle;
-        public void ShowOpen(int slot) { index=slot; opening=true; gameObject.SetActive(true); txtTitle.text="Tap to open"; root.gameObject.SetActive(false); if (packSpine != null && packSpine.Skeleton != null) { var skin=presenter.Packs.GetDefinition(presenter.Packs.GetSlots()[slot].Id).SpineSkin; packSpine.Skeleton.SetSkin(skin); packSpine.AnimationState.SetAnimation(0,"wait",true); } }
-        public void OnClickBg() { if (!opening) { gameObject.SetActive(false); return; } opening=false; StartCoroutine(SettleAfterOpenAnimation()); }
-        IEnumerator SettleAfterOpenAnimation() { if (packSpine != null && packSpine.Skeleton != null) packSpine.AnimationState.SetAnimation(0,"open",false); yield return new WaitForSeconds(0.8f); if (!presenter.Packs.TrySettleReward(index, out var reward)) { gameObject.SetActive(false); yield break; } root.gameObject.SetActive(true); txtTitle.text="Click to Continue"; ShowReward("Gold", reward.Gold); ShowReward("Diamond", reward.Diamond); foreach (var pair in reward.Fragments) ShowReward(pair.Key.Name, pair.Value); }
-        void ShowReward(string label, int count) { var go=Instantiate(objItem, root); go.name="ItemReward"; go.SetActive(true); var reward=go.GetComponent<ItemReward>(); reward.Set(label,count); }
-    }
-    public sealed class ItemReward : MonoBehaviour { TextMeshProUGUI label; public void Set(string name, int count) { label ??= CreateLabel(); label.text=$"{name} x{count}"; } TextMeshProUGUI CreateLabel() { var go=new GameObject("textCount",typeof(RectTransform),typeof(TextMeshProUGUI)); go.transform.SetParent(transform,false); var value=go.GetComponent<TextMeshProUGUI>(); value.fontSize=16; value.alignment=TextAlignmentOptions.Center; value.color=Color.white; return value; } }
 }

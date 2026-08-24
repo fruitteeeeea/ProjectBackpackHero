@@ -13,11 +13,13 @@ namespace BackpackPrototype
         public GameObject btnVideo, btnOpen, btnAther, btnStart, timeObj;
 
         PackMenuPresenter presenter;
+        GameObject backdrop;
         int index = -1;
 
-        internal void Initialize(PackMenuPresenter value)
+        internal void Initialize(PackMenuPresenter value, GameObject backdropObject)
         {
             presenter = value;
+            backdrop = backdropObject;
             Button startButton = btnStart != null ? btnStart.GetComponent<Button>() : null;
             if (startButton != null) startButton.onClick.AddListener(OnClickStart);
         }
@@ -25,7 +27,13 @@ namespace BackpackPrototype
         public void Show(int slot)
         {
             index = slot;
+            if (backdrop != null)
+            {
+                backdrop.SetActive(true);
+                backdrop.transform.SetAsLastSibling();
+            }
             gameObject.SetActive(true);
+            transform.SetAsLastSibling();
             Refresh();
         }
 
@@ -67,7 +75,11 @@ namespace BackpackPrototype
         public void OnClickVideo() { }
         public void OnClickAther() { }
         public void OnClickClose() => Close();
-        public void Close() => gameObject.SetActive(false);
+        public void Close()
+        {
+            if (backdrop != null) backdrop.SetActive(false);
+            gameObject.SetActive(false);
+        }
 
         static int IconIndex(PackId id) => id switch
         {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BackpackPrototype;
+using BackpackHero.Battle;
 using UnityEditor;
 using UnityEngine;
 
@@ -29,6 +30,8 @@ namespace BackpackHero.EditorTools
             DrawGrantControls(packs);
             EditorGUILayout.Space(6f);
             DrawQueueControls(packs);
+            EditorGUILayout.Space(6f);
+            DrawBattleResultControls();
 
             if (!string.IsNullOrEmpty(lastResult))
             {
@@ -126,6 +129,48 @@ namespace BackpackHero.EditorTools
                 packs.ClearAllPacks();
                 lastResult = "已清空全部卡包队列；玩家货币与物品养成未改变。";
             }
+        }
+
+        void DrawBattleResultControls()
+        {
+            EditorGUILayout.LabelField("战斗结果展示", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("游戏胜利", GUILayout.Height(28f)))
+                ShowBattleResult(true);
+            if (GUILayout.Button("游戏失败", GUILayout.Height(28f)))
+                ShowBattleResult(false);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        void ShowBattleResult(bool victory)
+        {
+            // Close every existing result surface first so the debug controls
+            // cannot leave victory and defeat overlays visible together.
+            foreach (OriginalSettlementPanelAdapter panel in
+                     Object.FindObjectsByType<OriginalSettlementPanelAdapter>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                panel.gameObject.SetActive(false);
+            }
+            foreach (BattleResultPanel panel in
+                     Object.FindObjectsByType<BattleResultPanel>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                panel.gameObject.SetActive(false);
+            }
+
+            BattleResultPresenter presenter = Object.FindAnyObjectByType<BattleResultPresenter>(
+                FindObjectsInactive.Include);
+            if (presenter == null)
+            {
+                GameObject host = new GameObject("Debug Battle Result Presenter");
+                presenter = host.AddComponent<BattleResultPresenter>();
+            }
+
+            presenter.Show(BattleResultData.CreateDefault(victory));
+            lastResult = victory ? "已显示游戏胜利结算界面。" : "已显示游戏失败结算界面。";
         }
 
         void DrawGrantButton(PackSystem packs, PackId id, string label)

@@ -1164,7 +1164,7 @@ MonoBehaviour:
   scoreText: {fileID: 1319613734101207974}
   deltaText: {fileID: 987869752116729701}
   rewardRoot: {fileID: 7552185143652136714}
-  rewardPrefab: {fileID: 1214814655204842311, guid: 36db614184db25648893f09e1983f360, type: 3}
+  rewardPrefab: {fileID: 6770047907615356668, guid: 36db614184db25648893f09e1983f360, type: 3}
   victoryAnimation: {fileID: 5899670090537538533}
   victorySpine: {fileID: 7395620944616213433}
   continueButton: {fileID: 5133741512278659376}

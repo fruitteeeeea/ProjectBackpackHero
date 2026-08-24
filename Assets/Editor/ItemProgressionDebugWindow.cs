@@ -26,6 +26,19 @@ namespace BackpackHero.EditorTools
             DrawSummary(system);
 
             EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("货币", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("添加 1000 金币", GUILayout.Height(24f)))
+            {
+                system.AddCurrency(1000);
+            }
+            if (GUILayout.Button("添加 1000 钻石", GUILayout.Height(24f)))
+            {
+                system.AddCurrency(0, 1000);
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(6f);
             EditorGUILayout.LabelField("养成状态", EditorStyles.boldLabel);
             if (GUILayout.Button("重置养成（全物品 Lv.1，碎片清零）", GUILayout.Height(28f)))
             {
@@ -70,6 +83,7 @@ namespace BackpackHero.EditorTools
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
+                EditorGUILayout.LabelField("金币 / 钻石", $"{system.Gold} / {system.Diamond}");
                 EditorGUILayout.LabelField("目录物品", system.GetAllItems().Count.ToString());
                 EditorGUILayout.LabelField("飞机物品", aircraftCount.ToString());
                 EditorGUILayout.LabelField("飞机 Lv.1 / Lv.10", $"{levelOneCount} / {maxLevelCount}");

@@ -17,6 +17,7 @@ namespace BackpackPrototype
         public TextMeshProUGUI textType, textOpeningTime, textOpeningDiamond;
         public SkeletonGraphic skeletonGraphic;
         Image background;
+        PackState displayedState = PackState.Empty;
 
         internal void Initialize(PackMenuPresenter value, int slotIndex)
         {
@@ -48,6 +49,11 @@ namespace BackpackPrototype
         public void Tick()
         {
             var state = presenter?.Packs.GetSlotState(index) ?? PackState.Empty;
+            if (state != displayedState)
+            {
+                Refresh();
+                return;
+            }
             if (state != PackState.Opening) return;
             if (textOpeningTime != null) textOpeningTime.text = Format(presenter.Packs.GetRemainingSeconds(index));
             if (textOpeningDiamond != null) textOpeningDiamond.text = presenter.Packs.GetSkipDiamondCost(index).ToString();
@@ -57,6 +63,7 @@ namespace BackpackPrototype
         {
             if (presenter == null) return;
             var state = presenter.Packs.GetSlotState(index);
+            displayedState = state;
             if (objEmpty != null) objEmpty.SetActive(state == PackState.Empty);
             if (objPack != null) objPack.SetActive(state != PackState.Empty);
             if (ImgPackIcon != null) ImgPackIcon.Select(state == PackState.Empty ? 3 : state == PackState.Opening ? 1 : state == PackState.Opened ? 2 : 0);
@@ -68,7 +75,11 @@ namespace BackpackPrototype
             if (objUnLock != null) objUnLock.SetActive(state == PackState.Locked);
             if (textType != null) textType.text = state == PackState.Start || state == PackState.Locked ? "Unlock" : state == PackState.Opened ? "Open" : "";
             if (skeletonGraphic != null) skeletonGraphic.gameObject.SetActive(state == PackState.Opened);
-            Tick();
+            if (state == PackState.Opening)
+            {
+                if (textOpeningTime != null) textOpeningTime.text = Format(presenter.Packs.GetRemainingSeconds(index));
+                if (textOpeningDiamond != null) textOpeningDiamond.text = presenter.Packs.GetSkipDiamondCost(index).ToString();
+            }
         }
 
         internal static string Format(int seconds) => TimeSpan.FromSeconds(seconds).ToString(@"hh\:mm\:ss");

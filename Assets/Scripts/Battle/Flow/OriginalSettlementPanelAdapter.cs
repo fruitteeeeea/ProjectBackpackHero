@@ -26,6 +26,15 @@ namespace BackpackHero.Battle
         private readonly List<ItemReward> rewardInstances = new();
         private void Awake()
         {
+            // Keep the source-style prefab assignment in the inspector, while
+            // recovering safely from old prefabs serialized before this field
+            // changed from a GameObject to ItemReward.
+            if (rewardPrefab == null)
+            {
+                rewardPrefab = Resources.Load<ItemReward>(
+                    "PlanetWar/OriginalSettlement/Prefab/ItemReward");
+            }
+
             if (continueButton != null)
             {
                 continueButton.onClick.RemoveAllListeners();

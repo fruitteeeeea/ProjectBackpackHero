@@ -20,12 +20,21 @@ namespace BackpackPrototype
 
         PackMenuPresenter presenter;
         int index = -1;
-        bool waitingForOpen;
         bool settled;
+        PresentationState presentationState;
         readonly List<ItemReward> spawned = new();
         Coroutine revealRoutine;
         Coroutine animationRoutine;
+        TrackEntry openEntry;
         ItemReward rewardPrefab;
+
+        enum PresentationState
+        {
+            WaitingToStart,
+            OpeningAnimation,
+            RevealingRewards,
+            ReadyToClose,
+        }
 
         internal void Initialize(PackMenuPresenter value) => presenter = value;
 
@@ -34,7 +43,7 @@ namespace BackpackPrototype
             StopPresentationRoutines();
             ResetRewardItems();
             index = slot;
-            waitingForOpen = true;
+            presentationState = PresentationState.WaitingToStart;
             settled = false;
             gameObject.SetActive(true);
             if (txtTitle != null) txtTitle.text = "Tap to skip";
@@ -42,53 +51,83 @@ namespace BackpackPrototype
             if (spine != null) spine.gameObject.SetActive(false);
             if (root != null) root.gameObject.SetActive(false);
             if (objAnimation != null) objAnimation.SetActive(false);
-            SetPackSkin();
-            if (packSpine != null && packSpine.AnimationState != null)
-                packSpine.AnimationState.SetAnimation(0, "wait", true);
+            StartPackAnimation("wait", true);
         }
 
         public void OnClickBg()
         {
-            if (!waitingForOpen) { gameObject.SetActive(false); return; }
-            waitingForOpen = false;
-            if (packSpine == null || packSpine.AnimationState == null)
+            switch (presentationState)
             {
-                StartCoroutine(SettleAfterFallback());
+                case PresentationState.WaitingToStart:
+                    // First tap starts the normal pack-opening animation.
+                    PlayOpenAnimation();
+                    break;
+                case PresentationState.OpeningAnimation:
+                    // A subsequent tap skips only the opening animation. It must still
+                    // settle and present every reward before this page can be closed.
+                    DetachOpenAnimationCallback();
+                    EnterRewardPresentation();
+                    break;
+                case PresentationState.RevealingRewards:
+                    // The same tap which skips the animation, and any later taps while
+                    // rewards are appearing, must not close the reward screen.
+                    break;
+                case PresentationState.ReadyToClose:
+                    gameObject.SetActive(false);
+                    break;
+            }
+        }
+
+        // The first tap starts the normal open flow. Its completion and a later
+        // animation skip both share the same settlement and reward-reveal path.
+        public void PlayOpenAnimation()
+        {
+            if (presentationState != PresentationState.WaitingToStart) return;
+            presentationState = PresentationState.OpeningAnimation;
+            DetachOpenAnimationCallback();
+            openEntry = StartPackAnimation("open", false);
+            if (openEntry == null)
+            {
+                EnterRewardPresentation();
                 return;
             }
 
-            TrackEntry entry = packSpine.AnimationState.SetAnimation(0, "open", false);
-            if (entry == null) StartCoroutine(SettleAfterFallback());
-            else entry.Complete += OnOpenCompleted;
+            openEntry.Complete += OnOpenCompleted;
         }
 
         void OnOpenCompleted(TrackEntry entry)
         {
             entry.Complete -= OnOpenCompleted;
-            Settle();
+            if (ReferenceEquals(openEntry, entry)) openEntry = null;
+            EnterRewardPresentation();
         }
 
-        IEnumerator SettleAfterFallback()
+        void DetachOpenAnimationCallback()
         {
-            yield return new WaitForSeconds(.8f);
-            Settle();
+            if (openEntry == null) return;
+            openEntry.Complete -= OnOpenCompleted;
+            openEntry = null;
         }
 
-        void Settle()
+        void EnterRewardPresentation()
         {
-            if (settled) return;
-            settled = true;
+            if (settled || presentationState != PresentationState.OpeningAnimation) return;
+            presentationState = PresentationState.RevealingRewards;
             if (presenter == null || !presenter.Packs.TrySettleReward(index, out PackReward reward))
             {
-                gameObject.SetActive(false);
+                // Do not silently dismiss to the main menu: keeping this page visible
+                // makes an invalid slot state diagnosable and allows a retry.
+                presentationState = PresentationState.WaitingToStart;
+                Debug.LogError($"[PackReward] Unable to settle pack reward for slot {index}.", this);
                 return;
             }
+            settled = true;
 
             if (packSpine != null) packSpine.gameObject.SetActive(false);
             if (spine != null) spine.gameObject.SetActive(true);
             if (root != null) root.gameObject.SetActive(true);
             if (objAnimation != null) objAnimation.SetActive(true);
-            if (txtTitle != null) txtTitle.text = "Click to Continue";
+            if (txtTitle != null) txtTitle.text = string.Empty;
             PlayAnimation(spine);
 
             List<System.Action<ItemReward>> bindings = new();
@@ -107,7 +146,11 @@ namespace BackpackPrototype
 
         IEnumerator RevealRewards(IReadOnlyList<System.Action<ItemReward>> bindings)
         {
-            if (root == null) yield break;
+            if (root == null)
+            {
+                FinishRewardReveal();
+                yield break;
+            }
             root.gameObject.SetActive(true);
             for (int i = 0; i < bindings.Count; i++)
             {
@@ -119,7 +162,14 @@ namespace BackpackPrototype
                 LayoutRebuilder.ForceRebuildLayoutImmediate(root as RectTransform);
                 if (i < bindings.Count - 1) yield return new WaitForSeconds(revealInterval);
             }
+            FinishRewardReveal();
+        }
+
+        void FinishRewardReveal()
+        {
             revealRoutine = null;
+            presentationState = PresentationState.ReadyToClose;
+            if (txtTitle != null) txtTitle.text = "Click to Continue";
         }
 
         IEnumerator HideAnimationAfterDelay()
@@ -158,6 +208,7 @@ namespace BackpackPrototype
 
         void StopPresentationRoutines()
         {
+            DetachOpenAnimationCallback();
             if (revealRoutine != null) StopCoroutine(revealRoutine);
             if (animationRoutine != null) StopCoroutine(animationRoutine);
             revealRoutine = null;
@@ -174,6 +225,33 @@ namespace BackpackPrototype
         {
             if (skeleton != null && skeleton.AnimationState != null)
                 skeleton.AnimationState.SetAnimation(0, "animation", false);
+        }
+
+        /// <summary>
+        /// The reward view is reused between packs. Reset the old track and pose before
+        /// starting a new pack animation so its first frame is never blended from the
+        /// last frame of a previous wait/open animation.
+        /// </summary>
+        TrackEntry StartPackAnimation(string animationName, bool loop)
+        {
+            if (packSpine == null) return null;
+            if (packSpine.Skeleton == null || packSpine.AnimationState == null)
+                packSpine.Initialize(true);
+            if (packSpine.Skeleton == null || packSpine.AnimationState == null) return null;
+
+            Spine.AnimationState state = packSpine.AnimationState;
+            state.ClearTracks();
+            SetPackSkin();
+            packSpine.Skeleton.SetToSetupPose();
+
+            TrackEntry entry = state.SetAnimation(0, animationName, loop);
+            if (entry == null) return null;
+            entry.TrackTime = 0f;
+            entry.TimeScale = 1f;
+            entry.MixDuration = 0f;
+            state.Apply(packSpine.Skeleton);
+            packSpine.Update(0f);
+            return entry;
         }
 
         void SetPackSkin()

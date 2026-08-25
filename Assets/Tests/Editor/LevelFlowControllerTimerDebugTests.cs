@@ -42,6 +42,22 @@ public sealed class LevelFlowControllerTimerDebugTests
             Is.EqualTo(LevelFlowController.OvertimeDurationSeconds));
     }
 
+    [Test]
+    public void ResetForDebugMatch_ResetsRoundScoreAndPhase()
+    {
+        LevelFlowController flow = CreateFlow();
+        SetMatchState(flow, 3, 2, 1, true);
+        EnterCombat();
+
+        flow.ResetForDebugMatch();
+
+        Assert.That(flow.Round, Is.EqualTo(1));
+        Assert.That(flow.PlayerWins, Is.EqualTo(0));
+        Assert.That(flow.EnemyWins, Is.EqualTo(0));
+        Assert.That(flow.IsMatchComplete, Is.False);
+        Assert.That(BattleFlowController.CurrentPhase,
+            Is.EqualTo(BattlePhase.Preparation));
+    }
     private LevelFlowController CreateFlow()
     {
         battleObject = BattleFlowController.EnsureInstance().gameObject;
@@ -49,6 +65,26 @@ public sealed class LevelFlowControllerTimerDebugTests
         return flowObject.AddComponent<LevelFlowController>();
     }
 
+    private static void SetMatchState(
+        LevelFlowController flow,
+        int round,
+        int playerWins,
+        int enemyWins,
+        bool isMatchComplete)
+    {
+        const BindingFlags Flags = BindingFlags.Instance |
+            BindingFlags.NonPublic;
+        typeof(LevelFlowController).GetField(
+            "currentRound", Flags)?.SetValue(flow, round);
+        typeof(LevelFlowController).GetField(
+            "playerWins", Flags)?.SetValue(flow, playerWins);
+        typeof(LevelFlowController).GetField(
+            "enemyWins", Flags)?.SetValue(flow, enemyWins);
+        typeof(LevelFlowController).GetField(
+            "isMatchComplete", Flags)?.SetValue(
+            flow,
+            isMatchComplete);
+    }
     private static void SetTimer(
         LevelFlowController flow,
         float remainingTime,

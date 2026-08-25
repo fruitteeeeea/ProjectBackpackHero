@@ -28,6 +28,7 @@ namespace BackpackPrototype
         private bool dragCellVisualizationEnabled;
 
         private bool backpacksHealthLocked;
+        private bool suppressEnemyReaction;
 
         [SerializeField, Min(0.05f)]
         private float refreshInterval = 0.1f;
@@ -69,6 +70,21 @@ namespace BackpackPrototype
                 out BattleBackpackTarget2D enemyTarget) &&
             playerTarget.IsAlive &&
             enemyTarget.IsAlive;
+
+        public bool CanSwapRuntimeDecks =>
+            playerBackpackSystem != null &&
+            playerBackpackSystem.IsReady &&
+            enemyBackpackSystem != null &&
+            enemyBackpackSystem.IsReady &&
+            enemyBackpackSystem.CurrentDeckPreset != null &&
+            DeckPreset.IsValidSlots(
+                playerBackpackSystem.ActiveDeckItems,
+                out _) &&
+            enemyBackpackSystem.CurrentDeckPreset.IsValid(out _) &&
+            playerBackpackSystem.CanApplyRuntimeDeck(
+                enemyBackpackSystem.CurrentDeckPreset.Slots) &&
+            enemyBackpackSystem.CanApplyRuntimeDeck(
+                playerBackpackSystem.ActiveDeckItems);
 
         public PlayerBackpackDebugSnapshot Snapshot =>
             snapshot;
@@ -274,6 +290,45 @@ namespace BackpackPrototype
 
             RefreshSnapshot();
             return true;
+        }
+
+        public bool TrySwapRuntimeDecksAndResetMatch()
+        {
+            if (!CanSwapRuntimeDecks)
+            {
+                return false;
+            }
+
+            List<ItemData> playerDeck = new(
+                playerBackpackSystem.ActiveDeckItems);
+            List<ItemData> enemyDeck = new(
+                enemyBackpackSystem.CurrentDeckPreset.Slots);
+
+            suppressEnemyReaction = true;
+            try
+            {
+                LevelFlowController.EnsureInstance()
+                    ?.ResetForDebugMatch();
+
+                if (!playerBackpackSystem.TryApplyRuntimeDeck(enemyDeck))
+                {
+                    return false;
+                }
+
+                if (enemyBackpackSystem.TryApplyRuntimeDeck(playerDeck))
+                {
+                    SetBackpacksHealthLocked(false);
+                    RefreshSnapshot();
+                    return true;
+                }
+
+                playerBackpackSystem.TryApplyRuntimeDeck(playerDeck);
+                return false;
+            }
+            finally
+            {
+                suppressEnemyReaction = false;
+            }
         }
 
         public bool ApplyEnemyData(
@@ -733,7 +788,7 @@ namespace BackpackPrototype
         private void HandlePlayerBackpackChanged(ItemInstance _)
         {
             // 玩家一次成功的模型变更立即换取一次敌人反应，但不消耗敌人回合额度。
-            if (CanModifyPreparation())
+            if (!suppressEnemyReaction && CanModifyPreparation())
             {
                 enemyBackpackSystem?.RequestImmediateReaction();
             }

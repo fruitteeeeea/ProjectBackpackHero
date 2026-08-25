@@ -13,16 +13,24 @@ namespace BackpackPrototype
 
         public bool IsValid(out string error)
         {
+            return IsValidSlots(slots, out error);
+        }
+
+        public static bool IsValidSlots(
+            IReadOnlyList<ItemData> candidateSlots,
+            out string error)
+        {
             error = null;
-            if (slots == null || slots.Count != PlayerItemSystem.DeckSlotCount)
+            if (candidateSlots == null ||
+                candidateSlots.Count != PlayerItemSystem.DeckSlotCount)
             {
                 error = $"Deck 预设必须包含 {PlayerItemSystem.DeckSlotCount} 个槽位。";
                 return false;
             }
             var used = new HashSet<string>();
-            for (int index = 0; index < slots.Count; index++)
+            for (int index = 0; index < candidateSlots.Count; index++)
             {
-                ItemData item = slots[index];
+                ItemData item = candidateSlots[index];
                 if (item == null) continue;
                 if (!PlayerItemSystem.IsDeckSlotType(item, index)) { error = $"槽位 {index + 1} 的物品类型不匹配。"; return false; }
                 if (string.IsNullOrWhiteSpace(item.ItemId) || !used.Add(item.ItemId)) { error = $"槽位 {index + 1} 的物品无效或重复。"; return false; }

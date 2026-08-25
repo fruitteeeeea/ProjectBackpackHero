@@ -15,6 +15,7 @@ namespace BackpackPrototype
         private const int ShopRollItemCount = 3;
         private const int ShopRollsPerPreparation = 1;
         private const int MaximumOperationsPerPreparation = 8;
+        private const int OperationSimulationAttemptCount = 5;
         private const float ImmediateReactionMinDelay = .5f;
         private const float ImmediateReactionMaxDelay = 1f;
         // 移动/加入的位移与放置反馈最长约 .52 秒；留出余量保证串行。
@@ -50,7 +51,26 @@ namespace BackpackPrototype
         private float nextAutomaticOperationTime, nextImmediateOperationTime;
         private EnemyBackpackData currentData;
         private DeckPreset currentDeckPreset;
+        private DeckPreset runtimeDeckPreset;
 
+        private enum OperationKind
+        {
+            RollShop,
+            MoveItem,
+            AddShopItem,
+            RemoveItem,
+            MergeItems,
+            ReplaceItem,
+        }
+
+        private sealed class OperationCandidate
+        {
+            public OperationKind Kind;
+            public ItemInstance Item;
+            public ItemInstance SecondaryItem;
+            public ItemData ShopItem;
+            public Vector2Int Destination;
+        }
         public EnemyBackpackData DefaultData => defaultData;
         public DeckPreset DefaultDeckPreset => defaultDeckPreset;
         public EnemyBackpackData CurrentData => currentData;
@@ -125,6 +145,45 @@ namespace BackpackPrototype
             return ApplyLayoutInternal(layout, null);
         }
         public bool ApplyDeckPreset(DeckPreset preset) => SetCurrentDeckPreset(preset) && RandomizeInitialPlacement();
+        public bool CanApplyRuntimeDeck(IReadOnlyList<ItemData> deck)
+        {
+            return isReady &&
+                   Backpack != null &&
+                   DeckPreset.IsValidSlots(deck, out _) &&
+                   DeckLayoutBuilder.TryBuild(
+                       deck,
+                       Backpack.Width,
+                       Backpack.Height,
+                       null,
+                       out _);
+        }
+
+        public bool TryApplyRuntimeDeck(IReadOnlyList<ItemData> deck)
+        {
+            if (!CanOperate() || !CanApplyRuntimeDeck(deck)) return false;
+
+            DeckPreset temporaryPreset = ScriptableObject.CreateInstance<DeckPreset>();
+            temporaryPreset.hideFlags = HideFlags.DontSave;
+            temporaryPreset.SetSlots(new List<ItemData>(deck));
+
+            DeckPreset previousRuntimePreset = runtimeDeckPreset;
+            if (!ApplyDeckPreset(temporaryPreset))
+            {
+                DestroyRuntimeDeckPreset(temporaryPreset);
+                return false;
+            }
+
+            runtimeDeckPreset = temporaryPreset;
+            if (previousRuntimePreset != null &&
+                previousRuntimePreset != temporaryPreset)
+            {
+                DestroyRuntimeDeckPreset(previousRuntimePreset);
+            }
+
+            return true;
+        }
+
+
         public bool ApplyData(EnemyBackpackData data)
         {
             if (data == null || data.Placements.Count == 0) return false;
@@ -186,44 +245,469 @@ namespace BackpackPrototype
         private bool TryExecuteOperation()
         {
             if (!CanOperate()) return false;
-            // 商店必须耗尽才允许刷新，且每个准备阶段仅有一次刷新机会。
-            if (shopItems.Count == 0 && TryRollShop())
+            float currentScore = BackpackStrengthCalculator
+                .Calculate(Backpack)
+                .TotalScore;
+            OperationCandidate selected = null;
+            float bestScoreGain = float.NegativeInfinity;
+
+            for (int attempt = 0;
+                 attempt < OperationSimulationAttemptCount;
+                 attempt++)
             {
-                return true;
+                OperationCandidate candidate = TryCreateOperationCandidate();
+                if (candidate == null ||
+                    !TrySimulateCandidate(candidate, out float simulatedScore))
+                {
+                    continue;
+                }
+
+                float scoreGain = simulatedScore - currentScore;
+                if (selected == null || scoreGain > bestScoreGain)
+                {
+                    selected = candidate;
+                    bestScoreGain = scoreGain;
+                }
             }
 
-            // 新飞机优先于合成：能直接放则直接放；否则先整理出可放置的位置。
-            if (TryAddShopAircraft() || TryMoveItemToMakeRoomForShopAircraft())
+            return selected != null &&
+                   bestScoreGain >= 0f &&
+                   TryExecuteCandidate(selected);
+        }
+
+        private OperationCandidate TryCreateOperationCandidate()
+        {
+            if (shopItems.Count == 0)
             {
-                return true;
+                return remainingShopRolls > 0
+                    ? new OperationCandidate { Kind = OperationKind.RollShop }
+                    : null;
+            }
+
+            OperationCandidate aircraftCandidate =
+                TryCreateShopAircraftCandidate();
+            if (aircraftCandidate != null)
+            {
+                return aircraftCandidate;
+            }
+
+            if (TryFindShopAircraftRoomMove(
+                    out ItemInstance movedItem,
+                    out Vector2Int moveDestination))
+            {
+                return new OperationCandidate
+                {
+                    Kind = OperationKind.MoveItem,
+                    Item = movedItem,
+                    Destination = moveDestination,
+                };
             }
 
             bool canAdd = CanAddAnyShopItem();
-            // 只要还能放入商店物品，绝大多数操作直接拿取。
             if (canAdd && UnityEngine.Random.value < .85f)
             {
-                return TryAddShopItem();
+                return TryCreateAddShopItemCandidate();
             }
 
-            // 空间受限后，优先把重复物品合成为更高等级；移动仅作为次要整理手段。
             int[] actions = canAdd
                 ? new[] { 1, 1, 1, 1, 1, 0, 0, 5, 5, 3 }
                 : new[] { 4, 4, 4, 4, 4, 4, 0, 0, 0, 5, 3, 2 };
             Shuffle(actions);
             foreach (int action in actions)
             {
-                bool changed = action switch
+                OperationCandidate candidate = action switch
                 {
-                    0 => TryMoveItem(),
-                    1 => TryAddShopItem(),
-                    2 => TryRemoveItem(),
-                    3 => TryReplaceItem(),
-                    4 => TryMergeItems(),
-                    _ => TryRollShop(),
+                    0 => TryCreateMoveCandidate(),
+                    1 => TryCreateAddShopItemCandidate(),
+                    2 => TryCreateRemoveCandidate(),
+                    3 => TryCreateReplaceCandidate(),
+                    4 => TryCreateMergeCandidate(),
+                    _ => remainingShopRolls > 0 && shopItems.Count == 0
+                        ? new OperationCandidate { Kind = OperationKind.RollShop }
+                        : null,
                 };
-                if (changed) return true;
+                if (candidate != null)
+                {
+                    return candidate;
+                }
             }
+
+            return null;
+        }
+
+        private OperationCandidate TryCreateShopAircraftCandidate()
+        {
+            foreach (ItemData data in shopItems)
+            {
+                if (data?.ItemType != ItemType.Aircraft)
+                {
+                    continue;
+                }
+
+                ItemInstance check =
+                    new("enemy-aircraft-cell-check", data, Vector2Int.zero);
+                if (EnemyBackpackLayoutPlanner.TryFindPreferredCell(
+                        Backpack,
+                        check,
+                        null,
+                        out Vector2Int cell))
+                {
+                    return new OperationCandidate
+                    {
+                        Kind = OperationKind.AddShopItem,
+                        ShopItem = data,
+                        Destination = cell,
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        private bool TryFindShopAircraftRoomMove(
+            out ItemInstance movedItem,
+            out Vector2Int destination)
+        {
+            movedItem = null;
+            destination = default;
+            foreach (ItemData aircraft in shopItems)
+            {
+                if (aircraft?.ItemType == ItemType.Aircraft &&
+                    TryFindMoveToMakeRoomForAircraft(
+                        aircraft,
+                        out movedItem,
+                        out destination))
+                {
+                    return true;
+                }
+            }
+
             return false;
+        }
+
+        private OperationCandidate TryCreateMoveCandidate()
+        {
+            if (Items.Count == 0)
+            {
+                return null;
+            }
+
+            ItemInstance item = Items[UnityEngine.Random.Range(0, Items.Count)];
+            return EnemyBackpackLayoutPlanner.TryFindPreferredCell(
+                Backpack,
+                item,
+                item,
+                out Vector2Int cell)
+                ? new OperationCandidate
+                {
+                    Kind = OperationKind.MoveItem,
+                    Item = item,
+                    Destination = cell,
+                }
+                : null;
+        }
+
+        private OperationCandidate TryCreateAddShopItemCandidate()
+        {
+            if (shopItems.Count == 0)
+            {
+                return null;
+            }
+
+            ItemData data = shopItems[UnityEngine.Random.Range(0, shopItems.Count)];
+            if (data == null ||
+                !EnemyBackpackLayoutPlanner.TryFindPreferredCell(
+                    Backpack,
+                    new ItemInstance("enemy-cell-check", data, Vector2Int.zero),
+                    null,
+                    out Vector2Int cell))
+            {
+                return null;
+            }
+
+            return new OperationCandidate
+            {
+                Kind = OperationKind.AddShopItem,
+                ShopItem = data,
+                Destination = cell,
+            };
+        }
+
+        private OperationCandidate TryCreateRemoveCandidate()
+        {
+            return IsBackpackFull() && Items.Count > 0
+                ? new OperationCandidate
+                {
+                    Kind = OperationKind.RemoveItem,
+                    Item = Items[UnityEngine.Random.Range(0, Items.Count)],
+                }
+                : null;
+        }
+
+        private OperationCandidate TryCreateMergeCandidate()
+        {
+            if (Backpack == null ||
+                CanAddAnyShopItem() ||
+                HasShopAircraftPlacementOpportunity())
+            {
+                return null;
+            }
+
+            foreach (ItemInstance source in Items)
+            {
+                if (source?.Data?.ItemType != ItemType.Aircraft)
+                {
+                    continue;
+                }
+
+                foreach (ItemInstance target in Items)
+                {
+                    if (Backpack.CanMerge(source, target))
+                    {
+                        return CreateMergeCandidate(source, target);
+                    }
+                }
+            }
+
+            foreach (ItemInstance source in Items)
+            {
+                if (!IsStrandedEquipment(source))
+                {
+                    continue;
+                }
+
+                foreach (ItemInstance target in Items)
+                {
+                    if (Backpack.CanMerge(source, target) &&
+                        CountAdjacentAircraft(target, target.AnchorCell) > 0)
+                    {
+                        return CreateMergeCandidate(source, target);
+                    }
+                }
+            }
+
+            List<ItemInstance> sources = new();
+            foreach (ItemInstance source in Items)
+            {
+                if (source?.Data == null ||
+                    source.Level != ItemInstance.DefaultLevel)
+                {
+                    continue;
+                }
+
+                foreach (ItemInstance target in Items)
+                {
+                    if (Backpack.CanMerge(source, target))
+                    {
+                        sources.Add(source);
+                        break;
+                    }
+                }
+            }
+
+            if (sources.Count == 0)
+            {
+                return null;
+            }
+
+            ItemInstance chosenSource =
+                sources[UnityEngine.Random.Range(0, sources.Count)];
+            foreach (ItemInstance target in Items)
+            {
+                if (Backpack.CanMerge(chosenSource, target))
+                {
+                    return CreateMergeCandidate(chosenSource, target);
+                }
+            }
+
+            return null;
+        }
+
+        private static OperationCandidate CreateMergeCandidate(
+            ItemInstance source,
+            ItemInstance target)
+        {
+            return new OperationCandidate
+            {
+                Kind = OperationKind.MergeItems,
+                Item = source,
+                SecondaryItem = target,
+            };
+        }
+
+        private OperationCandidate TryCreateReplaceCandidate()
+        {
+            if (Items.Count == 0 || shopItems.Count == 0)
+            {
+                return null;
+            }
+
+            ItemInstance old = Items[UnityEngine.Random.Range(0, Items.Count)];
+            ItemData data = shopItems[UnityEngine.Random.Range(0, shopItems.Count)];
+            if (data == null ||
+                !Backpack.CanPlace(
+                    new ItemInstance("enemy-replace-check", data, old.AnchorCell),
+                    old.AnchorCell,
+                    old))
+            {
+                return null;
+            }
+
+            return new OperationCandidate
+            {
+                Kind = OperationKind.ReplaceItem,
+                Item = old,
+                ShopItem = data,
+                Destination = old.AnchorCell,
+            };
+        }
+
+        private bool TrySimulateCandidate(
+            OperationCandidate candidate,
+            out float score)
+        {
+            score = 0f;
+            if (!TryCreateBackpackSnapshot(
+                    out BackpackController snapshot,
+                    out Dictionary<ItemInstance, ItemInstance> itemMap) ||
+                !TryApplyCandidate(snapshot, itemMap, candidate))
+            {
+                return false;
+            }
+
+            score = BackpackStrengthCalculator.Calculate(snapshot).TotalScore;
+            return true;
+        }
+
+        private bool TryCreateBackpackSnapshot(
+            out BackpackController snapshot,
+            out Dictionary<ItemInstance, ItemInstance> itemMap)
+        {
+            snapshot = null;
+            itemMap = null;
+            if (Backpack == null)
+            {
+                return false;
+            }
+
+            snapshot = new BackpackController(Backpack.Width, Backpack.Height);
+            itemMap = new Dictionary<ItemInstance, ItemInstance>();
+            int id = 0;
+            foreach (ItemInstance item in Items)
+            {
+                ItemInstance copy = new(
+                    $"enemy-simulation-{++id}",
+                    item.Data,
+                    item.AnchorCell,
+                    item.Level);
+                if (!snapshot.PlaceItem(copy, copy.AnchorCell))
+                {
+                    snapshot = null;
+                    itemMap = null;
+                    return false;
+                }
+
+                itemMap.Add(item, copy);
+            }
+
+            return true;
+        }
+
+        private static bool TryApplyCandidate(
+            BackpackController target,
+            IReadOnlyDictionary<ItemInstance, ItemInstance> itemMap,
+            OperationCandidate candidate)
+        {
+            switch (candidate.Kind)
+            {
+                case OperationKind.RollShop:
+                    return true;
+                case OperationKind.MoveItem:
+                    return itemMap.TryGetValue(candidate.Item, out ItemInstance movedItem) &&
+                           target.MoveItem(movedItem, candidate.Destination);
+                case OperationKind.AddShopItem:
+                    return target.PlaceItem(
+                        new ItemInstance(
+                            "enemy-simulation-shop-item",
+                            candidate.ShopItem,
+                            candidate.Destination),
+                        candidate.Destination);
+                case OperationKind.RemoveItem:
+                    return itemMap.TryGetValue(candidate.Item, out ItemInstance removedItem) &&
+                           target.RemoveItem(removedItem);
+                case OperationKind.MergeItems:
+                    return itemMap.TryGetValue(candidate.Item, out ItemInstance source) &&
+                           itemMap.TryGetValue(candidate.SecondaryItem, out ItemInstance mergeTarget) &&
+                           target.TryMerge(source, mergeTarget);
+                case OperationKind.ReplaceItem:
+                    return itemMap.TryGetValue(candidate.Item, out ItemInstance oldItem) &&
+                           target.RemoveItem(oldItem) &&
+                           target.PlaceItem(
+                               new ItemInstance(
+                                   "enemy-simulation-replacement",
+                                   candidate.ShopItem,
+                                   candidate.Destination),
+                               candidate.Destination);
+                default:
+                    return false;
+            }
+        }
+
+        private bool TryExecuteCandidate(OperationCandidate candidate)
+        {
+            switch (candidate.Kind)
+            {
+                case OperationKind.RollShop:
+                    return TryRollShop();
+                case OperationKind.MoveItem:
+                    return combatController.MoveItem(
+                        candidate.Item,
+                        candidate.Destination);
+                case OperationKind.AddShopItem:
+                    return TryAddShopItem(candidate.ShopItem, candidate.Destination);
+                case OperationKind.RemoveItem:
+                    return combatController.RemoveItem(candidate.Item);
+                case OperationKind.MergeItems:
+                    return Backpack.TryMerge(
+                        candidate.Item,
+                        candidate.SecondaryItem);
+                case OperationKind.ReplaceItem:
+                    return TryReplaceItem(
+                        candidate.Item,
+                        candidate.ShopItem,
+                        candidate.Destination);
+                default:
+                    return false;
+            }
+        }
+
+        private bool TryAddShopItem(ItemData data, Vector2Int cell)
+        {
+            int index = shopItems.IndexOf(data);
+            if (index < 0 || combatController.AddItem(data, cell) == null)
+            {
+                return false;
+            }
+
+            shopItems.RemoveAt(index);
+            return true;
+        }
+
+        private bool TryReplaceItem(
+            ItemInstance oldItem,
+            ItemData data,
+            Vector2Int cell)
+        {
+            int index = shopItems.IndexOf(data);
+            if (index < 0 ||
+                !combatController.RemoveItem(oldItem) ||
+                combatController.AddItem(data, cell) == null)
+            {
+                return false;
+            }
+
+            shopItems.RemoveAt(index);
+            return true;
         }
         private bool TryMoveItem()
         {
@@ -617,6 +1101,12 @@ namespace BackpackPrototype
             }
         }
         private bool CanOperate() => isReady && BattleFlowController.CurrentPhase == BattlePhase.Preparation && Backpack != null;
+        private static void DestroyRuntimeDeckPreset(DeckPreset preset)
+        {
+            if (preset == null) return;
+            if (Application.isPlaying) Destroy(preset);
+            else DestroyImmediate(preset);
+        }
         private bool ValidateConfiguration()
         {
             bool valid = combatController != null && fighterSpawner != null && (defaultData != null || defaultDeckPreset != null || presetPool.Count > 0) && gridView != null && itemLayer != null && aircraftSpawnAnchor != null && collisionCenterAnchor != null && itemViewPrefab != null;
@@ -626,6 +1116,7 @@ namespace BackpackPrototype
         private void OnDestroy()
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
+            DestroyRuntimeDeckPreset(runtimeDeckPreset);
             if (Backpack == null) return;
             Backpack.ItemAdded -= HandleItemAdded; Backpack.ItemMoved -= HandleItemMoved; Backpack.ItemRemoved -= HandleItemRemoved; Backpack.Cleared -= HandleCleared;
         }

@@ -104,6 +104,7 @@ namespace BackpackPrototype
         private BackpackCombatController combatController;
         private BackpackFighterSpawner fighterSpawner;
         private PlayerItemSystem playerItemSystem;
+        private List<ItemData> runtimeDeckItems;
         private PlayerBackpackDragDebugOverlay dragDebugOverlay;
         private ItemView draggingItem;
         private bool isReady;
@@ -161,6 +162,11 @@ namespace BackpackPrototype
             Mathf.Max(1, rollsPerPreparation);
 
         public int RemainingRolls => remainingRolls;
+
+        public IReadOnlyList<ItemData> ActiveDeckItems =>
+            runtimeDeckItems ??
+            playerItemSystem?.GetDeckItems() ??
+            Array.Empty<ItemData>();
 
         public bool CanRollShop =>
             isReady &&
@@ -332,14 +338,55 @@ namespace BackpackPrototype
                 return false;
             }
 
+            runtimeDeckItems = null;
             RestoreDeckLayout();
+            return true;
+        }
+
+        public bool CanApplyRuntimeDeck(
+            IReadOnlyList<ItemData> deck)
+        {
+            return isReady &&
+                   Backpack != null &&
+                   DeckPreset.IsValidSlots(deck, out _) &&
+                   DeckLayoutBuilder.TryBuild(
+                       deck,
+                       Backpack.Width,
+                       Backpack.Height,
+                       null,
+                       out _);
+        }
+
+        public bool TryApplyRuntimeDeck(
+            IReadOnlyList<ItemData> deck)
+        {
+            if (BattleFlowController.CurrentPhase !=
+                BattlePhase.Preparation ||
+                !CanApplyRuntimeDeck(deck) ||
+                !DeckLayoutBuilder.TryBuild(
+                    deck,
+                    Backpack.Width,
+                    Backpack.Height,
+                    null,
+                    out List<BackpackLayoutItem> layout))
+            {
+                return false;
+            }
+
+            if (!LoadLayout(layout))
+            {
+                return false;
+            }
+
+            runtimeDeckItems = new List<ItemData>(deck);
+            RefreshShopInternal();
             return true;
         }
 
         private void RestoreDeckLayout()
         {
-            PlayerItemSystem playerItems = PlayerItemSystem.Instance;
-            if (playerItems == null)
+            IReadOnlyList<ItemData> deck = ActiveDeckItems;
+            if (deck.Count == 0)
             {
                 combatController.RestoreDefaultLayout();
                 RebuildBackpackViews();
@@ -348,7 +395,7 @@ namespace BackpackPrototype
             }
 
             if (!DeckLayoutBuilder.TryBuild(
-                    playerItems.GetDeckItems(),
+                    deck,
                     Backpack.Width,
                     Backpack.Height,
                     null,
@@ -436,15 +483,8 @@ namespace BackpackPrototype
                 return false;
             }
 
-            PlayerItemSystem playerItems = PlayerItemSystem.Instance;
-            if (playerItems == null)
-            {
-                Debug.LogError("PlayerItemSystem is required before rolling the player shop.", this);
-                return false;
-            }
-
             List<ItemData> deckCatalog = new();
-            foreach (ItemData item in playerItems.GetDeckItems())
+            foreach (ItemData item in ActiveDeckItems)
                 if (item != null) deckCatalog.Add(item);
 
             if (deckCatalog.Count == 0)

@@ -461,6 +461,78 @@ public sealed class EnemyBackpackSystemTests
         }
     }
 
+    [Test]
+    public void OperationSimulation_DoesNotMutateTheLiveBackpack()
+    {
+        GameObject prefab =
+            AssetDatabase.LoadAssetAtPath<GameObject>(
+                EnemyPrefabPath);
+        GameObject instance = Object.Instantiate(prefab);
+
+        try
+        {
+            Initialize(instance);
+            EnemyBackpackSystem system =
+                instance.GetComponent<EnemyBackpackSystem>();
+            Assert.That(system.ApplyData(system.DefaultData), Is.True);
+            ItemInstance item = system.Items[0];
+            int itemCount = system.Items.Count;
+            Vector2Int originalCell = item.AnchorCell;
+            int originalLevel = item.Level;
+            float originalScore = BackpackStrengthCalculator
+                .Calculate(system.Backpack)
+                .TotalScore;
+
+            System.Type systemType = typeof(EnemyBackpackSystem);
+            System.Type kindType = systemType.GetNestedType(
+                "OperationKind",
+                BindingFlags.NonPublic);
+            System.Type candidateType = systemType.GetNestedType(
+                "OperationCandidate",
+                BindingFlags.NonPublic);
+            object candidate = System.Activator.CreateInstance(
+                candidateType,
+                true);
+            candidateType.GetField(
+                    "Kind",
+                    BindingFlags.Instance |
+                    BindingFlags.Public)
+                ?.SetValue(
+                    candidate,
+                    System.Enum.Parse(kindType, "MoveItem"));
+            candidateType.GetField(
+                    "Item",
+                    BindingFlags.Instance |
+                    BindingFlags.Public)
+                ?.SetValue(candidate, item);
+            candidateType.GetField(
+                    "Destination",
+                    BindingFlags.Instance |
+                    BindingFlags.Public)
+                ?.SetValue(candidate, originalCell);
+
+            object[] arguments = { candidate, 0f };
+            bool simulated = (bool)systemType.GetMethod(
+                    "TrySimulateCandidate",
+                    BindingFlags.Instance |
+                    BindingFlags.NonPublic)
+                ?.Invoke(system, arguments);
+
+            Assert.That(simulated, Is.True);
+            Assert.That(system.Items.Count, Is.EqualTo(itemCount));
+            Assert.That(item.AnchorCell, Is.EqualTo(originalCell));
+            Assert.That(item.Level, Is.EqualTo(originalLevel));
+            Assert.That(
+                BackpackStrengthCalculator
+                    .Calculate(system.Backpack)
+                    .TotalScore,
+                Is.EqualTo(originalScore));
+        }
+        finally
+        {
+            Object.DestroyImmediate(instance);
+        }
+    }
     private static void Initialize(GameObject instance)
     {
         Invoke(

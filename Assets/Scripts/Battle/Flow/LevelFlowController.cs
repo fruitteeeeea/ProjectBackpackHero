@@ -203,6 +203,30 @@ namespace BackpackHero.Battle
             MatchStateChanged?.Invoke();
         }
 
+        public void ResetForDebugMatch()
+        {
+            if (bannerRoutine != null)
+            {
+                StopCoroutine(bannerRoutine);
+                bannerRoutine = null;
+            }
+
+            SetBannerVisible(false);
+            currentRound = 1;
+            playerWins = 0;
+            enemyWins = 0;
+            hasCompletedRound = false;
+            pendingPlayerDeath = false;
+            pendingEnemyDeath = false;
+            resolutionQueued = false;
+            showingResult = false;
+            isMatchComplete = false;
+            ResetRoundTimer();
+            ResetBackpackHealth();
+            BattleFlowController.EnsureInstance()
+                ?.SetPhase(BattlePhase.Preparation);
+            MatchStateChanged?.Invoke();
+        }
         private void HandleBattlePhaseChanged(BattlePhase phase)
         {
             if (phase == BattlePhase.Combat && !showingResult)

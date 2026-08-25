@@ -273,6 +273,22 @@ namespace BackpackHero.EditorTools
             }
 
             EditorGUILayout.EndHorizontal();
+            EditorGUILayout.Space(4f);
+            using (new EditorGUI.DisabledScope(
+                       !bridge.CanSwapRuntimeDecks))
+            {
+                if (GUILayout.Button("交换玩家和敌人背包"))
+                {
+                    bridge.TrySwapRuntimeDecksAndResetMatch();
+                }
+            }
+
+            if (!bridge.CanSwapRuntimeDecks)
+            {
+                EditorGUILayout.HelpBox(
+                    "需要双方背包系统就绪，且敌方当前使用有效 DeckPreset 才能交换。",
+                    MessageType.Info);
+            }
 
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField(

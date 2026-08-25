@@ -65,7 +65,12 @@ public sealed class PlayerBackpackSystemTests
                 Random.InitState(seed);
                 var result = (List<ItemData>)builder.Invoke(
                     null,
-                    new object[] { deck, new List<ItemData>() });
+                    new object[]
+                    {
+                        deck,
+                        new List<ItemData>(),
+                        new Dictionary<string, int>(),
+                    });
 
                 Assert.That(result, Has.Count.EqualTo(3));
                 Assert.That(CountItem(result, aircraft), Is.LessThan(3));
@@ -88,6 +93,67 @@ public sealed class PlayerBackpackSystemTests
             Object.DestroyImmediate(aircraft);
             Object.DestroyImmediate(equipmentOne);
             Object.DestroyImmediate(equipmentTwo);
+            Object.DestroyImmediate(shape);
+        }
+    }
+
+    [Test]
+    public void ShopRoll_LimitsAircraftAppearancesAcrossPreparationButNotEquipment()
+    {
+        ItemShapeData shape = ScriptableObject.CreateInstance<ItemShapeData>();
+        ItemData aircraft = ScriptableObject.CreateInstance<ItemData>();
+        ItemData equipment = ScriptableObject.CreateInstance<ItemData>();
+
+        try
+        {
+            shape.InitializeForTests("One Cell", null, new[] { Vector2Int.zero });
+            aircraft.InitializeForTests("Aircraft", ItemType.Aircraft, 1f, shape);
+            aircraft.ConfigurePlayerProgressForTests("aircraft");
+            equipment.InitializeForTests("Equipment", ItemType.Equipment, 1f, shape);
+            equipment.ConfigurePlayerProgressForTests("equipment");
+
+            var deck = new List<ItemData> { aircraft, equipment };
+            var appearances = new Dictionary<string, int>();
+            MethodInfo builder = typeof(PlayerBackpackSystem).GetMethod(
+                "BuildShopRoll",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            MethodInfo recorder = typeof(PlayerBackpackSystem).GetMethod(
+                "RecordAircraftAppearances",
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.That(builder, Is.Not.Null);
+            Assert.That(recorder, Is.Not.Null);
+
+            int preferredSeed = FindPreferredShopCompositionSeed();
+            Random.InitState(preferredSeed);
+            var initialShop = (List<ItemData>)builder.Invoke(
+                null,
+                new object[] { deck, new List<ItemData>(), appearances });
+            recorder.Invoke(null, new object[] { initialShop, appearances });
+
+            Assert.That(CountItem(initialShop, aircraft), Is.EqualTo(2));
+            Assert.That(appearances[aircraft.ItemId], Is.EqualTo(2));
+
+            Random.InitState(preferredSeed);
+            var rolledShop = (List<ItemData>)builder.Invoke(
+                null,
+                new object[] { deck, initialShop, appearances });
+
+            Assert.That(CountItem(rolledShop, aircraft), Is.Zero);
+            Assert.That(CountItem(rolledShop, equipment), Is.EqualTo(2));
+
+            appearances.Clear();
+            Random.InitState(preferredSeed);
+            var nextPreparationShop = (List<ItemData>)builder.Invoke(
+                null,
+                new object[] { deck, rolledShop, appearances });
+
+            Assert.That(CountItem(nextPreparationShop, aircraft), Is.EqualTo(2));
+        }
+        finally
+        {
+            Object.DestroyImmediate(aircraft);
+            Object.DestroyImmediate(equipment);
             Object.DestroyImmediate(shape);
         }
     }
@@ -952,6 +1018,21 @@ public sealed class PlayerBackpackSystemTests
         }
 
         return count;
+    }
+
+    private static int FindPreferredShopCompositionSeed()
+    {
+        for (int seed = 0; seed < 100; seed++)
+        {
+            Random.InitState(seed);
+            if (Random.value < .6f)
+            {
+                return seed;
+            }
+        }
+
+        Assert.Fail("Could not find a preferred shop composition seed.");
+        return 0;
     }
 
     private static int CountItemsOfType(

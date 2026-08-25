@@ -44,6 +44,7 @@ namespace BackpackPrototype
             "CollisionCenterAnchor";
         private const int ShopRollItemCount = 3;
         private const int CompactShopItemCount = 4;
+        private const int MaximumAircraftAppearancesPerPreparation = 2;
         private const float ShopHorizontalPadding = 24f;
         private const float CompactShopItemSpacing = 64f;
         private const float PreferredShopCompositionChance = .6f;
@@ -116,6 +117,8 @@ namespace BackpackPrototype
         private readonly HashSet<ItemInstance> pendingShopTransfers = new();
         private readonly Dictionary<ItemInstance, Vector3>
             pendingShopTransferStartPositions = new();
+        private readonly Dictionary<string, int>
+            aircraftAppearancesThisPreparation = new();
         private int nextItemId;
         private int remainingRolls;
 
@@ -457,7 +460,8 @@ namespace BackpackPrototype
             List<ItemData> previousShopItems = GetCurrentShopItemData();
             List<ItemData> nextShopItems = BuildShopRoll(
                 deckCatalog,
-                previousShopItems);
+                previousShopItems,
+                aircraftAppearancesThisPreparation);
 
             ClearShopViews();
             foreach (ItemData item in nextShopItems)
@@ -465,6 +469,9 @@ namespace BackpackPrototype
                 CreateShopItem(item);
             }
 
+            RecordAircraftAppearances(
+                nextShopItems,
+                aircraftAppearancesThisPreparation);
             SetSelectedItem(null);
             return true;
         }
@@ -490,7 +497,9 @@ namespace BackpackPrototype
         /// </summary>
         private static List<ItemData> BuildShopRoll(
             IReadOnlyList<ItemData> deckCatalog,
-            IReadOnlyCollection<ItemData> previousShopItems)
+            IReadOnlyCollection<ItemData> previousShopItems,
+            IReadOnlyDictionary<string, int>
+                aircraftAppearancesThisPreparation)
         {
             List<ItemData> selected = new(ShopRollItemCount);
             List<ItemData> aircraft = new();
@@ -519,9 +528,21 @@ namespace BackpackPrototype
                 PreferredShopCompositionChance;
             if (usePreferredComposition)
             {
-                AddWeightedItem(aircraft, previousShopItems, selected);
-                AddWeightedItem(aircraft, previousShopItems, selected);
-                AddWeightedItem(equipment, previousShopItems, selected);
+                AddWeightedItem(
+                    aircraft,
+                    previousShopItems,
+                    aircraftAppearancesThisPreparation,
+                    selected);
+                AddWeightedItem(
+                    aircraft,
+                    previousShopItems,
+                    aircraftAppearancesThisPreparation,
+                    selected);
+                AddWeightedItem(
+                    equipment,
+                    previousShopItems,
+                    aircraftAppearancesThisPreparation,
+                    selected);
             }
 
             while (selected.Count < ShopRollItemCount)
@@ -529,6 +550,7 @@ namespace BackpackPrototype
                 if (!AddWeightedItem(
                         deckCatalog,
                         previousShopItems,
+                        aircraftAppearancesThisPreparation,
                         selected))
                 {
                     break;
@@ -541,12 +563,17 @@ namespace BackpackPrototype
         private static bool AddWeightedItem(
             IReadOnlyList<ItemData> candidates,
             IReadOnlyCollection<ItemData> previousShopItems,
+            IReadOnlyDictionary<string, int>
+                aircraftAppearancesThisPreparation,
             List<ItemData> selected)
         {
             float totalWeight = 0f;
             foreach (ItemData candidate in candidates)
             {
-                if (CanAddShopItem(candidate, selected))
+                if (CanAddShopItem(
+                        candidate,
+                        selected,
+                        aircraftAppearancesThisPreparation))
                 {
                     totalWeight += WasInPreviousShop(
                         candidate,
@@ -564,7 +591,10 @@ namespace BackpackPrototype
             float roll = UnityEngine.Random.value * totalWeight;
             foreach (ItemData candidate in candidates)
             {
-                if (!CanAddShopItem(candidate, selected))
+                if (!CanAddShopItem(
+                        candidate,
+                        selected,
+                        aircraftAppearancesThisPreparation))
                 {
                     continue;
                 }
@@ -601,9 +631,21 @@ namespace BackpackPrototype
 
         private static bool CanAddShopItem(
             ItemData candidate,
-            IReadOnlyList<ItemData> selected)
+            IReadOnlyList<ItemData> selected,
+            IReadOnlyDictionary<string, int>
+                aircraftAppearancesThisPreparation)
         {
             if (candidate == null)
+            {
+                return false;
+            }
+
+            if (candidate.ItemType == ItemType.Aircraft &&
+                GetAircraftAppearanceCount(
+                    candidate,
+                    selected,
+                    aircraftAppearancesThisPreparation) >=
+                MaximumAircraftAppearancesPerPreparation)
             {
                 return false;
             }
@@ -618,6 +660,60 @@ namespace BackpackPrototype
             }
 
             return true;
+        }
+
+        private static int GetAircraftAppearanceCount(
+            ItemData candidate,
+            IReadOnlyList<ItemData> selected,
+            IReadOnlyDictionary<string, int>
+                aircraftAppearancesThisPreparation)
+        {
+            string itemId = candidate.ItemId;
+            int count = 0;
+            if (!string.IsNullOrEmpty(itemId) &&
+                aircraftAppearancesThisPreparation != null)
+            {
+                aircraftAppearancesThisPreparation.TryGetValue(
+                    itemId,
+                    out count);
+            }
+
+            foreach (ItemData item in selected)
+            {
+                if (item != null &&
+                    item.ItemType == ItemType.Aircraft &&
+                    item.ItemId == itemId)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static void RecordAircraftAppearances(
+            IReadOnlyList<ItemData> items,
+            IDictionary<string, int> aircraftAppearances)
+        {
+            if (items == null || aircraftAppearances == null)
+            {
+                return;
+            }
+
+            foreach (ItemData item in items)
+            {
+                if (item == null ||
+                    item.ItemType != ItemType.Aircraft ||
+                    string.IsNullOrEmpty(item.ItemId))
+                {
+                    continue;
+                }
+
+                aircraftAppearances.TryGetValue(
+                    item.ItemId,
+                    out int count);
+                aircraftAppearances[item.ItemId] = count + 1;
+            }
         }
 
         public void EnterCombat()
@@ -858,6 +954,7 @@ namespace BackpackPrototype
             }
 
             shopInitializedForPreparation = true;
+            aircraftAppearancesThisPreparation.Clear();
             remainingRolls = RollsPerPreparation;
             RefreshShopInternal();
             NotifyRollStateChanged();

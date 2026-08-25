@@ -160,6 +160,8 @@ namespace PlanetWar.ReusableMainMenu
             itemLengths.Clear();
             itemPositions.Clear();
             totalItemCount = 0;
+            lastVisibleStart = -1;
+            lastVisibleEnd = -1;
             if (content != null) content.anchoredPosition = Vector2.zero;
         }
 

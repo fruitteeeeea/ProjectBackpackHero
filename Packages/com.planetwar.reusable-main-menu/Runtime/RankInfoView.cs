@@ -18,20 +18,24 @@ namespace PlanetWar.ReusableMainMenu
         public event Action CloseRequested;
 
         private bool isScrollToIndex;
+        private bool needsRebind;
         private int scrollToIndex = -1;
         private RankInfoSlider tempSliderRank;
 
         /// <summary>Replaces prefab sample values with the active progression catalog while retaining its artwork.</summary>
         public void ApplyProgression(RankInfoEntry[] progressionEntries, int missionId, int playerPoints)
         {
+            bool changed = missionId != currentMissionId || playerPoints != currentPlayerRankPoint || !SameEntries(entries, progressionEntries);
             if (progressionEntries != null && progressionEntries.Length > 0) entries = progressionEntries;
             currentMissionId = missionId;
             currentPlayerRankPoint = playerPoints;
+            if (changed && isActiveAndEnabled) needsRebind = true;
         }
 
         public void Show()
         {
             gameObject.SetActive(true);
+            needsRebind = false;
             Bind();
         }
 
@@ -122,9 +126,37 @@ namespace PlanetWar.ReusableMainMenu
                 }
             }
 
-            if (scrollToIndex < 0) scrollToIndex = entries.Length - 1;
+            // The original UI is drawn from highest score to lowest score. Do not
+            // infer the target from slider visibility: completed thresholds (notably
+            // 50,000) have a full slider and must still be the opening destination.
+            scrollToIndex = GetReachedNodeDisplayIndex();
             isScrollToIndex = true;
             StartCoroutine(CenterAfterLayout());
+        }
+
+        private int GetReachedNodeDisplayIndex()
+        {
+            if (entries == null || entries.Length == 0) return -1;
+            int reachedIndex = 0;
+            for (int i = 0; i < entries.Length; i++)
+            {
+                if (entries[i] != null && entries[i].score <= currentPlayerRankPoint) reachedIndex = i;
+                else if (entries[i] != null && entries[i].score > currentPlayerRankPoint) break;
+            }
+            return entries.Length - 1 - reachedIndex;
+        }
+
+        private static bool SameEntries(RankInfoEntry[] current, RankInfoEntry[] incoming)
+        {
+            if (ReferenceEquals(current, incoming)) return true;
+            if (current == null || incoming == null || current.Length != incoming.Length) return false;
+            for (int i = 0; i < current.Length; i++)
+            {
+                RankInfoEntry a = current[i], b = incoming[i];
+                if (a == null || b == null) { if (a != b) return false; continue; }
+                if (a.id != b.id || a.score != b.score || a.type != b.type || a.level != b.level) return false;
+            }
+            return true;
         }
 
         private IEnumerator CenterAfterLayout()
@@ -142,6 +174,12 @@ namespace PlanetWar.ReusableMainMenu
 
         private void Update()
         {
+            if (needsRebind)
+            {
+                needsRebind = false;
+                Bind();
+                return;
+            }
             if (scroll == null || btnOffset == null || scrollToIndex < 0) return;
             int current = scroll.GetCurrentScrollIndex();
             btnOffset.SetActive(Mathf.Abs(current - scrollToIndex) > 1);

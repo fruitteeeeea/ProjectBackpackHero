@@ -21,6 +21,14 @@ namespace PlanetWar.ReusableMainMenu
         private int scrollToIndex = -1;
         private RankInfoSlider tempSliderRank;
 
+        /// <summary>Replaces prefab sample values with the active progression catalog while retaining its artwork.</summary>
+        public void ApplyProgression(RankInfoEntry[] progressionEntries, int missionId, int playerPoints)
+        {
+            if (progressionEntries != null && progressionEntries.Length > 0) entries = progressionEntries;
+            currentMissionId = missionId;
+            currentPlayerRankPoint = playerPoints;
+        }
+
         public void Show()
         {
             gameObject.SetActive(true);
@@ -96,10 +104,21 @@ namespace PlanetWar.ReusableMainMenu
                     if (isCurrent) tempSliderRank = view != null ? view.sliderRank : null;
                 }
 
+                // At the score cap the final node is fully complete, rather than being
+                // an in-between slider value. It still needs to be the scroll target.
+                if (!isCurrent && i == entries.Length - 1 && currentPlayerRankPoint >= entry.score)
+                {
+                    isCurrent = true;
+                    tempSliderRank = entry.type == 0
+                        ? item.GetComponent<RankInfoItemMainView>()?.sliderRank
+                        : item.GetComponent<RankInfoItemRewardView>()?.sliderRank;
+                }
+
                 if (isCurrent)
                 {
                     scrollToIndex = j - 1;
-                    if (tempSliderRank != null) tempSliderRank.SetValue(0f, currentPlayerRankPoint);
+                    if (tempSliderRank != null)
+                        tempSliderRank.SetValue(i == entries.Length - 1 && currentPlayerRankPoint >= entry.score ? 1f : 0f, currentPlayerRankPoint);
                 }
             }
 

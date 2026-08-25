@@ -3,6 +3,7 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using BackpackHero.Progression;
 
 /// <summary>Compatibility controller for the unmodified migrated original UIBattle prefab.</summary>
 public sealed class UIBattle : MonoBehaviour
@@ -23,6 +24,7 @@ public sealed class UIBattle : MonoBehaviour
             return;
 
         IsRunning = true;
+        RankProgressionSystem.Instance?.BeginMatch();
         gameObject.SetActive(true);
         ApplySearchPlayerName(player.DisplayName);
         itemMy.SetData(player, true);

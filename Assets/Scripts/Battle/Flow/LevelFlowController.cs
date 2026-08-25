@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using BackpackHero.Progression;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -414,8 +415,13 @@ namespace BackpackHero.Battle
                 BattleResultPresenter presenter =
                     FindAnyObjectByType<BattleResultPresenter>(
                         FindObjectsInactive.Include);
-                presenter?.Show(
-                    BattleResultData.CreateDefault(playerWonMatch));
+                RankSettlement settlement = RankProgressionSystem.Instance
+                    .SettleMatch(playerWonMatch);
+                presenter?.Show(new BattleResultData(
+                    settlement.Victory,
+                    settlement.ScoreBefore,
+                    settlement.ScoreDelta,
+                    settlement.Rewards));
             }
             else
             {

@@ -12,7 +12,7 @@ namespace PlanetWar.ReusableMainMenu
         public TextMeshProUGUI countText;
         public GameObject claimedMark;
 
-        public void Bind(RankInfoReward reward, bool locked)
+        public void Bind(RankInfoReward reward, bool locked, bool claimed = false)
         {
             if (reward == null)
             {
@@ -25,7 +25,7 @@ namespace PlanetWar.ReusableMainMenu
                 countText.text = reward.count.ToString();
                 countText.color = locked ? Color.gray : Color.white;
             }
-            if (claimedMark != null) claimedMark.SetActive(false);
+            if (claimedMark != null) claimedMark.SetActive(claimed);
 
             if (resIcon != null)
             {

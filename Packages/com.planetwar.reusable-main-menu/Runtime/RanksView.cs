@@ -24,6 +24,25 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private TMP_Text battleDiamondText;
 
         private readonly List<RankRowView> spawnedRows = new List<RankRowView>();
+        private RankEntry[] displayEntries = System.Array.Empty<RankEntry>();
+
+        /// <summary>Supplies the complete persistent leaderboard without changing the authored row template.</summary>
+        public void SetEntries(IEnumerable<RankEntry> value)
+        {
+            displayEntries = value == null
+                ? System.Array.Empty<RankEntry>()
+                : System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Where(value, entry => entry != null));
+        }
+
+        /// <summary>Returns the six authored country flags used by the original Ranks page.</summary>
+        public Sprite GetCountryFlag(int countryIndex)
+        {
+            if (entries == null || entries.Length == 0) return null;
+            var flags = new List<Sprite>();
+            foreach (var entry in entries)
+                if (entry != null && entry.countryFlag != null && !flags.Contains(entry.countryFlag)) flags.Add(entry.countryFlag);
+            return flags.Count == 0 ? null : flags[Mathf.Abs(countryIndex) % flags.Count];
+        }
 
         public void Show()
         {
@@ -41,7 +60,14 @@ namespace PlanetWar.ReusableMainMenu
 
             itemTemplate.gameObject.SetActive(false);
             var content = scrollRect.content;
-            for (var index = 0; index < entries.Length; index++)
+            // SetEntries is used by the persistent progression system. Fall back to the
+            // original serialized list so this view remains usable in isolation.
+            if (displayEntries == null || displayEntries.Length == 0)
+                displayEntries = entries == null
+                    ? System.Array.Empty<RankEntry>()
+                    : System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Where(entries, entry => entry != null));
+            displayEntries = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.OrderByDescending(displayEntries, entry => entry.score));
+            for (var index = 0; index < displayEntries.Length; index++)
             {
                 var row = Instantiate(itemTemplate, content);
                 row.name = $"RankRow_Runtime_{index + 1:00}";
@@ -50,10 +76,10 @@ namespace PlanetWar.ReusableMainMenu
                 rect.pivot = new Vector2(.5f, .5f);
                 rect.anchoredPosition = new Vector2(0f, -rowHeight * index - rowHeight * .5f);
                 row.gameObject.SetActive(true);
-                row.Bind(index + 1, entries[index]);
+                row.Bind(index + 1, displayEntries[index]);
                 spawnedRows.Add(row);
             }
-            content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(scrollRect.viewport.rect.height, entries.Length * rowHeight));
+            content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(scrollRect.viewport.rect.height, displayEntries.Length * rowHeight));
             content.anchoredPosition = Vector2.zero;
         }
 
@@ -62,11 +88,11 @@ namespace PlanetWar.ReusableMainMenu
             yield return null;
             Canvas.ForceUpdateCanvases();
             var selfIndex = -1;
-            for (var i = 0; i < entries.Length; i++)
-                if (entries[i] != null && entries[i].isCurrentPlayer) { selfIndex = i; break; }
+            for (var i = 0; i < displayEntries.Length; i++)
+                if (displayEntries[i].isCurrentPlayer) { selfIndex = i; break; }
             if (scrollRect == null || selfIndex < 0) yield break;
 
-            var contentHeight = Mathf.Max(scrollRect.viewport.rect.height, entries.Length * rowHeight);
+            var contentHeight = Mathf.Max(scrollRect.viewport.rect.height, displayEntries.Length * rowHeight);
             var maxOffset = Mathf.Max(0f, contentHeight - scrollRect.viewport.rect.height);
             var desiredOffset = Mathf.Clamp(selfIndex * rowHeight - scrollRect.viewport.rect.height * .5f + rowHeight * .5f, 0f, maxOffset);
             scrollRect.content.anchoredPosition = new Vector2(0f, desiredOffset);

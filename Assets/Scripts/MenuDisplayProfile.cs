@@ -1,5 +1,7 @@
 using System.Reflection;
+using System.Collections.Generic;
 using BackpackPrototype;
+using BackpackHero.Progression;
 using PlanetWar.ReusableMainMenu;
 using TMPro;
 using UnityEngine;
@@ -22,8 +24,6 @@ namespace BackpackHero.UI
             "goldText", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo RankDiamondTextField = typeof(RanksView).GetField(
             "diamondText", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly FieldInfo RankEntriesField = typeof(RanksView).GetField(
-            "entries", BindingFlags.Instance | BindingFlags.NonPublic);
 
         [SerializeField] private Sprite playerAvatar;
         [SerializeField] private Sprite enemyAvatar;
@@ -34,6 +34,14 @@ namespace BackpackHero.UI
         private void Awake()
         {
             ApplyProfile();
+            if (RankProgressionSystem.Instance != null)
+                RankProgressionSystem.Instance.Changed += OnProgressionChanged;
+        }
+
+        private void OnDestroy()
+        {
+            if (RankProgressionSystem.Instance != null)
+                RankProgressionSystem.Instance.Changed -= OnProgressionChanged;
         }
 
         private void LateUpdate()
@@ -42,15 +50,22 @@ namespace BackpackHero.UI
             ApplyProfile();
         }
 
+        private void OnProgressionChanged()
+        {
+            ApplyProfile();
+            foreach (RanksView ranks in FindObjectsByType<RanksView>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (ranks.isActiveAndEnabled) ranks.Show();
+        }
+
         public MatchParticipant CreatePlayer() =>
-            new MatchParticipant(PlayerName, "Bronze I", "0", playerAvatar);
+            new MatchParticipant(PlayerName,
+                RankProgressionSystem.Instance?.CurrentRankName ?? "Glow Belt",
+                (RankProgressionSystem.Instance?.Points ?? 0).ToString(), playerAvatar);
 
         public MatchParticipant CreateOpponent() =>
-            new MatchParticipant(
-                EnemyNamePrefix + Random.Range(0, 10000).ToString("D4"),
-                "Bronze I",
-                "0",
-                enemyAvatar);
+            RankProgressionSystem.Instance != null
+                ? RankProgressionSystem.Instance.CreateOpponent(enemyAvatar)
+                : new MatchParticipant(EnemyNamePrefix + Random.Range(0, 10000).ToString("D4"), "Glow Belt", "0", enemyAvatar);
 
         private void ApplyProfile()
         {
@@ -66,8 +81,13 @@ namespace BackpackHero.UI
 
             PlayerItemSystem system = PlayerItemSystem.Instance;
             UIMain main = menu.GetComponentInChildren<UIMain>(true);
-            if (main != null && system != null)
-                main.ApplyProfile(PlayerName, system.Gold, system.Diamond);
+            if (main != null)
+            {
+                if (system != null) main.ApplyProfile(PlayerName, system.Gold, system.Diamond);
+                RankProgressionSystem progression = RankProgressionSystem.Instance;
+                if (progression != null)
+                    main.ApplyRankProgress(progression.Points, RankProgressionSystem.MaximumPoints, progression.CurrentRankName);
+            }
 
             if (playerAvatar == null) return;
 
@@ -80,12 +100,76 @@ namespace BackpackHero.UI
 
         private static void ApplyRankProfile()
         {
+            RankProgressionSystem progression = RankProgressionSystem.Instance;
             foreach (RanksView ranks in FindObjectsByType<RanksView>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (RankEntriesField?.GetValue(ranks) is not RankEntry[] entries) continue;
-                foreach (RankEntry entry in entries)
-                    if (entry != null && entry.isCurrentPlayer) entry.displayName = PlayerName;
+                if (progression != null)
+                {
+                    var board = progression.GetLeaderboard();
+                    var entries = new List<RankEntry>(board.Count);
+                    foreach (var player in board)
+                    {
+                        if (player == null) continue;
+                        entries.Add(new RankEntry {
+                            displayName = player.self ? PlayerName : player.name,
+                            score = player.self ? progression.Points : player.score,
+                            countryFlag = ranks.GetCountryFlag(player.countryIndex),
+                            isCurrentPlayer = player.self
+                        });
+                    }
+                    ranks.SetEntries(entries);
+                }
             }
+
+            foreach (RankInfoView info in FindObjectsByType<RankInfoView>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (progression == null) continue;
+                info.ApplyProgression(BuildRankInfoEntries(info.entries, progression), progression.CurrentNodeId, progression.Points);
+            }
+        }
+
+        private static RankInfoEntry[] BuildRankInfoEntries(RankInfoEntry[] authoredEntries, RankProgressionSystem progression)
+        {
+            var nodes = progression.Catalog.Nodes;
+            var result = new RankInfoEntry[nodes.Count];
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                var artwork = authoredEntries != null && i < authoredEntries.Length ? authoredEntries[i] : null;
+                Sprite rankIcon = LoadRankSprite(node.level, false) ?? artwork?.iconSprite;
+                Sprite lockedRankIcon = LoadRankSprite(node.level, true) ?? artwork?.lockedIconSprite;
+                result[i] = new RankInfoEntry {
+                    id = node.id, level = node.level, score = node.score, type = node.type,
+                    enName = node.rankName ?? string.Empty,
+                    iconSprite = rankIcon, lockedIconSprite = lockedRankIcon,
+                    rewards = BuildRankRewards(node, artwork?.rewards)
+                };
+            }
+            return result;
+        }
+
+        private static Sprite LoadRankSprite(int level, bool locked)
+        {
+            if (level < 1 || level > 8) return null;
+            string suffix = locked ? "_bai" : string.Empty;
+            return Resources.Load<Sprite>($"PlanetWar/Rank/icon_huizhang_{level}{suffix}");
+        }
+
+        private static RankInfoReward[] BuildRankRewards(RankNodeDefinition node, RankInfoReward[] artwork)
+        {
+            if (node.rewards == null || node.rewards.Length == 0) return System.Array.Empty<RankInfoReward>();
+            var result = new RankInfoReward[node.rewards.Length];
+            for (int i = 0; i < result.Length; i++)
+            {
+                var reward = node.rewards[i];
+                var visual = artwork != null && i < artwork.Length ? artwork[i] : null;
+                bool pack = reward.type == RankRewardDefinition.RewardType.Pack;
+                result[i] = new RankInfoReward {
+                    icon = visual?.icon, count = reward.amount, isPack = pack,
+                    displayName = pack ? reward.pack.ToString() : reward.type.ToString()
+                };
+            }
+            return result;
         }
 
         private static void ApplyCurrencyToSecondaryPages()

@@ -19,6 +19,7 @@ namespace BackpackHero.Battle
         public const float OvertimeCooldownSpeedMultiplier = 1.5f;
         public const float OvertimeAircraftHealthMultiplier = 0.8f;
         public const float OvertimeProjectileDamageMultiplier = 1.5f;
+        private const float ResultBannerDurationSeconds = 2f;
         private BattleBackpackTarget2D playerTarget;
         private BattleBackpackTarget2D enemyTarget;
         private LevelFlowBannerView bannerView;
@@ -425,40 +426,39 @@ namespace BackpackHero.Battle
                 : playerWon ? "Player Win" : "Player Lose";
             bool playerWonMatch = isMatchComplete &&
                 playerWins > enemyWins;
-            if (isMatchComplete)
+            BattleFlowController.EnsureInstance()
+                ?.SetPhase(BattlePhase.Result);
+
+            Color resultColor = playerWon
+                ? bannerView != null
+                    ? bannerView.WinColor
+                    : Color.blue
+                : bannerView != null
+                    ? bannerView.LoseColor
+                    : Color.red;
+            ShowResultBanner(result, resultColor, () =>
+                CompleteRoundResolution(playerWonMatch));
+        }
+
+        private void CompleteRoundResolution(bool playerWonMatch)
+        {
+            if (!isMatchComplete)
             {
-                HideBannerImmediately();
-                // End the combat before opening the result overlay. This
-                // invokes the existing fade-out path for aircraft/projectiles
-                // and resets every backpack item's cooldown state.
                 BattleFlowController.EnsureInstance()
                     ?.SetPhase(BattlePhase.Preparation);
+                return;
             }
-            if (isMatchComplete)
-            {
-                BattleResultPresenter presenter =
-                    FindAnyObjectByType<BattleResultPresenter>(
-                        FindObjectsInactive.Include);
-                RankSettlement settlement = RankProgressionSystem.Instance
-                    .SettleMatch(playerWonMatch);
-                presenter?.Show(new BattleResultData(
-                    settlement.Victory,
-                    settlement.ScoreBefore,
-                    settlement.ScoreDelta,
-                    settlement.Rewards));
-            }
-            else
-            {
-                ShowResultBanner(
-                    result,
-                    playerWon
-                        ? bannerView != null
-                            ? bannerView.WinColor
-                            : Color.blue
-                        : bannerView != null
-                            ? bannerView.LoseColor
-                            : Color.red);
-            }
+
+            BattleResultPresenter presenter =
+                FindAnyObjectByType<BattleResultPresenter>(
+                    FindObjectsInactive.Include);
+            RankSettlement settlement = RankProgressionSystem.Instance
+                .SettleMatch(playerWonMatch);
+            presenter?.Show(new BattleResultData(
+                settlement.Victory,
+                settlement.ScoreBefore,
+                settlement.ScoreDelta,
+                settlement.Rewards));
         }
 
         private void ResetBackpackHealth()
@@ -476,13 +476,22 @@ namespace BackpackHero.Battle
                 isResult: false);
         }
 
-        private void ShowResultBanner(string text, Color color)
+        private void ShowResultBanner(
+            string text,
+            Color color,
+            Action onCompleted)
         {
-            ShowBanner(text, color, isResult: true);
+            ShowBanner(text, color, isResult: true,
+                ResultBannerDurationSeconds, onCompleted);
             ResultShown?.Invoke(text);
         }
 
-        private void ShowBanner(string text, Color color, bool isResult)
+        private void ShowBanner(
+            string text,
+            Color color,
+            bool isResult,
+            float duration = -1f,
+            Action onCompleted = null)
         {
             EnsureBanner();
             if (bannerRoutine != null)
@@ -493,52 +502,50 @@ namespace BackpackHero.Battle
             showingResult = isResult;
             bannerView?.SetContent(text, color);
 
-            bannerRoutine = StartCoroutine(PlayBannerLifecycle());
+            float lifecycleDuration = duration >= 0f
+                ? duration
+                : DisplayDuration;
+            bannerRoutine = StartCoroutine(PlayBannerLifecycle(
+                lifecycleDuration, onCompleted));
         }
 
-        private IEnumerator PlayBannerLifecycle()
+        private IEnumerator PlayBannerLifecycle(
+            float totalDuration,
+            Action onCompleted)
         {
-            float totalDuration = Mathf.Max(
-                FlickerInterval * 6f,
-                DisplayDuration);
+            totalDuration = Mathf.Max(0f, totalDuration);
+            float flickerInterval = Mathf.Min(
+                FlickerInterval, totalDuration / 6f);
             float steadyDuration = Mathf.Max(
                 0f,
-                totalDuration - FlickerInterval * 6f);
+                totalDuration - flickerInterval * 6f);
 
             SetBannerVisible(false);
             yield return new WaitForSecondsRealtime(
-                FlickerInterval);
+                flickerInterval);
             SetBannerVisible(true);
             yield return new WaitForSecondsRealtime(
-                FlickerInterval);
+                flickerInterval);
             SetBannerVisible(false);
             yield return new WaitForSecondsRealtime(
-                FlickerInterval);
+                flickerInterval);
             SetBannerVisible(true);
 
             yield return new WaitForSecondsRealtime(steadyDuration);
 
             yield return new WaitForSecondsRealtime(
-                FlickerInterval);
+                flickerInterval);
             SetBannerVisible(false);
             yield return new WaitForSecondsRealtime(
-                FlickerInterval);
+                flickerInterval);
             SetBannerVisible(true);
             yield return new WaitForSecondsRealtime(
-                FlickerInterval);
+                flickerInterval);
             SetBannerVisible(false);
 
             bannerRoutine = null;
-            bool finishedResult = showingResult;
             showingResult = false;
-
-            // 最终结算也要退出战斗阶段，避免背包继续生成飞机；
-            // IsMatchComplete 会锁住下一回合，保留关卡结算状态。
-            if (finishedResult)
-            {
-                BattleFlowController.EnsureInstance()
-                    ?.SetPhase(BattlePhase.Preparation);
-            }
+            onCompleted?.Invoke();
         }
 
         private void SetBannerVisible(bool visible)
@@ -546,21 +553,10 @@ namespace BackpackHero.Battle
             bannerView?.SetVisible(visible);
         }
 
-        private void HideBannerImmediately()
-        {
-            if (bannerRoutine != null)
-            {
-                StopCoroutine(bannerRoutine);
-                bannerRoutine = null;
-            }
-            showingResult = false;
-            bannerView?.Hide();
-        }
-
         private float DisplayDuration =>
             bannerView != null
                 ? bannerView.DisplayDuration
-                : 2f;
+                : ResultBannerDurationSeconds;
 
         private float FlickerInterval =>
             bannerView != null

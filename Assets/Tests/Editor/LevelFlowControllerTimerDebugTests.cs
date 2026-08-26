@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Reflection;
 using BackpackHero.Battle;
 using NUnit.Framework;
@@ -58,6 +59,64 @@ public sealed class LevelFlowControllerTimerDebugTests
         Assert.That(BattleFlowController.CurrentPhase,
             Is.EqualTo(BattlePhase.Preparation));
     }
+    [Test]
+    public void ResultPhase_StopsCombatWithoutEnteringPreparation()
+    {
+        LevelFlowController flow = CreateFlow();
+        EnterCombat();
+
+        BattleFlowController.EnsureInstance().SetPhase(
+            BattlePhase.Result);
+
+        Assert.That(BattleFlowController.CurrentPhase,
+            Is.EqualTo(BattlePhase.Result));
+        Assert.That(BattleFlowController.IsCombatPhase, Is.False);
+        Assert.That(flow.IsRoundTimerRunning, Is.False);
+    }
+
+    [Test]
+    public void ResultBannerLifecycle_UsesFixedTwoSecondDuration()
+    {
+        LevelFlowController flow = CreateFlow();
+        MethodInfo method = typeof(LevelFlowController).GetMethod(
+            "PlayBannerLifecycle", BindingFlags.Instance |
+            BindingFlags.NonPublic);
+
+        FieldInfo durationField = typeof(LevelFlowController).GetField(
+            "ResultBannerDurationSeconds", BindingFlags.Static |
+            BindingFlags.NonPublic);
+        float duration = (float)durationField?.GetValue(null);
+        IEnumerator lifecycle = (IEnumerator)method?.Invoke(flow,
+            new object[] { duration, null });
+        float totalWait = 0f;
+        while (lifecycle.MoveNext())
+        {
+            if (lifecycle.Current is WaitForSecondsRealtime wait)
+            {
+                totalWait += wait.waitTime;
+            }
+        }
+
+        Assert.That(totalWait, Is.EqualTo(2f).Within(0.0001f));
+    }
+
+    [Test]
+    public void CompleteRoundResolution_NonFinalRoundEntersPreparation()
+    {
+        CreateFlow();
+        BattleFlowController.EnsureInstance().SetPhase(
+            BattlePhase.Result);
+        MethodInfo method = typeof(LevelFlowController).GetMethod(
+            "CompleteRoundResolution", BindingFlags.Instance |
+            BindingFlags.NonPublic);
+
+        method?.Invoke(LevelFlowController.Instance,
+            new object[] { false });
+
+        Assert.That(BattleFlowController.CurrentPhase,
+            Is.EqualTo(BattlePhase.Preparation));
+    }
+
     private LevelFlowController CreateFlow()
     {
         battleObject = BattleFlowController.EnsureInstance().gameObject;

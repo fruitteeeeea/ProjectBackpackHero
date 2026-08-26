@@ -163,7 +163,8 @@ namespace BackpackHero.Battle
 
             currentPhase = phase;
 
-            if (currentPhase == BattlePhase.Preparation)
+            if (currentPhase == BattlePhase.Preparation ||
+                currentPhase == BattlePhase.Result)
             {
                 FadeOutRemainingBattleObjects();
             }

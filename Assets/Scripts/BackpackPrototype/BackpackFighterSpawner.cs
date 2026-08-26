@@ -180,7 +180,7 @@ namespace BackpackPrototype
             attack.Initialize(
                 BattleAttackLaunchContext.WithAimPoint(
                     faction,
-                    target.CurrentHealth,
+                    target.MaximumHealth * 0.75f,
                     speed,
                     -1f,
                     origin,

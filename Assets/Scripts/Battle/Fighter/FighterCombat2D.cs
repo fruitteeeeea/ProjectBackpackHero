@@ -106,6 +106,40 @@ namespace BackpackHero.Battle
                     360f)
                 : 1f;
 
+        public bool IsPositionWithinTargetingArc(
+            Vector2 targetPosition,
+            float arcMultiplier = 1f)
+        {
+            if (mover == null)
+            {
+                return false;
+            }
+
+            Vector2 directionToTarget =
+                targetPosition - (Vector2)transform.position;
+            if (directionToTarget.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return true;
+            }
+
+            float targetingArcAngle = Mathf.Min(
+                360f,
+                EffectiveTargetingArcAngle * Mathf.Max(0f, arcMultiplier));
+            if (targetingArcAngle >= 360f)
+            {
+                return true;
+            }
+
+            Vector2 forward = mover.Direction.normalized;
+            directionToTarget.Normalize();
+
+            float halfAngle = targetingArcAngle * 0.5f;
+            float minimumAlignment = Mathf.Cos(
+                halfAngle * Mathf.Deg2Rad);
+            return Vector2.Dot(forward, directionToTarget) >=
+                   minimumAlignment - 0.0001f;
+        }
+
         private void Awake()
         {
             fighter =
@@ -861,35 +895,20 @@ namespace BackpackHero.Battle
                 return false;
             }
 
-            Vector2 forward =
-                mover.Direction.normalized;
-
             Vector2 directionToTarget =
-                GetTargetPosition(candidate) -
-                transform.position;
+                GetTargetPosition(candidate) - transform.position;
 
-            if (directionToTarget.sqrMagnitude <=
-                Mathf.Epsilon)
+            if (directionToTarget.sqrMagnitude <= Mathf.Epsilon)
             {
                 alignment = 1f;
                 return true;
             }
 
-            directionToTarget.Normalize();
-
-            alignment =
-                Vector2.Dot(
-                    forward,
-                    directionToTarget);
-
-            float halfAngle = EffectiveTargetingArcAngle * 0.5f;
-
-            float minimumAlignment =
-                Mathf.Cos(
-                    halfAngle *
-                    Mathf.Deg2Rad);
-
-            return alignment >= minimumAlignment;
+            alignment = Vector2.Dot(
+                mover.Direction.normalized,
+                directionToTarget.normalized);
+            return IsPositionWithinTargetingArc(
+                GetTargetPosition(candidate));
         }
         
         private bool IsValidTarget(

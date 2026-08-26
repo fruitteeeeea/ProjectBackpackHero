@@ -18,7 +18,7 @@ namespace BackpackHero.Battle
     {
         private const float OvertimePenaltyRetryInterval = 1f;
         private const float OvertimeDamageMultiplier = 0.1f;
-        private const float InitialInvulnerabilityDuration = 0.8f;
+        private const float InitialInvulnerabilityDuration = 0.1f;
 
         [Header("Overtime Penalty")]
         [SerializeField]
@@ -379,6 +379,9 @@ namespace BackpackHero.Battle
 
             if (nearestEnemy != null &&
                 nearestEnemy.TryGetComponent(out FighterCombat2D combat) &&
+                combat.IsPositionWithinTargetingArc(
+                    transform.position,
+                    2f) &&
                 combat.FireAttackAtPoint(
                     overtimePenaltyProjectilePrefab,
                     transform.position,

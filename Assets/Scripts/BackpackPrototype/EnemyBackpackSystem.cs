@@ -52,6 +52,11 @@ namespace BackpackPrototype
         private EnemyBackpackData currentData;
         private DeckPreset currentDeckPreset;
         private DeckPreset runtimeDeckPreset;
+        private int defaultProgressionLevel =
+            PlayerItemSystem.DefaultLevel;
+        private int activeProgressionLevel =
+            PlayerItemSystem.DefaultLevel;
+        private bool hasProgressionLevelOverride;
 
         private enum OperationKind
         {
@@ -89,6 +94,10 @@ namespace BackpackPrototype
         public BackpackFighterSpawner FighterSpawner => fighterSpawner;
         public RectTransform AircraftSpawnAnchor => aircraftSpawnAnchor;
         public RectTransform CollisionCenterAnchor => collisionCenterAnchor;
+        public int DefaultProgressionLevel => defaultProgressionLevel;
+        public int ActiveProgressionLevel => activeProgressionLevel;
+        public bool HasProgressionLevelOverride =>
+            hasProgressionLevelOverride;
 
         private void Awake()
         {
@@ -103,6 +112,7 @@ namespace BackpackPrototype
             if (!isReady) return;
             if (!hasInitialized)
             {
+                ResetProgressionLevelForNewMatch();
                 SelectRandomPreset();
                 if (currentDeckPreset != null) RandomizeInitialPlacement(); else RestoreDefaultData();
                 hasInitialized = true;
@@ -214,6 +224,37 @@ namespace BackpackPrototype
         public void SetOperationInterval(float value) => operationInterval = Mathf.Max(.1f, value);
         public void ResetShopRollAllowance() => remainingShopRolls = ShopRollsPerPreparation;
         public void ResetOperationAllowance() => remainingOperations = MaximumOperationsPerPreparation;
+
+        public bool SetDebugProgressionLevel(int level)
+        {
+            if (!CanOperate() || operationRunning)
+            {
+                return false;
+            }
+
+            activeProgressionLevel = Mathf.Clamp(
+                level,
+                PlayerItemSystem.DefaultLevel,
+                PlayerItemSystem.MaximumLevel);
+            hasProgressionLevelOverride = true;
+            ApplyProgressionLevelToItems();
+            return true;
+        }
+
+        public bool RestoreDefaultProgressionLevel()
+        {
+            if (!CanOperate() || operationRunning)
+            {
+                return false;
+            }
+
+            defaultProgressionLevel = CalculateDefaultProgressionLevel();
+            activeProgressionLevel = defaultProgressionLevel;
+            hasProgressionLevelOverride = false;
+            ApplyProgressionLevelToItems();
+            return true;
+        }
+
         private void ResetPreparationState()
         {
             pendingCountedOperations = 0;
@@ -684,7 +725,7 @@ namespace BackpackPrototype
         private bool TryAddShopItem(ItemData data, Vector2Int cell)
         {
             int index = shopItems.IndexOf(data);
-            if (index < 0 || combatController.AddItem(data, cell) == null)
+            if (index < 0 || AddEnemyItem(data, cell) == null)
             {
                 return false;
             }
@@ -701,7 +742,7 @@ namespace BackpackPrototype
             int index = shopItems.IndexOf(data);
             if (index < 0 ||
                 !combatController.RemoveItem(oldItem) ||
-                combatController.AddItem(data, cell) == null)
+                AddEnemyItem(data, cell) == null)
             {
                 return false;
             }
@@ -719,7 +760,7 @@ namespace BackpackPrototype
         {
             if (shopItems.Count == 0) return false;
             int index = UnityEngine.Random.Range(0, shopItems.Count); ItemData data = shopItems[index];
-            if (!EnemyBackpackLayoutPlanner.TryFindPreferredCell(Backpack, new ItemInstance("enemy-cell-check", data, Vector2Int.zero), null, out Vector2Int cell) || combatController.AddItem(data, cell) == null) return false;
+            if (!EnemyBackpackLayoutPlanner.TryFindPreferredCell(Backpack, new ItemInstance("enemy-cell-check", data, Vector2Int.zero), null, out Vector2Int cell) || AddEnemyItem(data, cell) == null) return false;
             shopItems.RemoveAt(index); return true;
         }
         private bool TryAddShopAircraft()
@@ -738,7 +779,7 @@ namespace BackpackPrototype
                         check,
                         null,
                         out Vector2Int cell) ||
-                    combatController.AddItem(data, cell) == null)
+                    AddEnemyItem(data, cell) == null)
                 {
                     continue;
                 }
@@ -944,7 +985,7 @@ namespace BackpackPrototype
             if (Items.Count == 0 || shopItems.Count == 0) return false;
             ItemInstance old = Items[UnityEngine.Random.Range(0, Items.Count)]; int index = UnityEngine.Random.Range(0, shopItems.Count); ItemData data = shopItems[index];
             if (!Backpack.CanPlace(new ItemInstance("enemy-replace-check", data, old.AnchorCell), old.AnchorCell, old)) return false;
-            if (!combatController.RemoveItem(old) || combatController.AddItem(data, old.AnchorCell) == null) return false;
+            if (!combatController.RemoveItem(old) || AddEnemyItem(data, old.AnchorCell) == null) return false;
             shopItems.RemoveAt(index); return true;
         }
         private void HandlePhaseChanged(BattlePhase phase)
@@ -964,6 +1005,43 @@ namespace BackpackPrototype
             ResetPreparationState();
             RefreshHiddenShop();
         }
+        private void ResetProgressionLevelForNewMatch()
+        {
+            defaultProgressionLevel = CalculateDefaultProgressionLevel();
+            activeProgressionLevel = defaultProgressionLevel;
+            hasProgressionLevelOverride = false;
+        }
+
+        private static int CalculateDefaultProgressionLevel()
+        {
+            PlayerItemSystem playerItems = PlayerItemSystem.Instance;
+            return EnemyBackpackProgression.CalculateDefaultLevel(
+                playerItems?.GetDeckItems(),
+                playerItems != null ? playerItems.GetLevel : null);
+        }
+
+        private void ApplyProgressionLevelToItems()
+        {
+            foreach (ItemInstance item in Items)
+            {
+                ApplyProgressionLevel(item);
+            }
+        }
+
+        private void ApplyProgressionLevel(ItemInstance item)
+        {
+            item?.SetProgressionLevel(activeProgressionLevel);
+        }
+
+        private ItemInstance AddEnemyItem(
+            ItemData data,
+            Vector2Int cell)
+        {
+            ItemInstance item = combatController.AddItem(data, cell);
+            ApplyProgressionLevel(item);
+            return item;
+        }
+
         private void RefreshHiddenShop()
         {
             shopItems.Clear(); if (currentDeckPreset == null) return;
@@ -998,7 +1076,7 @@ namespace BackpackPrototype
             ItemView view = Instantiate(prefab, itemLayer, false); view.Bind(item, Backpack, gridView, itemLayer, null, null, gridView.CellSize, gridView.Spacing, combatController); view.SetBackpackPosition(item.AnchorCell); view.SetInteractionEnabled(false); itemViews.Add(view); return view;
         }
         private ItemView FindView(ItemInstance item) { foreach (ItemView view in itemViews) if (view != null && view.Instance == item) return view; return null; }
-        private void HandleItemAdded(ItemInstance item) { if (isApplyingData) return; ItemView view = CreateView(item); if (operationRunning) view?.AnimateSpawnInBackpack(); }
+        private void HandleItemAdded(ItemInstance item) { ApplyProgressionLevel(item); if (isApplyingData) return; ItemView view = CreateView(item); if (operationRunning) view?.AnimateSpawnInBackpack(); }
         private void HandleItemMoved(ItemInstance item) { if (isApplyingData) return; ItemView view = FindView(item); if (operationRunning) view?.AnimateToBackpackPosition(item.AnchorCell); else view?.SetBackpackPosition(item.AnchorCell); }
         private void HandleItemRemoved(ItemInstance item)
         {

@@ -31,6 +31,8 @@ namespace BackpackHero.EditorTools
             bool canModify = enemy.IsReady && BattleFlowController.CurrentPhase == BattlePhase.Preparation && !enemy.IsOperationRunning;
             using (new EditorGUI.DisabledScope(!canModify))
             {
+                DrawProgressionLevelControls(enemy);
+                EditorGUILayout.Space(6f);
                 EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("使用选中预设")) enemy.SetCurrentDeckPreset(selectedPreset);
                 if (GUILayout.Button("随机选取预设")) enemy.SelectRandomPreset();
@@ -65,6 +67,48 @@ namespace BackpackHero.EditorTools
 
                 EditorGUILayout.LabelField("隐藏商店库存", stock);
             }
+        }
+        private static void DrawProgressionLevelControls(
+            EnemyBackpackSystem enemy)
+        {
+            EditorGUILayout.LabelField("敌人物品局外养成", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(
+                "所有敌人物品共享该等级；不消耗或产生碎片。",
+                EditorStyles.miniLabel);
+            EditorGUILayout.LabelField(
+                "当前生效等级",
+                $"Lv.{enemy.ActiveProgressionLevel}");
+
+            Color originalBackground = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(.65f, .9f, .65f);
+            if (GUILayout.Button(
+                    $"规则默认等级  Lv.{enemy.DefaultProgressionLevel}",
+                    GUILayout.Height(24f)))
+            {
+                enemy.RestoreDefaultProgressionLevel();
+            }
+
+            GUI.backgroundColor = originalBackground;
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("-", GUILayout.Width(32f), GUILayout.Height(24f)))
+            {
+                enemy.SetDebugProgressionLevel(
+                    enemy.ActiveProgressionLevel - 1);
+            }
+
+            EditorGUILayout.LabelField(
+                enemy.HasProgressionLevelOverride
+                    ? "本局调试覆盖中"
+                    : "使用规则默认等级",
+                EditorStyles.centeredGreyMiniLabel);
+
+            if (GUILayout.Button("+", GUILayout.Width(32f), GUILayout.Height(24f)))
+            {
+                enemy.SetDebugProgressionLevel(
+                    enemy.ActiveProgressionLevel + 1);
+            }
+
+            EditorGUILayout.EndHorizontal();
         }
     }
 }

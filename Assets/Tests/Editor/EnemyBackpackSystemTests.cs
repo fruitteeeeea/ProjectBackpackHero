@@ -20,6 +20,78 @@ public sealed class EnemyBackpackSystemTests
         "Assets/Data/Backpack/EnemyBackpacks/" +
         "EnemyBackpack_Default.asset";
 
+
+    [Test]
+    public void DefaultProgressionLevel_UsesDeckModeMinusOne()
+    {
+        ItemData first = ScriptableObject.CreateInstance<ItemData>();
+        ItemData second = ScriptableObject.CreateInstance<ItemData>();
+        ItemData third = ScriptableObject.CreateInstance<ItemData>();
+
+        try
+        {
+            int level = EnemyBackpackProgression.CalculateDefaultLevel(
+                new[] { first, second, third },
+                item => item == first || item == second ? 6 : 3);
+
+            Assert.That(level, Is.EqualTo(5));
+        }
+        finally
+        {
+            Object.DestroyImmediate(first);
+            Object.DestroyImmediate(second);
+            Object.DestroyImmediate(third);
+        }
+    }
+
+    [Test]
+    public void DefaultProgressionLevel_IgnoresEmptySlotsAndBreaksTiesLow()
+    {
+        ItemData first = ScriptableObject.CreateInstance<ItemData>();
+        ItemData second = ScriptableObject.CreateInstance<ItemData>();
+        ItemData third = ScriptableObject.CreateInstance<ItemData>();
+        ItemData fourth = ScriptableObject.CreateInstance<ItemData>();
+
+        try
+        {
+            int level = EnemyBackpackProgression.CalculateDefaultLevel(
+                new[] { first, null, second, third, fourth },
+                item => item == first || item == second ? 5 : 7);
+
+            Assert.That(level, Is.EqualTo(4));
+        }
+        finally
+        {
+            Object.DestroyImmediate(first);
+            Object.DestroyImmediate(second);
+            Object.DestroyImmediate(third);
+            Object.DestroyImmediate(fourth);
+        }
+    }
+
+    [Test]
+    public void DefaultProgressionLevel_UsesLevelOneForEmptyOrLevelOneDecks()
+    {
+        ItemData item = ScriptableObject.CreateInstance<ItemData>();
+
+        try
+        {
+            Assert.That(
+                EnemyBackpackProgression.CalculateDefaultLevel(
+                    System.Array.Empty<ItemData>(),
+                    _ => PlayerItemSystem.MaximumLevel),
+                Is.EqualTo(PlayerItemSystem.DefaultLevel));
+            Assert.That(
+                EnemyBackpackProgression.CalculateDefaultLevel(
+                    new[] { item },
+                    _ => PlayerItemSystem.DefaultLevel),
+                Is.EqualTo(PlayerItemSystem.DefaultLevel));
+        }
+        finally
+        {
+            Object.DestroyImmediate(item);
+        }
+    }
     [Test]
     public void DefaultData_MatchesPlayerDefaultLayout()
     {
@@ -527,6 +599,46 @@ public sealed class EnemyBackpackSystemTests
                     .Calculate(system.Backpack)
                     .TotalScore,
                 Is.EqualTo(originalScore));
+        }
+        finally
+        {
+            Object.DestroyImmediate(instance);
+        }
+    }
+
+    [Test]
+    public void DebugProgressionLevel_SynchronizesEnemyItemsAndPersistsPreparation()
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            EnemyPrefabPath);
+        GameObject instance = Object.Instantiate(prefab);
+
+        try
+        {
+            Initialize(instance);
+            EnemyBackpackSystem system = instance.GetComponent<EnemyBackpackSystem>();
+            Assert.That(system.ApplyData(system.DefaultData), Is.True);
+            int originalMatchLevel = system.Items[0].Level;
+
+            Assert.That(system.SetDebugProgressionLevel(8), Is.True);
+            foreach (ItemInstance item in system.Items)
+            {
+                Assert.That(item.ProgressionLevel, Is.EqualTo(8));
+            }
+
+            Invoke(system, "InitializePreparation");
+            Assert.That(system.ActiveProgressionLevel, Is.EqualTo(8));
+            Assert.That(system.HasProgressionLevelOverride, Is.True);
+            Assert.That(system.Items[0].Level, Is.EqualTo(originalMatchLevel));
+
+            Assert.That(system.RestoreDefaultProgressionLevel(), Is.True);
+            Assert.That(system.HasProgressionLevelOverride, Is.False);
+            foreach (ItemInstance item in system.Items)
+            {
+                Assert.That(
+                    item.ProgressionLevel,
+                    Is.EqualTo(system.DefaultProgressionLevel));
+            }
         }
         finally
         {

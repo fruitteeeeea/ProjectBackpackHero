@@ -113,7 +113,7 @@ namespace BackpackHero.UI
                         entries.Add(new RankEntry {
                             displayName = player.self ? PlayerName : player.name,
                             score = player.self ? progression.Points : player.score,
-                            countryFlag = ranks.GetCountryFlag(player.countryIndex),
+                            countryFlag = ranks.GetCountryFlag(player.self ? 0 : player.countryIndex),
                             isCurrentPlayer = player.self
                         });
                     }

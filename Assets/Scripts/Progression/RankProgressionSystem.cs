@@ -121,7 +121,7 @@ namespace BackpackHero.Progression
             var names = new[] { "Starweaver", "Millet Plant Glow", "Daisy Sunwhisper", "Noah Sunbloom", "Ion Frostweaver", "Orange Glow", "Iron Glow", "Sequoia", "Nova Skydancer", "River Ember", "Luna Cloudsong", "Aster Moonfall", "Sage Brightstar", "Echo Wildfire", "Robin Mistwalker", "Sky Silvermoon", "Piper Sunray", "Rowan Starfall", "Aquamarine", "Celeste Dawnbringer", "Ember Wildroot", "Finn Starforge", "Hazel Skysong", "Iris Moonwhisper", "Jasper Nightbloom", "Kai Silverwind", "Liora Frostfall", "Milo Suncrest", "Nora Emberglow", "Opal Brightwood", "Quinn Stormcaller", "Rhea Cloudwalker", "Silas Moonstone", "Talia Starbloom", "Uma Ravenwood", "Vale Sunseeker", "Wren Firelight", "Xander Cloudfall", "Yara Mistbloom", "Zane Starwatch", "Ayla Nightfall", "Briar Sunweaver", "Cora Dawnfall", "Dorian Frostwind", "Elara Skydancer", "Flint Moonrider", "Gwen Starling", "Hugo Brightleaf" };
             data.leaderboard.Clear();
             for (int i = 0; i < names.Length; i++) data.leaderboard.Add(new RankLeaderboardEntry { name = names[i], score = UnityEngine.Random.Range(30000, 49501), countryIndex = i % 6 });
-            data.leaderboard.Add(new RankLeaderboardEntry { name = BackpackHero.UI.MenuDisplayProfile.PlayerName, score = MaximumPoints, countryIndex = 1, self = true });
+            data.leaderboard.Add(new RankLeaderboardEntry { name = BackpackHero.UI.MenuDisplayProfile.PlayerName, score = MaximumPoints, countryIndex = 0, self = true });
             data.leaderboard.Sort((a, b) => b.score.CompareTo(a.score)); if (notify) Notify();
         }
     }

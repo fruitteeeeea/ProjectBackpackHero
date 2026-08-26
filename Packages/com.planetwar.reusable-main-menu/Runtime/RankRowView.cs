@@ -44,7 +44,11 @@ namespace PlanetWar.ReusableMainMenu
                 rankLabel.text = rank.ToString();
                 rankLabel.gameObject.SetActive(!isTopThree);
             }
-            if (nameLabel != null) nameLabel.text = entry.displayName;
+            if (nameLabel != null)
+            {
+                nameLabel.text = entry.displayName;
+                nameLabel.color = entry.isCurrentPlayer ? Color.white : new Color32(135, 148, 170, 255);
+            }
             if (scoreLabel != null) scoreLabel.text = entry.score.ToString();
         }
     }

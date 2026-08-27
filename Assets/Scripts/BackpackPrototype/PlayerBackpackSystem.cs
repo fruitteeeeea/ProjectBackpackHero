@@ -129,6 +129,11 @@ namespace BackpackPrototype
         private int debugAutoOperationSuccessCount;
         private string debugAutoOperationStatus;
         private string debugAutoOperationName;
+        private readonly HashSet<string> debugAutoOperationVisitedLayouts = new();
+        private bool initialLayoutPending = true;
+        private bool applyingInitialLayout;
+        private int pendingInitialLayoutVersion = -1;
+        private int appliedInitialLayoutVersion = -1;
 
         public static bool IsAnyDebugAutoOperationRunning { get; private set; }
 
@@ -170,6 +175,9 @@ namespace BackpackPrototype
         public int DebugAutoOperationSuccessCount => debugAutoOperationSuccessCount;
         public string DebugAutoOperationStatus => debugAutoOperationStatus;
         public string DebugAutoOperationName => debugAutoOperationName;
+        public bool IsApplyingInitialLayout => applyingInitialLayout;
+        public event Action DebugAutoOperationsStarted;
+        public event Action<string> DebugAutoOperationsFinished;
 
         public int RollsPerPreparation =>
             Mathf.Max(1, rollsPerPreparation);
@@ -255,6 +263,8 @@ namespace BackpackPrototype
         {
             BattleFlowController.PhaseChanged +=
                 HandlePhaseChanged;
+            LevelFlowController.MatchInitialized +=
+                HandleMatchInitialized;
         }
 
         private void Start()
@@ -264,7 +274,7 @@ namespace BackpackPrototype
                 return;
             }
 
-            RestoreDeckLayout();
+            RequestInitialLayoutForNewMatch();
             InitializeShopContainer();
             CacheShopItemScale();
             RebuildBackpackViews();
@@ -285,58 +295,15 @@ namespace BackpackPrototype
                 return false;
             }
 
-            BackpackController validation =
-                new BackpackController(
-                    Backpack.Width,
-                    Backpack.Height);
-
-            for (int index = 0;
-                 index < layout.Count;
-                 index++)
-            {
-                BackpackLayoutItem placement =
-                    layout[index];
-
-                if (placement.Data == null)
-                {
-                    Debug.LogError(
-                        $"布局条目 {index} 缺少物品或UI Prefab配置。",
-                        this);
-                    return false;
-                }
-
-                ItemInstance candidate =
-                    new ItemInstance(
-                        $"layout-validation-{index}",
-                        placement.Data,
-                        placement.AnchorCell,
-                        placement.Level);
-
-                if (!validation.PlaceItem(
-                        candidate,
-                        placement.AnchorCell))
-                {
-                    Debug.LogError(
-                        $"布局条目 {index} 无法放置在 " +
-                        $"{placement.AnchorCell}。",
-                        this);
-                    return false;
-                }
-            }
-
             isLoadingLayout = true;
-
+            bool applied;
             try
             {
-                combatController.Clear();
-
-                foreach (BackpackLayoutItem placement
-                         in layout)
+                applied = InitialBackpackLayoutController.TryApply(
+                    combatController, layout, null, out string failureReason);
+                if (!applied)
                 {
-                    combatController.AddItem(
-                        placement.Data,
-                        placement.AnchorCell,
-                        placement.Level);
+                    Debug.LogError($"无法应用背包布局：{failureReason}", this);
                 }
             }
             finally
@@ -344,13 +311,13 @@ namespace BackpackPrototype
                 isLoadingLayout = false;
             }
 
-            if (Application.isPlaying)
+            if (applied && Application.isPlaying)
             {
                 RebuildBackpackViews();
             }
 
-            SetSelectedItem(null);
-            return true;
+            if (applied) SetSelectedItem(null);
+            return applied;
         }
 
         public void RestoreDefaultLayout()
@@ -406,8 +373,10 @@ namespace BackpackPrototype
         {
             if (!isReady || Backpack == null ||
                 BattleFlowController.CurrentPhase != BattlePhase.Preparation ||
-                !EnemyBackpackLayoutPlanner.TryBuild(
+                !DeckPreset.IsValidSlots(ActiveDeckItems, out _) ||
+                !InitialBackpackLayoutController.TryBuild(
                     ActiveDeckItems, Backpack.Width, Backpack.Height,
+                    GetInitialItemLevel,
                     out List<BackpackLayoutItem> layout))
             {
                 return false;
@@ -416,30 +385,68 @@ namespace BackpackPrototype
             return LoadLayout(layout);
         }
 
-        /// <summary>调试用：先做一次初始布局，再以真实商店/背包操作执行最多 15 次 AI 决策。</summary>
+        /// <summary>仅在新对局或调试重启后请求一次初始布局。</summary>
+        public void RequestInitialLayoutForNewMatch()
+        {
+            int version = LevelFlowController.MatchInitializationVersion;
+            if (appliedInitialLayoutVersion == version) return;
+            initialLayoutPending = true;
+            pendingInitialLayoutVersion = version;
+            TryApplyInitialLayoutForMatch();
+        }
+
+        private void TryApplyInitialLayoutForMatch()
+        {
+            if (!initialLayoutPending || !isReady ||
+                BattleFlowController.CurrentPhase != BattlePhase.Preparation)
+            {
+                return;
+            }
+
+            applyingInitialLayout = true;
+            try
+            {
+                if (RandomizeInitialPlacementWithEnemyAI())
+                {
+                    initialLayoutPending = false;
+                    appliedInitialLayoutVersion = pendingInitialLayoutVersion;
+                }
+            }
+            finally
+            {
+                applyingInitialLayout = false;
+            }
+        }
+
+        /// <summary>调试用：从当前背包出发执行最多 15 次严格增益的真实 AI 决策。</summary>
         public bool StartDebugAutoOperations(int operationCount = 15, float interval = .3f)
         {
             if (debugAutoOperationRunning || !isReady || Backpack == null ||
-                BattleFlowController.CurrentPhase != BattlePhase.Preparation ||
-                !RandomizeInitialPlacementWithEnemyAI()) return false;
+                BattleFlowController.CurrentPhase != BattlePhase.Preparation) return false;
             debugAutoOperationSuccessCount = 0;
             debugAutoOperationStatus = "正在规划操作";
-            debugAutoOperationName = "初始布局";
+            debugAutoOperationName = "规划中";
+            debugAutoOperationVisitedLayouts.Clear();
+            debugAutoOperationVisitedLayouts.Add(
+                BackpackOperationPlanner.GetLayoutFingerprint(Backpack));
             // StartCoroutine 要到下一帧才开始；这里先上锁，避免同一帧进入战斗。
             debugAutoOperationRunning = true;
             IsAnyDebugAutoOperationRunning = true;
+            DebugAutoOperationsStarted?.Invoke();
             debugAutoOperationRoutine = StartCoroutine(RunDebugAutoOperations(Mathf.Max(1, operationCount), Mathf.Max(.05f, interval)));
             return true;
         }
 
         public void CancelDebugAutoOperations(string reason = "已取消")
         {
+            bool wasRunning = debugAutoOperationRunning;
             if (debugAutoOperationRoutine != null) StopCoroutine(debugAutoOperationRoutine);
             debugAutoOperationRoutine = null;
             debugAutoOperationRunning = false;
             IsAnyDebugAutoOperationRunning = false;
             debugAutoOperationStatus = reason;
             debugAutoOperationName = null;
+            if (wasRunning) DebugAutoOperationsFinished?.Invoke(reason);
         }
 
         private IEnumerator RunDebugAutoOperations(int targetCount, float interval)
@@ -447,16 +454,24 @@ namespace BackpackPrototype
             while (debugAutoOperationSuccessCount < targetCount &&
                    BattleFlowController.CurrentPhase == BattlePhase.Preparation)
             {
-                if (!BackpackOperationPlanner.TrySelectBest(Backpack, GetShopItemData(), remainingRolls, out BackpackOperation operation))
+                if (!BackpackOperationPlanner.TrySelectBest(
+                        Backpack, GetShopItemData(), remainingRolls,
+                        BackpackOperationSelectionMode.ExploreNonDecreasing,
+                        debugAutoOperationVisitedLayouts,
+                        out BackpackOperation operation))
                 {
-                    debugAutoOperationStatus = "没有可执行的增益操作";
+                    debugAutoOperationStatus = "已达到当前可探索最优解";
                     break;
                 }
                 debugAutoOperationName = DescribeDebugOperation(operation);
                 if (TryExecuteDebugOperation(operation))
                 {
                     debugAutoOperationSuccessCount++;
-                    debugAutoOperationStatus = $"已完成 {debugAutoOperationSuccessCount} / {targetCount}";
+                    debugAutoOperationVisitedLayouts.Add(
+                        BackpackOperationPlanner.GetLayoutFingerprint(Backpack));
+                    debugAutoOperationStatus = operation.IsExploration
+                        ? $"探索操作 {debugAutoOperationSuccessCount} / {targetCount}"
+                        : $"增益操作 {debugAutoOperationSuccessCount} / {targetCount}";
                 }
                 else
                 {
@@ -489,6 +504,7 @@ namespace BackpackPrototype
                 BackpackOperationKind.AddShopItem => "从商店放置",
                 BackpackOperationKind.RemoveItem => "移除物品",
                 BackpackOperationKind.MergeItems => "合成物品",
+                BackpackOperationKind.MergeShopItem => "商店物品合成升级",
                 BackpackOperationKind.ReplaceItem => "替换物品",
                 _ => "规划中",
             };
@@ -505,6 +521,9 @@ namespace BackpackPrototype
                 case BackpackOperationKind.MergeItems:
                     if (!Backpack.TryMerge(operation.Item, operation.SecondaryItem)) return false;
                     FindView(operation.SecondaryItem)?.PlayMergeFeedback(); return true;
+                case BackpackOperationKind.MergeShopItem:
+                    return TryAutoMergeShopItem(
+                        operation.ShopItem, operation.SecondaryItem);
                 case BackpackOperationKind.ReplaceItem:
                     return combatController.RemoveItem(operation.Item) && TryAutoPlaceShopItem(operation.ShopItem, operation.Destination);
                 default: return false;
@@ -515,6 +534,30 @@ namespace BackpackPrototype
         {
             ItemView view = shopItems.Find(candidate => candidate?.Instance?.Data == data);
             return view != null && combatController.PlaceItem(view.Instance, cell);
+        }
+
+        private bool TryAutoMergeShopItem(ItemData data, ItemInstance target)
+        {
+            ItemView sourceView = shopItems.Find(
+                candidate => candidate?.Instance?.Data == data);
+            if (sourceView?.Instance == null || target == null ||
+                !Backpack.TryMerge(sourceView.Instance, target))
+            {
+                return false;
+            }
+
+            shopItems.Remove(sourceView);
+            ReflowShopItems();
+            FindView(target)?.PlayMergeFeedback();
+            sourceView.AnimateRemoval(() =>
+            {
+                if (sourceView != null)
+                {
+                    sourceView.gameObject.SetActive(false);
+                    Destroy(sourceView.gameObject);
+                }
+            });
+            return true;
         }
 
         public bool TryApplyRuntimeDeck(
@@ -554,11 +597,11 @@ namespace BackpackPrototype
                 return;
             }
 
-            if (!DeckLayoutBuilder.TryBuild(
+            if (!InitialBackpackLayoutController.TryBuild(
                     deck,
                     Backpack.Width,
                     Backpack.Height,
-                    null,
+                    GetInitialItemLevel,
                     out List<BackpackLayoutItem> layout))
             {
                 Debug.LogError("当前 Deck 无法完整放入背包。", this);
@@ -1114,8 +1157,23 @@ namespace BackpackPrototype
             adjustmentCurve?.SetCurveValue(clampedValue);
         }
 
+        private int GetInitialItemLevel(ItemData item) =>
+            HasDebugProgressionLevel
+                ? debugProgressionLevel
+                : playerItemSystem?.GetLevel(item) ?? PlayerItemSystem.DefaultLevel;
+
+        private void HandleMatchInitialized()
+        {
+            RequestInitialLayoutForNewMatch();
+        }
+
         private void HandlePhaseChanged(BattlePhase phase)
         {
+            if (phase == BattlePhase.Preparation)
+            {
+                TryApplyInitialLayoutForMatch();
+            }
+
             if (phase != BattlePhase.Preparation && debugAutoOperationRunning)
             {
                 CancelDebugAutoOperations("已离开准备阶段");
@@ -2032,6 +2090,8 @@ namespace BackpackPrototype
             dragDebugOverlay?.Clear();
             BattleFlowController.PhaseChanged -=
                 HandlePhaseChanged;
+            LevelFlowController.MatchInitialized -=
+                HandleMatchInitialized;
 
             if (curveInput != null)
             {

@@ -30,6 +30,8 @@ namespace BackpackPrototype
 
         private bool backpacksHealthLocked;
         private bool suppressEnemyReaction;
+        private bool suppressEnemyReactionForPlayerAutoOperation;
+        private PlayerBackpackSystem subscribedPlayerSystem;
 
         [SerializeField, Min(0.05f)]
         private float refreshInterval = 0.1f;
@@ -892,6 +894,22 @@ namespace BackpackPrototype
 
         private void RefreshAutoCopySubscription()
         {
+            if (subscribedPlayerSystem != playerBackpackSystem)
+            {
+                if (subscribedPlayerSystem != null)
+                {
+                    subscribedPlayerSystem.DebugAutoOperationsStarted -= HandlePlayerAutoOperationsStarted;
+                    subscribedPlayerSystem.DebugAutoOperationsFinished -= HandlePlayerAutoOperationsFinished;
+                }
+
+                subscribedPlayerSystem = playerBackpackSystem;
+                if (subscribedPlayerSystem != null)
+                {
+                    subscribedPlayerSystem.DebugAutoOperationsStarted += HandlePlayerAutoOperationsStarted;
+                    subscribedPlayerSystem.DebugAutoOperationsFinished += HandlePlayerAutoOperationsFinished;
+                }
+            }
+
             BackpackController next =
                 playerBackpackSystem != null
                     ? playerBackpackSystem.Backpack
@@ -936,7 +954,10 @@ namespace BackpackPrototype
         private void HandlePlayerBackpackChanged(ItemInstance _)
         {
             // 玩家一次成功的模型变更立即换取一次敌人反应，但不消耗敌人回合额度。
-            if (!suppressEnemyReaction && CanModifyPreparation())
+            if (!suppressEnemyReaction &&
+                !suppressEnemyReactionForPlayerAutoOperation &&
+                playerBackpackSystem?.IsApplyingInitialLayout != true &&
+                CanModifyPreparation())
             {
                 enemyBackpackSystem?.RequestImmediateReaction();
             }
@@ -945,10 +966,34 @@ namespace BackpackPrototype
         private void HandlePlayerBackpackCleared() =>
             HandlePlayerBackpackChanged(null);
 
+        private void HandlePlayerAutoOperationsStarted()
+        {
+            suppressEnemyReactionForPlayerAutoOperation = true;
+            enemyBackpackSystem?.SetDebugAutomationPaused(true);
+        }
+
+        private void HandlePlayerAutoOperationsFinished(string _)
+        {
+            suppressEnemyReactionForPlayerAutoOperation = false;
+            enemyBackpackSystem?.SetDebugAutomationPaused(false);
+            if (CanModifyPreparation())
+            {
+                enemyBackpackSystem?.StartDebugReaction();
+            }
+        }
+
         private void OnDisable()
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
             SetBackpacksHealthLocked(false);
+
+            if (subscribedPlayerSystem != null)
+            {
+                subscribedPlayerSystem.DebugAutoOperationsStarted -= HandlePlayerAutoOperationsStarted;
+                subscribedPlayerSystem.DebugAutoOperationsFinished -= HandlePlayerAutoOperationsFinished;
+                subscribedPlayerSystem = null;
+            }
+            enemyBackpackSystem?.SetDebugAutomationPaused(false);
 
             if (subscribedPlayerBackpack != null)
             {

@@ -588,7 +588,7 @@ public sealed class PlayerBackpackSystemTests
 
             LogAssert.Expect(
                 LogType.Error,
-                "布局条目 1 无法放置在 (0, 0)。");
+                "无法应用背包布局：布局条目 1 无法放置。");
 
             Assert.That(
                 system.LoadLayout(

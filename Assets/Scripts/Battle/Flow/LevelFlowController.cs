@@ -38,6 +38,8 @@ namespace BackpackHero.Battle
         private bool isOvertime;
 
         public static LevelFlowController Instance { get; private set; }
+        /// <summary>每次创建或重启整场对局时递增，用于运行时可靠地只应用一次初始布局。</summary>
+        public static int MatchInitializationVersion { get; private set; } = 1;
         public static int CurrentRound =>
             Instance != null ? Instance.currentRound : 1;
 
@@ -100,6 +102,8 @@ namespace BackpackHero.Battle
         public static event Action<int> RoundStarted;
         public static event Action<string> ResultShown;
         public static event Action MatchStateChanged;
+        /// <summary>仅在首次对局创建或明确重启后发出，不包含开战和结算。</summary>
+        public static event Action MatchInitialized;
         public static event Action RoundTimerStateChanged;
 
         [RuntimeInitializeOnLoadMethod(
@@ -110,6 +114,8 @@ namespace BackpackHero.Battle
             RoundStarted = null;
             ResultShown = null;
             MatchStateChanged = null;
+            MatchInitialized = null;
+            MatchInitializationVersion = 1;
             RoundTimerStateChanged = null;
         }
 
@@ -157,6 +163,7 @@ namespace BackpackHero.Battle
         {
             BattleFlowController.EnsureInstance()
                 ?.SetPhase(BattlePhase.Preparation);
+            MatchInitialized?.Invoke();
             BattleFlowController.PhaseChanged +=
                 HandleBattlePhaseChanged;
         }
@@ -175,7 +182,8 @@ namespace BackpackHero.Battle
         {
             // 调试 AI 正在以真实商店/背包状态连续操作时，不能让任何入口
             // （包括正式准备 UI 和调试面板）提前切进战斗。
-            if (PlayerBackpackSystem.IsAnyDebugAutoOperationRunning)
+            if (PlayerBackpackSystem.IsAnyDebugAutoOperationRunning ||
+                PlayerBackpackDebugBridge.Active?.EnemyTarget?.IsDebugReactionRunning == true)
             {
                 return false;
             }
@@ -223,6 +231,8 @@ namespace BackpackHero.Battle
             ResetRoundTimer();
             ResetBackpackHealth();
             BattleFlowController.EnsureInstance()?.SetPhase(BattlePhase.Preparation);
+            MatchInitializationVersion++;
+            MatchInitialized?.Invoke();
             MatchStateChanged?.Invoke();
         }
 
@@ -248,6 +258,8 @@ namespace BackpackHero.Battle
             ResetBackpackHealth();
             BattleFlowController.EnsureInstance()
                 ?.SetPhase(BattlePhase.Preparation);
+            MatchInitializationVersion++;
+            MatchInitialized?.Invoke();
             MatchStateChanged?.Invoke();
         }
         private void HandleBattlePhaseChanged(BattlePhase phase)

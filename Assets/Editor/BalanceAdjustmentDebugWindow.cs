@@ -179,32 +179,29 @@ namespace BackpackHero.EditorTools
         {
             EditorGUILayout.Space(6f);
             EditorGUILayout.LabelField("背包 AI 自动操作", EditorStyles.boldLabel);
-            bool playerOperating = bridge.Target.IsDebugAutoOperationRunning;
+            bool playerOperating = bridge.Target.IsDebugAutoOperationRunning ||
+                bridge.EnemyTarget.IsDebugReactionRunning;
             bool canPlace = BattleFlowController.CurrentPhase == BattlePhase.Preparation &&
                 bridge.Target.IsReady && bridge.EnemyTarget.IsReady && !playerOperating && !bridge.EnemyTarget.IsOperationRunning;
             using (new EditorGUI.DisabledScope(!canPlace))
-            using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button("玩家 AI 执行 15 次操作"))
                 {
                     bridge.Target.StartDebugAutoOperations();
-                }
-                if (GUILayout.Button("敌人 AI 执行 15 次操作"))
-                {
-                    bridge.EnemyTarget.StartDebugOperations();
                 }
             }
             string status = string.IsNullOrEmpty(bridge.Target.DebugAutoOperationStatus)
                 ? "未启动" : bridge.Target.DebugAutoOperationStatus;
             EditorGUILayout.LabelField("玩家 AI", $"{bridge.Target.DebugAutoOperationSuccessCount} / 15 · {status}");
             EditorGUILayout.LabelField("当前操作", bridge.Target.DebugAutoOperationName ?? "-");
-            EditorGUILayout.HelpBox("玩家先使用一次初始布局，随后与敌人共用评分器，以真实商店和背包状态执行操作。操作进行时已锁定进入战斗。", MessageType.None);
+            EditorGUILayout.HelpBox("初始布局只在对局开始或重启时生成。玩家 AI 从当前背包连续优化；结束后敌人会进行一次真实响应。", MessageType.None);
         }
 
         private static void DrawMatchControls(PlayerBackpackDebugBridge bridge)
         {
             LevelFlowController flow = LevelFlowController.Instance;
-            bool playerOperating = bridge.Target.IsDebugAutoOperationRunning;
+            bool playerOperating = bridge.Target.IsDebugAutoOperationRunning ||
+                bridge.EnemyTarget.IsDebugReactionRunning;
             EditorGUILayout.Space(6f);
             using (new EditorGUI.DisabledScope(playerOperating))
             {

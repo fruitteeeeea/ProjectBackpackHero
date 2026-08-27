@@ -235,6 +235,34 @@ public sealed class EnemyBackpackSystemTests
     }
 
     [Test]
+    public void InitialLayoutController_BuildsEveryItemInEnemyDefaultPreset()
+    {
+        DeckPreset preset = AssetDatabase.LoadAssetAtPath<DeckPreset>(
+            "Assets/Data/Backpack/DeckPresets/DeckPreset_01.asset");
+
+        Assert.That(preset, Is.Not.Null);
+        Assert.That(InitialBackpackLayoutController.TryBuild(
+            preset.Slots, 7, 4, null, out var layout), Is.True);
+
+        int expectedCount = 0;
+        foreach (ItemData item in preset.Slots)
+        {
+            if (item != null) expectedCount++;
+        }
+
+        Assert.That(layout, Has.Count.EqualTo(expectedCount));
+
+        BackpackController validation = new(7, 4);
+        foreach (BackpackLayoutItem placement in layout)
+        {
+            Assert.That(validation.PlaceItem(
+                new ItemInstance("initial-layout-test", placement.Data,
+                    placement.AnchorCell, placement.Level),
+                placement.AnchorCell), Is.True);
+        }
+    }
+
+    [Test]
     public void EnemyUi_HidesInteractionAndMirrorsMotion()
     {
         GameObject enemyUi =

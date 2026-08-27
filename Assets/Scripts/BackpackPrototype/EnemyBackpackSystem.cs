@@ -47,7 +47,11 @@ namespace BackpackPrototype
         private BackpackCombatController combatController;
         private BackpackFighterSpawner fighterSpawner;
         private bool isReady, isApplyingData, hasInitialized, operationRunning;
-        private Coroutine debugOperationRoutine;
+        private bool initialLayoutPending = true;
+        private int pendingInitialLayoutVersion = -1;
+        private int appliedInitialLayoutVersion = -1;
+        private bool debugAutomationPaused;
+        private Coroutine debugReactionRoutine;
         private int pendingImmediateOperations, pendingCountedOperations, remainingShopRolls, remainingOperations;
         private float nextAutomaticOperationTime, nextImmediateOperationTime;
         private EnemyBackpackData currentData;
@@ -85,6 +89,7 @@ namespace BackpackPrototype
         public IReadOnlyList<ItemData> ShopItems => shopItems;
         public bool IsReady => isReady;
         public bool IsOperationRunning => operationRunning;
+        public bool IsDebugReactionRunning => debugReactionRoutine != null;
         public int RemainingOperations => remainingOperations;
         public int MaximumOperations => MaximumOperationsPerPreparation;
         public int RemainingShopRolls => remainingShopRolls;
@@ -107,7 +112,11 @@ namespace BackpackPrototype
             isReady = ValidateConfiguration();
             SubscribeBackpack();
         }
-        private void OnEnable() => BattleFlowController.PhaseChanged += HandlePhaseChanged;
+        private void OnEnable()
+        {
+            BattleFlowController.PhaseChanged += HandlePhaseChanged;
+            LevelFlowController.MatchInitialized += HandleMatchInitialized;
+        }
         private void Start()
         {
             if (!isReady) return;
@@ -115,14 +124,14 @@ namespace BackpackPrototype
             {
                 ResetProgressionLevelForNewMatch();
                 SelectRandomPreset();
-                if (currentDeckPreset != null) RandomizeInitialPlacement(); else RestoreDefaultData();
                 hasInitialized = true;
             }
+            RequestInitialLayoutForNewMatch();
             InitializePreparation();
         }
         private void Update()
         {
-            if (!CanOperate() || operationRunning) return;
+            if (!CanOperate() || operationRunning || debugAutomationPaused) return;
             if (remainingOperations <= 0) return;
             if (pendingImmediateOperations > 0 && Time.unscaledTime >= nextImmediateOperationTime) { pendingImmediateOperations--; StartCoroutine(RunOperation()); return; }
             // 等待玩家操作后的反应延迟期间，不允许普通自动操作抢先执行。
@@ -152,7 +161,11 @@ namespace BackpackPrototype
         }
         public bool RandomizeInitialPlacement()
         {
-            if (!CanOperate() || currentDeckPreset == null || !EnemyBackpackLayoutPlanner.TryBuild(currentDeckPreset.Slots, Backpack.Width, Backpack.Height, out List<BackpackLayoutItem> layout)) return false;
+            if (!CanOperate() || currentDeckPreset == null ||
+                !InitialBackpackLayoutController.TryBuild(
+                    currentDeckPreset.Slots, Backpack.Width, Backpack.Height,
+                    _ => activeProgressionLevel,
+                    out List<BackpackLayoutItem> layout)) return false;
             return ApplyLayoutInternal(layout, null);
         }
         public bool ApplyDeckPreset(DeckPreset preset) => SetCurrentDeckPreset(preset) && RandomizeInitialPlacement();
@@ -200,6 +213,28 @@ namespace BackpackPrototype
             return ApplyLayoutInternal(layout, null);
         }
 
+        /// <summary>仅在新对局或调试重启后请求一次初始布局。</summary>
+        public void RequestInitialLayoutForNewMatch()
+        {
+            int version = LevelFlowController.MatchInitializationVersion;
+            if (appliedInitialLayoutVersion == version) return;
+            initialLayoutPending = true;
+            pendingInitialLayoutVersion = version;
+            TryApplyInitialLayoutForMatch();
+        }
+
+        private void TryApplyInitialLayoutForMatch()
+        {
+            if (!initialLayoutPending || !CanOperate()) return;
+            if (currentDeckPreset != null
+                ? RandomizeInitialPlacement()
+                : RestoreDefaultData())
+            {
+                initialLayoutPending = false;
+                appliedInitialLayoutVersion = pendingInitialLayoutVersion;
+            }
+        }
+
 
         public bool ApplyData(EnemyBackpackData data)
         {
@@ -219,38 +254,36 @@ namespace BackpackPrototype
             pendingCountedOperations++; return true;
         }
 
-        /// <summary>调试用：执行一轮真实的敌方背包操作，不受正式每回合上限限制。</summary>
-        public bool StartDebugOperations(int operationCount = 15)
+        /// <summary>玩家 AI 完成后的单次真实响应，不重建背包且不消耗正式额度。</summary>
+        public bool StartDebugReaction()
         {
-            if (!CanOperate() || operationRunning || debugOperationRoutine != null ||
-                !RandomizeInitialPlacement())
+            if (!CanOperate() || operationRunning || debugReactionRoutine != null)
             {
                 return false;
             }
 
-            debugOperationRoutine = StartCoroutine(
-                RunDebugOperations(Mathf.Max(1, operationCount)));
+            // 在协程首帧前就占用操作权，避免 Update 同帧启动普通敌方操作。
+            operationRunning = true;
+            debugReactionRoutine = StartCoroutine(RunDebugReaction());
             return true;
         }
 
-        private IEnumerator RunDebugOperations(int targetCount)
+        private IEnumerator RunDebugReaction()
         {
-            int completed = 0;
-            operationRunning = true;
-            while (completed < targetCount && CanOperate())
-            {
-                if (!TryExecuteOperation())
-                {
-                    break;
-                }
-
-                completed++;
-                // 敌方沿用自己的完整视效时长，避免复用 ItemView 时相互打断。
+            if (TryExecuteOperation())
                 yield return new WaitForSecondsRealtime(VisualOperationDuration);
-            }
-
             operationRunning = false;
-            debugOperationRoutine = null;
+            debugReactionRoutine = null;
+        }
+
+        public void SetDebugAutomationPaused(bool paused)
+        {
+            debugAutomationPaused = paused;
+            if (paused)
+            {
+                pendingImmediateOperations = 0;
+                pendingCountedOperations = 0;
+            }
         }
         public bool RequestImmediateReaction()
         {
@@ -348,6 +381,9 @@ namespace BackpackPrototype
                     return combatController.RemoveItem(operation.Item);
                 case BackpackOperationKind.MergeItems:
                     return Backpack.TryMerge(operation.Item, operation.SecondaryItem);
+                case BackpackOperationKind.MergeShopItem:
+                    return TryMergeShopItem(
+                        operation.ShopItem, operation.SecondaryItem);
                 case BackpackOperationKind.ReplaceItem:
                     return TryReplaceItem(operation.Item, operation.ShopItem, operation.Destination);
                 default:
@@ -773,6 +809,22 @@ namespace BackpackPrototype
             return true;
         }
 
+        private bool TryMergeShopItem(ItemData data, ItemInstance target)
+        {
+            int index = shopItems.IndexOf(data);
+            if (index < 0 || target == null ||
+                !Backpack.TryMerge(
+                    new ItemInstance("enemy-shop-merge", data, Vector2Int.zero),
+                    target))
+            {
+                return false;
+            }
+
+            shopItems.RemoveAt(index);
+            FindView(target)?.PlayMergeFeedback();
+            return true;
+        }
+
         private bool TryReplaceItem(
             ItemInstance oldItem,
             ItemData data,
@@ -1029,7 +1081,11 @@ namespace BackpackPrototype
         }
         private void HandlePhaseChanged(BattlePhase phase)
         {
-            if (phase == BattlePhase.Preparation) InitializePreparation();
+            if (phase == BattlePhase.Preparation)
+            {
+                TryApplyInitialLayoutForMatch();
+                InitializePreparation();
+            }
             else
             {
                 pendingImmediateOperations = 0;
@@ -1091,16 +1147,26 @@ namespace BackpackPrototype
         private bool ApplyLayoutInternal(IReadOnlyList<BackpackLayoutItem> layout, EnemyBackpackData sourceData)
         {
             if (!CanOperate() || layout == null) return false;
-            BackpackController validation = new(Backpack.Width, Backpack.Height);
-            for (int index = 0; index < layout.Count; index++)
-            {
-                BackpackLayoutItem placement = layout[index];
-                if (placement.Data == null || !validation.PlaceItem(new ItemInstance($"enemy-validation-{index}", placement.Data, placement.AnchorCell, placement.Level), placement.AnchorCell)) return false;
-            }
             isApplyingData = true;
-            try { combatController.Clear(); for (int index = 0; index < layout.Count; index++) { BackpackLayoutItem p = layout[index]; if (!combatController.PlaceItem(new ItemInstance($"enemy-item-{index + 1}", p.Data, p.AnchorCell, p.Level), p.AnchorCell)) return false; } }
+            bool applied;
+            try
+            {
+                applied = InitialBackpackLayoutController.TryApply(
+                    combatController, layout, ApplyProgressionLevel,
+                    out string failureReason);
+                if (!applied)
+                {
+                    Debug.LogError($"无法应用敌人背包布局：{failureReason}", this);
+                }
+            }
             finally { isApplyingData = false; }
+            if (!applied) return false;
             currentData = sourceData; if (Application.isPlaying) RebuildViews(); return true;
+        }
+
+        private void HandleMatchInitialized()
+        {
+            RequestInitialLayoutForNewMatch();
         }
         private void SubscribeBackpack()
         {
@@ -1229,10 +1295,15 @@ namespace BackpackPrototype
             bool valid = combatController != null && fighterSpawner != null && (defaultData != null || defaultDeckPreset != null || presetPool.Count > 0) && gridView != null && itemLayer != null && aircraftSpawnAnchor != null && collisionCenterAnchor != null && itemViewPrefab != null;
             if (!valid) Debug.LogError("EnemyBackpackSystem配置不完整。", this); return valid;
         }
-        private void OnDisable() => BattleFlowController.PhaseChanged -= HandlePhaseChanged;
+        private void OnDisable()
+        {
+            BattleFlowController.PhaseChanged -= HandlePhaseChanged;
+            LevelFlowController.MatchInitialized -= HandleMatchInitialized;
+        }
         private void OnDestroy()
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
+            LevelFlowController.MatchInitialized -= HandleMatchInitialized;
             DestroyRuntimeDeckPreset(runtimeDeckPreset);
             if (Backpack == null) return;
             Backpack.ItemAdded -= HandleItemAdded; Backpack.ItemMoved -= HandleItemMoved; Backpack.ItemRemoved -= HandleItemRemoved; Backpack.Cleared -= HandleCleared;

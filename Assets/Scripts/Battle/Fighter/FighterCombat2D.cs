@@ -631,9 +631,7 @@ namespace BackpackHero.Battle
                             GamePacingDebugRuntime
                                 .GetProjectileDamageMultiplier(
                                     fighter.Faction) *
-                            LevelDifficultyRuntime
-                                .GetProjectileDamageMultiplier(
-                                    fighter.Faction) *
+                            fighter.LevelDifficultyDamageMultiplier *
                             (LevelFlowController.Instance?.IsOvertime == true
                                 ? LevelFlowController.OvertimeProjectileDamageMultiplier
                                 : 1f),

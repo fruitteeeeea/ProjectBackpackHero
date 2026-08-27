@@ -43,6 +43,7 @@ namespace BackpackHero.Battle
         private ItemInstance damageSourceItem;
         private float progressionHealthMultiplier = 1f;
         private float progressionDamageMultiplier = 1f;
+        private bool appliesEnemyLevelStrength;
         private LifetimeAndScreenBounds2D lifetime;
         private bool overtimePenaltyActive;
         private float overtimePenaltyRetryTimer;
@@ -82,6 +83,14 @@ namespace BackpackHero.Battle
             Time.time < initialInvulnerabilityEndsAt;
         public ItemInstance DamageSourceItem => damageSourceItem;
         public float ProgressionDamageMultiplier => progressionDamageMultiplier;
+        /// <summary>
+        /// 生成时确定的关卡伤害倍率。调试开关后不会改变既有敌机。
+        /// </summary>
+        public float LevelDifficultyDamageMultiplier =>
+            appliesEnemyLevelStrength
+                ? LevelDifficultyRuntime.GetProjectileDamageMultiplier(
+                    Faction)
+                : 1f;
 
         /// <summary>
         /// 本架飞机生成时截取的战斗曲线值。曲线输入之后变化不会影响它。
@@ -217,6 +226,8 @@ namespace BackpackHero.Battle
                 Time.time + InitialInvulnerabilityDuration;
             progressionHealthMultiplier = Mathf.Max(0.01f, healthMultiplier);
             progressionDamageMultiplier = Mathf.Max(0.01f, damageMultiplier);
+            appliesEnemyLevelStrength = faction != BattleFaction.Enemy ||
+                LevelDifficultyRuntime.Instance?.EnemyStrengthEnabled == true;
             
             factionMember.SetFaction(faction);
             
@@ -316,8 +327,10 @@ namespace BackpackHero.Battle
                 progressionHealthMultiplier *
                 GamePacingDebugRuntime.GetAircraftHealthMultiplier(
                     Faction) *
-                LevelDifficultyRuntime.GetAircraftHealthMultiplier(
-                    Faction) *
+                (appliesEnemyLevelStrength
+                    ? LevelDifficultyRuntime.GetAircraftHealthMultiplier(
+                        Faction)
+                    : 1f) *
                 (LevelFlowController.Instance?.IsOvertime == true
                     ? LevelFlowController.OvertimeAircraftHealthMultiplier
                     : 1f));

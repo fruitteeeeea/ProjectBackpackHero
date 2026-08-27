@@ -63,8 +63,7 @@ namespace BackpackHero.Battle
                 fighter.EffectiveDamageMultiplier *
                 GamePacingDebugRuntime.GetProjectileDamageMultiplier(
                     fighter.Faction) *
-                LevelDifficultyRuntime.GetProjectileDamageMultiplier(
-                    fighter.Faction);
+                fighter.LevelDifficultyDamageMultiplier;
             impact.ResolveImpact(null, transform.position, fighter.Faction, damage,
                 new BattleDamageSource(fighter.DamageSourceItem));
             Destroy(attack.gameObject);

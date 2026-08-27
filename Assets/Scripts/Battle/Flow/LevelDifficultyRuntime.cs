@@ -11,10 +11,16 @@ namespace BackpackHero.Battle
         private const string ResourceName = "LevelDifficultySettings";
         [SerializeField] private LevelDifficultySettings settings;
         private LevelDifficultySettings activeValues;
+        private bool enemyStrengthEnabled;
 
         public static LevelDifficultyRuntime Instance { get; private set; }
         public static event Action Changed;
         public LevelDifficultySettings Settings => settings;
+        /// <summary>
+        /// 是否让新生成的敌机应用关卡敌人生命与伤害倍率。
+        /// 该状态仅在当前 Play Mode 中保存。
+        /// </summary>
+        public bool EnemyStrengthEnabled => enemyStrengthEnabled;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState() { Instance = null; Changed = null; }
@@ -32,6 +38,7 @@ namespace BackpackHero.Battle
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+            enemyStrengthEnabled = false;
             settings = Resources.Load<LevelDifficultySettings>(ResourceName);
             if (settings != null)
             {
@@ -76,6 +83,14 @@ namespace BackpackHero.Battle
                     .GetBackpackRoundHealthMultiplier(
                         LevelFlowController.CurrentRound)
                 : 1f;
+        }
+
+        /// <summary>
+        /// 更新新生成敌机的关卡强度开关，不通知已有战斗单位刷新数值。
+        /// </summary>
+        public void SetEnemyStrengthEnabled(bool enabled)
+        {
+            enemyStrengthEnabled = enabled;
         }
 
         public void SetSettings(LevelDifficultySettings nextSettings)

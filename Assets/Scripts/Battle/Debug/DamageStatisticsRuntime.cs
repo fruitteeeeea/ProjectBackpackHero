@@ -23,13 +23,14 @@ namespace BackpackHero.Battle
         private sealed class MutableFactionTotals { public int EnemyAircraftKills; public int OvertimeAircraftExits; }
         private readonly Dictionary<BattleFaction, Dictionary<string, MutableEntry>> entries = new();
         private readonly Dictionary<BattleFaction, MutableFactionTotals> factionTotals = new();
+        private float combatStartedAt = -1f;
         public static DamageStatisticsRuntime Instance { get; private set; }
         public static event Action Changed;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void EnsureGlobal() { if (Instance == null) new GameObject("Damage Statistics Runtime").AddComponent<DamageStatisticsRuntime>(); }
         private void Awake() { if (Instance != null && Instance != this) { Destroy(gameObject); return; } Instance = this; DontDestroyOnLoad(gameObject); BattleFlowController.PhaseChanged += HandlePhaseChanged; }
         private void OnDestroy() { BattleFlowController.PhaseChanged -= HandlePhaseChanged; if (Instance == this) Instance = null; }
-        private void HandlePhaseChanged(BattlePhase phase) { if (phase == BattlePhase.Combat) Clear(); }
+        private void HandlePhaseChanged(BattlePhase phase) { if (phase == BattlePhase.Combat) { Clear(); combatStartedAt = Time.unscaledTime; } }
         public void Clear() { entries.Clear(); factionTotals.Clear(); Changed?.Invoke(); }
         public static void RecordHit(BattleFaction faction, BattleDamageSource source, float raw, float actual, bool killedFighter) => Instance?.Record(faction, source, raw, actual, killedFighter);
         public static void RecordOvertimeAircraftExit(BattleFaction faction) =>
@@ -75,5 +76,6 @@ namespace BackpackHero.Battle
         public int GetOvertimeAircraftExitCount(BattleFaction faction) =>
             factionTotals.TryGetValue(faction, out MutableFactionTotals totals)
                 ? totals.OvertimeAircraftExits : 0;
+        public float CombatElapsedSeconds => combatStartedAt < 0f ? 0f : Mathf.Max(0f, Time.unscaledTime - combatStartedAt);
     }
 }

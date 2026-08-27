@@ -384,6 +384,13 @@ namespace BackpackPrototype
                 return;
             }
 
+            PlayerBackpackSystem playerBackpack = GetComponent<PlayerBackpackSystem>();
+            if (playerBackpack != null && playerBackpack.TryGetDebugProgressionLevel(out int debugLevel))
+            {
+                item.SetProgressionLevel(debugLevel);
+                return;
+            }
+
             PlayerItemSystem progression = PlayerItemSystem.Instance;
             if (progression != null)
             {

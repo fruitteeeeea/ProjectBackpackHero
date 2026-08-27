@@ -40,7 +40,8 @@ namespace BackpackHero.EditorTools
         Pack,
         DamageStatistics,
         BackpackStrength,
-        FloatingDamageText
+        FloatingDamageText,
+        BalanceAdjustment
     }
 
     internal sealed class DebugCenterTabDefinition
@@ -110,9 +111,12 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.FloatingDamageText, DebugCenterKind.VisualEffects, "伤害飘字",
                 () => FloatingDamageTextDebugRuntime.Instance != null,
                 VisualEffectsDebugCenterWindow.CreateFloatingDamageTextContent, true),
+            new(DebugCenterTab.BalanceAdjustment, DebugCenterKind.GameplayDesign, "平衡调整",
+                BalanceAdjustmentDebugWindow.IsAvailable,
+                () => ScriptableObject.CreateInstance<BalanceAdjustmentDebugWindow>(), true),
             new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
                 () => GamePacingDebugRuntime.Instance != null,
-                () => ScriptableObject.CreateInstance<GamePacingDebugWindow>(), true),
+                () => ScriptableObject.CreateInstance<GamePacingDebugWindow>()),
             new(DebugCenterTab.StyleTendency, DebugCenterKind.GameplayDesign, "风格倾向",
                 () => StyleTendencyDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<StyleTendencyDebugWindow>()),
@@ -342,6 +346,7 @@ namespace BackpackHero.EditorTools
                 case PackDebugWindow pack: pack.DrawTab(); break;
                 case DamageStatisticsDebugWindow damageStatistics: damageStatistics.DrawTab(); break;
                 case BackpackStrengthDebugWindow backpackStrength: backpackStrength.DrawTab(); break;
+                case BalanceAdjustmentDebugWindow balanceAdjustment: balanceAdjustment.DrawTab(); break;
             }
         }
     }

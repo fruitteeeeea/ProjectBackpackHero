@@ -122,6 +122,7 @@ namespace BackpackPrototype
             aircraftAppearancesThisPreparation = new();
         private int nextItemId;
         private int remainingRolls;
+        private int debugProgressionLevel = -1;
 
         /// <summary>Roll 次数变化后通知商店 UI 刷新显示。</summary>
         public event Action RollStateChanged;
@@ -162,6 +163,37 @@ namespace BackpackPrototype
             Mathf.Max(1, rollsPerPreparation);
 
         public int RemainingRolls => remainingRolls;
+        public bool HasDebugProgressionLevel => debugProgressionLevel >= ItemInstance.DefaultLevel;
+        public int ActiveProgressionLevel => HasDebugProgressionLevel
+            ? debugProgressionLevel : PlayerItemSystem.DefaultLevel;
+
+        /// <summary>仅覆写当前对局背包实例，不写入玩家养成存档。</summary>
+        public bool SetDebugProgressionLevel(int level)
+        {
+            if (!isReady || Backpack == null) return false;
+            debugProgressionLevel = Mathf.Clamp(level, ItemInstance.DefaultLevel, ItemInstance.MaximumLevel);
+            ApplyDebugProgressionLevel();
+            return true;
+        }
+
+        public void ClearDebugProgressionLevel()
+        {
+            debugProgressionLevel = -1;
+            foreach (ItemInstance item in Items)
+                item?.SetProgressionLevel(PlayerItemSystem.Instance?.GetLevel(item.Data) ?? PlayerItemSystem.DefaultLevel);
+        }
+
+        public bool TryGetDebugProgressionLevel(out int level)
+        {
+            level = debugProgressionLevel;
+            return HasDebugProgressionLevel;
+        }
+
+        private void ApplyDebugProgressionLevel()
+        {
+            if (!HasDebugProgressionLevel) return;
+            foreach (ItemInstance item in Items) item?.SetProgressionLevel(debugProgressionLevel);
+        }
 
         public IReadOnlyList<ItemData> ActiveDeckItems =>
             runtimeDeckItems ??
@@ -355,6 +387,21 @@ namespace BackpackPrototype
                        Backpack.Height,
                        null,
                        out _);
+        }
+
+        /// <summary>调试用：复用敌方初始摆放规划器安排当前玩家 Deck。</summary>
+        public bool RandomizeInitialPlacementWithEnemyAI()
+        {
+            if (!isReady || Backpack == null ||
+                BattleFlowController.CurrentPhase != BattlePhase.Preparation ||
+                !EnemyBackpackLayoutPlanner.TryBuild(
+                    ActiveDeckItems, Backpack.Width, Backpack.Height,
+                    out List<BackpackLayoutItem> layout))
+            {
+                return false;
+            }
+
+            return LoadLayout(layout);
         }
 
         public bool TryApplyRuntimeDeck(

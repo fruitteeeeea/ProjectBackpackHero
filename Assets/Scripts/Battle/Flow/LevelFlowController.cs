@@ -82,6 +82,20 @@ namespace BackpackHero.Battle
             return true;
         }
 
+        /// <summary>以正式结算流程立即结束整场对局，仅供运行时调试调用。</summary>
+        public bool ForceDebugMatchResult(bool playerWon)
+        {
+            if (!BattleFlowController.IsCombatPhase || showingResult || isMatchComplete)
+            {
+                return false;
+            }
+
+            playerWins = playerWon ? WinsRequired - 1 : 0;
+            enemyWins = playerWon ? 0 : WinsRequired - 1;
+            RecordDeath(player: !playerWon);
+            return true;
+        }
+
         public static event Action<int> RoundStarted;
         public static event Action<string> ResultShown;
         public static event Action MatchStateChanged;

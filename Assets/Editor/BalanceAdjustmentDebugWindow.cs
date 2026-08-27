@@ -1,0 +1,224 @@
+using System.Collections.Generic;
+using System.Linq;
+using BackpackHero.Battle;
+using BackpackHero.Debugging;
+using BackpackPrototype;
+using UnityEditor;
+using UnityEngine;
+
+namespace BackpackHero.EditorTools
+{
+    /// <summary>对局内的只读汇总与临时平衡控制入口。</summary>
+    internal sealed class BalanceAdjustmentDebugWindow : ScriptableObject
+    {
+        private Vector2 scroll;
+
+        internal static bool IsAvailable()
+        {
+            PlayerBackpackDebugBridge bridge = PlayerBackpackDebugBridge.Active;
+            return EditorApplication.isPlaying && bridge?.Target?.IsReady == true &&
+                bridge.EnemyTarget?.IsReady == true &&
+                (BattleFlowController.CurrentPhase == BattlePhase.Preparation ||
+                 BattleFlowController.CurrentPhase == BattlePhase.Combat);
+        }
+
+        internal void DrawTab()
+        {
+            scroll = EditorGUILayout.BeginScrollView(scroll);
+            EditorGUILayout.LabelField("平衡调整", EditorStyles.boldLabel);
+            if (!IsAvailable())
+            {
+                EditorGUILayout.HelpBox("仅在对局的准备阶段或战斗阶段、且双方背包已就绪时可用。", MessageType.Info);
+                EditorGUILayout.EndScrollView();
+                return;
+            }
+
+            PlayerBackpackDebugBridge bridge = PlayerBackpackDebugBridge.Active;
+            DrawRuntimeInformation(bridge);
+            EditorGUILayout.Space(12f);
+            DrawAdjustments(bridge);
+            EditorGUILayout.EndScrollView();
+        }
+
+        private static void DrawRuntimeInformation(PlayerBackpackDebugBridge bridge)
+        {
+            EditorGUILayout.LabelField("运行时信息显示", EditorStyles.boldLabel);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                DrawFactionInformation("玩家", BattleFaction.Player, bridge.Target, bridge.EnemyTarget, true);
+                DrawFactionInformation("敌人", BattleFaction.Enemy, bridge.Target, bridge.EnemyTarget, false);
+            }
+        }
+
+        private static void DrawFactionInformation(string title, BattleFaction faction,
+            PlayerBackpackSystem player, EnemyBackpackSystem enemy, bool isPlayer)
+        {
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox, GUILayout.MinWidth(300f)))
+            {
+                EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+                int level = isPlayer ? player.ActiveProgressionLevel : enemy.ActiveProgressionLevel;
+                EditorGUILayout.LabelField("养成等级", $"Lv.{level}");
+                EditorGUILayout.LabelField("背包配置", isPlayer ? DescribePlayerDeck(player) : enemy.CurrentDeckPreset?.name ?? "未选择预设", EditorStyles.wordWrappedLabel);
+                BackpackController backpack = isPlayer ? player.Backpack : enemy.Backpack;
+                EditorGUILayout.LabelField("背包强度", backpack != null ? BackpackStrengthCalculator.Calculate(backpack).TotalScore.ToString("0.##") : "-");
+                DrawDamageSummary(faction);
+            }
+        }
+
+        private static string DescribePlayerDeck(PlayerBackpackSystem player)
+        {
+            IReadOnlyList<ItemData> deck = player.ActiveDeckItems;
+            return "当前玩家 Deck：" + string.Join(" / ", deck.Select(item => item != null ? item.ItemName : "空"));
+        }
+
+        private static void DrawDamageSummary(BattleFaction faction)
+        {
+            DamageStatisticsRuntime statistics = DamageStatisticsRuntime.Instance;
+            IReadOnlyList<DamageStatisticsEntry> entries = statistics?.GetEntries(faction) ?? new List<DamageStatisticsEntry>();
+            float total = entries.Sum(entry => entry.ActualDamage);
+            float elapsed = statistics?.CombatElapsedSeconds ?? 0f;
+            EditorGUILayout.LabelField("当前总伤害", total.ToString("0.##"));
+            EditorGUILayout.LabelField("DPS", elapsed > 0f ? (total / elapsed).ToString("0.##") : "0");
+            int kills = statistics?.GetEnemyAircraftKillCount(faction) ?? 0;
+            int exits = statistics?.GetOvertimeAircraftExitCount(faction) ?? 0;
+            EditorGUILayout.LabelField("击杀敌机（己方强制退场）", $"{kills}（{exits}）");
+            DrawDamageCategory("飞机子弹", DamageStatisticsItemCategory.Aircraft, entries, total);
+            DrawDamageCategory("装备伤害", DamageStatisticsItemCategory.Equipment, entries, total);
+        }
+
+        private static void DrawDamageCategory(string label, DamageStatisticsItemCategory category,
+            IReadOnlyList<DamageStatisticsEntry> entries, float total)
+        {
+            float damage = entries.Where(entry => entry.Category == category).Sum(entry => entry.ActualDamage);
+            EditorGUILayout.LabelField(label, $"{damage:0.##}（{(total > 0f ? damage / total : 0f):P1}）", EditorStyles.miniLabel);
+        }
+
+        private static void DrawAdjustments(PlayerBackpackDebugBridge bridge)
+        {
+            EditorGUILayout.LabelField("操作调整", EditorStyles.boldLabel);
+            DrawGameSpeed();
+            DrawFlightRoute(bridge);
+            DrawProgressionLevels(bridge);
+            DrawAutomatedPlacement(bridge);
+            DrawMatchControls(bridge);
+        }
+
+        private static void DrawGameSpeed()
+        {
+            GamePacingDebugRuntime runtime = GamePacingDebugRuntime.Instance;
+            if (runtime == null) return;
+            float value = EditorGUILayout.Slider("游戏运行速度", runtime.GameSpeed, .5f, 1f);
+            if (!Mathf.Approximately(value, runtime.GameSpeed)) runtime.SetGameSpeed(value);
+        }
+
+        private static void DrawFlightRoute(PlayerBackpackDebugBridge bridge)
+        {
+            PlayerRandomFlightCurveController controller = bridge.GetComponent<PlayerRandomFlightCurveController>();
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("随机航线", EditorStyles.boldLabel);
+            using (new EditorGUI.DisabledScope(BattleFlowController.CurrentPhase != BattlePhase.Combat || controller == null))
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                DrawRouteButton(controller, RandomFlightCurveMode.Off, "关闭");
+                DrawRouteButton(controller, RandomFlightCurveMode.Peaceful, "平和");
+                DrawRouteButton(controller, RandomFlightCurveMode.Intense, "激烈");
+            }
+        }
+
+        private static void DrawRouteButton(PlayerRandomFlightCurveController controller, RandomFlightCurveMode mode, string label)
+        {
+            Color old = GUI.backgroundColor;
+            if (controller != null && controller.Mode == mode) GUI.backgroundColor = new Color(.65f, .9f, 1f);
+            if (GUILayout.Button(label) && controller != null) controller.SetMode(mode);
+            GUI.backgroundColor = old;
+        }
+
+        private static void DrawProgressionLevels(PlayerBackpackDebugBridge bridge)
+        {
+            EditorGUILayout.Space(6f);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                DrawLevelButtons("玩家临时养成", bridge.Target.ActiveProgressionLevel,
+                    level => bridge.Target.SetDebugProgressionLevel(level));
+                DrawLevelButtons("敌人临时养成", bridge.EnemyTarget.ActiveProgressionLevel,
+                    level => bridge.EnemyTarget.SetDebugProgressionLevel(level));
+            }
+        }
+
+        private static void DrawLevelButtons(string title, int activeLevel, System.Func<int, bool> setLevel)
+        {
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+                for (int row = 0; row < 2; row++)
+                using (new EditorGUILayout.HorizontalScope())
+                for (int column = 1; column <= 5; column++)
+                {
+                    int level = row * 5 + column;
+                    Color old = GUI.backgroundColor;
+                    if (activeLevel == level) GUI.backgroundColor = new Color(.65f, .9f, 1f);
+                    if (GUILayout.Button($"Lv.{level}")) setLevel(level);
+                    GUI.backgroundColor = old;
+                }
+            }
+        }
+
+        private static void DrawAutomatedPlacement(PlayerBackpackDebugBridge bridge)
+        {
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("敌方 AI 自动摆放", EditorStyles.boldLabel);
+            bool canPlace = BattleFlowController.CurrentPhase == BattlePhase.Preparation &&
+                bridge.Target.IsReady && bridge.EnemyTarget.IsReady && !bridge.EnemyTarget.IsOperationRunning;
+            using (new EditorGUI.DisabledScope(!canPlace))
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("玩家执行 15 次摆放"))
+                {
+                    for (int index = 0; index < 15; index++)
+                        bridge.Target.RandomizeInitialPlacementWithEnemyAI();
+                }
+                if (GUILayout.Button("敌人执行 15 次摆放"))
+                {
+                    for (int index = 0; index < 15; index++)
+                        bridge.EnemyTarget.RandomizeInitialPlacement();
+                }
+            }
+            EditorGUILayout.HelpBox("双方均使用 EnemyBackpackLayoutPlanner；15 次连续重新规划后保留最后一次有效布局。", MessageType.None);
+        }
+
+        private static void DrawMatchControls(PlayerBackpackDebugBridge bridge)
+        {
+            LevelFlowController flow = LevelFlowController.Instance;
+            EditorGUILayout.Space(6f);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(flow == null || !flow.IsRoundTimerRunning))
+                {
+                    if (GUILayout.Button("-5 秒")) flow.AdjustRoundTimerForDebug(-5f);
+                    if (GUILayout.Button("+5 秒")) flow.AdjustRoundTimerForDebug(5f);
+                }
+                if (GUILayout.Button("准备阶段")) bridge.EnterPreparation();
+                if (GUILayout.Button("战斗阶段")) bridge.EnterCombat();
+            }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(!bridge.CanSwapRuntimeDecks))
+                    if (GUILayout.Button("交换玩家和敌人背包")) bridge.TrySwapRuntimeDecksAndResetMatch();
+                using (new EditorGUI.DisabledScope(bridge.BackpacksHealthLocked || !bridge.CanLockBackpackHealth))
+                {
+                    if (GUILayout.Button("敌人背包 -25%")) bridge.DamageEnemyBackpackByMaximumHealthFraction(.25f);
+                    if (GUILayout.Button("玩家背包 -25%")) bridge.DamagePlayerBackpackByMaximumHealthFraction(.25f);
+                }
+            }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(flow == null || !BattleFlowController.IsCombatPhase))
+                {
+                    if (GUILayout.Button("战斗胜利")) flow.ForceDebugMatchResult(true);
+                    if (GUILayout.Button("战斗失败")) flow.ForceDebugMatchResult(false);
+                }
+                if (GUILayout.Button("重启对局")) { DamageStatisticsRuntime.Instance?.Clear(); flow?.ResetForDebugMatch(); }
+            }
+        }
+    }
+}

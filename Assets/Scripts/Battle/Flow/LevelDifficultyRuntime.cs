@@ -38,7 +38,9 @@ namespace BackpackHero.Battle
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
-            enemyStrengthEnabled = false;
+            // 关卡难度是正式游戏参数，默认应参与敌人生成；调试页的
+            // “关闭”只用于当前 Play Mode 的临时验证。
+            enemyStrengthEnabled = true;
             settings = GameDataCatalog.Load()?.LevelDifficulty;
             if (settings != null)
             {

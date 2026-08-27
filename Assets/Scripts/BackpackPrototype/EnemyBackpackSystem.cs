@@ -193,6 +193,12 @@ namespace BackpackPrototype
             return true;
         }
 
+        /// <summary>调试桥接用：在准备阶段恢复已验证的精确背包布局。</summary>
+        public bool LoadLayout(IReadOnlyList<BackpackLayoutItem> layout)
+        {
+            return ApplyLayoutInternal(layout, null);
+        }
+
 
         public bool ApplyData(EnemyBackpackData data)
         {

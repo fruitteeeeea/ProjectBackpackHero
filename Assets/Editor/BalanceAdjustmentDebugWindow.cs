@@ -12,6 +12,8 @@ namespace BackpackHero.EditorTools
     internal sealed class BalanceAdjustmentDebugWindow : ScriptableObject
     {
         private Vector2 scroll;
+        private readonly BalanceAdjustmentPersistence persistence =
+            new BalanceAdjustmentPersistence();
 
         internal static bool IsAvailable()
         {
@@ -26,34 +28,39 @@ namespace BackpackHero.EditorTools
         {
             scroll = EditorGUILayout.BeginScrollView(scroll);
             EditorGUILayout.LabelField("平衡调整", EditorStyles.boldLabel);
-            if (!IsAvailable())
+            persistence.DrawTestToolbar();
+            persistence.DrawPersistentEnemyStrength();
+            bool runtimeReady = IsAvailable();
+            if (!runtimeReady)
             {
-                EditorGUILayout.HelpBox("仅在对局的准备阶段或战斗阶段、且双方背包已就绪时可用。", MessageType.Info);
-                EditorGUILayout.EndScrollView();
-                return;
+                EditorGUILayout.HelpBox("等待 Play Mode 对局运行时：页面保持可打开，功能将在双方背包就绪且位于准备或战斗阶段时启用。", MessageType.Info);
             }
 
             PlayerBackpackDebugBridge bridge = PlayerBackpackDebugBridge.Active;
-            DrawRuntimeInformation(bridge);
-            EditorGUILayout.Space(12f);
-            DrawAdjustments(bridge);
+            using (new EditorGUI.DisabledScope(!runtimeReady))
+            {
+                if (runtimeReady)
+                {
+                    DrawRuntimeInformation(bridge);
+                    EditorGUILayout.Space(12f);
+                    DrawAdjustments(bridge);
+                }
+            }
             EditorGUILayout.EndScrollView();
         }
 
         private static void DrawRuntimeInformation(PlayerBackpackDebugBridge bridge)
         {
             EditorGUILayout.LabelField("运行时信息显示", EditorStyles.boldLabel);
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                DrawFactionInformation("玩家", BattleFaction.Player, bridge.Target, bridge.EnemyTarget, true);
-                DrawFactionInformation("敌人", BattleFaction.Enemy, bridge.Target, bridge.EnemyTarget, false);
-            }
+            DrawFactionInformation("玩家", BattleFaction.Player, bridge.Target, bridge.EnemyTarget, true);
+            EditorGUILayout.Space(6f);
+            DrawFactionInformation("敌人", BattleFaction.Enemy, bridge.Target, bridge.EnemyTarget, false);
         }
 
         private static void DrawFactionInformation(string title, BattleFaction faction,
             PlayerBackpackSystem player, EnemyBackpackSystem enemy, bool isPlayer)
         {
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox, GUILayout.MinWidth(300f)))
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
                 int level = isPlayer ? player.ActiveProgressionLevel : enemy.ActiveProgressionLevel;
@@ -93,7 +100,7 @@ namespace BackpackHero.EditorTools
             EditorGUILayout.LabelField(label, $"{damage:0.##}（{(total > 0f ? damage / total : 0f):P1}）", EditorStyles.miniLabel);
         }
 
-        private static void DrawAdjustments(PlayerBackpackDebugBridge bridge)
+        private void DrawAdjustments(PlayerBackpackDebugBridge bridge)
         {
             EditorGUILayout.LabelField("操作调整", EditorStyles.boldLabel);
             DrawGameSpeed();
@@ -107,8 +114,15 @@ namespace BackpackHero.EditorTools
         {
             GamePacingDebugRuntime runtime = GamePacingDebugRuntime.Instance;
             if (runtime == null) return;
-            float value = EditorGUILayout.Slider("游戏运行速度", runtime.GameSpeed, .5f, 1f);
-            if (!Mathf.Approximately(value, runtime.GameSpeed)) runtime.SetGameSpeed(value);
+            EditorGUI.BeginChangeCheck();
+            float value = EditorGUILayout.Slider("游戏运行速度", runtime.GameSpeed <= 0f ? 1f : runtime.GameSpeed, .5f, 2f);
+            value = Mathf.Round(value * 2f) * .5f;
+            if (EditorGUI.EndChangeCheck()) runtime.SetGameSpeed(value);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("恢复正常游戏速度（1x）")) runtime.SetGameSpeed(1f);
+                if (GUILayout.Button("暂停游戏（0x）")) runtime.SetGameSpeed(0f);
+            }
         }
 
         private static void DrawFlightRoute(PlayerBackpackDebugBridge bridge)
@@ -133,16 +147,14 @@ namespace BackpackHero.EditorTools
             GUI.backgroundColor = old;
         }
 
-        private static void DrawProgressionLevels(PlayerBackpackDebugBridge bridge)
+        private void DrawProgressionLevels(PlayerBackpackDebugBridge bridge)
         {
             EditorGUILayout.Space(6f);
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                DrawLevelButtons("玩家临时养成", bridge.Target.ActiveProgressionLevel,
-                    level => bridge.Target.SetDebugProgressionLevel(level));
-                DrawLevelButtons("敌人临时养成", bridge.EnemyTarget.ActiveProgressionLevel,
-                    level => bridge.EnemyTarget.SetDebugProgressionLevel(level));
-            }
+            DrawLevelButtons("玩家临时养成", bridge.Target.ActiveProgressionLevel,
+                level => bridge.Target.SetDebugProgressionLevel(level));
+            EditorGUILayout.Space(6f);
+            DrawLevelButtons("敌人临时养成", bridge.EnemyTarget.ActiveProgressionLevel,
+                level => bridge.EnemyTarget.SetDebugProgressionLevel(level));
         }
 
         private static void DrawLevelButtons(string title, int activeLevel, System.Func<int, bool> setLevel)
@@ -220,5 +232,7 @@ namespace BackpackHero.EditorTools
                 if (GUILayout.Button("重启对局")) { DamageStatisticsRuntime.Instance?.Clear(); flow?.ResetForDebugMatch(); }
             }
         }
+
+        private void OnDisable() => persistence.Dispose();
     }
 }

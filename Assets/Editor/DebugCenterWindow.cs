@@ -112,7 +112,7 @@ namespace BackpackHero.EditorTools
                 () => FloatingDamageTextDebugRuntime.Instance != null,
                 VisualEffectsDebugCenterWindow.CreateFloatingDamageTextContent, true),
             new(DebugCenterTab.BalanceAdjustment, DebugCenterKind.GameplayDesign, "平衡调整",
-                BalanceAdjustmentDebugWindow.IsAvailable,
+                () => true,
                 () => ScriptableObject.CreateInstance<BalanceAdjustmentDebugWindow>(), true),
             new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
                 () => GamePacingDebugRuntime.Instance != null,

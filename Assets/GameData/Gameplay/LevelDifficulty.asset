@@ -22,8 +22,8 @@ MonoBehaviour:
   - 0.95
   - 1
   enemyStages:
-  - health: 0.79
-    damage: 0.79
+  - health: 0.85
+    damage: 0.85
   - health: 0.82
     damage: 0.81
   - health: 0.84

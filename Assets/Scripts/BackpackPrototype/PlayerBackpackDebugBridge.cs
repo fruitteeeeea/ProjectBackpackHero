@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using BackpackHero.Battle;
+using BackpackHero.Debugging;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -329,6 +330,153 @@ namespace BackpackPrototype
             {
                 suppressEnemyReaction = false;
             }
+        }
+
+        /// <summary>把当前双方背包及临时调试状态收集为编辑器测试方案。</summary>
+        public bool TryCaptureBalanceTestPreset(
+            BalanceAdjustmentTestPreset preset,
+            out string error)
+        {
+            error = null;
+            if (preset == null)
+            {
+                error = "测试方案不可用。";
+                return false;
+            }
+
+            if (!playerBackpackSystem || !playerBackpackSystem.IsReady ||
+                !enemyBackpackSystem || !enemyBackpackSystem.IsReady)
+            {
+                error = "等待双方背包运行时就绪。";
+                return false;
+            }
+
+            PlayerRandomFlightCurveController flight =
+                GetComponent<PlayerRandomFlightCurveController>();
+            preset.SetRuntimeState(
+                GamePacingDebugRuntime.Instance?.GameSpeed ?? 1f,
+                flight != null ? flight.Mode : RandomFlightCurveMode.Off,
+                playerBackpackSystem.ActiveProgressionLevel,
+                enemyBackpackSystem.ActiveProgressionLevel,
+                enemyBackpackSystem.CurrentDeckPreset,
+                playerBackpackSystem.ActiveDeckItems,
+                enemyBackpackSystem.CurrentDeckPreset?.Slots,
+                CaptureLayout(playerBackpackSystem.Backpack),
+                CaptureLayout(enemyBackpackSystem.Backpack));
+            return true;
+        }
+
+        /// <summary>在准备阶段校验后一次性应用测试方案；不读取或写入正式配置。</summary>
+        public bool TryApplyBalanceTestPreset(
+            BalanceAdjustmentTestPreset preset,
+            out string error)
+        {
+            error = null;
+            if (!CanModifyPreparation())
+            {
+                error = "仅可在双方背包就绪的准备阶段应用测试方案。";
+                return false;
+            }
+
+            if (preset == null ||
+                !ValidatePreset(preset, playerBackpackSystem.Backpack,
+                    enemyBackpackSystem.Backpack, out error))
+            {
+                return false;
+            }
+
+            // 先完成所有不写状态的校验，随后才开始重置并修改当前对局。
+            LevelFlowController.EnsureInstance()?.ResetForDebugMatch();
+            suppressEnemyReaction = true;
+            try
+            {
+                if (!playerBackpackSystem.TryApplyRuntimeDeck(preset.PlayerDeck) ||
+                    !enemyBackpackSystem.TryApplyRuntimeDeck(preset.EnemyDeck) ||
+                    !playerBackpackSystem.LoadLayout(ToRuntimeLayout(preset.PlayerLayout)) ||
+                    !enemyBackpackSystem.LoadLayout(ToRuntimeLayout(preset.EnemyLayout)) ||
+                    !playerBackpackSystem.SetDebugProgressionLevel(preset.PlayerProgressionLevel) ||
+                    !enemyBackpackSystem.SetDebugProgressionLevel(preset.EnemyProgressionLevel))
+                {
+                    error = "测试方案布局无法应用到当前背包。";
+                    return false;
+                }
+
+                GamePacingDebugRuntime.Instance?.SetGameSpeed(preset.GameSpeed);
+                GetComponent<PlayerRandomFlightCurveController>()?.SetMode(
+                    preset.RandomFlightMode);
+                SetBackpacksHealthLocked(false);
+                RefreshSnapshot();
+                return true;
+            }
+            finally
+            {
+                suppressEnemyReaction = false;
+            }
+        }
+
+        private static List<BalanceAdjustmentTestPreset.LayoutEntry> CaptureLayout(
+            BackpackController backpack)
+        {
+            List<BalanceAdjustmentTestPreset.LayoutEntry> result = new();
+            if (backpack == null) return result;
+            foreach (ItemInstance item in backpack.Items)
+                if (item?.Data != null)
+                    result.Add(new BalanceAdjustmentTestPreset.LayoutEntry(
+                        item.Data, item.AnchorCell, item.Level));
+            return result;
+        }
+
+        private static List<BackpackLayoutItem> ToRuntimeLayout(
+            IReadOnlyList<BalanceAdjustmentTestPreset.LayoutEntry> source)
+        {
+            List<BackpackLayoutItem> result = new();
+            if (source == null) return result;
+            foreach (BalanceAdjustmentTestPreset.LayoutEntry entry in source)
+                result.Add(new BackpackLayoutItem(
+                    entry.Item, entry.AnchorCell, entry.Level));
+            return result;
+        }
+
+        private static bool ValidatePreset(BalanceAdjustmentTestPreset preset,
+            BackpackController playerBackpack, BackpackController enemyBackpack,
+            out string error)
+        {
+            error = null;
+            if (!DeckPreset.IsValidSlots(preset.PlayerDeck, out error) ||
+                !DeckPreset.IsValidSlots(preset.EnemyDeck, out error))
+            {
+                return false;
+            }
+
+            return ValidateLayout(preset.PlayerLayout, playerBackpack, "玩家", out error) &&
+                   ValidateLayout(preset.EnemyLayout, enemyBackpack, "敌人", out error);
+        }
+
+        private static bool ValidateLayout(
+            IReadOnlyList<BalanceAdjustmentTestPreset.LayoutEntry> source,
+            BackpackController backpack, string faction, out string error)
+        {
+            error = null;
+            if (backpack == null || source == null || source.Count == 0)
+            {
+                error = faction + "背包布局为空。";
+                return false;
+            }
+
+            BackpackController validation = new(backpack.Width, backpack.Height);
+            for (int index = 0; index < source.Count; index++)
+            {
+                BalanceAdjustmentTestPreset.LayoutEntry entry = source[index];
+                if (entry.Item == null || !validation.PlaceItem(
+                        new ItemInstance("balance-validation-" + index,
+                            entry.Item, entry.AnchorCell, entry.Level),
+                        entry.AnchorCell))
+                {
+                    error = faction + $"布局第 {index + 1} 项无效或发生重叠。";
+                    return false;
+                }
+            }
+            return true;
         }
 
         public bool ApplyEnemyData(

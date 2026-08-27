@@ -197,7 +197,7 @@ namespace BackpackHero.Debugging
         public void SetGameSpeed(float value)
         {
 #if UNITY_EDITOR
-            gameSpeed = Mathf.Clamp(value, 0.5f, 2f);
+            gameSpeed = Mathf.Clamp(value, 0f, 2f);
             Time.timeScale = gameSpeed;
 #endif
         }

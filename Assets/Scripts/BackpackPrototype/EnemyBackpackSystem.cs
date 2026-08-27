@@ -16,8 +16,7 @@ namespace BackpackPrototype
         private const int ShopRollsPerPreparation = 1;
         private const int MaximumOperationsPerPreparation = 8;
         private const int OperationSimulationAttemptCount = 5;
-        private const float ImmediateReactionMinDelay = .5f;
-        private const float ImmediateReactionMaxDelay = 1f;
+        private const float ManualReactionDelay = .3f;
         // 移动/加入的位移与放置反馈最长约 .52 秒；留出余量保证串行。
         private const float VisualOperationDuration = .65f;
 
@@ -50,7 +49,9 @@ namespace BackpackPrototype
         private bool initialLayoutPending = true;
         private int pendingInitialLayoutVersion = -1;
         private int appliedInitialLayoutVersion = -1;
+        private int appliedPreparationInitializationVersion = -1;
         private bool debugAutomationPaused;
+        private bool debugReactionPending;
         private Coroutine debugReactionRoutine;
         private int pendingImmediateOperations, pendingCountedOperations, remainingShopRolls, remainingOperations;
         private float nextAutomaticOperationTime, nextImmediateOperationTime;
@@ -131,7 +132,13 @@ namespace BackpackPrototype
         }
         private void Update()
         {
-            if (!CanOperate() || operationRunning || debugAutomationPaused) return;
+            if (!CanOperate() || operationRunning) return;
+            if (debugReactionPending)
+            {
+                TryStartPendingDebugReaction();
+                return;
+            }
+            if (debugAutomationPaused) return;
             if (remainingOperations <= 0) return;
             if (pendingImmediateOperations > 0 && Time.unscaledTime >= nextImmediateOperationTime) { pendingImmediateOperations--; StartCoroutine(RunOperation()); return; }
             // 等待玩家操作后的反应延迟期间，不允许普通自动操作抢先执行。
@@ -164,7 +171,7 @@ namespace BackpackPrototype
             if (!CanOperate() || currentDeckPreset == null ||
                 !InitialBackpackLayoutController.TryBuild(
                     currentDeckPreset.Slots, Backpack.Width, Backpack.Height,
-                    _ => activeProgressionLevel,
+                    null,
                     out List<BackpackLayoutItem> layout)) return false;
             return ApplyLayoutInternal(layout, null);
         }
@@ -257,15 +264,28 @@ namespace BackpackPrototype
         /// <summary>玩家 AI 完成后的单次真实响应，不重建背包且不消耗正式额度。</summary>
         public bool StartDebugReaction()
         {
-            if (!CanOperate() || operationRunning || debugReactionRoutine != null)
+            if (!CanOperate())
             {
                 return false;
             }
 
+            debugReactionPending = true;
+            TryStartPendingDebugReaction();
+            return true;
+        }
+
+        private void TryStartPendingDebugReaction()
+        {
+            if (!debugReactionPending || !CanOperate() || operationRunning ||
+                debugReactionRoutine != null || debugAutomationPaused)
+            {
+                return;
+            }
+
             // 在协程首帧前就占用操作权，避免 Update 同帧启动普通敌方操作。
+            debugReactionPending = false;
             operationRunning = true;
             debugReactionRoutine = StartCoroutine(RunDebugReaction());
-            return true;
         }
 
         private IEnumerator RunDebugReaction()
@@ -289,10 +309,7 @@ namespace BackpackPrototype
         {
             if (!CanOperate() || remainingOperations <= 0) return false;
             pendingImmediateOperations++;
-            nextImmediateOperationTime = Time.unscaledTime +
-                UnityEngine.Random.Range(
-                    ImmediateReactionMinDelay,
-                    ImmediateReactionMaxDelay);
+            nextImmediateOperationTime = Time.unscaledTime + ManualReactionDelay;
             return true;
         }
         public void SetOperationInterval(float value) => operationInterval = Mathf.Max(.1f, value);
@@ -351,10 +368,7 @@ namespace BackpackPrototype
             nextAutomaticOperationTime = Time.unscaledTime + operationInterval;
             if (pendingImmediateOperations > 0)
             {
-                nextImmediateOperationTime = Time.unscaledTime +
-                    UnityEngine.Random.Range(
-                        ImmediateReactionMinDelay,
-                        ImmediateReactionMaxDelay);
+                nextImmediateOperationTime = Time.unscaledTime + ManualReactionDelay;
             }
         }
         private bool TryExecuteOperation()
@@ -1085,6 +1099,11 @@ namespace BackpackPrototype
             {
                 TryApplyInitialLayoutForMatch();
                 InitializePreparation();
+                if (CanOperate())
+                {
+                    appliedPreparationInitializationVersion =
+                        LevelFlowController.MatchInitializationVersion;
+                }
             }
             else
             {
@@ -1167,6 +1186,26 @@ namespace BackpackPrototype
         private void HandleMatchInitialized()
         {
             RequestInitialLayoutForNewMatch();
+            InitializePreparationForNewMatch();
+        }
+
+        /// <summary>
+        /// 调试重启可在已经处于准备阶段时发生；此时不会触发 PhaseChanged，
+        /// 仍需为新对局重置隐藏商店、Roll 与操作额度。
+        /// </summary>
+        private void InitializePreparationForNewMatch()
+        {
+            int version = LevelFlowController.MatchInitializationVersion;
+            if (appliedPreparationInitializationVersion == version)
+            {
+                return;
+            }
+
+            InitializePreparation();
+            if (CanOperate())
+            {
+                appliedPreparationInitializationVersion = version;
+            }
         }
         private void SubscribeBackpack()
         {
@@ -1299,11 +1338,14 @@ namespace BackpackPrototype
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
             LevelFlowController.MatchInitialized -= HandleMatchInitialized;
+            debugReactionPending = false;
+            debugAutomationPaused = false;
         }
         private void OnDestroy()
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
             LevelFlowController.MatchInitialized -= HandleMatchInitialized;
+            debugReactionPending = false;
             DestroyRuntimeDeckPreset(runtimeDeckPreset);
             if (Backpack == null) return;
             Backpack.ItemAdded -= HandleItemAdded; Backpack.ItemMoved -= HandleItemMoved; Backpack.ItemRemoved -= HandleItemRemoved; Backpack.Cleared -= HandleCleared;

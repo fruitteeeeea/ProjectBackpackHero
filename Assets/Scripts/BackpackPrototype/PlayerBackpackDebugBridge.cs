@@ -899,6 +899,7 @@ namespace BackpackPrototype
                 if (subscribedPlayerSystem != null)
                 {
                     subscribedPlayerSystem.DebugAutoOperationsStarted -= HandlePlayerAutoOperationsStarted;
+                    subscribedPlayerSystem.DebugAutoOperationsReadyForEnemyResponse -= HandlePlayerAutoOperationsReadyForEnemyResponse;
                     subscribedPlayerSystem.DebugAutoOperationsFinished -= HandlePlayerAutoOperationsFinished;
                 }
 
@@ -906,6 +907,7 @@ namespace BackpackPrototype
                 if (subscribedPlayerSystem != null)
                 {
                     subscribedPlayerSystem.DebugAutoOperationsStarted += HandlePlayerAutoOperationsStarted;
+                    subscribedPlayerSystem.DebugAutoOperationsReadyForEnemyResponse += HandlePlayerAutoOperationsReadyForEnemyResponse;
                     subscribedPlayerSystem.DebugAutoOperationsFinished += HandlePlayerAutoOperationsFinished;
                 }
             }
@@ -976,7 +978,15 @@ namespace BackpackPrototype
         {
             suppressEnemyReactionForPlayerAutoOperation = false;
             enemyBackpackSystem?.SetDebugAutomationPaused(false);
-            if (CanModifyPreparation())
+        }
+
+        private void HandlePlayerAutoOperationsReadyForEnemyResponse()
+        {
+            suppressEnemyReactionForPlayerAutoOperation = false;
+            enemyBackpackSystem?.SetDebugAutomationPaused(false);
+            if (playerBackpackSystem != null &&
+                playerBackpackSystem.isActiveAndEnabled &&
+                CanModifyPreparation())
             {
                 enemyBackpackSystem?.StartDebugReaction();
             }
@@ -990,6 +1000,7 @@ namespace BackpackPrototype
             if (subscribedPlayerSystem != null)
             {
                 subscribedPlayerSystem.DebugAutoOperationsStarted -= HandlePlayerAutoOperationsStarted;
+                subscribedPlayerSystem.DebugAutoOperationsReadyForEnemyResponse -= HandlePlayerAutoOperationsReadyForEnemyResponse;
                 subscribedPlayerSystem.DebugAutoOperationsFinished -= HandlePlayerAutoOperationsFinished;
                 subscribedPlayerSystem = null;
             }

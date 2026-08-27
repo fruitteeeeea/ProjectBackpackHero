@@ -126,6 +126,7 @@ namespace BackpackPrototype
         private int debugProgressionLevel = -1;
         private Coroutine debugAutoOperationRoutine;
         private bool debugAutoOperationRunning;
+        private bool debugAutoResponseNotified;
         private int debugAutoOperationSuccessCount;
         private string debugAutoOperationStatus;
         private string debugAutoOperationName;
@@ -134,6 +135,7 @@ namespace BackpackPrototype
         private bool applyingInitialLayout;
         private int pendingInitialLayoutVersion = -1;
         private int appliedInitialLayoutVersion = -1;
+        private int appliedShopInitializationVersion = -1;
 
         public static bool IsAnyDebugAutoOperationRunning { get; private set; }
 
@@ -177,6 +179,8 @@ namespace BackpackPrototype
         public string DebugAutoOperationName => debugAutoOperationName;
         public bool IsApplyingInitialLayout => applyingInitialLayout;
         public event Action DebugAutoOperationsStarted;
+        /// <summary>AI 已完成决策，敌人可立刻开始单次跟进；不等待最后一批 Tween 收束。</summary>
+        public event Action DebugAutoOperationsReadyForEnemyResponse;
         public event Action<string> DebugAutoOperationsFinished;
 
         public int RollsPerPreparation =>
@@ -376,7 +380,7 @@ namespace BackpackPrototype
                 !DeckPreset.IsValidSlots(ActiveDeckItems, out _) ||
                 !InitialBackpackLayoutController.TryBuild(
                     ActiveDeckItems, Backpack.Width, Backpack.Height,
-                    GetInitialItemLevel,
+                    null,
                     out List<BackpackLayoutItem> layout))
             {
                 return false;
@@ -426,6 +430,7 @@ namespace BackpackPrototype
             debugAutoOperationSuccessCount = 0;
             debugAutoOperationStatus = "正在规划操作";
             debugAutoOperationName = "规划中";
+            debugAutoResponseNotified = false;
             debugAutoOperationVisitedLayouts.Clear();
             debugAutoOperationVisitedLayouts.Add(
                 BackpackOperationPlanner.GetLayoutFingerprint(Backpack));
@@ -446,7 +451,11 @@ namespace BackpackPrototype
             IsAnyDebugAutoOperationRunning = false;
             debugAutoOperationStatus = reason;
             debugAutoOperationName = null;
-            if (wasRunning) DebugAutoOperationsFinished?.Invoke(reason);
+            if (wasRunning)
+            {
+                NotifyDebugAutoOperationsReadyForEnemyResponse();
+                DebugAutoOperationsFinished?.Invoke(reason);
+            }
         }
 
         private IEnumerator RunDebugAutoOperations(int targetCount, float interval)
@@ -483,9 +492,17 @@ namespace BackpackPrototype
                 yield return new WaitForSecondsRealtime(interval);
             }
             if (debugAutoOperationSuccessCount >= targetCount) debugAutoOperationStatus = $"已完成 {targetCount} 次操作";
+            NotifyDebugAutoOperationsReadyForEnemyResponse();
             // 给最后一批重叠 Tween 留出收束时间后再允许进入战斗。
             yield return new WaitForSecondsRealtime(.65f);
             CancelDebugAutoOperations(debugAutoOperationStatus ?? "已结束");
+        }
+
+        private void NotifyDebugAutoOperationsReadyForEnemyResponse()
+        {
+            if (debugAutoResponseNotified) return;
+            debugAutoResponseNotified = true;
+            DebugAutoOperationsReadyForEnemyResponse?.Invoke();
         }
 
         private List<ItemData> GetShopItemData()
@@ -601,7 +618,7 @@ namespace BackpackPrototype
                     deck,
                     Backpack.Width,
                     Backpack.Height,
-                    GetInitialItemLevel,
+                    null,
                     out List<BackpackLayoutItem> layout))
             {
                 Debug.LogError("当前 Deck 无法完整放入背包。", this);
@@ -1157,14 +1174,32 @@ namespace BackpackPrototype
             adjustmentCurve?.SetCurveValue(clampedValue);
         }
 
-        private int GetInitialItemLevel(ItemData item) =>
-            HasDebugProgressionLevel
-                ? debugProgressionLevel
-                : playerItemSystem?.GetLevel(item) ?? PlayerItemSystem.DefaultLevel;
-
         private void HandleMatchInitialized()
         {
             RequestInitialLayoutForNewMatch();
+            InitializeShopForNewMatch();
+        }
+
+        /// <summary>
+        /// 新对局（包括调试重启）可能已经处于准备阶段，因此不会再次收到
+        /// PhaseChanged。商店初始化必须由 MatchInitialized 显式触发。
+        /// </summary>
+        private void InitializeShopForNewMatch()
+        {
+            int version = LevelFlowController.MatchInitializationVersion;
+            if (appliedShopInitializationVersion == version)
+            {
+                return;
+            }
+
+            // 强制开始一个新的准备阶段商店：保留背包，只重置商店与 Roll。
+            shopInitializedForPreparation = false;
+            InitializeShopForPreparation();
+
+            if (shopInitializedForPreparation)
+            {
+                appliedShopInitializationVersion = version;
+            }
         }
 
         private void HandlePhaseChanged(BattlePhase phase)
@@ -1182,6 +1217,11 @@ namespace BackpackPrototype
             if (phase == BattlePhase.Preparation)
             {
                 InitializeShopForPreparation();
+                if (shopInitializedForPreparation)
+                {
+                    appliedShopInitializationVersion =
+                        LevelFlowController.MatchInitializationVersion;
+                }
             }
             else
             {

@@ -230,8 +230,8 @@ namespace BackpackHero.Battle
             isMatchComplete = false;
             ResetRoundTimer();
             ResetBackpackHealth();
-            BattleFlowController.EnsureInstance()?.SetPhase(BattlePhase.Preparation);
             MatchInitializationVersion++;
+            BattleFlowController.EnsureInstance()?.SetPhase(BattlePhase.Preparation);
             MatchInitialized?.Invoke();
             MatchStateChanged?.Invoke();
         }
@@ -256,9 +256,9 @@ namespace BackpackHero.Battle
             isMatchComplete = false;
             ResetRoundTimer();
             ResetBackpackHealth();
+            MatchInitializationVersion++;
             BattleFlowController.EnsureInstance()
                 ?.SetPhase(BattlePhase.Preparation);
-            MatchInitializationVersion++;
             MatchInitialized?.Invoke();
             MatchStateChanged?.Invoke();
         }

@@ -63,8 +63,13 @@ namespace BackpackHero.EditorTools
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
-                int level = isPlayer ? player.ActiveProgressionLevel : enemy.ActiveProgressionLevel;
-                EditorGUILayout.LabelField("养成等级", $"Lv.{level}");
+                int playerLevel = PlayerItemSystem.DefaultLevel;
+                bool hasUniformLevel = !isPlayer ||
+                    player.TryGetUniformProgressionLevel(out playerLevel);
+                int level = isPlayer ? playerLevel : enemy.ActiveProgressionLevel;
+                EditorGUILayout.LabelField("养成等级", hasUniformLevel
+                    ? $"Lv.{level}"
+                    : "混合等级（未启用临时统一覆写）");
                 EditorGUILayout.LabelField("背包配置", isPlayer ? DescribePlayerDeck(player) : enemy.CurrentDeckPreset?.name ?? "未选择预设", EditorStyles.wordWrappedLabel);
                 BackpackController backpack = isPlayer ? player.Backpack : enemy.Backpack;
                 EditorGUILayout.LabelField("背包强度", backpack != null ? BackpackStrengthCalculator.Calculate(backpack).TotalScore.ToString("0.##") : "-");
@@ -150,25 +155,34 @@ namespace BackpackHero.EditorTools
         private void DrawProgressionLevels(PlayerBackpackDebugBridge bridge)
         {
             EditorGUILayout.Space(6f);
-            DrawLevelButtons("玩家临时养成", bridge.Target.ActiveProgressionLevel,
+            bool hasUniformPlayerLevel = bridge.Target
+                .TryGetUniformProgressionLevel(out int playerLevel);
+            DrawLevelButtons("玩家临时养成", playerLevel,
+                hasUniformPlayerLevel,
                 level => bridge.Target.SetDebugProgressionLevel(level));
             EditorGUILayout.Space(6f);
             DrawLevelButtons("敌人临时养成", bridge.EnemyTarget.ActiveProgressionLevel,
+                true,
                 level => bridge.EnemyTarget.SetDebugProgressionLevel(level));
         }
 
-        private static void DrawLevelButtons(string title, int activeLevel, System.Func<int, bool> setLevel)
+        private static void DrawLevelButtons(string title, int activeLevel,
+            bool hasHighlightedLevel, System.Func<int, bool> setLevel)
         {
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+                if (!hasHighlightedLevel)
+                {
+                    EditorGUILayout.LabelField("当前物品养成等级不一致；点击任一按钮可临时统一为该等级。", EditorStyles.miniLabel);
+                }
                 for (int row = 0; row < 2; row++)
                 using (new EditorGUILayout.HorizontalScope())
                 for (int column = 1; column <= 5; column++)
                 {
                     int level = row * 5 + column;
                     Color old = GUI.backgroundColor;
-                    if (activeLevel == level) GUI.backgroundColor = new Color(.65f, .9f, 1f);
+                    if (hasHighlightedLevel && activeLevel == level) GUI.backgroundColor = new Color(.65f, .9f, 1f);
                     if (GUILayout.Button($"Lv.{level}")) setLevel(level);
                     GUI.backgroundColor = old;
                 }
@@ -180,28 +194,34 @@ namespace BackpackHero.EditorTools
             EditorGUILayout.Space(6f);
             EditorGUILayout.LabelField("背包 AI 自动操作", EditorStyles.boldLabel);
             bool playerOperating = bridge.Target.IsDebugAutoOperationRunning ||
-                bridge.EnemyTarget.IsDebugReactionRunning;
+                bridge.EnemyTarget.IsDebugFastOperationRunning;
             bool canPlace = BattleFlowController.CurrentPhase == BattlePhase.Preparation &&
                 bridge.Target.IsReady && bridge.EnemyTarget.IsReady && !playerOperating && !bridge.EnemyTarget.IsOperationRunning;
             using (new EditorGUI.DisabledScope(!canPlace))
             {
-                if (GUILayout.Button("玩家 AI 执行 15 次操作"))
+                if (GUILayout.Button("双方 AI 执行 15 次操作"))
                 {
-                    bridge.Target.StartDebugAutoOperations();
+                    bridge.StartSynchronizedDebugAutoOperations();
                 }
+                if (GUILayout.Button("敌人 AI 快速放置（最多 15 次）"))
+                    bridge.EnemyTarget.StartDebugFastOperations();
             }
             string status = string.IsNullOrEmpty(bridge.Target.DebugAutoOperationStatus)
                 ? "未启动" : bridge.Target.DebugAutoOperationStatus;
             EditorGUILayout.LabelField("玩家 AI", $"{bridge.Target.DebugAutoOperationSuccessCount} / 15 · {status}");
             EditorGUILayout.LabelField("当前操作", bridge.Target.DebugAutoOperationName ?? "-");
-            EditorGUILayout.HelpBox("初始布局只在对局开始或重启时生成。玩家 AI 从当前背包连续优化；结束后敌人会进行一次真实响应。", MessageType.None);
+            string enemyStatus = string.IsNullOrEmpty(bridge.EnemyTarget.DebugFastOperationStatus)
+                ? "未启动" : bridge.EnemyTarget.DebugFastOperationStatus;
+            EditorGUILayout.LabelField("敌人 AI", $"{bridge.EnemyTarget.DebugFastOperationSuccessCount} / 15 · {enemyStatus}");
+            EditorGUILayout.LabelField("敌人当前操作", bridge.EnemyTarget.DebugFastOperationName ?? "-");
+            EditorGUILayout.HelpBox("双方 AI 都从当前背包连续优化，不会重建初始布局。敌人快速放置期间暂停其常规自动操作。", MessageType.None);
         }
 
         private static void DrawMatchControls(PlayerBackpackDebugBridge bridge)
         {
             LevelFlowController flow = LevelFlowController.Instance;
             bool playerOperating = bridge.Target.IsDebugAutoOperationRunning ||
-                bridge.EnemyTarget.IsDebugReactionRunning;
+                bridge.EnemyTarget.IsDebugFastOperationRunning;
             EditorGUILayout.Space(6f);
             using (new EditorGUI.DisabledScope(playerOperating))
             {

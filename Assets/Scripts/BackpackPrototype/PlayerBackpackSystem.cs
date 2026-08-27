@@ -126,7 +126,9 @@ namespace BackpackPrototype
         private int debugProgressionLevel = -1;
         private Coroutine debugAutoOperationRoutine;
         private bool debugAutoOperationRunning;
-        private bool debugAutoResponseNotified;
+        private bool executingDebugPlannedOperation;
+        private bool hasOperationLogScore;
+        private float lastOperationLogScore;
         private int debugAutoOperationSuccessCount;
         private string debugAutoOperationStatus;
         private string debugAutoOperationName;
@@ -178,10 +180,6 @@ namespace BackpackPrototype
         public string DebugAutoOperationStatus => debugAutoOperationStatus;
         public string DebugAutoOperationName => debugAutoOperationName;
         public bool IsApplyingInitialLayout => applyingInitialLayout;
-        public event Action DebugAutoOperationsStarted;
-        /// <summary>AI 已完成决策，敌人可立刻开始单次跟进；不等待最后一批 Tween 收束。</summary>
-        public event Action DebugAutoOperationsReadyForEnemyResponse;
-        public event Action<string> DebugAutoOperationsFinished;
 
         public int RollsPerPreparation =>
             Mathf.Max(1, rollsPerPreparation);
@@ -191,11 +189,74 @@ namespace BackpackPrototype
         public int ActiveProgressionLevel => HasDebugProgressionLevel
             ? debugProgressionLevel : PlayerItemSystem.DefaultLevel;
 
+        /// <summary>
+        /// 获取平衡面板应显示的玩家养成等级。未启用临时统一覆写时，
+        /// 只有当前背包物品的持久养成等级一致才返回 true。
+        /// </summary>
+        public bool TryGetUniformProgressionLevel(out int level)
+        {
+            if (HasDebugProgressionLevel)
+            {
+                level = debugProgressionLevel;
+                return true;
+            }
+
+            bool hasItem = false;
+            level = PlayerItemSystem.DefaultLevel;
+            foreach (ItemInstance item in Items)
+            {
+                if (item == null)
+                {
+                    continue;
+                }
+
+                int itemLevel = item.ProgressionLevel;
+                if (!hasItem)
+                {
+                    level = itemLevel;
+                    hasItem = true;
+                }
+                else if (level != itemLevel)
+                {
+                    return false;
+                }
+            }
+
+            if (hasItem)
+            {
+                return true;
+            }
+
+            foreach (ItemData item in ActiveDeckItems)
+            {
+                if (item == null)
+                {
+                    continue;
+                }
+
+                int itemLevel = playerItemSystem?.GetLevel(item) ??
+                    PlayerItemSystem.DefaultLevel;
+                if (!hasItem)
+                {
+                    level = itemLevel;
+                    hasItem = true;
+                }
+                else if (level != itemLevel)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         /// <summary>仅覆写当前对局背包实例，不写入玩家养成存档。</summary>
         public bool SetDebugProgressionLevel(int level)
         {
             if (!isReady || Backpack == null) return false;
-            debugProgressionLevel = Mathf.Clamp(level, ItemInstance.DefaultLevel, ItemInstance.MaximumLevel);
+            debugProgressionLevel = Mathf.Clamp(level,
+                PlayerItemSystem.DefaultLevel,
+                PlayerItemSystem.MaximumLevel);
             ApplyDebugProgressionLevel();
             return true;
         }
@@ -430,32 +491,24 @@ namespace BackpackPrototype
             debugAutoOperationSuccessCount = 0;
             debugAutoOperationStatus = "正在规划操作";
             debugAutoOperationName = "规划中";
-            debugAutoResponseNotified = false;
             debugAutoOperationVisitedLayouts.Clear();
             debugAutoOperationVisitedLayouts.Add(
                 BackpackOperationPlanner.GetLayoutFingerprint(Backpack));
             // StartCoroutine 要到下一帧才开始；这里先上锁，避免同一帧进入战斗。
             debugAutoOperationRunning = true;
             IsAnyDebugAutoOperationRunning = true;
-            DebugAutoOperationsStarted?.Invoke();
             debugAutoOperationRoutine = StartCoroutine(RunDebugAutoOperations(Mathf.Max(1, operationCount), Mathf.Max(.05f, interval)));
             return true;
         }
 
         public void CancelDebugAutoOperations(string reason = "已取消")
         {
-            bool wasRunning = debugAutoOperationRunning;
             if (debugAutoOperationRoutine != null) StopCoroutine(debugAutoOperationRoutine);
             debugAutoOperationRoutine = null;
             debugAutoOperationRunning = false;
             IsAnyDebugAutoOperationRunning = false;
             debugAutoOperationStatus = reason;
             debugAutoOperationName = null;
-            if (wasRunning)
-            {
-                NotifyDebugAutoOperationsReadyForEnemyResponse();
-                DebugAutoOperationsFinished?.Invoke(reason);
-            }
         }
 
         private IEnumerator RunDebugAutoOperations(int targetCount, float interval)
@@ -473,8 +526,27 @@ namespace BackpackPrototype
                     break;
                 }
                 debugAutoOperationName = DescribeDebugOperation(operation);
-                if (TryExecuteDebugOperation(operation))
+                float scoreBefore = BackpackStrengthCalculator.Calculate(Backpack)
+                    .TotalScore;
+                executingDebugPlannedOperation = true;
+                bool succeeded;
+                try
                 {
+                    succeeded = TryExecuteDebugOperation(operation);
+                }
+                finally
+                {
+                    executingDebugPlannedOperation = false;
+                }
+
+                if (succeeded)
+                {
+                    BackpackOperationDebugLogger.Log(BattleFaction.Player,
+                        operation, scoreBefore, Backpack, GetShopItemData(),
+                        remainingRolls, this);
+                    lastOperationLogScore = BackpackStrengthCalculator
+                        .Calculate(Backpack).TotalScore;
+                    hasOperationLogScore = true;
                     debugAutoOperationSuccessCount++;
                     debugAutoOperationVisitedLayouts.Add(
                         BackpackOperationPlanner.GetLayoutFingerprint(Backpack));
@@ -492,17 +564,9 @@ namespace BackpackPrototype
                 yield return new WaitForSecondsRealtime(interval);
             }
             if (debugAutoOperationSuccessCount >= targetCount) debugAutoOperationStatus = $"已完成 {targetCount} 次操作";
-            NotifyDebugAutoOperationsReadyForEnemyResponse();
             // 给最后一批重叠 Tween 留出收束时间后再允许进入战斗。
             yield return new WaitForSecondsRealtime(.65f);
             CancelDebugAutoOperations(debugAutoOperationStatus ?? "已结束");
-        }
-
-        private void NotifyDebugAutoOperationsReadyForEnemyResponse()
-        {
-            if (debugAutoResponseNotified) return;
-            debugAutoResponseNotified = true;
-            DebugAutoOperationsReadyForEnemyResponse?.Invoke();
         }
 
         private List<ItemData> GetShopItemData()
@@ -666,6 +730,8 @@ namespace BackpackPrototype
         /// </summary>
         public bool TryRefreshShop()
         {
+            float scoreBefore = BackpackStrengthCalculator.Calculate(Backpack)
+                .TotalScore;
             if (!CanRollShop || !RefreshShopInternal())
             {
                 return false;
@@ -673,6 +739,15 @@ namespace BackpackPrototype
 
             remainingRolls--;
             NotifyRollStateChanged();
+            if (!executingDebugPlannedOperation)
+            {
+                BackpackOperationDebugLogger.Log(BattleFaction.Player,
+                    "刷新商店", scoreBefore, Backpack,
+                    GetShopItemData(), remainingRolls, this);
+                lastOperationLogScore = BackpackStrengthCalculator
+                    .Calculate(Backpack).TotalScore;
+                hasOperationLogScore = true;
+            }
             return true;
         }
 
@@ -1713,6 +1788,7 @@ namespace BackpackPrototype
             }
 
             targetView.PlayMergeFeedback();
+            LogManualBackpackOperation("合成物品");
         }
 
         private void HandleItemDragStateChanged(
@@ -1921,6 +1997,7 @@ namespace BackpackPrototype
             else
             {
                 view?.SetBackpackPosition(item.AnchorCell);
+                LogManualBackpackOperation("移动物品");
             }
         }
 
@@ -2007,6 +2084,8 @@ namespace BackpackPrototype
                 backpackViews.Add(view);
             }
 
+            LogManualBackpackOperation("从商店放置");
+
         }
 
         private void HandleItemDeleted(ItemView view)
@@ -2021,6 +2100,26 @@ namespace BackpackPrototype
             {
                 SetSelectedItem(null);
             }
+
+            LogManualBackpackOperation("移除物品");
+        }
+
+        private void LogManualBackpackOperation(string action)
+        {
+            if (debugAutoOperationRunning || Backpack == null)
+            {
+                return;
+            }
+
+            float scoreAfter = BackpackStrengthCalculator.Calculate(Backpack)
+                .TotalScore;
+            float scoreBefore = hasOperationLogScore
+                ? lastOperationLogScore
+                : scoreAfter;
+            BackpackOperationDebugLogger.Log(BattleFaction.Player, action,
+                scoreBefore, Backpack, GetShopItemData(), remainingRolls, this);
+            lastOperationLogScore = scoreAfter;
+            hasOperationLogScore = true;
         }
 
         private ItemView FindView(ItemInstance item)

@@ -16,7 +16,6 @@ namespace BackpackPrototype
         private const int ShopRollsPerPreparation = 1;
         private const int MaximumOperationsPerPreparation = 8;
         private const int OperationSimulationAttemptCount = 5;
-        private const float ManualReactionDelay = .3f;
         // 移动/加入的位移与放置反馈最长约 .52 秒；留出余量保证串行。
         private const float VisualOperationDuration = .65f;
 
@@ -50,11 +49,14 @@ namespace BackpackPrototype
         private int pendingInitialLayoutVersion = -1;
         private int appliedInitialLayoutVersion = -1;
         private int appliedPreparationInitializationVersion = -1;
-        private bool debugAutomationPaused;
-        private bool debugReactionPending;
-        private Coroutine debugReactionRoutine;
-        private int pendingImmediateOperations, pendingCountedOperations, remainingShopRolls, remainingOperations;
-        private float nextAutomaticOperationTime, nextImmediateOperationTime;
+        private Coroutine debugFastOperationRoutine;
+        private bool debugFastOperationRunning;
+        private int debugFastOperationSuccessCount;
+        private string debugFastOperationStatus;
+        private string debugFastOperationName;
+        private readonly HashSet<string> debugFastOperationVisitedLayouts = new();
+        private int pendingCountedOperations, remainingShopRolls, remainingOperations;
+        private float nextAutomaticOperationTime;
         private EnemyBackpackData currentData;
         private DeckPreset currentDeckPreset;
         private DeckPreset runtimeDeckPreset;
@@ -90,7 +92,10 @@ namespace BackpackPrototype
         public IReadOnlyList<ItemData> ShopItems => shopItems;
         public bool IsReady => isReady;
         public bool IsOperationRunning => operationRunning;
-        public bool IsDebugReactionRunning => debugReactionRoutine != null;
+        public bool IsDebugFastOperationRunning => debugFastOperationRunning;
+        public int DebugFastOperationSuccessCount => debugFastOperationSuccessCount;
+        public string DebugFastOperationStatus => debugFastOperationStatus;
+        public string DebugFastOperationName => debugFastOperationName;
         public int RemainingOperations => remainingOperations;
         public int MaximumOperations => MaximumOperationsPerPreparation;
         public int RemainingShopRolls => remainingShopRolls;
@@ -132,17 +137,8 @@ namespace BackpackPrototype
         }
         private void Update()
         {
-            if (!CanOperate() || operationRunning) return;
-            if (debugReactionPending)
-            {
-                TryStartPendingDebugReaction();
-                return;
-            }
-            if (debugAutomationPaused) return;
+            if (!CanOperate() || operationRunning || debugFastOperationRunning) return;
             if (remainingOperations <= 0) return;
-            if (pendingImmediateOperations > 0 && Time.unscaledTime >= nextImmediateOperationTime) { pendingImmediateOperations--; StartCoroutine(RunOperation()); return; }
-            // 等待玩家操作后的反应延迟期间，不允许普通自动操作抢先执行。
-            if (pendingImmediateOperations > 0) return;
             if (pendingCountedOperations > 0) { pendingCountedOperations--; StartCoroutine(RunOperation()); return; }
             if (Time.unscaledTime >= nextAutomaticOperationTime) StartCoroutine(RunOperation());
         }
@@ -257,60 +253,90 @@ namespace BackpackPrototype
         }
         public bool RequestOperation()
         {
-            if (!CanOperate() || remainingOperations <= 0) return false;
+            if (!CanOperate() || debugFastOperationRunning ||
+                remainingOperations <= 0) return false;
             pendingCountedOperations++; return true;
         }
 
-        /// <summary>玩家 AI 完成后的单次真实响应，不重建背包且不消耗正式额度。</summary>
-        public bool StartDebugReaction()
+        /// <summary>调试用：从当前背包开始快速执行共享探索规则，不重置布局。</summary>
+        public bool StartDebugFastOperations(int operationCount = 15, float interval = .3f)
         {
-            if (!CanOperate())
+            if (!CanOperate() || operationRunning || debugFastOperationRunning)
             {
                 return false;
             }
 
-            debugReactionPending = true;
-            TryStartPendingDebugReaction();
+            pendingCountedOperations = 0;
+            debugFastOperationSuccessCount = 0;
+            debugFastOperationStatus = "正在规划操作";
+            debugFastOperationName = "规划中";
+            debugFastOperationVisitedLayouts.Clear();
+            debugFastOperationVisitedLayouts.Add(
+                BackpackOperationPlanner.GetLayoutFingerprint(Backpack));
+            debugFastOperationRunning = true;
+            debugFastOperationRoutine = StartCoroutine(RunDebugFastOperations(
+                Mathf.Max(1, operationCount), Mathf.Max(.05f, interval)));
             return true;
         }
 
-        private void TryStartPendingDebugReaction()
+        public void CancelDebugFastOperations(string reason = "已取消")
         {
-            if (!debugReactionPending || !CanOperate() || operationRunning ||
-                debugReactionRoutine != null || debugAutomationPaused)
+            if (debugFastOperationRoutine != null)
             {
-                return;
+                StopCoroutine(debugFastOperationRoutine);
             }
 
-            // 在协程首帧前就占用操作权，避免 Update 同帧启动普通敌方操作。
-            debugReactionPending = false;
-            operationRunning = true;
-            debugReactionRoutine = StartCoroutine(RunDebugReaction());
+            debugFastOperationRoutine = null;
+            debugFastOperationRunning = false;
+            debugFastOperationStatus = reason;
+            debugFastOperationName = null;
         }
 
-        private IEnumerator RunDebugReaction()
+        private IEnumerator RunDebugFastOperations(int targetCount, float interval)
         {
-            if (TryExecuteOperation())
-                yield return new WaitForSecondsRealtime(VisualOperationDuration);
-            operationRunning = false;
-            debugReactionRoutine = null;
-        }
-
-        public void SetDebugAutomationPaused(bool paused)
-        {
-            debugAutomationPaused = paused;
-            if (paused)
+            while (debugFastOperationSuccessCount < targetCount && CanOperate())
             {
-                pendingImmediateOperations = 0;
-                pendingCountedOperations = 0;
+                if (!BackpackOperationPlanner.TrySelectBest(
+                        Backpack, shopItems, remainingShopRolls,
+                        BackpackOperationSelectionMode.ExploreNonDecreasing,
+                        debugFastOperationVisitedLayouts,
+                        out BackpackOperation operation))
+                {
+                    debugFastOperationStatus = "已达到当前可探索最优解";
+                    break;
+                }
+
+                debugFastOperationName = BackpackOperationDebugLogger
+                    .Describe(operation);
+                float scoreBefore = BackpackStrengthCalculator.Calculate(Backpack)
+                    .TotalScore;
+                operationRunning = true;
+                bool succeeded = TryExecutePlannedOperation(operation);
+                operationRunning = false;
+                if (!succeeded)
+                {
+                    debugFastOperationStatus = "操作执行失败";
+                    break;
+                }
+
+                BackpackOperationDebugLogger.Log(BattleFaction.Enemy, operation,
+                    scoreBefore, Backpack, shopItems, remainingShopRolls, this);
+                debugFastOperationSuccessCount++;
+                debugFastOperationVisitedLayouts.Add(
+                    BackpackOperationPlanner.GetLayoutFingerprint(Backpack));
+                debugFastOperationStatus = operation.IsExploration
+                    ? $"探索操作 {debugFastOperationSuccessCount} / {targetCount}"
+                    : $"增益操作 {debugFastOperationSuccessCount} / {targetCount}";
+                yield return new WaitForSecondsRealtime(interval);
             }
-        }
-        public bool RequestImmediateReaction()
-        {
-            if (!CanOperate() || remainingOperations <= 0) return false;
-            pendingImmediateOperations++;
-            nextImmediateOperationTime = Time.unscaledTime + ManualReactionDelay;
-            return true;
+
+            if (debugFastOperationSuccessCount >= targetCount)
+            {
+                debugFastOperationStatus = $"已完成 {targetCount} 次操作";
+            }
+
+            yield return new WaitForSecondsRealtime(VisualOperationDuration);
+            CancelDebugFastOperations(debugFastOperationStatus ?? "已结束");
         }
         public void SetOperationInterval(float value) => operationInterval = Mathf.Max(.1f, value);
         public void ResetShopRollAllowance() => remainingShopRolls = ShopRollsPerPreparation;
@@ -352,7 +378,6 @@ namespace BackpackPrototype
             remainingShopRolls = ShopRollsPerPreparation;
             remainingOperations = MaximumOperationsPerPreparation;
             nextAutomaticOperationTime = Time.unscaledTime + operationInterval;
-            nextImmediateOperationTime = 0f;
         }
         public void SetPresetPoolForTests(IEnumerable<DeckPreset> presets) => presetPool = presets != null ? new List<DeckPreset>(presets) : new List<DeckPreset>();
 
@@ -366,18 +391,27 @@ namespace BackpackPrototype
             yield return new WaitForSecondsRealtime(VisualOperationDuration);
             operationRunning = false;
             nextAutomaticOperationTime = Time.unscaledTime + operationInterval;
-            if (pendingImmediateOperations > 0)
-            {
-                nextImmediateOperationTime = Time.unscaledTime + ManualReactionDelay;
-            }
         }
         private bool TryExecuteOperation()
         {
             if (!CanOperate()) return false;
-            return BackpackOperationPlanner.TrySelectBest(
-                       Backpack, shopItems, remainingShopRolls,
-                       out BackpackOperation operation) &&
-                   TryExecutePlannedOperation(operation);
+            if (!BackpackOperationPlanner.TrySelectBest(
+                    Backpack, shopItems, remainingShopRolls,
+                    out BackpackOperation operation))
+            {
+                return false;
+            }
+
+            float scoreBefore = BackpackStrengthCalculator.Calculate(Backpack)
+                .TotalScore;
+            if (!TryExecutePlannedOperation(operation))
+            {
+                return false;
+            }
+
+            BackpackOperationDebugLogger.Log(BattleFaction.Enemy, operation,
+                scoreBefore, Backpack, shopItems, remainingShopRolls, this);
+            return true;
         }
 
         private bool TryExecutePlannedOperation(BackpackOperation operation)
@@ -1107,15 +1141,16 @@ namespace BackpackPrototype
             }
             else
             {
-                pendingImmediateOperations = 0;
                 pendingCountedOperations = 0;
-                nextImmediateOperationTime = 0f;
+                if (debugFastOperationRunning)
+                {
+                    CancelDebugFastOperations("已离开准备阶段");
+                }
             }
         }
         private void InitializePreparation()
         {
             if (!CanOperate()) return;
-            pendingImmediateOperations = 0;
             ResetPreparationState();
             RefreshHiddenShop();
         }
@@ -1338,14 +1373,13 @@ namespace BackpackPrototype
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
             LevelFlowController.MatchInitialized -= HandleMatchInitialized;
-            debugReactionPending = false;
-            debugAutomationPaused = false;
+            CancelDebugFastOperations("运行时已禁用");
         }
         private void OnDestroy()
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
             LevelFlowController.MatchInitialized -= HandleMatchInitialized;
-            debugReactionPending = false;
+            CancelDebugFastOperations("运行时已销毁");
             DestroyRuntimeDeckPreset(runtimeDeckPreset);
             if (Backpack == null) return;
             Backpack.ItemAdded -= HandleItemAdded; Backpack.ItemMoved -= HandleItemMoved; Backpack.ItemRemoved -= HandleItemRemoved; Backpack.Cleared -= HandleCleared;

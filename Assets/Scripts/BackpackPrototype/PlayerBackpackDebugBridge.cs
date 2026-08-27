@@ -29,15 +29,11 @@ namespace BackpackPrototype
         private bool dragCellVisualizationEnabled;
 
         private bool backpacksHealthLocked;
-        private bool suppressEnemyReaction;
-        private bool suppressEnemyReactionForPlayerAutoOperation;
-        private PlayerBackpackSystem subscribedPlayerSystem;
 
         [SerializeField, Min(0.05f)]
         private float refreshInterval = 0.1f;
 
         private float nextRefreshTime;
-        private BackpackController subscribedPlayerBackpack;
         private PlayerBackpackDebugSnapshot snapshot =
             PlayerBackpackDebugSnapshot.Unavailable(
                 "调试桥尚未初始化。");
@@ -112,7 +108,6 @@ namespace BackpackPrototype
             }
 
             ResolveTarget();
-            RefreshAutoCopySubscription();
             RefreshSnapshot();
         }
 
@@ -146,7 +141,6 @@ namespace BackpackPrototype
                 SetBackpacksHealthLocked(false);
             }
 
-            RefreshAutoCopySubscription();
             if (Time.unscaledTime >= nextRefreshTime)
             {
                 RefreshSnapshot();
@@ -159,7 +153,6 @@ namespace BackpackPrototype
         public void Bind(PlayerBackpackSystem target)
         {
             playerBackpackSystem = target;
-            RefreshAutoCopySubscription();
             RefreshSnapshot();
         }
 
@@ -307,31 +300,22 @@ namespace BackpackPrototype
             List<ItemData> enemyDeck = new(
                 enemyBackpackSystem.CurrentDeckPreset.Slots);
 
-            suppressEnemyReaction = true;
-            try
+            LevelFlowController.EnsureInstance()?.ResetForDebugMatch();
+
+            if (!playerBackpackSystem.TryApplyRuntimeDeck(enemyDeck))
             {
-                LevelFlowController.EnsureInstance()
-                    ?.ResetForDebugMatch();
-
-                if (!playerBackpackSystem.TryApplyRuntimeDeck(enemyDeck))
-                {
-                    return false;
-                }
-
-                if (enemyBackpackSystem.TryApplyRuntimeDeck(playerDeck))
-                {
-                    SetBackpacksHealthLocked(false);
-                    RefreshSnapshot();
-                    return true;
-                }
-
-                playerBackpackSystem.TryApplyRuntimeDeck(playerDeck);
                 return false;
             }
-            finally
+
+            if (enemyBackpackSystem.TryApplyRuntimeDeck(playerDeck))
             {
-                suppressEnemyReaction = false;
+                SetBackpacksHealthLocked(false);
+                RefreshSnapshot();
+                return true;
             }
+
+            playerBackpackSystem.TryApplyRuntimeDeck(playerDeck);
+            return false;
         }
 
         /// <summary>把当前双方背包及临时调试状态收集为编辑器测试方案。</summary>
@@ -353,12 +337,19 @@ namespace BackpackPrototype
                 return false;
             }
 
+            if (!playerBackpackSystem.TryGetUniformProgressionLevel(
+                    out int playerProgressionLevel))
+            {
+                error = "玩家当前物品养成等级不一致；请先在平衡调整中选择一个临时统一养成等级后再保存方案。";
+                return false;
+            }
+
             PlayerRandomFlightCurveController flight =
                 GetComponent<PlayerRandomFlightCurveController>();
             preset.SetRuntimeState(
                 GamePacingDebugRuntime.Instance?.GameSpeed ?? 1f,
                 flight != null ? flight.Mode : RandomFlightCurveMode.Off,
-                playerBackpackSystem.ActiveProgressionLevel,
+                playerProgressionLevel,
                 enemyBackpackSystem.ActiveProgressionLevel,
                 enemyBackpackSystem.CurrentDeckPreset,
                 playerBackpackSystem.ActiveDeckItems,
@@ -389,31 +380,23 @@ namespace BackpackPrototype
 
             // 先完成所有不写状态的校验，随后才开始重置并修改当前对局。
             LevelFlowController.EnsureInstance()?.ResetForDebugMatch();
-            suppressEnemyReaction = true;
-            try
+            if (!playerBackpackSystem.TryApplyRuntimeDeck(preset.PlayerDeck) ||
+                !enemyBackpackSystem.TryApplyRuntimeDeck(preset.EnemyDeck) ||
+                !playerBackpackSystem.LoadLayout(ToRuntimeLayout(preset.PlayerLayout)) ||
+                !enemyBackpackSystem.LoadLayout(ToRuntimeLayout(preset.EnemyLayout)) ||
+                !playerBackpackSystem.SetDebugProgressionLevel(preset.PlayerProgressionLevel) ||
+                !enemyBackpackSystem.SetDebugProgressionLevel(preset.EnemyProgressionLevel))
             {
-                if (!playerBackpackSystem.TryApplyRuntimeDeck(preset.PlayerDeck) ||
-                    !enemyBackpackSystem.TryApplyRuntimeDeck(preset.EnemyDeck) ||
-                    !playerBackpackSystem.LoadLayout(ToRuntimeLayout(preset.PlayerLayout)) ||
-                    !enemyBackpackSystem.LoadLayout(ToRuntimeLayout(preset.EnemyLayout)) ||
-                    !playerBackpackSystem.SetDebugProgressionLevel(preset.PlayerProgressionLevel) ||
-                    !enemyBackpackSystem.SetDebugProgressionLevel(preset.EnemyProgressionLevel))
-                {
-                    error = "测试方案布局无法应用到当前背包。";
-                    return false;
-                }
+                error = "测试方案布局无法应用到当前背包。";
+                return false;
+            }
 
-                GamePacingDebugRuntime.Instance?.SetGameSpeed(preset.GameSpeed);
-                GetComponent<PlayerRandomFlightCurveController>()?.SetMode(
-                    preset.RandomFlightMode);
-                SetBackpacksHealthLocked(false);
-                RefreshSnapshot();
-                return true;
-            }
-            finally
-            {
-                suppressEnemyReaction = false;
-            }
+            GamePacingDebugRuntime.Instance?.SetGameSpeed(preset.GameSpeed);
+            GetComponent<PlayerRandomFlightCurveController>()?.SetMode(
+                preset.RandomFlightMode);
+            SetBackpacksHealthLocked(false);
+            RefreshSnapshot();
+            return true;
         }
 
         private static List<BalanceAdjustmentTestPreset.LayoutEntry> CaptureLayout(
@@ -892,134 +875,39 @@ namespace BackpackPrototype
                         FindObjectsInactive.Include);
         }
 
-        private void RefreshAutoCopySubscription()
+        /// <summary>同时启动双方的共享探索 AI；任一方无法启动时不留下单独序列。</summary>
+        public bool StartSynchronizedDebugAutoOperations(
+            int operationCount = 15, float interval = .3f)
         {
-            if (subscribedPlayerSystem != playerBackpackSystem)
+            if (!CanModifyPreparation() || enemyBackpackSystem == null ||
+                !enemyBackpackSystem.IsReady ||
+                playerBackpackSystem.IsDebugAutoOperationRunning ||
+                enemyBackpackSystem.IsDebugFastOperationRunning ||
+                enemyBackpackSystem.IsOperationRunning)
             {
-                if (subscribedPlayerSystem != null)
-                {
-                    subscribedPlayerSystem.DebugAutoOperationsStarted -= HandlePlayerAutoOperationsStarted;
-                    subscribedPlayerSystem.DebugAutoOperationsReadyForEnemyResponse -= HandlePlayerAutoOperationsReadyForEnemyResponse;
-                    subscribedPlayerSystem.DebugAutoOperationsFinished -= HandlePlayerAutoOperationsFinished;
-                }
-
-                subscribedPlayerSystem = playerBackpackSystem;
-                if (subscribedPlayerSystem != null)
-                {
-                    subscribedPlayerSystem.DebugAutoOperationsStarted += HandlePlayerAutoOperationsStarted;
-                    subscribedPlayerSystem.DebugAutoOperationsReadyForEnemyResponse += HandlePlayerAutoOperationsReadyForEnemyResponse;
-                    subscribedPlayerSystem.DebugAutoOperationsFinished += HandlePlayerAutoOperationsFinished;
-                }
+                return false;
             }
 
-            BackpackController next =
-                playerBackpackSystem != null
-                    ? playerBackpackSystem.Backpack
-                    : null;
-            if (subscribedPlayerBackpack == next)
+            if (!playerBackpackSystem.StartDebugAutoOperations(
+                    operationCount, interval))
             {
-                return;
+                return false;
             }
 
-            if (subscribedPlayerBackpack != null)
+            if (enemyBackpackSystem.StartDebugFastOperations(
+                    operationCount, interval))
             {
-                subscribedPlayerBackpack.ItemAdded -=
-                    HandlePlayerBackpackChanged;
-                subscribedPlayerBackpack.ItemMoved -=
-                    HandlePlayerBackpackChanged;
-                subscribedPlayerBackpack.ItemRemoved -=
-                    HandlePlayerBackpackChanged;
-                subscribedPlayerBackpack.ItemLevelChanged -=
-                    HandlePlayerBackpackChanged;
-                subscribedPlayerBackpack.Cleared -=
-                    HandlePlayerBackpackCleared;
+                return true;
             }
 
-            subscribedPlayerBackpack = next;
-            if (subscribedPlayerBackpack == null)
-            {
-                return;
-            }
-
-            subscribedPlayerBackpack.ItemAdded +=
-                HandlePlayerBackpackChanged;
-            subscribedPlayerBackpack.ItemMoved +=
-                HandlePlayerBackpackChanged;
-            subscribedPlayerBackpack.ItemRemoved +=
-                HandlePlayerBackpackChanged;
-            subscribedPlayerBackpack.ItemLevelChanged +=
-                HandlePlayerBackpackChanged;
-            subscribedPlayerBackpack.Cleared +=
-                HandlePlayerBackpackCleared;
-        }
-
-        private void HandlePlayerBackpackChanged(ItemInstance _)
-        {
-            // 玩家一次成功的模型变更立即换取一次敌人反应，但不消耗敌人回合额度。
-            if (!suppressEnemyReaction &&
-                !suppressEnemyReactionForPlayerAutoOperation &&
-                playerBackpackSystem?.IsApplyingInitialLayout != true &&
-                CanModifyPreparation())
-            {
-                enemyBackpackSystem?.RequestImmediateReaction();
-            }
-        }
-
-        private void HandlePlayerBackpackCleared() =>
-            HandlePlayerBackpackChanged(null);
-
-        private void HandlePlayerAutoOperationsStarted()
-        {
-            suppressEnemyReactionForPlayerAutoOperation = true;
-            enemyBackpackSystem?.SetDebugAutomationPaused(true);
-        }
-
-        private void HandlePlayerAutoOperationsFinished(string _)
-        {
-            suppressEnemyReactionForPlayerAutoOperation = false;
-            enemyBackpackSystem?.SetDebugAutomationPaused(false);
-        }
-
-        private void HandlePlayerAutoOperationsReadyForEnemyResponse()
-        {
-            suppressEnemyReactionForPlayerAutoOperation = false;
-            enemyBackpackSystem?.SetDebugAutomationPaused(false);
-            if (playerBackpackSystem != null &&
-                playerBackpackSystem.isActiveAndEnabled &&
-                CanModifyPreparation())
-            {
-                enemyBackpackSystem?.StartDebugReaction();
-            }
+            playerBackpackSystem.CancelDebugAutoOperations("敌方 AI 无法启动");
+            return false;
         }
 
         private void OnDisable()
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
             SetBackpacksHealthLocked(false);
-
-            if (subscribedPlayerSystem != null)
-            {
-                subscribedPlayerSystem.DebugAutoOperationsStarted -= HandlePlayerAutoOperationsStarted;
-                subscribedPlayerSystem.DebugAutoOperationsReadyForEnemyResponse -= HandlePlayerAutoOperationsReadyForEnemyResponse;
-                subscribedPlayerSystem.DebugAutoOperationsFinished -= HandlePlayerAutoOperationsFinished;
-                subscribedPlayerSystem = null;
-            }
-            enemyBackpackSystem?.SetDebugAutomationPaused(false);
-
-            if (subscribedPlayerBackpack != null)
-            {
-                subscribedPlayerBackpack.ItemAdded -=
-                    HandlePlayerBackpackChanged;
-                subscribedPlayerBackpack.ItemMoved -=
-                    HandlePlayerBackpackChanged;
-                subscribedPlayerBackpack.ItemRemoved -=
-                    HandlePlayerBackpackChanged;
-                subscribedPlayerBackpack.ItemLevelChanged -=
-                    HandlePlayerBackpackChanged;
-                subscribedPlayerBackpack.Cleared -=
-                    HandlePlayerBackpackCleared;
-                subscribedPlayerBackpack = null;
-            }
 
             if (Active == this)
             {

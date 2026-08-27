@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BackpackHero.Battle;
 using UnityEngine;
 
 namespace BackpackPrototype
@@ -279,6 +280,55 @@ namespace BackpackPrototype
             public BackpackOperation Operation { get; }
             public BackpackController Backpack { get; }
             public float Score { get; }
+        }
+    }
+
+    /// <summary>统一输出真实背包操作的运行时调试记录。</summary>
+    public static class BackpackOperationDebugLogger
+    {
+        public static string Describe(BackpackOperation operation) =>
+            operation?.Kind switch
+            {
+                BackpackOperationKind.RollShop => "刷新商店",
+                BackpackOperationKind.MoveItem => "移动物品",
+                BackpackOperationKind.AddShopItem => "从商店放置",
+                BackpackOperationKind.RemoveItem => "移除物品",
+                BackpackOperationKind.MergeItems => "合成物品",
+                BackpackOperationKind.MergeShopItem => "商店物品合成升级",
+                BackpackOperationKind.ReplaceItem => "替换物品",
+                _ => "未知操作",
+            };
+
+        public static void Log(BattleFaction faction, BackpackOperation operation,
+            float scoreBefore, BackpackController backpack,
+            IReadOnlyList<ItemData> shopItems, int remainingRolls,
+            UnityEngine.Object context)
+        {
+            Log(faction, Describe(operation), scoreBefore, backpack, shopItems,
+                remainingRolls, context);
+        }
+
+        public static void Log(BattleFaction faction, string action,
+            float scoreBefore, BackpackController backpack,
+            IReadOnlyList<ItemData> shopItems, int remainingRolls,
+            UnityEngine.Object context)
+        {
+            float scoreAfter = BackpackStrengthCalculator.Calculate(backpack)
+                .TotalScore;
+            List<string> names = new();
+            if (shopItems != null)
+            {
+                foreach (ItemData item in shopItems)
+                {
+                    if (item != null) names.Add(item.ItemName);
+                }
+            }
+
+            Debug.Log($"[BackpackOperation] {faction} | {action} | " +
+                $"分数 {scoreBefore:0.##} → {scoreAfter:0.##} " +
+                $"({scoreAfter - scoreBefore:+0.##;-0.##;0}) | " +
+                $"商店 [{string.Join(", ", names)}] | Roll {remainingRolls}",
+                context);
         }
     }
 }

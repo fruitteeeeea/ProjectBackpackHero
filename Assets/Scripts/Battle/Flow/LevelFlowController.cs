@@ -183,7 +183,7 @@ namespace BackpackHero.Battle
             // 调试 AI 正在以真实商店/背包状态连续操作时，不能让任何入口
             // （包括正式准备 UI 和调试面板）提前切进战斗。
             if (PlayerBackpackSystem.IsAnyDebugAutoOperationRunning ||
-                PlayerBackpackDebugBridge.Active?.EnemyTarget?.IsDebugReactionRunning == true)
+                PlayerBackpackDebugBridge.Active?.EnemyTarget?.IsDebugFastOperationRunning == true)
             {
                 return false;
             }

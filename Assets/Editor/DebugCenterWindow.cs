@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Linq;
 using BackpackHero.Background;
 using BackpackHero.Battle;
 using BackpackHero.Debugging;
@@ -13,7 +15,8 @@ namespace BackpackHero.EditorTools
     internal enum DebugCenterKind
     {
         ProgramTest,
-        GameplayDesign
+        GameplayDesign,
+        VisualEffects
     }
 
     internal enum DebugCenterTab
@@ -36,7 +39,8 @@ namespace BackpackHero.EditorTools
         ItemProgression,
         Pack,
         DamageStatistics,
-        BackpackStrength
+        BackpackStrength,
+        FloatingDamageText
     }
 
     internal sealed class DebugCenterTabDefinition
@@ -91,18 +95,21 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.TestShooter, DebugCenterKind.ProgramTest, "Test Shooter",
                 () => TestShooterDebugRuntimeBridge.HasTarget,
                 () => ScriptableObject.CreateInstance<TestShooterDebugWindow>()),
-            new(DebugCenterTab.BackgroundPhysics, DebugCenterKind.ProgramTest, "星图物理",
+            new(DebugCenterTab.BackgroundPhysics, DebugCenterKind.VisualEffects, "星图物理",
                 () => BackgroundPhysicsDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<BackgroundPhysicsDebugWindow>(), true),
             new(DebugCenterTab.Level, DebugCenterKind.ProgramTest, "关卡",
                 () => LevelFlowController.Instance != null,
                 () => ScriptableObject.CreateInstance<LevelDebugWindow>()),
-            new(DebugCenterTab.AircraftVisual, DebugCenterKind.ProgramTest, "飞机视觉动效",
+            new(DebugCenterTab.AircraftVisual, DebugCenterKind.VisualEffects, "飞机视觉动效",
                 () => AircraftVisualDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<AircraftVisualDebugWindow>()),
-            new(DebugCenterTab.BackpackVisual, DebugCenterKind.ProgramTest, "背包动效",
+            new(DebugCenterTab.BackpackVisual, DebugCenterKind.VisualEffects, "背包动效",
                 () => BackpackVisualDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<BackpackVisualDebugWindow>()),
+            new(DebugCenterTab.FloatingDamageText, DebugCenterKind.VisualEffects, "伤害飘字",
+                () => FloatingDamageTextDebugRuntime.Instance != null,
+                VisualEffectsDebugCenterWindow.CreateFloatingDamageTextContent, true),
             new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
                 () => GamePacingDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<GamePacingDebugWindow>(), true),
@@ -403,9 +410,37 @@ namespace BackpackHero.EditorTools
         }
     }
 
-    /// <summary>按固定顺序创建双 Center，以便使用公开 API 尝试将其并列停靠。</summary>
+    internal sealed class VisualEffectsDebugCenterWindow : DebugCenterWindowBase
+    {
+        protected override DebugCenterKind Center => DebugCenterKind.VisualEffects;
+        protected override string PreferenceKey => "BackpackHero.DebugCenter.VisualEffects.LastTab";
+
+        [MenuItem("Tools/Debug/视效调整面板")]
+        internal static void OpenFromMenu() => DebugCenterWorkspace.Open();
+
+        internal static VisualEffectsDebugCenterWindow Open(bool focus = true)
+        {
+            VisualEffectsDebugCenterWindow window = EditorWindow.GetWindow<VisualEffectsDebugCenterWindow>(
+                "视效调整面板", focus, typeof(ProgramTestDebugCenterWindow));
+            window.Initialize("视效调整面板");
+            if (focus) window.Focus();
+            return window;
+        }
+
+        internal static ScriptableObject CreateFloatingDamageTextContent()
+        {
+            AircraftVisualDebugWindow content = ScriptableObject.CreateInstance<AircraftVisualDebugWindow>();
+            content.FloatingTextOnly = true;
+            return content;
+        }
+    }
+
+    /// <summary>按固定顺序创建三个 Center，并在公开 API 不足时最小范围反射停靠。</summary>
     internal static class DebugCenterWorkspace
     {
+        private const int DockRetryCount = 8;
+        private static int pendingDockRetries;
+
         internal static void Open(DebugCenterTab? preferredTab = null)
         {
             ProgramTestDebugCenterWindow programPanel =
@@ -414,6 +449,10 @@ namespace BackpackHero.EditorTools
                 GameplayDesignDebugCenterWindow.Open(
                     focus: false,
                     dockNextToProgramPanel: true);
+            VisualEffectsDebugCenterWindow visualPanel =
+                VisualEffectsDebugCenterWindow.Open(focus: false);
+            TryDockTogether(programPanel, designPanel, visualPanel);
+            ScheduleDockRetry();
 
             if (!preferredTab.HasValue)
             {
@@ -432,6 +471,46 @@ namespace BackpackHero.EditorTools
                 designPanel.Select(preferredTab.Value);
                 designPanel.Focus();
             }
+            else if (definition?.Center == DebugCenterKind.VisualEffects)
+            {
+                visualPanel.Select(preferredTab.Value);
+                visualPanel.Focus();
+            }
+        }
+
+        internal static void ResetDockRetries() => pendingDockRetries = 0;
+
+        private static void TryDockTogether(EditorWindow anchor, params EditorWindow[] windows)
+        {
+            // DockArea.AddTab 是 Unity 内部 API；仅集中在这里作为公开 GetWindow 的兜底。
+            object dockArea = typeof(EditorWindow).GetField("m_Parent",
+                BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(anchor);
+            MethodInfo addTab = dockArea?.GetType().GetMethod("AddTab",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                null, new[] { typeof(EditorWindow) }, null);
+            if (addTab == null) return;
+            foreach (EditorWindow window in windows)
+            {
+                if (window != null) addTab.Invoke(dockArea, new object[] { window });
+            }
+        }
+
+        private static void ScheduleDockRetry()
+        {
+            if (pendingDockRetries >= DockRetryCount) return;
+            pendingDockRetries++;
+            EditorApplication.delayCall += () =>
+            {
+                ProgramTestDebugCenterWindow program = Resources.FindObjectsOfTypeAll<ProgramTestDebugCenterWindow>()
+                    .FirstOrDefault();
+                GameplayDesignDebugCenterWindow gameplay = Resources.FindObjectsOfTypeAll<GameplayDesignDebugCenterWindow>()
+                    .FirstOrDefault();
+                VisualEffectsDebugCenterWindow visual = Resources.FindObjectsOfTypeAll<VisualEffectsDebugCenterWindow>()
+                    .FirstOrDefault();
+                if (program != null && gameplay != null && visual != null)
+                    TryDockTogether(program, gameplay, visual);
+                ScheduleDockRetry();
+            };
         }
     }
 
@@ -472,6 +551,10 @@ namespace BackpackHero.EditorTools
             {
                 yield return definition;
             }
+            foreach (DebugCenterTabDefinition definition in DebugCenterRegistry.GetTabs(DebugCenterKind.VisualEffects))
+            {
+                yield return definition;
+            }
         }
 
         private static void OpenFor(DebugCenterTabDefinition definition)
@@ -484,8 +567,10 @@ namespace BackpackHero.EditorTools
             if (state == PlayModeStateChange.ExitingEditMode)
             {
                 WasAvailable.Clear();
+                DebugCenterWorkspace.ResetDockRetries();
                 CloseAll<ProgramTestDebugCenterWindow>();
                 CloseAll<GameplayDesignDebugCenterWindow>();
+                CloseAll<VisualEffectsDebugCenterWindow>();
                 return;
             }
 
@@ -495,9 +580,11 @@ namespace BackpackHero.EditorTools
             }
 
             WasAvailable.Clear();
+            DebugCenterWorkspace.ResetDockRetries();
             GamePacingDebugRuntime.Instance?.ResetGameSpeed();
             CloseAll<ProgramTestDebugCenterWindow>();
             CloseAll<GameplayDesignDebugCenterWindow>();
+            CloseAll<VisualEffectsDebugCenterWindow>();
         }
 
         private static void CloseAll<T>() where T : EditorWindow

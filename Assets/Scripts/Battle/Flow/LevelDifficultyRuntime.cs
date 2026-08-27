@@ -1,5 +1,6 @@
 using System;
 using BackpackHero.Config;
+using BackpackHero.Debugging;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -8,7 +9,6 @@ namespace BackpackHero.Battle
     [DefaultExecutionOrder(-9999)]
     public sealed class LevelDifficultyRuntime : MonoBehaviour
     {
-        private const string ResourceName = "LevelDifficultySettings";
         [SerializeField] private LevelDifficultySettings settings;
         private LevelDifficultySettings activeValues;
         private bool enemyStrengthEnabled;
@@ -39,7 +39,7 @@ namespace BackpackHero.Battle
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             enemyStrengthEnabled = false;
-            settings = Resources.Load<LevelDifficultySettings>(ResourceName);
+            settings = GameDataCatalog.Load()?.LevelDifficulty;
             if (settings != null)
             {
                 activeValues = ScriptableObject.CreateInstance<LevelDifficultySettings>();

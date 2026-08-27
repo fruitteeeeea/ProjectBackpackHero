@@ -8,9 +8,6 @@ namespace BackpackHero.Debugging
     [DefaultExecutionOrder(-9999)]
     public sealed class StyleTendencyDebugRuntime : MonoBehaviour
     {
-        private const string DefaultSettingsResourceName =
-            "StyleTendency/Arcade";
-
         [SerializeField]
         private StyleTendencyDebugSettings defaultSettings;
         private StyleTendencyMultipliers multipliers =
@@ -76,8 +73,7 @@ namespace BackpackHero.Debugging
             }
 
             Instance = this;
-            defaultSettings = Resources.Load<StyleTendencyDebugSettings>(
-                DefaultSettingsResourceName);
+            defaultSettings = GameDataCatalog.Load()?.StyleTendency;
             LoadSavedValues();
         }
 

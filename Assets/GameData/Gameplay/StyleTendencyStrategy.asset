@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c96b7c4578454f87bfc79beb61183bde, type: 3}
-  m_Name: Arcade
+  m_Name: StyleTendencyStrategy
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.StyleTendencyDebugSettings
-  itemCooldownSpeedMultiplier: 1
-  aircraftTargetingArcAngleMultiplier: 1
-  aircraftAttackRangeMultiplier: 1
-  aircraftAttackSpeedMultiplier: 1
-  aircraftFlightSpeedMultiplier: 1
-  aircraftLifetimeMultiplier: 1.25
-  projectileSpeedMultiplier: 1
-  projectileLifetimeMultiplier: 1
-  cooldownItemType: 1
+  itemCooldownSpeedMultiplier: 0.5
+  aircraftTargetingArcAngleMultiplier: 3
+  aircraftAttackRangeMultiplier: 2
+  aircraftAttackSpeedMultiplier: 0.2
+  aircraftFlightSpeedMultiplier: 0.6
+  aircraftLifetimeMultiplier: 1
+  projectileSpeedMultiplier: 0.6
+  projectileLifetimeMultiplier: 0.25
+  cooldownItemType: 0

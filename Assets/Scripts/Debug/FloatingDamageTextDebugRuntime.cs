@@ -7,9 +7,6 @@ namespace BackpackHero.Debugging
     [DefaultExecutionOrder(-9997)]
     public sealed class FloatingDamageTextDebugRuntime : MonoBehaviour
     {
-        private const string DefaultSettingsResourceName =
-            "FloatingDamageText/FloatingDamageTextDebugSettings";
-
         [SerializeField] private FloatingDamageTextDebugSettings defaultSettings;
         private FloatingDamageTextVisualSettings settings;
 
@@ -52,8 +49,7 @@ namespace BackpackHero.Debugging
             }
 
             Instance = this;
-            defaultSettings = Resources.Load<FloatingDamageTextDebugSettings>(
-                DefaultSettingsResourceName);
+            defaultSettings = GameDataCatalog.Load()?.FloatingDamageText;
             LoadSavedValues();
             InstanceAvailable?.Invoke(this);
         }

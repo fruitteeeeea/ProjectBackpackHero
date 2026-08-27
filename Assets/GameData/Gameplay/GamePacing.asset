@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 807a7c148e2c48619f47fc3fe3e61232, type: 3}
-  m_Name: GamePacingDebugSettings
+  m_Name: GamePacing
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.GamePacingDebugSettings
   aircraftSpeedMultiplier: 0.5
   projectileDamageMultiplier: 1

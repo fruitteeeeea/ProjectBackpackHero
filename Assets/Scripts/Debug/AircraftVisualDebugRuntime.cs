@@ -7,9 +7,6 @@ namespace BackpackHero.Debugging
     [DefaultExecutionOrder(-9998)]
     public sealed class AircraftVisualDebugRuntime : MonoBehaviour
     {
-        private const string DefaultSettingsResourceName =
-            "AircraftVisual/AircraftVisualDebugSettings";
-
         [SerializeField] private AircraftVisualDebugSettings defaultSettings;
         private AircraftVisualSettings settings = AircraftVisualSettings.Default;
 
@@ -54,8 +51,7 @@ namespace BackpackHero.Debugging
             }
 
             Instance = this;
-            defaultSettings = Resources.Load<AircraftVisualDebugSettings>(
-                DefaultSettingsResourceName);
+            defaultSettings = GameDataCatalog.Load()?.AircraftVisual;
             LoadSavedValues();
             InstanceAvailable?.Invoke(this);
         }

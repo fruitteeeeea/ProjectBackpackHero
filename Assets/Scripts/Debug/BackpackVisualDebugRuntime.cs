@@ -6,9 +6,6 @@ namespace BackpackHero.Debugging
     [DefaultExecutionOrder(-9998)]
     public sealed class BackpackVisualDebugRuntime : MonoBehaviour
     {
-        private const string DefaultSettingsResourceName =
-            "BackpackVisual/BackpackVisualDebugSettings";
-
         [SerializeField] private BackpackVisualDebugSettings defaultSettings;
         private BackpackVisualSettings settings = BackpackVisualSettings.Default;
 
@@ -42,8 +39,7 @@ namespace BackpackHero.Debugging
             }
 
             Instance = this;
-            defaultSettings = Resources.Load<BackpackVisualDebugSettings>(
-                DefaultSettingsResourceName);
+            defaultSettings = GameDataCatalog.Load()?.BackpackVisual;
             LoadSavedValues();
             InstanceAvailable?.Invoke(this);
         }

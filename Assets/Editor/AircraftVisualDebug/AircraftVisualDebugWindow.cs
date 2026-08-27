@@ -8,6 +8,7 @@ namespace BackpackHero.EditorTools
     /// <summary>程序测试页：编辑、应用并持久化飞机视觉开关。</summary>
     internal sealed class AircraftVisualDebugWindow : ScriptableObject
     {
+        internal bool FloatingTextOnly { get; set; }
         private const string HitParticlesPath =
             "Assets/Prefabs/VFX/Particles/VFX_Particles_AircraftExplosion.prefab";
         private const string DeathExplosionParticlesPath =
@@ -27,7 +28,7 @@ namespace BackpackHero.EditorTools
         internal void DrawTab()
         {
             EditorGUILayout.Space(8f);
-            EditorGUILayout.LabelField("全局飞机视觉动效", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(FloatingTextOnly ? "伤害飘字" : "全局飞机视觉动效", EditorStyles.boldLabel);
 
             if (!EditorApplication.isPlaying)
             {
@@ -37,9 +38,8 @@ namespace BackpackHero.EditorTools
                 return;
             }
 
-            AircraftVisualDebugRuntime runtime =
-                AircraftVisualDebugRuntime.Instance;
-            if (runtime == null)
+            AircraftVisualDebugRuntime runtime = AircraftVisualDebugRuntime.Instance;
+            if (!FloatingTextOnly && runtime == null)
             {
                 EditorGUILayout.HelpBox(
                     "正在等待全局飞机视觉控制器启动。",
@@ -47,13 +47,16 @@ namespace BackpackHero.EditorTools
                 return;
             }
 
-            SyncRuntime(runtime);
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
-            DrawOverrideToggle();
-            DrawSettingsTarget();
-            DrawToggles();
-            DrawPersistence(runtime);
-            DrawParticleAssets();
+            if (!FloatingTextOnly)
+            {
+                SyncRuntime(runtime);
+                DrawOverrideToggle();
+                DrawSettingsTarget();
+                DrawToggles();
+                DrawPersistence(runtime);
+                DrawParticleAssets();
+            }
             DrawFloatingTextSettings();
             EditorGUILayout.EndScrollView();
         }

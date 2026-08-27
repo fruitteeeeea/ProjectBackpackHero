@@ -10,9 +10,6 @@ namespace BackpackHero.Debugging
     [DefaultExecutionOrder(-10000)]
     public sealed class GamePacingDebugRuntime : MonoBehaviour
     {
-        private const string DefaultSettingsResourceName =
-            "GamePacingDebugSettings";
-
         [SerializeField]
         private GamePacingDebugSettings defaultSettings;
         private GamePacingMultipliers multipliers =
@@ -132,8 +129,7 @@ namespace BackpackHero.Debugging
             }
 
             Instance = this;
-            defaultSettings = Resources.Load<GamePacingDebugSettings>(
-                DefaultSettingsResourceName);
+            defaultSettings = GameDataCatalog.Load()?.GamePacing;
             LoadSavedValues();
             InstanceAvailable?.Invoke(this);
         }
@@ -169,7 +165,7 @@ namespace BackpackHero.Debugging
 
         /// <summary>
         /// 由编辑器桥接层显式绑定项目中的默认配置资产。
-        /// Player构建仍会通过Resources自动加载同一资产。
+        /// Player 构建通过 GameDataCatalog 引用同一正式资产。
         /// </summary>
         public void SetDefaultSettings(
             GamePacingDebugSettings newDefaultSettings)

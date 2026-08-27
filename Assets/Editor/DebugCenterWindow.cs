@@ -111,9 +111,6 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.FloatingDamageText, DebugCenterKind.VisualEffects, "伤害飘字",
                 () => FloatingDamageTextDebugRuntime.Instance != null,
                 VisualEffectsDebugCenterWindow.CreateFloatingDamageTextContent, true),
-            new(DebugCenterTab.BalanceAdjustment, DebugCenterKind.GameplayDesign, "平衡调整",
-                () => true,
-                () => ScriptableObject.CreateInstance<BalanceAdjustmentDebugWindow>(), true),
             new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
                 () => GamePacingDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<GamePacingDebugWindow>()),
@@ -137,8 +134,21 @@ namespace BackpackHero.EditorTools
                 () => ScriptableObject.CreateInstance<DamageStatisticsDebugWindow>()),
             new(DebugCenterTab.BackpackStrength, DebugCenterKind.GameplayDesign, "场上背包强度",
                 () => EditorApplication.isPlaying && PlayerBackpackDebugBridge.Active != null,
-                () => ScriptableObject.CreateInstance<BackpackStrengthDebugWindow>())
+                () => ScriptableObject.CreateInstance<BackpackStrengthDebugWindow>()),
+            // Runtime 自动打开按此注册顺序处理；平衡调整必须最后，确保
+            // Play Mode 启动阶段最终显示它。
+            new(DebugCenterTab.BalanceAdjustment, DebugCenterKind.GameplayDesign, "平衡调整",
+                () => true,
+                () => ScriptableObject.CreateInstance<BalanceAdjustmentDebugWindow>(), true)
         };
+
+        internal static IEnumerable<DebugCenterTabDefinition> GetAllTabsInRegistrationOrder()
+        {
+            foreach (DebugCenterTabDefinition definition in Definitions)
+            {
+                yield return definition;
+            }
+        }
 
         internal static IEnumerable<DebugCenterTabDefinition> GetTabs(DebugCenterKind center)
         {
@@ -401,6 +411,12 @@ namespace BackpackHero.EditorTools
                 : EditorWindow.GetWindow<GameplayDesignDebugCenterWindow>(
                     "玩法设计面板", focus);
             window.Initialize("玩法设计面板");
+            // Play Mode 每次打开玩法设计面板都优先进入平衡调整，不能被
+            // 上一次在 EditorPrefs 中保留的手动选页覆盖。
+            if (!preferredTab.HasValue && EditorApplication.isPlaying)
+            {
+                preferredTab = DebugCenterTab.BalanceAdjustment;
+            }
             if (preferredTab.HasValue)
             {
                 window.Select(preferredTab.Value);
@@ -532,39 +548,18 @@ namespace BackpackHero.EditorTools
 
         private static void MonitorRuntime()
         {
-            foreach (DebugCenterTabDefinition definition in GetDefinitions())
+            foreach (DebugCenterTabDefinition definition in
+                     DebugCenterRegistry.GetAllTabsInRegistrationOrder())
             {
                 bool available = EditorApplication.isPlaying && definition.IsAvailable();
                 WasAvailable.TryGetValue(definition.Tab, out bool wasAvailable);
                 if (available && !wasAvailable)
                 {
-                    OpenFor(definition);
+                    DebugCenterWorkspace.Open(definition.Tab);
                 }
 
                 WasAvailable[definition.Tab] = available;
             }
-        }
-
-        private static IEnumerable<DebugCenterTabDefinition> GetDefinitions()
-        {
-            foreach (DebugCenterTabDefinition definition in DebugCenterRegistry.GetTabs(DebugCenterKind.ProgramTest))
-            {
-                yield return definition;
-            }
-
-            foreach (DebugCenterTabDefinition definition in DebugCenterRegistry.GetTabs(DebugCenterKind.GameplayDesign))
-            {
-                yield return definition;
-            }
-            foreach (DebugCenterTabDefinition definition in DebugCenterRegistry.GetTabs(DebugCenterKind.VisualEffects))
-            {
-                yield return definition;
-            }
-        }
-
-        private static void OpenFor(DebugCenterTabDefinition definition)
-        {
-            DebugCenterWorkspace.Open(definition.Tab);
         }
 
         private static void HandlePlayModeStateChanged(PlayModeStateChange state)

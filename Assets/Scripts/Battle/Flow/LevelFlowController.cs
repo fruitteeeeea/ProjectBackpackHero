@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using BackpackPrototype;
 using BackpackHero.Progression;
 using UnityEngine;
 
@@ -172,6 +173,13 @@ namespace BackpackHero.Battle
         /// </summary>
         public bool RequestStartRound()
         {
+            // 调试 AI 正在以真实商店/背包状态连续操作时，不能让任何入口
+            // （包括正式准备 UI 和调试面板）提前切进战斗。
+            if (PlayerBackpackSystem.IsAnyDebugAutoOperationRunning)
+            {
+                return false;
+            }
+
             if (BattleFlowController.CurrentPhase !=
                 BattlePhase.Preparation || showingResult ||
                 isMatchComplete || currentRound > MaximumRounds)

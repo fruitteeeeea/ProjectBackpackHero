@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using BackpackHero.Battle;
 using BackpackHero.Input;
@@ -123,6 +124,13 @@ namespace BackpackPrototype
         private int nextItemId;
         private int remainingRolls;
         private int debugProgressionLevel = -1;
+        private Coroutine debugAutoOperationRoutine;
+        private bool debugAutoOperationRunning;
+        private int debugAutoOperationSuccessCount;
+        private string debugAutoOperationStatus;
+        private string debugAutoOperationName;
+
+        public static bool IsAnyDebugAutoOperationRunning { get; private set; }
 
         /// <summary>Roll 次数变化后通知商店 UI 刷新显示。</summary>
         public event Action RollStateChanged;
@@ -158,6 +166,10 @@ namespace BackpackPrototype
         public ItemView SelectedItem { get; private set; }
 
         public bool IsReady => isReady;
+        public bool IsDebugAutoOperationRunning => debugAutoOperationRunning;
+        public int DebugAutoOperationSuccessCount => debugAutoOperationSuccessCount;
+        public string DebugAutoOperationStatus => debugAutoOperationStatus;
+        public string DebugAutoOperationName => debugAutoOperationName;
 
         public int RollsPerPreparation =>
             Mathf.Max(1, rollsPerPreparation);
@@ -402,6 +414,107 @@ namespace BackpackPrototype
             }
 
             return LoadLayout(layout);
+        }
+
+        /// <summary>调试用：先做一次初始布局，再以真实商店/背包操作执行最多 15 次 AI 决策。</summary>
+        public bool StartDebugAutoOperations(int operationCount = 15, float interval = .3f)
+        {
+            if (debugAutoOperationRunning || !isReady || Backpack == null ||
+                BattleFlowController.CurrentPhase != BattlePhase.Preparation ||
+                !RandomizeInitialPlacementWithEnemyAI()) return false;
+            debugAutoOperationSuccessCount = 0;
+            debugAutoOperationStatus = "正在规划操作";
+            debugAutoOperationName = "初始布局";
+            // StartCoroutine 要到下一帧才开始；这里先上锁，避免同一帧进入战斗。
+            debugAutoOperationRunning = true;
+            IsAnyDebugAutoOperationRunning = true;
+            debugAutoOperationRoutine = StartCoroutine(RunDebugAutoOperations(Mathf.Max(1, operationCount), Mathf.Max(.05f, interval)));
+            return true;
+        }
+
+        public void CancelDebugAutoOperations(string reason = "已取消")
+        {
+            if (debugAutoOperationRoutine != null) StopCoroutine(debugAutoOperationRoutine);
+            debugAutoOperationRoutine = null;
+            debugAutoOperationRunning = false;
+            IsAnyDebugAutoOperationRunning = false;
+            debugAutoOperationStatus = reason;
+            debugAutoOperationName = null;
+        }
+
+        private IEnumerator RunDebugAutoOperations(int targetCount, float interval)
+        {
+            while (debugAutoOperationSuccessCount < targetCount &&
+                   BattleFlowController.CurrentPhase == BattlePhase.Preparation)
+            {
+                if (!BackpackOperationPlanner.TrySelectBest(Backpack, GetShopItemData(), remainingRolls, out BackpackOperation operation))
+                {
+                    debugAutoOperationStatus = "没有可执行的增益操作";
+                    break;
+                }
+                debugAutoOperationName = DescribeDebugOperation(operation);
+                if (TryExecuteDebugOperation(operation))
+                {
+                    debugAutoOperationSuccessCount++;
+                    debugAutoOperationStatus = $"已完成 {debugAutoOperationSuccessCount} / {targetCount}";
+                }
+                else
+                {
+                    // 执行前后模型状态若被其他正式逻辑改变，不能把失败操作
+                    // 误计数，也不应无限尝试同一个已失效候选。
+                    debugAutoOperationStatus = "操作执行失败";
+                    break;
+                }
+                yield return new WaitForSecondsRealtime(interval);
+            }
+            if (debugAutoOperationSuccessCount >= targetCount) debugAutoOperationStatus = $"已完成 {targetCount} 次操作";
+            // 给最后一批重叠 Tween 留出收束时间后再允许进入战斗。
+            yield return new WaitForSecondsRealtime(.65f);
+            CancelDebugAutoOperations(debugAutoOperationStatus ?? "已结束");
+        }
+
+        private List<ItemData> GetShopItemData()
+        {
+            List<ItemData> result = new();
+            foreach (ItemView view in shopItems) if (view?.Instance?.Data != null) result.Add(view.Instance.Data);
+            return result;
+        }
+
+        private static string DescribeDebugOperation(BackpackOperation operation)
+        {
+            return operation?.Kind switch
+            {
+                BackpackOperationKind.RollShop => "刷新商店",
+                BackpackOperationKind.MoveItem => "移动物品",
+                BackpackOperationKind.AddShopItem => "从商店放置",
+                BackpackOperationKind.RemoveItem => "移除物品",
+                BackpackOperationKind.MergeItems => "合成物品",
+                BackpackOperationKind.ReplaceItem => "替换物品",
+                _ => "规划中",
+            };
+        }
+
+        private bool TryExecuteDebugOperation(BackpackOperation operation)
+        {
+            switch (operation.Kind)
+            {
+                case BackpackOperationKind.RollShop: return TryRefreshShop();
+                case BackpackOperationKind.MoveItem: return combatController.MoveItem(operation.Item, operation.Destination);
+                case BackpackOperationKind.AddShopItem: return TryAutoPlaceShopItem(operation.ShopItem, operation.Destination);
+                case BackpackOperationKind.RemoveItem: return combatController.RemoveItem(operation.Item);
+                case BackpackOperationKind.MergeItems:
+                    if (!Backpack.TryMerge(operation.Item, operation.SecondaryItem)) return false;
+                    FindView(operation.SecondaryItem)?.PlayMergeFeedback(); return true;
+                case BackpackOperationKind.ReplaceItem:
+                    return combatController.RemoveItem(operation.Item) && TryAutoPlaceShopItem(operation.ShopItem, operation.Destination);
+                default: return false;
+            }
+        }
+
+        private bool TryAutoPlaceShopItem(ItemData data, Vector2Int cell)
+        {
+            ItemView view = shopItems.Find(candidate => candidate?.Instance?.Data == data);
+            return view != null && combatController.PlaceItem(view.Instance, cell);
         }
 
         public bool TryApplyRuntimeDeck(
@@ -1003,6 +1116,11 @@ namespace BackpackPrototype
 
         private void HandlePhaseChanged(BattlePhase phase)
         {
+            if (phase != BattlePhase.Preparation && debugAutoOperationRunning)
+            {
+                CancelDebugAutoOperations("已离开准备阶段");
+            }
+
             if (phase == BattlePhase.Preparation)
             {
                 InitializeShopForPreparation();
@@ -1678,8 +1796,15 @@ namespace BackpackPrototype
                 backpackViews.Add(existing);
             }
 
-            existing.SetBackpackPosition(
-                item.AnchorCell);
+            if (debugAutoOperationRunning)
+            {
+                // 保留商店 ItemView，直接播放其进入背包的移动反馈。
+                existing.AnimateToBackpackPosition(item.AnchorCell);
+            }
+            else
+            {
+                existing.SetBackpackPosition(item.AnchorCell);
+            }
         }
 
         private void HandleModelItemMoved(
@@ -1690,8 +1815,15 @@ namespace BackpackPrototype
                 return;
             }
 
-            FindView(item)?.SetBackpackPosition(
-                item.AnchorCell);
+            ItemView view = FindView(item);
+            if (debugAutoOperationRunning)
+            {
+                view?.AnimateToBackpackPosition(item.AnchorCell);
+            }
+            else
+            {
+                view?.SetBackpackPosition(item.AnchorCell);
+            }
         }
 
         private void HandleModelItemRemoved(
@@ -1741,8 +1873,22 @@ namespace BackpackPrototype
                 SetSelectedItem(null);
             }
 
-            view.gameObject.SetActive(false);
-            Destroy(view.gameObject);
+            if (debugAutoOperationRunning)
+            {
+                view.AnimateRemoval(() =>
+                {
+                    if (view != null)
+                    {
+                        view.gameObject.SetActive(false);
+                        Destroy(view.gameObject);
+                    }
+                });
+            }
+            else
+            {
+                view.gameObject.SetActive(false);
+                Destroy(view.gameObject);
+            }
         }
 
         private void HandleSelectionRequested(
@@ -1881,6 +2027,7 @@ namespace BackpackPrototype
 
         private void OnDisable()
         {
+            CancelDebugAutoOperations("运行时已禁用");
             draggingItem = null;
             dragDebugOverlay?.Clear();
             BattleFlowController.PhaseChanged -=
@@ -1894,6 +2041,7 @@ namespace BackpackPrototype
 
         private void OnDestroy()
         {
+            CancelDebugAutoOperations("运行时已销毁");
             if (playerItemSystem != null)
             {
                 playerItemSystem.Changed -= HandlePlayerItemsChanged;

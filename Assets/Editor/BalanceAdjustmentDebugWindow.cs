@@ -178,30 +178,36 @@ namespace BackpackHero.EditorTools
         private static void DrawAutomatedPlacement(PlayerBackpackDebugBridge bridge)
         {
             EditorGUILayout.Space(6f);
-            EditorGUILayout.LabelField("敌方 AI 自动摆放", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("背包 AI 自动操作", EditorStyles.boldLabel);
+            bool playerOperating = bridge.Target.IsDebugAutoOperationRunning;
             bool canPlace = BattleFlowController.CurrentPhase == BattlePhase.Preparation &&
-                bridge.Target.IsReady && bridge.EnemyTarget.IsReady && !bridge.EnemyTarget.IsOperationRunning;
+                bridge.Target.IsReady && bridge.EnemyTarget.IsReady && !playerOperating && !bridge.EnemyTarget.IsOperationRunning;
             using (new EditorGUI.DisabledScope(!canPlace))
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("玩家执行 15 次摆放"))
+                if (GUILayout.Button("玩家 AI 执行 15 次操作"))
                 {
-                    for (int index = 0; index < 15; index++)
-                        bridge.Target.RandomizeInitialPlacementWithEnemyAI();
+                    bridge.Target.StartDebugAutoOperations();
                 }
-                if (GUILayout.Button("敌人执行 15 次摆放"))
+                if (GUILayout.Button("敌人 AI 执行 15 次操作"))
                 {
-                    for (int index = 0; index < 15; index++)
-                        bridge.EnemyTarget.RandomizeInitialPlacement();
+                    bridge.EnemyTarget.StartDebugOperations();
                 }
             }
-            EditorGUILayout.HelpBox("双方均使用 EnemyBackpackLayoutPlanner；15 次连续重新规划后保留最后一次有效布局。", MessageType.None);
+            string status = string.IsNullOrEmpty(bridge.Target.DebugAutoOperationStatus)
+                ? "未启动" : bridge.Target.DebugAutoOperationStatus;
+            EditorGUILayout.LabelField("玩家 AI", $"{bridge.Target.DebugAutoOperationSuccessCount} / 15 · {status}");
+            EditorGUILayout.LabelField("当前操作", bridge.Target.DebugAutoOperationName ?? "-");
+            EditorGUILayout.HelpBox("玩家先使用一次初始布局，随后与敌人共用评分器，以真实商店和背包状态执行操作。操作进行时已锁定进入战斗。", MessageType.None);
         }
 
         private static void DrawMatchControls(PlayerBackpackDebugBridge bridge)
         {
             LevelFlowController flow = LevelFlowController.Instance;
+            bool playerOperating = bridge.Target.IsDebugAutoOperationRunning;
             EditorGUILayout.Space(6f);
+            using (new EditorGUI.DisabledScope(playerOperating))
+            {
             using (new EditorGUILayout.HorizontalScope())
             {
                 using (new EditorGUI.DisabledScope(flow == null || !flow.IsRoundTimerRunning))
@@ -230,6 +236,11 @@ namespace BackpackHero.EditorTools
                     if (GUILayout.Button("战斗失败")) flow.ForceDebugMatchResult(false);
                 }
                 if (GUILayout.Button("重启对局")) { DamageStatisticsRuntime.Instance?.Clear(); flow?.ResetForDebugMatch(); }
+            }
+            }
+            if (playerOperating)
+            {
+                EditorGUILayout.HelpBox("玩家 AI 正在操作背包，完成或停止前不能切换阶段或重置对局。", MessageType.Info);
             }
         }
 

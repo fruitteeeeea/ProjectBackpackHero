@@ -47,6 +47,7 @@ namespace BackpackPrototype
         private BackpackCombatController combatController;
         private BackpackFighterSpawner fighterSpawner;
         private bool isReady, isApplyingData, hasInitialized, operationRunning;
+        private Coroutine debugOperationRoutine;
         private int pendingImmediateOperations, pendingCountedOperations, remainingShopRolls, remainingOperations;
         private float nextAutomaticOperationTime, nextImmediateOperationTime;
         private EnemyBackpackData currentData;
@@ -217,6 +218,40 @@ namespace BackpackPrototype
             if (!CanOperate() || remainingOperations <= 0) return false;
             pendingCountedOperations++; return true;
         }
+
+        /// <summary>调试用：执行一轮真实的敌方背包操作，不受正式每回合上限限制。</summary>
+        public bool StartDebugOperations(int operationCount = 15)
+        {
+            if (!CanOperate() || operationRunning || debugOperationRoutine != null ||
+                !RandomizeInitialPlacement())
+            {
+                return false;
+            }
+
+            debugOperationRoutine = StartCoroutine(
+                RunDebugOperations(Mathf.Max(1, operationCount)));
+            return true;
+        }
+
+        private IEnumerator RunDebugOperations(int targetCount)
+        {
+            int completed = 0;
+            operationRunning = true;
+            while (completed < targetCount && CanOperate())
+            {
+                if (!TryExecuteOperation())
+                {
+                    break;
+                }
+
+                completed++;
+                // 敌方沿用自己的完整视效时长，避免复用 ItemView 时相互打断。
+                yield return new WaitForSecondsRealtime(VisualOperationDuration);
+            }
+
+            operationRunning = false;
+            debugOperationRoutine = null;
+        }
         public bool RequestImmediateReaction()
         {
             if (!CanOperate() || remainingOperations <= 0) return false;
@@ -292,34 +327,32 @@ namespace BackpackPrototype
         private bool TryExecuteOperation()
         {
             if (!CanOperate()) return false;
-            float currentScore = BackpackStrengthCalculator
-                .Calculate(Backpack)
-                .TotalScore;
-            OperationCandidate selected = null;
-            float bestScoreGain = float.NegativeInfinity;
+            return BackpackOperationPlanner.TrySelectBest(
+                       Backpack, shopItems, remainingShopRolls,
+                       out BackpackOperation operation) &&
+                   TryExecutePlannedOperation(operation);
+        }
 
-            for (int attempt = 0;
-                 attempt < OperationSimulationAttemptCount;
-                 attempt++)
+        private bool TryExecutePlannedOperation(BackpackOperation operation)
+        {
+            if (operation == null) return false;
+            switch (operation.Kind)
             {
-                OperationCandidate candidate = TryCreateOperationCandidate();
-                if (candidate == null ||
-                    !TrySimulateCandidate(candidate, out float simulatedScore))
-                {
-                    continue;
-                }
-
-                float scoreGain = simulatedScore - currentScore;
-                if (selected == null || scoreGain > bestScoreGain)
-                {
-                    selected = candidate;
-                    bestScoreGain = scoreGain;
-                }
+                case BackpackOperationKind.RollShop:
+                    return TryRollShop();
+                case BackpackOperationKind.MoveItem:
+                    return combatController.MoveItem(operation.Item, operation.Destination);
+                case BackpackOperationKind.AddShopItem:
+                    return TryAddShopItem(operation.ShopItem, operation.Destination);
+                case BackpackOperationKind.RemoveItem:
+                    return combatController.RemoveItem(operation.Item);
+                case BackpackOperationKind.MergeItems:
+                    return Backpack.TryMerge(operation.Item, operation.SecondaryItem);
+                case BackpackOperationKind.ReplaceItem:
+                    return TryReplaceItem(operation.Item, operation.ShopItem, operation.Destination);
+                default:
+                    return false;
             }
-
-            return selected != null &&
-                   bestScoreGain >= 0f &&
-                   TryExecuteCandidate(selected);
         }
 
         private OperationCandidate TryCreateOperationCandidate()

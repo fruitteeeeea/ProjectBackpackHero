@@ -77,7 +77,7 @@ namespace BackpackHero.EditorTools
         {
             new(DebugCenterTab.Runtime, DebugCenterKind.ProgramTest, "Runtime",
                 () => EditorApplication.isPlaying,
-                () => ScriptableObject.CreateInstance<RuntimeDebugWindow>()),
+                () => ScriptableObject.CreateInstance<RuntimeDebugWindow>(), true),
             new(DebugCenterTab.Values, DebugCenterKind.ProgramTest, "数值",
                 () => DebugValueRuntimeBridge.HasTarget,
                 () => ScriptableObject.CreateInstance<DebugValueWindow>()),
@@ -110,7 +110,7 @@ namespace BackpackHero.EditorTools
                 () => ScriptableObject.CreateInstance<BackpackVisualDebugWindow>()),
             new(DebugCenterTab.FloatingDamageText, DebugCenterKind.VisualEffects, "伤害飘字",
                 () => FloatingDamageTextDebugRuntime.Instance != null,
-                VisualEffectsDebugCenterWindow.CreateFloatingDamageTextContent, true),
+                VisualEffectsDebugCenterWindow.CreateFloatingDamageTextContent),
             new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
                 () => GamePacingDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<GamePacingDebugWindow>()),
@@ -256,7 +256,9 @@ namespace BackpackHero.EditorTools
             DebugCenterTabDefinition selected = hasSelection
                 ? DebugCenterRegistry.Get(selectedTab)
                 : null;
-            if (selected != null && selected.Center == Center && selected.IsAvailable())
+            // 已选标签即使暂时未连接 Runtime 也应保持显示；标签内容本身
+            // 会显示连接提示，不能因此抢占用户当前页。
+            if (selected != null && selected.Center == Center)
             {
                 return;
             }
@@ -466,13 +468,14 @@ namespace BackpackHero.EditorTools
         {
             ProgramTestDebugCenterWindow programPanel =
                 ProgramTestDebugCenterWindow.Open(focus: false);
+            VisualEffectsDebugCenterWindow visualPanel =
+                VisualEffectsDebugCenterWindow.Open(focus: false);
             GameplayDesignDebugCenterWindow designPanel =
                 GameplayDesignDebugCenterWindow.Open(
                     focus: false,
                     dockNextToProgramPanel: true);
-            VisualEffectsDebugCenterWindow visualPanel =
-                VisualEffectsDebugCenterWindow.Open(focus: false);
-            TryDockTogether(programPanel, designPanel, visualPanel);
+            // 顶层 Dock 标签顺序：程序测试 → 视效调整 → 玩法设计。
+            TryDockTogether(programPanel, visualPanel, designPanel);
             ScheduleDockRetry();
 
             if (!preferredTab.HasValue)
@@ -529,7 +532,7 @@ namespace BackpackHero.EditorTools
                 VisualEffectsDebugCenterWindow visual = Resources.FindObjectsOfTypeAll<VisualEffectsDebugCenterWindow>()
                     .FirstOrDefault();
                 if (program != null && gameplay != null && visual != null)
-                    TryDockTogether(program, gameplay, visual);
+                    TryDockTogether(program, visual, gameplay);
                 ScheduleDockRetry();
             };
         }
@@ -539,6 +542,8 @@ namespace BackpackHero.EditorTools
     internal static class DebugCenterWindowLifecycle
     {
         private static readonly Dictionary<DebugCenterTab, bool> WasAvailable = new();
+        private static int playModeInitializationVersion;
+        private static bool workspaceInitializedForCurrentPlayMode;
 
         static DebugCenterWindowLifecycle()
         {
@@ -552,12 +557,6 @@ namespace BackpackHero.EditorTools
                      DebugCenterRegistry.GetAllTabsInRegistrationOrder())
             {
                 bool available = EditorApplication.isPlaying && definition.IsAvailable();
-                WasAvailable.TryGetValue(definition.Tab, out bool wasAvailable);
-                if (available && !wasAvailable)
-                {
-                    DebugCenterWorkspace.Open(definition.Tab);
-                }
-
                 WasAvailable[definition.Tab] = available;
             }
         }
@@ -567,10 +566,18 @@ namespace BackpackHero.EditorTools
             if (state == PlayModeStateChange.ExitingEditMode)
             {
                 WasAvailable.Clear();
+                workspaceInitializedForCurrentPlayMode = false;
+                playModeInitializationVersion++;
                 DebugCenterWorkspace.ResetDockRetries();
                 CloseAll<ProgramTestDebugCenterWindow>();
                 CloseAll<GameplayDesignDebugCenterWindow>();
                 CloseAll<VisualEffectsDebugCenterWindow>();
+                return;
+            }
+
+            if (state == PlayModeStateChange.EnteredPlayMode)
+            {
+                SchedulePlayModeWorkspaceInitialization();
                 return;
             }
 
@@ -580,6 +587,8 @@ namespace BackpackHero.EditorTools
             }
 
             WasAvailable.Clear();
+            workspaceInitializedForCurrentPlayMode = false;
+            playModeInitializationVersion++;
             DebugCenterWorkspace.ResetDockRetries();
             GamePacingDebugRuntime.Instance?.ResetGameSpeed();
             CloseAll<ProgramTestDebugCenterWindow>();
@@ -593,6 +602,25 @@ namespace BackpackHero.EditorTools
             {
                 window.Close();
             }
+        }
+
+        private static void SchedulePlayModeWorkspaceInitialization()
+        {
+            int version = ++playModeInitializationVersion;
+            EditorApplication.delayCall += () =>
+            {
+                if (version != playModeInitializationVersion ||
+                    !EditorApplication.isPlaying ||
+                    workspaceInitializedForCurrentPlayMode)
+                {
+                    return;
+                }
+
+                // 不传 preferredTab：程序/视效面板恢复用户选择；玩法设计
+                // 由其 Open 规则在 Play Mode 固定选择“平衡调整”。
+                DebugCenterWorkspace.Open();
+                workspaceInitializedForCurrentPlayMode = true;
+            };
         }
     }
 }

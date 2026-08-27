@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using BackpackPrototype;
 using BackpackHero.Battle;
+using BackpackHero.Progression;
 using UnityEditor;
 using UnityEngine;
 
@@ -169,7 +170,10 @@ namespace BackpackHero.EditorTools
                 presenter = host.AddComponent<BattleResultPresenter>();
             }
 
-            presenter.Show(BattleResultData.CreateDefault(victory));
+            // This is a visual-only preview: show the persisted score without
+            // applying a settlement or mutating any player progress.
+            int currentScore = RankProgressionSystem.Instance?.Points ?? 0;
+            presenter.Show(BattleResultData.CreateDefault(victory, currentScore));
             lastResult = victory ? "已显示游戏胜利结算界面。" : "已显示游戏失败结算界面。";
         }
 

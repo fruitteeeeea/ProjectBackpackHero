@@ -33,15 +33,15 @@ namespace BackpackHero.Battle
             Rewards = rewards;
         }
 
-        public static BattleResultData CreateDefault(bool isVictory)
+        public static BattleResultData CreateDefault(bool isVictory, int totalScore = 0)
         {
             return isVictory
-                ? new BattleResultData(true, 0, 30, new[]
+                ? new BattleResultData(true, totalScore, 30, new[]
                 {
                     new BattleResultReward("GOLD", 99),
                     new BattleResultReward("DIAMOND", 99)
                 })
-                : new BattleResultData(false, 0, -10, new[]
+                : new BattleResultData(false, totalScore, -10, new[]
                 {
                     new BattleResultReward("GOLD", 99)
                 });

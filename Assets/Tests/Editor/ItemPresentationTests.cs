@@ -9,6 +9,101 @@ using BackpackPrototype;
 
 public sealed class ItemPresentationTests
 {
+    [Test]
+    public void PlayerItemHangarPresenter_EquipmentDetailContainsOnlyCd()
+    {
+        ItemData item = AssetDatabase.LoadAssetAtPath<ItemData>(
+            "Assets/Data/Backpack/Items/Equipment_ArcCoil.asset");
+        MethodInfo method = typeof(PlayerItemHangarPresenter).GetMethod(
+            "BuildEquipmentDetailAttributes", BindingFlags.Static | BindingFlags.NonPublic);
+
+        HangarDetailAttribute[] attributes =
+            (HangarDetailAttribute[])method.Invoke(null, new object[] { item });
+
+        Assert.That(attributes, Has.Length.EqualTo(1));
+        Assert.That(attributes[0].Label, Is.EqualTo("CD"));
+        Assert.That(attributes[0].Value, Is.EqualTo(item.Cd.ToString("0.##") + "s"));
+    }
+
+    [Test]
+    public void MainMenuSpellDetails_ContainsOnlyCdAttributeCard()
+    {
+        GameObject menu = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Packages/com.planetwar.reusable-main-menu/Prefabs/MainMenu.prefab");
+        HangarDetailLayout spellDetails = menu.transform.Find("UICardView/UICardSpell")
+            .GetComponent<HangarDetailLayout>();
+        SerializedObject serialized = new SerializedObject(spellDetails);
+        SerializedProperty values = serialized.FindProperty("attributeValueTexts");
+        SerializedProperty labels = serialized.FindProperty("attributeLabelTexts");
+        HangarDetailLayout entityDetails = menu.transform.Find("UICardView/UICardInfo")
+            .GetComponent<HangarDetailLayout>();
+        GridLayoutGroup entityAttributes = entityDetails.transform.Find("att").GetComponent<GridLayoutGroup>();
+
+        Assert.That(values.arraySize, Is.EqualTo(1));
+        Assert.That(labels.arraySize, Is.EqualTo(1));
+        Assert.That((labels.GetArrayElementAtIndex(0).objectReferenceValue as TMP_Text).text,
+            Is.EqualTo("CD"));
+        TMP_Text cdValue = values.GetArrayElementAtIndex(0).objectReferenceValue as TMP_Text;
+        HorizontalLayoutGroup spellAttributes = cdValue.transform.parent.parent.parent
+            .GetComponent<HorizontalLayoutGroup>();
+        Assert.That(spellAttributes.childAlignment, Is.EqualTo(TextAnchor.MiddleLeft));
+        Assert.That(spellAttributes.padding.left, Is.EqualTo(entityAttributes.padding.left));
+        foreach (TMP_Text text in spellDetails.GetComponentsInChildren<TMP_Text>(true))
+            Assert.That(text.text, Is.Not.EqualTo("Freeze Time"));
+    }
+
+    [Test]
+    public void HangarDetailLayout_EquipmentShowsOnlyCdAttribute()
+    {
+        GameObject page = new GameObject("UICardView");
+        GameObject entityDetails = new GameObject("UICardInfo");
+        entityDetails.transform.SetParent(page.transform);
+        GameObject entityAttributes = new GameObject("att", typeof(GridLayoutGroup));
+        entityAttributes.transform.SetParent(entityDetails.transform);
+        entityAttributes.GetComponent<GridLayoutGroup>().padding.left = 11;
+        GameObject detailRoot = new GameObject("HangarDetail");
+        detailRoot.transform.SetParent(page.transform);
+        GameObject cardRoot = new GameObject("EquipmentCard");
+        try
+        {
+            HangarDetailLayout layout = detailRoot.AddComponent<HangarDetailLayout>();
+            TMP_Text[] labels = new TMP_Text[4];
+            TMP_Text[] values = new TMP_Text[4];
+            GameObject attributeRow = new GameObject("AttributeRow", typeof(HorizontalLayoutGroup));
+            attributeRow.transform.SetParent(detailRoot.transform);
+            for (int index = 0; index < values.Length; index++)
+            {
+                GameObject attributeCard = new GameObject($"Attribute_{index + 1}");
+                attributeCard.transform.SetParent(attributeRow.transform);
+                GameObject value = new GameObject("value");
+                value.transform.SetParent(attributeCard.transform);
+                labels[index] = NewText(attributeCard.transform, "label");
+                values[index] = NewText(value.transform, "val");
+            }
+            layout.Configure(null, null, null, null, null, null, null, null, values, labels);
+
+            HangarCardItem card = cardRoot.AddComponent<HangarCardItem>();
+            card.Configure(new HangarItemSnapshot(HangarItemKind.Equipment, "Arc Coil", "", null,
+                null, true, 1, 0, 0, 0, 3.5f, 1, null, Color.white, "Unlocked",
+                new[] { new HangarDetailAttribute("CD", "3.5s") }));
+
+            layout.ShowPreview(card);
+
+            Assert.That(labels[0].text, Is.EqualTo("CD"));
+            Assert.That(values[0].text, Is.EqualTo("3.5s"));
+            HorizontalLayoutGroup rowLayout = attributeRow.GetComponent<HorizontalLayoutGroup>();
+            Assert.That(rowLayout.childAlignment, Is.EqualTo(TextAnchor.MiddleLeft));
+            Assert.That(rowLayout.padding.left, Is.EqualTo(11));
+            for (int index = 1; index < values.Length; index++)
+                Assert.That(values[index].transform.parent.parent.gameObject.activeSelf, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(cardRoot);
+            Object.DestroyImmediate(page);
+        }
+    }
+
     [TestCase(2)]
     [TestCase(10)]
     public void HangarDetailLayout_PreviewCardDisplaysSnapshotLevel(int level)

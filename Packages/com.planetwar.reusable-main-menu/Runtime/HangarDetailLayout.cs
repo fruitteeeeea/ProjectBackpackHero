@@ -145,12 +145,14 @@ namespace PlanetWar.ReusableMainMenu
         {
             if (snapshot.DetailAttributes == null || snapshot.DetailAttributes.Length == 0) return;
             if (attributeValueTexts == null) return;
+            if (snapshot.Kind == HangarItemKind.Equipment) ApplyEquipmentAttributeAlignment();
             for (int index = 0; index < attributeValueTexts.Length; index++)
             {
                 TMP_Text text = attributeValueTexts[index];
                 if (text == null) continue;
                 bool visible = index < snapshot.DetailAttributes.Length && snapshot.DetailAttributes[index].Visible;
-                if (text.transform.parent != null) text.transform.parent.gameObject.SetActive(visible);
+                Transform attributeCard = FindAttributeCard(text);
+                if (attributeCard != null) attributeCard.gameObject.SetActive(visible);
                 if (!visible) continue;
                 HangarDetailAttribute attribute = snapshot.DetailAttributes[index];
                 text.text = attribute.Value;
@@ -260,6 +262,31 @@ namespace PlanetWar.ReusableMainMenu
                 if (closest != null) return closest;
             }
             return null;
+        }
+
+        private static Transform FindAttributeCard(TMP_Text value)
+        {
+            if (value == null || value.transform.parent == null) return null;
+            // Both rebuilt and older prefabs use att -> value -> val. Target the outer card so
+            // hiding an unavailable stat also hides its static label, icon and background.
+            return value.transform.parent.parent ?? value.transform.parent;
+        }
+
+        // Old baked spell panels retain all four authored stat cards. Once their unavailable
+        // cards are hidden, use UICardInfo's authored left inset for the remaining CD row.
+        private void ApplyEquipmentAttributeAlignment()
+        {
+            if (attributeValueTexts.Length == 0) return;
+            Transform card = FindAttributeCard(attributeValueTexts[0]);
+            HorizontalLayoutGroup spellAttributes = card != null && card.parent != null
+                ? card.parent.GetComponent<HorizontalLayoutGroup>()
+                : null;
+            GridLayoutGroup entityAttributes = transform.parent != null
+                ? transform.parent.Find("UICardInfo/att")?.GetComponent<GridLayoutGroup>()
+                : null;
+            if (spellAttributes == null || entityAttributes == null) return;
+            spellAttributes.childAlignment = TextAnchor.MiddleLeft;
+            spellAttributes.padding.left = entityAttributes.padding.left;
         }
     }
 }

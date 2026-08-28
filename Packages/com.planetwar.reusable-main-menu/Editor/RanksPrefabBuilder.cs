@@ -48,7 +48,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var rankInfoPageBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("rankInfoPage").objectReferenceValue != null;
                 var bottomBarBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("bottomBar").objectReferenceValue != null;
                 var rankInfoReady = rankInfo != null && rankInfo.scroll != null && rankInfo.itemRankMain != null && rankInfo.itemRankReward != null && rankInfo.btnOffset != null && rankInfo.entries != null && rankInfo.entries.Length >= 12 && rankInfo.scroll.scrollRect != null && rankInfo.scroll.content != null && rankInfo.scroll.viewport != null && rankInfoPageBound && bottomBarBound;
-                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasDetailPreviewLevelBindings(entityDetails) || !HasAttributeAddValueBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !HasDetailPreviewLevelBindings(spellDetails) || !rankInfoReady))
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasDetailPreviewLevelBindings(entityDetails) || !HasAttributeAddValueBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !HasDetailPreviewLevelBindings(spellDetails) || !HasSingleSpellAttributeCard(spellDetails) || !HasSpellAttributeAlignment(entityDetails, spellDetails) || !rankInfoReady))
                 {
                     Debug.Log("[PlanetWar] Rebuilding MainMenu Hangar with the original static card configuration.");
                     Rebuild();
@@ -394,6 +394,8 @@ namespace PlanetWar.ReusableMainMenu.Editor
             Set(view, "entityDetails", entityDetails);
             Set(view, "spellDetails", spellDetails);
             Set(view, "entityLayout", ConfigureDetailLayout(entityDetails));
+            RemoveExtraSpellAttributeCards(spellDetails);
+            ApplySpellAttributeAlignment(entityDetails, spellDetails);
             Set(view, "spellLayout", ConfigureDetailLayout(spellDetails));
             Set(view, "goldText", Find(rankCoin, "Text (TMP)")?.GetComponent<TMP_Text>());
             Set(view, "diamondText", Find(rankDiamond, "Text (TMP)")?.GetComponent<TMP_Text>());
@@ -563,6 +565,25 @@ namespace PlanetWar.ReusableMainMenu.Editor
                    values.arraySize == additions.arraySize;
         }
 
+        private static bool HasSingleSpellAttributeCard(HangarDetailLayout layout)
+        {
+            if (layout == null) return false;
+            var values = new SerializedObject(layout).FindProperty("attributeValueTexts");
+            return values != null && values.arraySize == 1 &&
+                   values.GetArrayElementAtIndex(0).objectReferenceValue != null;
+        }
+
+        private static bool HasSpellAttributeAlignment(HangarDetailLayout entityDetails, HangarDetailLayout spellDetails)
+        {
+            GridLayoutGroup entityAttributes = entityDetails != null
+                ? Find(entityDetails.transform, "att")?.GetComponent<GridLayoutGroup>()
+                : null;
+            HorizontalLayoutGroup spellAttributes = FindSpellAttributeRow(spellDetails);
+            return entityAttributes != null && spellAttributes != null &&
+                   spellAttributes.childAlignment == TextAnchor.MiddleLeft &&
+                   spellAttributes.padding.left == entityAttributes.padding.left;
+        }
+
         private static bool HasDetailPreviewLevelBindings(HangarDetailLayout layout)
         {
             if (layout == null) return false;
@@ -609,6 +630,56 @@ namespace PlanetWar.ReusableMainMenu.Editor
             foreach (TMP_Text text in panel.GetComponentsInChildren<TMP_Text>(true))
                 if (text.name == "val") values.Add(text);
             return values.ToArray();
+        }
+
+        // UICardSpell ships with four authored stat cards. Equipment details expose only CD,
+        // so remove the trailing cards while baking MainMenu instead of leaving static artwork
+        // behind for runtime to conceal. The source template is deliberately left untouched.
+        private static void RemoveExtraSpellAttributeCards(GameObject panel)
+        {
+            TMP_Text[] values = FindAttributeValues(panel.transform);
+            for (int index = values.Length - 1; index >= 1; index--)
+            {
+                Transform card = FindAttributeCard(values[index]);
+                if (card != null) UnityEngine.Object.DestroyImmediate(card.gameObject);
+            }
+        }
+
+        // The entity details panel is the visual source of truth for the stat area's left
+        // inset. Keep the spell's one-row presentation vertically centered, but begin CD at
+        // the same horizontal position as UICardInfo's first attribute card.
+        private static void ApplySpellAttributeAlignment(GameObject entityDetails, GameObject spellDetails)
+        {
+            GridLayoutGroup entityAttributes = Find(entityDetails.transform, "att")?.GetComponent<GridLayoutGroup>();
+            HorizontalLayoutGroup spellAttributes = FindSpellAttributeRow(spellDetails);
+            if (entityAttributes == null || spellAttributes == null) return;
+            spellAttributes.childAlignment = TextAnchor.MiddleLeft;
+            spellAttributes.padding.left = entityAttributes.padding.left;
+        }
+
+        private static HorizontalLayoutGroup FindSpellAttributeRow(GameObject spellDetails)
+        {
+            TMP_Text[] values = spellDetails != null ? FindAttributeValues(spellDetails.transform) : null;
+            Transform card = values != null && values.Length > 0 ? FindAttributeCard(values[0]) : null;
+            return card != null && card.parent != null ? card.parent.GetComponent<HorizontalLayoutGroup>() : null;
+        }
+
+        private static HorizontalLayoutGroup FindSpellAttributeRow(HangarDetailLayout spellDetails)
+        {
+            if (spellDetails == null) return null;
+            var values = new SerializedObject(spellDetails).FindProperty("attributeValueTexts");
+            if (values == null || values.arraySize == 0) return null;
+            TMP_Text value = values.GetArrayElementAtIndex(0).objectReferenceValue as TMP_Text;
+            Transform card = FindAttributeCard(value);
+            return card != null && card.parent != null ? card.parent.GetComponent<HorizontalLayoutGroup>() : null;
+        }
+
+        private static Transform FindAttributeCard(TMP_Text value)
+        {
+            if (value == null || value.transform.parent == null) return null;
+            // Attribute markup is att -> value -> val. Hide/delete att so its title, icon and
+            // background follow the dynamic value's visibility rather than lingering alone.
+            return value.transform.parent.parent ?? value.transform.parent;
         }
 
         private static TMP_Text[] FindAttributeLabels(Transform panel)

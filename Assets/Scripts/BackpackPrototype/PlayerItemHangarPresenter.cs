@@ -111,7 +111,7 @@ namespace BackpackPrototype
 
         private static HangarDetailAttribute[] BuildDetailAttributes(ItemData item, int level)
         {
-            if (item.ItemType == ItemType.Equipment) return BuildEquipmentDetailAttributes(item, level);
+            if (item.ItemType == ItemType.Equipment) return BuildEquipmentDetailAttributes(item);
             if (item.FighterDefinition == null) return null;
             FighterDefinition fighter = item.FighterDefinition;
             // The migrated UICardInfo prefab serializes its six visible rows in this order:
@@ -147,24 +147,11 @@ namespace BackpackPrototype
                    GamePacingDebugRuntime.GetDamageFloatingTextMagicNumber();
         }
 
-        private static HangarDetailAttribute[] BuildEquipmentDetailAttributes(ItemData item, int level)
+        private static HangarDetailAttribute[] BuildEquipmentDetailAttributes(ItemData item)
         {
-            float range = 0f, damage = 0f, interval = 0f;
-            bool hasStats = false;
-            foreach (EquipmentEffectDefinition effect in item.EquipmentEffects)
-            {
-                if (effect == null || !effect.TryGetHangarStats(out EquipmentHangarStats stats)) continue;
-                hasStats = true;
-                range = Mathf.Max(range, stats.Range);
-                damage += stats.Damage;
-                interval = interval <= 0f ? stats.Interval : Mathf.Min(interval, stats.Interval);
-            }
             return new[]
             {
-                new HangarDetailAttribute("冷却", item.Cd.ToString("0.##") + "s"),
-                new HangarDetailAttribute("作用范围", range.ToString("0.#"), hasStats && range > 0f),
-                new HangarDetailAttribute("伤害", damage.ToString("0.#"), hasStats && damage > 0f),
-                new HangarDetailAttribute("效果间隔", FormatIntervalWithNext(item, interval, level), hasStats && interval > 0f)
+                new HangarDetailAttribute("CD", item.Cd.ToString("0.##") + "s")
             };
         }
 
@@ -178,14 +165,6 @@ namespace BackpackPrototype
                 next > 0f && !Mathf.Approximately(increase, 0f)
                     ? increase > 0f ? $"+{increase:0.#}" : increase.ToString("0.#")
                     : string.Empty);
-        }
-
-        private static string FormatIntervalWithNext(ItemData item, float interval, int level)
-        {
-            float value = interval * item.GetEquipmentIntervalMultiplierForProgressionLevel(level);
-            if (level >= PlayerItemSystem.MaximumLevel) return value.ToString("0.##") + "s";
-            float next = interval * item.GetEquipmentIntervalMultiplierForProgressionLevel(level + 1);
-            return $"{value:0.##}s ({next - value:+0.##;-0.##;0}s)";
         }
 
     }

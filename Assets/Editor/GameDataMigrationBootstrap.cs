@@ -25,8 +25,11 @@ namespace BackpackHero.EditorTools
             // Strategy 是现有项目中可由设计师选择的第二份正式配置，不能在迁移时丢失。
             Migrate<StyleTendencyDebugSettings>(
                 "Assets/Resources/StyleTendency/Strategy.asset", "Assets/GameData/Gameplay/StyleTendencyStrategy.asset");
-            LevelDifficultySettings difficulty = Migrate<LevelDifficultySettings>(
+            Migrate<LevelDifficultySettings>(
                 "Assets/Resources/LevelDifficultySettings.asset", "Assets/GameData/Gameplay/LevelDifficulty.asset");
+            LevelDifficultySettings difficulty =
+                EnsureDefaultLevelDifficulty(
+                    "Assets/GameData/Gameplay/LevelDifficultyDefault.asset");
             AircraftVisualDebugSettings aircraft = Migrate<AircraftVisualDebugSettings>(
                 "Assets/Resources/AircraftVisual/AircraftVisualDebugSettings.asset", "Assets/GameData/Visual/AircraftVisual.asset");
             BackpackVisualDebugSettings backpack = Migrate<BackpackVisualDebugSettings>(
@@ -63,6 +66,31 @@ namespace BackpackHero.EditorTools
             if (legacy != null) EditorUtility.CopySerialized(legacy, target);
             AssetDatabase.CreateAsset(target, targetPath);
             return target;
+        }
+
+        private static LevelDifficultySettings EnsureDefaultLevelDifficulty(
+            string path)
+        {
+            LevelDifficultySettings existing =
+                AssetDatabase.LoadAssetAtPath<LevelDifficultySettings>(path);
+            if (existing != null) return existing;
+
+            LevelDifficultySettings settings =
+                ScriptableObject.CreateInstance<LevelDifficultySettings>();
+            for (int level = 1;
+                 level <= LevelDifficultySettings.LevelCount;
+                 level++)
+            {
+                for (int stage = 0;
+                     stage < LevelDifficultySettings.StageCount;
+                     stage++)
+                {
+                    settings.SetEnemyStrength(level, stage, 1f, 1f);
+                }
+            }
+
+            AssetDatabase.CreateAsset(settings, path);
+            return settings;
         }
 
         private static void EnsureFolder(string path)

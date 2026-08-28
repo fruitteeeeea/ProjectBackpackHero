@@ -5,16 +5,25 @@ using UnityEngine;
 public sealed class LevelDifficultySettingsTests
 {
     [Test]
-    public void DefaultSettings_UseRequestedFiveLevelStrengthTable()
+    public void DefaultSettings_UseNeutralTenLevelStrengthTable()
     {
         LevelDifficultySettings settings = ScriptableObject.CreateInstance<LevelDifficultySettings>();
         try
         {
-            Assert.That(settings.GetEnemyStrength(1, 1).Health, Is.EqualTo(.79f));
-            Assert.That(settings.GetEnemyStrength(1, 2).Damage, Is.EqualTo(.81f));
-            Assert.That(settings.GetEnemyStrength(3, 4).Health, Is.EqualTo(.89f));
-            Assert.That(settings.GetEnemyStrength(5, 2).Damage, Is.EqualTo(.93f));
-            Assert.That(settings.GetEnemyStrength(5, 5).Health, Is.EqualTo(.95f));
+            for (int level = 1;
+                 level <= LevelDifficultySettings.LevelCount;
+                 level++)
+            {
+                for (int stage = 1;
+                     stage <= LevelDifficultySettings.StageCount;
+                     stage++)
+                {
+                    EnemyStrengthMultipliers strength =
+                        settings.GetEnemyStrength(level, stage);
+                    Assert.That(strength.Health, Is.EqualTo(1f));
+                    Assert.That(strength.Damage, Is.EqualTo(1f));
+                }
+            }
         }
         finally { Object.DestroyImmediate(settings); }
     }

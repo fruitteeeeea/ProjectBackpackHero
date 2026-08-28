@@ -89,7 +89,7 @@ namespace BackpackHero.Editor
             if (GameConfigService.Level?.BackpackRoundHealthMultipliers?.Length != LevelDifficultySettings.BackpackRoundMultiplierCount)
                 errors.Add("LevelConfig must contain six backpack round multipliers.");
             if (GameConfigService.Level?.EnemyStages?.Length != LevelDifficultySettings.LevelCount * LevelDifficultySettings.StageCount)
-                errors.Add("LevelConfig must contain fifteen enemy stages.");
+                errors.Add("LevelConfig must contain " + (LevelDifficultySettings.LevelCount * LevelDifficultySettings.StageCount) + " enemy stages.");
         }
 
         private static string ToShapeId(ItemShapeData shape)

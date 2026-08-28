@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.GameDataCatalog
   gamePacing: {fileID: 11400000, guid: 98b8641deeb2a8644aab953d79e76a99, type: 2}
   styleTendency: {fileID: 11400000, guid: 01e37b50346231f47a5331f764c6b0ef, type: 2}
-  levelDifficulty: {fileID: 11400000, guid: ff7c8e975bb10bf4a8551e83a0c60e27, type: 2}
+  levelDifficulty: {fileID: 11400000, guid: c6ad3cf342a5473290a8927cf5f4a921, type: 2}
   aircraftVisual: {fileID: 11400000, guid: 43a162226c0a8374c9c7f62562bc654f, type: 2}
   backpackVisual: {fileID: 11400000, guid: 88eadaa0870ea8448906ada7edd282d0, type: 2}
   floatingDamageText: {fileID: 11400000, guid: 90537464f8e9d0e4badc63cbb50c4a8a, type: 2}

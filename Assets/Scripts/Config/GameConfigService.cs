@@ -128,8 +128,15 @@ namespace BackpackHero.Config
             if (row == null) throw new InvalidOperationException("LevelConfig has no row.");
             float[] rounds = ParseFloatList(row.BackpackRoundHealthMultipliers, 6, "backpack round multipliers");
             string[] stageStrings = row.EnemyStages.Split('|');
-            if (stageStrings.Length != 15) throw new InvalidOperationException("enemyStages must contain 15 health:damage pairs.");
-            EnemyStrengthMultipliers[] stages = new EnemyStrengthMultipliers[15];
+            int expectedStageCount =
+                LevelDifficultySettings.LevelCount *
+                LevelDifficultySettings.StageCount;
+            if (stageStrings.Length != expectedStageCount)
+                throw new InvalidOperationException(
+                    "enemyStages must contain " + expectedStageCount +
+                    " health:damage pairs.");
+            EnemyStrengthMultipliers[] stages =
+                new EnemyStrengthMultipliers[expectedStageCount];
             for (int i = 0; i < stages.Length; i++)
             {
                 string[] pair = stageStrings[i].Split(':');

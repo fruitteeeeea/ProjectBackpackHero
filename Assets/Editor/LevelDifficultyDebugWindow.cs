@@ -25,7 +25,7 @@ namespace BackpackHero.EditorTools
             LevelDifficultyRuntime runtime = LevelDifficultyRuntime.Instance;
             if (runtime == null || runtime.Settings == null)
             {
-                EditorGUILayout.HelpBox("未找到 Resources/LevelDifficultySettings 配置资产。", MessageType.Warning);
+                EditorGUILayout.HelpBox("未找到默认关卡难度配置资产。", MessageType.Warning);
                 return;
             }
 
@@ -73,7 +73,7 @@ namespace BackpackHero.EditorTools
         private void DrawEnemyTable()
         {
             EditorGUILayout.Space(8f);
-            EditorGUILayout.LabelField("敌人强度（每关前三个阶段档位）", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("敌人强度（10 关、每关 3 个阶段档位）", EditorStyles.boldLabel);
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 GUILayout.Label("关卡阶段", GUILayout.Width(150));
@@ -81,7 +81,7 @@ namespace BackpackHero.EditorTools
                 GUILayout.Label("敌人伤害倍率", GUILayout.Width(115));
             }
 
-            string[] stageLabels = { "阶段1", "阶段2", "阶段3～5" };
+            string[] stageLabels = { "阶段1", "阶段2", "阶段3+" };
             for (int level = 1; level <= LevelDifficultySettings.LevelCount; level++)
             {
                 for (int stage = 0; stage < LevelDifficultySettings.StageCount; stage++)

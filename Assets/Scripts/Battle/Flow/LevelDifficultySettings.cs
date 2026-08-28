@@ -20,11 +20,11 @@ namespace BackpackHero.Battle
         public float Damage => damage;
     }
 
-    /// <summary>五关三回合档位的正式难度配置。</summary>
+    /// <summary>十关三回合档位的正式难度配置。</summary>
     [CreateAssetMenu(fileName = "LevelDifficultySettings", menuName = "Battle/Level Difficulty Settings")]
     public sealed class LevelDifficultySettings : ScriptableObject
     {
-        public const int LevelCount = 5;
+        public const int LevelCount = 10;
         public const int StageCount = 3;
         public const int BackpackRoundMultiplierCount = 6;
 
@@ -188,9 +188,10 @@ namespace BackpackHero.Battle
 
         private static EnemyStrengthMultipliers[] CreateDefaultStages()
         {
-            float[,] values = { { .79f, .79f }, { .82f, .81f }, { .84f, .84f }, { .82f, .82f }, { .85f, .84f }, { .87f, .87f }, { .85f, .85f }, { .87f, .87f }, { .89f, .89f }, { .87f, .88f }, { .90f, .90f }, { .92f, .92f }, { .90f, .90f }, { .92f, .93f }, { .95f, .95f } };
-            EnemyStrengthMultipliers[] result = new EnemyStrengthMultipliers[LevelCount * StageCount];
-            for (int i = 0; i < result.Length; i++) result[i] = new EnemyStrengthMultipliers(values[i, 0], values[i, 1]);
+            EnemyStrengthMultipliers[] result =
+                new EnemyStrengthMultipliers[LevelCount * StageCount];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new EnemyStrengthMultipliers(1f, 1f);
             return result;
         }
 

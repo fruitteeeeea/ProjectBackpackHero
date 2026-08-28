@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using BackpackHero.Audio;
 using BackpackPrototype;
 using BackpackHero.Progression;
 using UnityEngine;
@@ -481,6 +482,11 @@ namespace BackpackHero.Battle
                 BattleFlowController.EnsureInstance()
                     ?.SetPhase(BattlePhase.Preparation);
                 return;
+            }
+
+            if (playerWonMatch)
+            {
+                GameSfxService.Instance?.Play(GameSfxId.Victory);
             }
 
             BattleResultPresenter presenter =

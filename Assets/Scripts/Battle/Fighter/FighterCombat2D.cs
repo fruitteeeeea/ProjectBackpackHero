@@ -1,4 +1,5 @@
 using BackpackHero.Debugging;
+using BackpackHero.Audio;
 using BackpackPrototype;
 using System.Collections.Generic;
 using UnityEngine;
@@ -508,7 +509,8 @@ namespace BackpackHero.Battle
                 defaultPrefab,
                 request.Direction,
                 true,
-                ProjectileVisualSource.FighterDefault))
+                ProjectileVisualSource.FighterDefault,
+                isSpreadShot: IsSpreadShot(request)))
             {
                 DefaultAttackFired?.Invoke();
             }
@@ -534,7 +536,8 @@ namespace BackpackHero.Battle
             bool allowRandomProjectileOverride,
             ProjectileVisualSource visualSource,
             ItemInstance sourceItem = null,
-            float equipmentItemModifier = 1f)
+            float equipmentItemModifier = 1f,
+            bool isSpreadShot = false)
         {
             BattleAttack2D attackPrefab =
                 allowRandomProjectileOverride
@@ -553,7 +556,9 @@ namespace BackpackHero.Battle
                 visualSource,
                 currentTarget.TargetType == BattleTargetType.Backpack,
                 sourceItem ?? aircraftItem,
-                equipmentItemModifier);
+                equipmentItemModifier,
+                true,
+                isSpreadShot);
         }
 
         /// <summary>
@@ -579,7 +584,8 @@ namespace BackpackHero.Battle
                 false,
                 sourceItem ?? aircraftItem,
                 equipmentItemModifier,
-                countsForDamageStatistics);
+                countsForDamageStatistics,
+                false);
         }
 
         private bool FireAttackAtPoint(
@@ -590,7 +596,8 @@ namespace BackpackHero.Battle
             bool canDamageBackpack,
             ItemInstance sourceItem = null,
             float equipmentItemModifier = 1f,
-            bool countsForDamageStatistics = true)
+            bool countsForDamageStatistics = true,
+            bool isSpreadShot = false)
         {
             if (fighter == null ||
                 fighter.Definition == null ||
@@ -656,7 +663,21 @@ namespace BackpackHero.Battle
                 GetComponent<FighterFeedbacks>();
 
             feedbacks?.PlayAttack();
+            GameSfxService.Instance?.PlayProjectile(
+                attackPrefab,
+                visualSource == ProjectileVisualSource.Equipment,
+                isSpreadShot,
+                attackPrefab is LaserBeamAttack2D);
             return true;
+        }
+
+        private bool IsSpreadShot(BattleShotRequest request)
+        {
+            return fireModeController != null &&
+                request.ModeIndex >= 0 &&
+                request.ModeIndex < fireModeController.FireModes.Count &&
+                fireModeController.FireModes[request.ModeIndex].Pattern is
+                    SpreadProjectileFirePattern;
         }
 
         private static BattleAttack2D ResolveAttackPrefab(

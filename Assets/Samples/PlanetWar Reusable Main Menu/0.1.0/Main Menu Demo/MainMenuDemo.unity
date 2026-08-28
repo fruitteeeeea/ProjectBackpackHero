@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 12}
   - component: {fileID: 13}
   - component: {fileID: 14}
+  - component: {fileID: 15}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -222,6 +223,19 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &15
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 10}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31974f039b1541dbad7d88bb7ca6166c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Audio.UiSfxSceneBinder
+  buttonClickClip: {fileID: 8300000, guid: 6e9669bf4f4e7fe478f8901464f732af, type: 3}
 --- !u!1 &20
 GameObject:
   m_ObjectHideFlags: 0

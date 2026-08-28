@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71376a1bb69741c289f1a455f8fb15ee, type: 3}
+  m_Name: GameSfxCatalog
+  m_EditorClassIdentifier: 
+  uiClick: {fileID: 8300000, guid: 6e9669bf4f4e7fe478f8901464f732af, type: 3}
+  backpackItem: {fileID: 8300000, guid: f71f2af50a0ddc840828119013d88363, type: 3}
+  fighterHit: {fileID: 8300000, guid: 1ab64219b6d8eee4985e092dfb12f278, type: 3}
+  defaultProjectile: {fileID: 8300000, guid: 8ccb2e469b80d4e4696eae2700c0bd9c, type: 3}
+  equipmentProjectile: {fileID: 8300000, guid: 85eebe59dedc2ad42a1d8deddb51c419, type: 3}
+  laserProjectile: {fileID: 8300000, guid: 7449452ddc125694fa485dca26d8fc71, type: 3}
+  spreadProjectile: {fileID: 8300000, guid: b7de1f7d918faca4ca776780161dc8ad, type: 3}
+  victory: {fileID: 8300000, guid: 079d58641c22c0548b14d1c90878d7e9, type: 3}
+  equipmentProjectileOverrides: []

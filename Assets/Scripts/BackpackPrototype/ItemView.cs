@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using BackpackHero.Battle;
+using BackpackHero.Audio;
 using BackpackHero.Debugging;
 using TMPro;
 using UnityEngine;
@@ -971,6 +972,7 @@ namespace BackpackPrototype
             }
 
             isDragging = true;
+            GameSfxService.Instance?.Play(GameSfxId.BackpackItem);
             RefreshAircraftGlow();
             RequestSelection();
             canDeleteFromTrash = IsPlacedInBackpack;
@@ -1164,6 +1166,7 @@ namespace BackpackPrototype
             SetBackpackPosition(anchorCell);
             CandidateAnchorCell = null;
             PlayPlacedFeedback();
+            GameSfxService.Instance?.Play(GameSfxId.BackpackItem);
             PlacedSuccessfully?.Invoke(this);
             return true;
         }

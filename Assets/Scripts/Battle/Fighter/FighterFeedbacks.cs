@@ -1,5 +1,6 @@
 using DG.Tweening;
 using MoreMountains.Feedbacks;
+using BackpackHero.Audio;
 using BackpackHero.Debugging;
 using System;
 using UnityEngine;
@@ -76,6 +77,7 @@ namespace BackpackHero.Battle
             float damage,
             BattleFaction faction)
         {
+            GameSfxService.Instance?.Play(GameSfxId.FighterHit);
             AircraftVisualSettings settings =
                 AircraftVisualDebugRuntime.CurrentSettings;
             if (!settings.AircraftVisualOverridesEnabled)

@@ -31,6 +31,7 @@ namespace BackpackHero.EditorTools
             SyncRuntime(runtime);
             DrawSettingsTarget();
             DrawShipStyleButtons(runtime);
+            DrawItemBaseStyleButtons(runtime);
             DrawPersistence(runtime);
         }
 
@@ -91,6 +92,36 @@ namespace BackpackHero.EditorTools
             ArtAssetDebugRuntime runtime, BackpackShipStyle style)
         {
             draft.Value = draft.Value.WithBackpackShipStyle(style);
+            runtime.SetSettings(draft.Value);
+        }
+
+        private void DrawItemBaseStyleButtons(ArtAssetDebugRuntime runtime)
+        {
+            EditorGUILayout.Space(10f);
+            EditorGUILayout.LabelField("Item 形状底版调整", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("切换会同步玩家背包、商店和敌人背包中的全部 Item。",
+                MessageType.None);
+            ItemBaseStyle style = draft.Value.ItemBaseStyle;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Toggle(style == ItemBaseStyle.Style1, "样式1", "Button") &&
+                    style != ItemBaseStyle.Style1)
+                {
+                    SelectItemBaseStyle(runtime, ItemBaseStyle.Style1);
+                }
+
+                if (GUILayout.Toggle(style == ItemBaseStyle.Style2, "样式2", "Button") &&
+                    style != ItemBaseStyle.Style2)
+                {
+                    SelectItemBaseStyle(runtime, ItemBaseStyle.Style2);
+                }
+            }
+        }
+
+        private void SelectItemBaseStyle(
+            ArtAssetDebugRuntime runtime, ItemBaseStyle style)
+        {
+            draft.Value = draft.Value.WithItemBaseStyle(style);
             runtime.SetSettings(draft.Value);
         }
 

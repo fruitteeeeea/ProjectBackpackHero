@@ -181,3 +181,4 @@ MonoBehaviour:
   icon: {fileID: 810000000000000004}
   label: {fileID: 0}
   levelLabel: {fileID: 0}
+  itemBaseShape: 5

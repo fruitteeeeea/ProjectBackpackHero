@@ -19,6 +19,8 @@ namespace BackpackPrototype
         [SerializeField] private Text label;
         [SerializeField] private TextMeshProUGUI levelLabel;
         [SerializeField] private TMP_Text itemLabel;
+        [SerializeField] private ItemBaseShape itemBaseShape =
+            ItemBaseShape.Square;
 
         [SerializeField, Min(0f)]
         private float shopDropHitPadding = 32f;
@@ -95,6 +97,7 @@ namespace BackpackPrototype
         private Material iconCooldownMaterial;
         private Image aircraftGlowImage;
         private Material aircraftGlowMaterial;
+        private Sprite style1BackgroundSprite;
 
         public ItemInstance Instance { get; private set; }
         public BackpackController Backpack { get; private set; }
@@ -128,6 +131,7 @@ namespace BackpackPrototype
                 : 0f;
 
         public Sprite IconSprite => icon != null ? icon.sprite : null;
+        public ItemBaseShape ItemBaseShape => itemBaseShape;
 
         public RectTransform RectTransform => rectTransform;
         public bool IsDragging => isDragging;
@@ -207,6 +211,13 @@ namespace BackpackPrototype
             {
                 background = GetComponent<Image>();
             }
+
+            style1BackgroundSprite = background != null
+                ? background.sprite
+                : null;
+            ArtAssetDebugRuntime.SettingsChanged +=
+                HandleArtAssetSettingsChanged;
+            ApplyItemBaseStyle();
 
             if (label == null)
             {
@@ -1410,6 +1421,8 @@ namespace BackpackPrototype
             shopTransitionTween?.Kill();
             BackpackVisualDebugRuntime.SettingsChanged -=
                 HandleBackpackVisualSettingsChanged;
+            ArtAssetDebugRuntime.SettingsChanged -=
+                HandleArtAssetSettingsChanged;
             BattleFlowController.PhaseChanged -= HandleBattlePhaseChanged;
             ReleaseAircraftGlow();
             ReleaseCooldownMaterials();
@@ -1433,6 +1446,35 @@ namespace BackpackPrototype
             if (mergeHighlightActive)
             {
                 SetMergeHighlight(true);
+            }
+        }
+
+        private void HandleArtAssetSettingsChanged(
+            ArtAssetDebugSettingsValue _)
+        {
+            ApplyItemBaseStyle();
+        }
+
+        private void ApplyItemBaseStyle()
+        {
+            if (background == null)
+            {
+                return;
+            }
+
+            Sprite sprite = ArtAssetDebugRuntime.GetCurrentItemBaseSprite(
+                itemBaseShape, style1BackgroundSprite);
+            if (sprite == null)
+            {
+                return;
+            }
+
+            background.sprite = sprite;
+            if (aircraftGlowImage != null)
+            {
+                aircraftGlowImage.sprite = sprite;
+                SyncAircraftGlowTransform();
+                RefreshAircraftGlow();
             }
         }
 

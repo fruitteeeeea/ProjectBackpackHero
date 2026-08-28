@@ -55,13 +55,30 @@ namespace BackpackHero.Debugging
 
         public void SetSettings(ArtAssetDebugSettingsValue values)
         {
-            settings = new ArtAssetDebugSettingsValue(values.BackpackShipStyle);
+            settings = new ArtAssetDebugSettingsValue(values.BackpackShipStyle,
+                values.ItemBaseStyle);
             ApplyToTargets();
             SettingsChanged?.Invoke(settings);
         }
 
         public void SetBackpackShipStyle(BackpackShipStyle style) =>
             SetSettings(settings.WithBackpackShipStyle(style));
+
+        public void SetItemBaseStyle(ItemBaseStyle style) =>
+            SetSettings(settings.WithItemBaseStyle(style));
+
+        public static Sprite GetCurrentItemBaseSprite(
+            ItemBaseShape shape, Sprite style1Fallback)
+        {
+            if (CurrentSettings.ItemBaseStyle != ItemBaseStyle.Style2)
+            {
+                return style1Fallback;
+            }
+
+            Sprite style2 = Instance?.defaultSettings?
+                .GetStyle2ItemBaseSprite(shape);
+            return style2 != null ? style2 : style1Fallback;
+        }
 
         public void LoadSavedValues() => SetSettings(defaultSettings != null
             ? defaultSettings.GetValues()

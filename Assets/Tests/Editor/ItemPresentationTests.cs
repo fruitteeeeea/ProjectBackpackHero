@@ -9,6 +9,40 @@ using BackpackPrototype;
 
 public sealed class ItemPresentationTests
 {
+    [TestCase(2)]
+    [TestCase(10)]
+    public void HangarDetailLayout_PreviewCardDisplaysSnapshotLevel(int level)
+    {
+        GameObject detailRoot = new GameObject("HangarDetail");
+        GameObject sourceRoot = new GameObject("SourceCard");
+        try
+        {
+            HangarDetailLayout layout = detailRoot.AddComponent<HangarDetailLayout>();
+            GameObject previewRoot = new GameObject("ItemCard (1)");
+            previewRoot.transform.SetParent(detailRoot.transform);
+            HangarCardItem preview = previewRoot.AddComponent<HangarCardItem>();
+            TMP_Text levelPrefix = NewText(previewRoot.transform, "lv");
+            TMP_Text levelValue = NewText(previewRoot.transform, "level");
+            levelValue.text = "1";
+            layout.Configure(null, null, null, null, null, null, null, preview);
+
+            HangarCardItem source = sourceRoot.AddComponent<HangarCardItem>();
+            source.Configure(new HangarItemSnapshot(HangarItemKind.Aircraft, "Scout", "", null,
+                null, true, level, 0, 0, 0, 1f, 1, null, Color.white, "Unlocked",
+                itemId: "scout", maximumLevel: 10));
+
+            layout.ShowPreview(source);
+
+            Assert.That(levelPrefix.text, Is.EqualTo("Lv"));
+            Assert.That(levelValue.text, Is.EqualTo(level.ToString()));
+        }
+        finally
+        {
+            Object.DestroyImmediate(sourceRoot);
+            Object.DestroyImmediate(detailRoot);
+        }
+    }
+
     [Test]
     public void HangarDetailLayout_SeparatesAircraftValueAndUpgradeAddition()
     {

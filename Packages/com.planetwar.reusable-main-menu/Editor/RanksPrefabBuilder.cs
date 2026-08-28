@@ -48,7 +48,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var rankInfoPageBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("rankInfoPage").objectReferenceValue != null;
                 var bottomBarBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("bottomBar").objectReferenceValue != null;
                 var rankInfoReady = rankInfo != null && rankInfo.scroll != null && rankInfo.itemRankMain != null && rankInfo.itemRankReward != null && rankInfo.btnOffset != null && rankInfo.entries != null && rankInfo.entries.Length >= 12 && rankInfo.scroll.scrollRect != null && rankInfo.scroll.content != null && rankInfo.scroll.viewport != null && rankInfoPageBound && bottomBarBound;
-                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasAttributeAddValueBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !rankInfoReady))
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasDetailPreviewLevelBindings(entityDetails) || !HasAttributeAddValueBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !HasDetailPreviewLevelBindings(spellDetails) || !rankInfoReady))
                 {
                     Debug.Log("[PlanetWar] Rebuilding MainMenu Hangar with the original static card configuration.");
                     Rebuild();
@@ -504,6 +504,15 @@ namespace PlanetWar.ReusableMainMenu.Editor
             var layout = panel.GetComponent<HangarDetailLayout>() ?? panel.AddComponent<HangarDetailLayout>();
             var previewRoot = Find(panel.transform, "ItemCard (1)") ?? Find(panel.transform, "ItemCard");
             var preview = previewRoot != null ? previewRoot.GetComponent<HangarCardItem>() ?? previewRoot.gameObject.AddComponent<HangarCardItem>() : null;
+            // The preview card is created from the original UICardInfo/UICardSpell prefab,
+            // whose authored numeric label starts at 1. Bind the dedicated labels so runtime
+            // snapshot configuration can replace that placeholder with the item's real level.
+            if (preview != null)
+            {
+                TMP_Text levelPrefix = Find(preview.transform, "lv")?.GetComponent<TMP_Text>();
+                TMP_Text levelValue = Find(preview.transform, "level")?.GetComponent<TMP_Text>();
+                preview.ConfigureOriginalLabels(levelPrefix, levelValue);
+            }
             ConfigureCardProgressionPresentation(preview);
             layout.Configure(
                 Find(panel.transform, "btnUpgrade")?.gameObject,
@@ -552,6 +561,17 @@ namespace PlanetWar.ReusableMainMenu.Editor
             var additions = serialized.FindProperty("attributeAddValueTexts");
             return values != null && additions != null && values.arraySize > 0 &&
                    values.arraySize == additions.arraySize;
+        }
+
+        private static bool HasDetailPreviewLevelBindings(HangarDetailLayout layout)
+        {
+            if (layout == null) return false;
+            var serializedLayout = new SerializedObject(layout);
+            var preview = serializedLayout.FindProperty("previewItem").objectReferenceValue as HangarCardItem;
+            if (preview == null) return false;
+            var serializedPreview = new SerializedObject(preview);
+            return serializedPreview.FindProperty("levelPrefixText").objectReferenceValue != null &&
+                   serializedPreview.FindProperty("levelValueText").objectReferenceValue != null;
         }
 
         private static void ConfigureCardProgressionPresentation(HangarCardItem card)

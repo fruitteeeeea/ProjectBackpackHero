@@ -76,6 +76,7 @@ namespace PlanetWar.ReusableMainMenu
             if (actionGroup != null) actionGroup.SetActive(card.IsUnlocked);
             if (previewItem != null)
             {
+                EnsurePreviewLevelLabels();
                 // Match the source UICardInfo -> ItemCard.Init path: the detail preview uses
                 // the same card presentation configuration as the card that opened it.
                 if (snapshot.Name != null)
@@ -108,6 +109,22 @@ namespace PlanetWar.ReusableMainMenu
             if (upgradeButton != null) upgradeButton.SetActive(false);
             if (progressGroup != null) progressGroup.SetActive(card.IsUnlocked);
             if (equipButton != null) equipButton.SetActive(card.IsUnlocked && !card.IsEquipped);
+        }
+
+        // Existing MainMenu.prefab instances created before level labels were serialized still
+        // carry the ItemCard's authored "1". Resolve only that preview's two dedicated labels
+        // before it receives the live snapshot so old scenes work without a manual rebake.
+        private void EnsurePreviewLevelLabels()
+        {
+            if (previewItem == null) return;
+            TMP_Text prefix = null;
+            TMP_Text value = null;
+            foreach (TMP_Text text in previewItem.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (text.name == "lv") prefix = text;
+                else if (text.name == "level") value = text;
+            }
+            previewItem.ConfigureOriginalLabels(prefix, value);
         }
 
         private void ApplyProgression(HangarItemSnapshot snapshot)

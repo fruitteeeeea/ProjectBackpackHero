@@ -1,5 +1,9 @@
 using BackpackHero.Audio;
 using NUnit.Framework;
+using PlanetWar.ReusableMainMenu;
+using System.Reflection;
+using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class GameSfxServiceTests
 {
@@ -22,4 +26,62 @@ public sealed class GameSfxServiceTests
         Assert.That(limiter.CanPlay(GameSfxId.EquipmentProjectile, 1.05f, 0.1f), Is.True);
         Assert.That(limiter.CanPlay(GameSfxId.DefaultProjectile, 1.1f, 0.1f), Is.True);
     }
+
+    [Test]
+    public void SfxSettingsBridge_BindsEverySettingsViewAndSynchronizesSoundState()
+    {
+        const string preferenceKey = "BackpackHero.SfxEnabled";
+        PlayerPrefs.DeleteKey(preferenceKey);
+        PlayerPrefs.Save();
+
+        GameObject serviceRoot = new("SfxServiceTest");
+        GameObject bridgeRoot = new("SfxBridgeTest");
+        GameObject firstRoot = CreateSettingsView("First", out Toggle firstSound);
+        GameObject secondRoot = CreateSettingsView("Second", out Toggle secondSound);
+        try
+        {
+            GameSfxService service = serviceRoot.AddComponent<GameSfxService>();
+            SfxSettingsBridge bridge = bridgeRoot.AddComponent<SfxSettingsBridge>();
+            InvokeUpdate(bridge);
+
+            firstSound.isOn = false;
+
+            Assert.That(service.IsEnabled, Is.False);
+            Assert.That(secondSound.isOn, Is.False);
+            Assert.That(PlayerPrefs.GetInt(preferenceKey, 1), Is.EqualTo(0));
+        }
+        finally
+        {
+            Object.DestroyImmediate(firstRoot);
+            Object.DestroyImmediate(secondRoot);
+            Object.DestroyImmediate(bridgeRoot);
+            Object.DestroyImmediate(serviceRoot);
+            PlayerPrefs.DeleteKey(preferenceKey);
+            PlayerPrefs.Save();
+        }
+    }
+
+    private static GameObject CreateSettingsView(string name, out Toggle sound)
+    {
+        GameObject root = new(name);
+        root.SetActive(false);
+        SettingsView view = root.AddComponent<SettingsView>();
+        sound = new GameObject("Sound", typeof(RectTransform), typeof(Toggle)).GetComponent<Toggle>();
+        Toggle music = new GameObject("Music", typeof(RectTransform), typeof(Toggle)).GetComponent<Toggle>();
+        Toggle vibration = new GameObject("Vibration", typeof(RectTransform), typeof(Toggle)).GetComponent<Toggle>();
+        sound.transform.SetParent(root.transform, false);
+        music.transform.SetParent(root.transform, false);
+        vibration.transform.SetParent(root.transform, false);
+        SetPrivateField(view, "soundToggle", sound);
+        SetPrivateField(view, "musicToggle", music);
+        SetPrivateField(view, "vibrationToggle", vibration);
+        root.SetActive(true);
+        return root;
+    }
+
+    private static void InvokeUpdate(SfxSettingsBridge bridge) =>
+        typeof(SfxSettingsBridge).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(bridge, null);
+
+    private static void SetPrivateField(object target, string name, object value) =>
+        target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(target, value);
 }

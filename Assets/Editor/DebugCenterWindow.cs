@@ -6,6 +6,7 @@ using BackpackHero.Background;
 using BackpackHero.Battle;
 using BackpackHero.Debugging;
 using BackpackHero.Input;
+using BackpackHero.Audio;
 using BackpackPrototype;
 using UnityEditor;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace BackpackHero.EditorTools
     internal enum DebugCenterTab
     {
         Runtime,
+        GameSfx,
         Values,
         SwipeCurve,
         PlayerBackpack,
@@ -80,6 +82,9 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.Runtime, DebugCenterKind.ProgramTest, "Runtime",
                 () => EditorApplication.isPlaying,
                 () => ScriptableObject.CreateInstance<RuntimeDebugWindow>()),
+            new(DebugCenterTab.GameSfx, DebugCenterKind.ProgramTest, "游戏声音",
+                () => EditorApplication.isPlaying && GameSfxService.Instance != null,
+                () => ScriptableObject.CreateInstance<GameSfxDebugWindow>()),
             new(DebugCenterTab.Values, DebugCenterKind.ProgramTest, "数值",
                 () => DebugValueRuntimeBridge.HasTarget,
                 () => ScriptableObject.CreateInstance<DebugValueWindow>()),
@@ -348,6 +353,7 @@ namespace BackpackHero.EditorTools
             switch (content)
             {
                 case RuntimeDebugWindow runtime: runtime.DrawTab(); break;
+                case GameSfxDebugWindow gameSfx: gameSfx.DrawTab(); break;
                 case DebugValueWindow values: values.DrawTab(); break;
                 case HorizontalSwipeCurveDebugWindow swipe: swipe.DrawTab(); break;
                 case PlayerBackpackDebugWindow backpack: backpack.DrawTab(); break;

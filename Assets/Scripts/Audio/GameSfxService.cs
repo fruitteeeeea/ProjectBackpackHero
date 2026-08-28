@@ -36,6 +36,11 @@ namespace BackpackHero.Audio
 
         public static GameSfxService Instance { get; private set; }
         public bool IsEnabled { get; private set; }
+        /// <summary>Editor-only diagnostic state. It is intentionally not persisted with player settings.</summary>
+        public bool UiDiagnosticLoggingEnabled { get; private set; }
+        public bool HasAudioSource => source != null;
+        public bool HasCatalog => catalog != null;
+        public string DefaultUiClipName => ResolveClip(GameSfxId.UiClick)?.name ?? "<missing>";
 
         private readonly GameSfxRateLimiter rateLimiter = new();
         private AudioSource source;
@@ -72,6 +77,22 @@ namespace BackpackHero.Audio
             PlayerPrefs.Save();
         }
 
+        public void SetUiDiagnosticLoggingEnabled(bool enabled)
+        {
+            UiDiagnosticLoggingEnabled = enabled;
+            if (enabled) LogDiagnosticSnapshot("diagnostics enabled");
+        }
+
+        public void LogDiagnosticSnapshot(string reason = "manual snapshot")
+        {
+            if (!UiDiagnosticLoggingEnabled) return;
+            UiSfxAutoBinder binder = GetComponent<UiSfxAutoBinder>();
+            Debug.Log($"[SFX-DIAG] {reason}; scene={SceneManager.GetActiveScene().name}; " +
+                      $"service={name}; sfxEnabled={IsEnabled}; audioSource={source != null}; " +
+                      $"catalog={catalog != null}; defaultUiClip={DefaultUiClipName}; " +
+                      $"boundButtons={binder?.BoundButtonCount ?? 0}", this);
+        }
+
         public void Play(GameSfxId id) => Play(ResolveClip(id), id);
 
         public void PlayUi(AudioClip clip) => Play(clip != null ? clip : ResolveClip(GameSfxId.UiClick), GameSfxId.UiClick);
@@ -92,8 +113,34 @@ namespace BackpackHero.Audio
 
         private void Play(AudioClip clip, GameSfxId id)
         {
-            if (!IsEnabled || clip == null || source == null || IsRateLimited(id)) return;
+            if (!IsEnabled)
+            {
+                LogPlayOutcome(id, clip, "skipped: SFX disabled");
+                return;
+            }
+            if (clip == null)
+            {
+                LogPlayOutcome(id, clip, "skipped: clip missing");
+                return;
+            }
+            if (source == null)
+            {
+                LogPlayOutcome(id, clip, "skipped: AudioSource missing");
+                return;
+            }
+            if (IsRateLimited(id))
+            {
+                LogPlayOutcome(id, clip, "skipped: rate limited");
+                return;
+            }
             source.PlayOneShot(clip, id == GameSfxId.UiClick || id == GameSfxId.BackpackItem ? UiVolume : CombatVolume);
+            LogPlayOutcome(id, clip, "PlayOneShot invoked");
+        }
+
+        private void LogPlayOutcome(GameSfxId id, AudioClip clip, string outcome)
+        {
+            if (!UiDiagnosticLoggingEnabled || id != GameSfxId.UiClick) return;
+            Debug.Log($"[SFX-DIAG] ui-play; clip={clip?.name ?? "<missing>"}; {outcome}", this);
         }
 
         private bool IsRateLimited(GameSfxId id)
@@ -129,35 +176,96 @@ namespace BackpackHero.Audio
     {
         private readonly HashSet<Button> bound = new();
         private float nextScanAt;
-        private void OnEnable() { SceneManager.sceneLoaded += OnSceneLoaded; Scan(); }
+        public int BoundButtonCount => bound.Count;
+
+        private void OnEnable() { SceneManager.sceneLoaded += OnSceneLoaded; Scan("enabled", true); }
         private void OnDisable() { SceneManager.sceneLoaded -= OnSceneLoaded; }
-        private void Update() { if (Time.unscaledTime >= nextScanAt) { nextScanAt = Time.unscaledTime + 0.35f; Scan(); } }
-        private void OnSceneLoaded(Scene _, LoadSceneMode __) => Scan();
-        private void Scan()
+        private void Update() { if (Time.unscaledTime >= nextScanAt) { nextScanAt = Time.unscaledTime + 0.35f; Scan("periodic", false); } }
+        private void OnSceneLoaded(Scene scene, LoadSceneMode _) => Scan($"scene loaded: {scene.name}", true);
+        private void Scan(string reason, bool logEvenWithoutNewBindings)
         {
+            int discovered = 0;
+            int newlyBound = 0;
             foreach (Button button in FindObjectsByType<Button>(FindObjectsInactive.Exclude))
             {
+                discovered++;
                 if (button == null || !bound.Add(button)) continue;
                 AudioClip clip = button.GetComponentInParent<UiSfxSceneBinder>()?.ButtonClickClip;
-                button.onClick.AddListener(() => PlayClick(clip));
+                button.onClick.AddListener(() => PlayClick(button, clip));
+                newlyBound++;
             }
             bound.RemoveWhere(button => button == null);
+            GameSfxService service = GameSfxService.Instance;
+            if (service != null && service.UiDiagnosticLoggingEnabled && (logEvenWithoutNewBindings || newlyBound > 0))
+            {
+                Debug.Log($"[SFX-DIAG] ui-scan; reason={reason}; scene={SceneManager.GetActiveScene().name}; " +
+                          $"activeButtons={discovered}; newlyBound={newlyBound}; totalBound={bound.Count}", this);
+            }
         }
-        private static void PlayClick(AudioClip clip) => GameSfxService.Instance?.PlayUi(clip);
+        private static void PlayClick(Button button, AudioClip clip)
+        {
+            GameSfxService service = GameSfxService.Instance;
+            if (service != null && service.UiDiagnosticLoggingEnabled)
+            {
+                Debug.Log($"[SFX-DIAG] ui-click; path={GetHierarchyPath(button.transform)}; " +
+                          $"active={button.gameObject.activeInHierarchy}; enabled={button.enabled}; " +
+                          $"interactable={button.interactable}; sceneClip={clip?.name ?? "<none>"}; service=true", button);
+            }
+            service?.PlayUi(clip);
+        }
+
+        private static string GetHierarchyPath(Transform transform)
+        {
+            string path = transform.name;
+            while (transform.parent != null)
+            {
+                transform = transform.parent;
+                path = $"{transform.name}/{path}";
+            }
+            return path;
+        }
     }
 
     public sealed class SfxSettingsBridge : MonoBehaviour
     {
-        private SettingsView view;
+        private readonly HashSet<SettingsView> boundViews = new();
+
         private void Update()
         {
-            if (view != null) return;
-            view = FindAnyObjectByType<SettingsView>(FindObjectsInactive.Include);
-            if (view == null) return;
-            view.ApplySettings(new SettingsState(GameSfxService.Instance?.IsEnabled ?? true, view.State.MusicEnabled, view.State.VibrationEnabled));
-            view.SettingsChanged += HandleSettingsChanged;
+            foreach (SettingsView view in FindObjectsByType<SettingsView>(FindObjectsInactive.Include))
+            {
+                if (view == null || !boundViews.Add(view)) continue;
+                ApplySfxState(view);
+                view.SettingsChanged += HandleSettingsChanged;
+            }
+
+            boundViews.RemoveWhere(view => view == null);
         }
-        private void OnDestroy() { if (view != null) view.SettingsChanged -= HandleSettingsChanged; }
-        private static void HandleSettingsChanged(SettingsState state) => GameSfxService.Instance?.SetEnabled(state.SoundEnabled);
+
+        private void OnDestroy()
+        {
+            foreach (SettingsView view in boundViews)
+            {
+                if (view != null) view.SettingsChanged -= HandleSettingsChanged;
+            }
+            boundViews.Clear();
+        }
+
+        private void HandleSettingsChanged(SettingsState state)
+        {
+            GameSfxService.Instance?.SetEnabled(state.SoundEnabled);
+            foreach (SettingsView view in boundViews)
+            {
+                if (view != null) ApplySfxState(view);
+            }
+        }
+
+        private static void ApplySfxState(SettingsView view)
+        {
+            view.ApplySettings(new SettingsState(
+                GameSfxService.Instance?.IsEnabled ?? true,
+                view.State.MusicEnabled,
+                view.State.VibrationEnabled));
+        }
     }
 }

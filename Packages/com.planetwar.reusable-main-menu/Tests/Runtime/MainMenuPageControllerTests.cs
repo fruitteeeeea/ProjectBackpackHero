@@ -63,6 +63,26 @@ public sealed class MainMenuPageControllerTests
         }
     }
 
+    [Test]
+    public void SettingsOpenAndCloseKeepsBackdropInSync()
+    {
+        var harness = CreateHarness();
+        try
+        {
+            harness.Relay.Invoke(MainMenuAction.Settings);
+            Assert.IsTrue(harness.SettingsPage.gameObject.activeSelf);
+            Assert.IsTrue(harness.SettingsBackdrop.activeSelf);
+
+            harness.SettingsPage.OnClickClose();
+            Assert.IsFalse(harness.SettingsPage.gameObject.activeSelf);
+            Assert.IsFalse(harness.SettingsBackdrop.activeSelf);
+        }
+        finally
+        {
+            DestroyHarness(harness);
+        }
+    }
+
     private sealed class Harness
     {
         public GameObject Root;
@@ -72,6 +92,8 @@ public sealed class MainMenuPageControllerTests
         public GameObject BottomBar;
         public GameObject BottomButton;
         public RankInfoView RankInfo;
+        public SettingsView SettingsPage;
+        public GameObject SettingsBackdrop;
         public Transform[] TabTargets;
         public RecordingBottomChoose Indicator;
     }
@@ -110,6 +132,15 @@ public sealed class MainMenuPageControllerTests
         rankInfo.transform.SetParent(root.transform, false);
         rankInfo.SetActive(false);
 
+        var settings = new GameObject("Settings");
+        settings.transform.SetParent(root.transform, false);
+        settings.SetActive(false);
+        settings.AddComponent<SettingsView>();
+
+        var settingsBackdrop = new GameObject("SettingsBackdrop");
+        settingsBackdrop.transform.SetParent(root.transform, false);
+        settingsBackdrop.SetActive(false);
+
         var bottomBar = new GameObject("BottomBar");
         bottomBar.transform.SetParent(root.transform, false);
         bottomBar.SetActive(true);
@@ -135,6 +166,8 @@ public sealed class MainMenuPageControllerTests
         SetField(controller, "ranksPage", ranksPage.GetComponent<RanksView>());
         SetField(controller, "hangarPage", hangarPage.GetComponent<HangarView>());
         SetField(controller, "rankInfoPage", rankInfo.GetComponent<RankInfoView>());
+        SetField(controller, "settingsPage", settings.GetComponent<SettingsView>());
+        SetField(controller, "settingsBackdrop", settingsBackdrop);
         SetField(controller, "bottomBar", bottomBar);
         SetField(controller, "tabIndicator", indicator);
         SetField(controller, "tabTargets", tabTargets);
@@ -148,6 +181,8 @@ public sealed class MainMenuPageControllerTests
             BottomBar = bottomBar,
             BottomButton = bottomButton,
             RankInfo = rankInfo.GetComponent<RankInfoView>(),
+            SettingsPage = settings.GetComponent<SettingsView>(),
+            SettingsBackdrop = settingsBackdrop,
             TabTargets = tabTargets,
             Indicator = indicator
         };

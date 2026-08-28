@@ -16,6 +16,7 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private HangarView hangarPage;
         [SerializeField] private RankInfoView rankInfoPage;
         [SerializeField] private SettingsView settingsPage;
+        [SerializeField] private GameObject settingsBackdrop;
         [SerializeField] private GameObject bottomBar;
         [SerializeField] private MainBottmChoose tabIndicator;
         [SerializeField] private Transform[] tabTargets;
@@ -26,6 +27,7 @@ namespace PlanetWar.ReusableMainMenu
             if (relay != null) relay.ActionInvoked += OnAction;
             if (rankInfoPage != null) rankInfoPage.CloseRequested += OnRankInfoClosed;
             if (settingsPage != null) settingsPage.CloseRequested += HideSettings;
+            HideSettings();
         }
 
         private void OnDestroy()
@@ -34,6 +36,7 @@ namespace PlanetWar.ReusableMainMenu
             if (relay != null) relay.ActionInvoked -= OnAction;
             if (rankInfoPage != null) rankInfoPage.CloseRequested -= OnRankInfoClosed;
             if (settingsPage != null) settingsPage.CloseRequested -= HideSettings;
+            HideSettings();
         }
 
         private void OnAction(MainMenuAction action)
@@ -48,6 +51,7 @@ namespace PlanetWar.ReusableMainMenu
 
         private void ShowRanks()
         {
+            HideSettings();
             SetBottomBarActive(true);
             if (mainPage != null) mainPage.SetActive(false);
             if (hangarPage != null) hangarPage.gameObject.SetActive(false);
@@ -58,16 +62,28 @@ namespace PlanetWar.ReusableMainMenu
 
         private void ShowSettings()
         {
-            if (settingsPage != null) settingsPage.gameObject.SetActive(true);
+            if (settingsBackdrop != null)
+            {
+                settingsBackdrop.SetActive(true);
+                settingsBackdrop.transform.SetAsLastSibling();
+            }
+
+            if (settingsPage != null)
+            {
+                settingsPage.gameObject.SetActive(true);
+                settingsPage.transform.SetAsLastSibling();
+            }
         }
 
         private void HideSettings()
         {
             if (settingsPage != null) settingsPage.gameObject.SetActive(false);
+            if (settingsBackdrop != null) settingsBackdrop.SetActive(false);
         }
 
         private void ShowRankInfo()
         {
+            HideSettings();
             SetBottomBarActive(false);
             if (mainPage != null) mainPage.SetActive(false);
             if (ranksPage != null) ranksPage.gameObject.SetActive(false);
@@ -82,6 +98,7 @@ namespace PlanetWar.ReusableMainMenu
 
         private void ShowBattle(int tabIndex)
         {
+            HideSettings();
             if (ranksPage != null) ranksPage.gameObject.SetActive(false);
             if (hangarPage != null) hangarPage.gameObject.SetActive(false);
             if (rankInfoPage != null) rankInfoPage.Hide();
@@ -92,6 +109,7 @@ namespace PlanetWar.ReusableMainMenu
 
         private void ShowHangar()
         {
+            HideSettings();
             SetBottomBarActive(true);
             if (mainPage != null) mainPage.SetActive(false);
             if (ranksPage != null) ranksPage.gameObject.SetActive(false);

@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Collections.Generic;
 using BackpackPrototype;
+using BackpackHero.Debugging;
 using BackpackHero.Progression;
 using PlanetWar.ReusableMainMenu;
 using TMPro;
@@ -36,12 +37,14 @@ namespace BackpackHero.UI
             ApplyProfile();
             if (RankProgressionSystem.Instance != null)
                 RankProgressionSystem.Instance.Changed += OnProgressionChanged;
+            FunctionBlockRuntime.StateChanged += OnFunctionBlockChanged;
         }
 
         private void OnDestroy()
         {
             if (RankProgressionSystem.Instance != null)
                 RankProgressionSystem.Instance.Changed -= OnProgressionChanged;
+            FunctionBlockRuntime.StateChanged -= OnFunctionBlockChanged;
         }
 
         private void LateUpdate()
@@ -56,6 +59,8 @@ namespace BackpackHero.UI
             foreach (RanksView ranks in FindObjectsByType<RanksView>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 if (ranks.isActiveAndEnabled) ranks.Show();
         }
+
+        private void OnFunctionBlockChanged(bool _, bool __) => ApplyProfile();
 
         public MatchParticipant CreatePlayer() =>
             new MatchParticipant(PlayerName,
@@ -86,8 +91,14 @@ namespace BackpackHero.UI
                 if (system != null) main.ApplyProfile(PlayerName, system.Gold, system.Diamond);
                 RankProgressionSystem progression = RankProgressionSystem.Instance;
                 if (progression != null)
-                    main.ApplyMainProgress(progression.Points, RankProgressionSystem.MaximumPoints,
-                        CalculateCollectionLevel(system));
+                {
+                    if (FunctionBlockRuntime.IsMilestoneBlocked)
+                        main.ApplyMainProgress(progression.Points, RankProgressionSystem.MaximumPoints,
+                            CalculateCollectionLevel(system));
+                    else
+                        main.ApplyRankProgress(progression.Points, RankProgressionSystem.MaximumPoints,
+                            progression.CurrentRankName);
+                }
             }
 
             if (playerAvatar == null) return;

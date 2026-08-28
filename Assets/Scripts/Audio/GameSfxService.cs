@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using BackpackHero.Battle;
 using PlanetWar.ReusableMainMenu;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -174,9 +175,9 @@ namespace BackpackHero.Audio
 
     public sealed class UiSfxAutoBinder : MonoBehaviour
     {
-        private readonly HashSet<Button> bound = new();
+        private readonly Dictionary<Button, UnityAction> bindings = new();
         private float nextScanAt;
-        public int BoundButtonCount => bound.Count;
+        public int BoundButtonCount => bindings.Count;
 
         private void OnEnable() { SceneManager.sceneLoaded += OnSceneLoaded; Scan("enabled", true); }
         private void OnDisable() { SceneManager.sceneLoaded -= OnSceneLoaded; }
@@ -189,22 +190,49 @@ namespace BackpackHero.Audio
             foreach (Button button in FindObjectsByType<Button>(FindObjectsInactive.Exclude))
             {
                 discovered++;
-                if (button == null || !bound.Add(button)) continue;
-                AudioClip clip = button.GetComponentInParent<UiSfxSceneBinder>()?.ButtonClickClip;
-                button.onClick.AddListener(() => PlayClick(button, clip));
-                newlyBound++;
+                if (button == null) continue;
+
+                if (!bindings.TryGetValue(button, out UnityAction listener))
+                {
+                    listener = () => PlayClick(button);
+                    bindings.Add(button, listener);
+                    newlyBound++;
+                }
+
+                // Hangar cards and their detail actions rebuild their UnityEvent at runtime.
+                // Remove only our own cached callback before re-adding it, preserving every
+                // business callback while recovering the UI SFX callback after such a reset.
+                button.onClick.RemoveListener(listener);
+                button.onClick.AddListener(listener);
             }
-            bound.RemoveWhere(button => button == null);
+
+            RemoveDestroyedBindings();
             GameSfxService service = GameSfxService.Instance;
             if (service != null && service.UiDiagnosticLoggingEnabled && (logEvenWithoutNewBindings || newlyBound > 0))
             {
                 Debug.Log($"[SFX-DIAG] ui-scan; reason={reason}; scene={SceneManager.GetActiveScene().name}; " +
-                          $"activeButtons={discovered}; newlyBound={newlyBound}; totalBound={bound.Count}", this);
+                          $"activeButtons={discovered}; newlyBound={newlyBound}; reboundCallbacks={discovered}; " +
+                          $"totalBound={bindings.Count}", this);
             }
         }
-        private static void PlayClick(Button button, AudioClip clip)
+
+        private void RemoveDestroyedBindings()
+        {
+            List<Button> destroyed = null;
+            foreach (Button button in bindings.Keys)
+            {
+                if (button != null) continue;
+                destroyed ??= new List<Button>();
+                destroyed.Add(button);
+            }
+            if (destroyed == null) return;
+            foreach (Button button in destroyed) bindings.Remove(button);
+        }
+
+        private static void PlayClick(Button button)
         {
             GameSfxService service = GameSfxService.Instance;
+            AudioClip clip = button.GetComponentInParent<UiSfxSceneBinder>()?.ButtonClickClip;
             if (service != null && service.UiDiagnosticLoggingEnabled)
             {
                 Debug.Log($"[SFX-DIAG] ui-click; path={GetHierarchyPath(button.transform)}; " +

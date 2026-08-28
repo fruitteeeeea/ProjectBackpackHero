@@ -61,6 +61,34 @@ public sealed class GameSfxServiceTests
         }
     }
 
+    [Test]
+    public void UiSfxAutoBinder_RebindsAfterBusinessCodeClearsOnClickWithoutDuplicatingBusinessCallback()
+    {
+        GameObject buttonRoot = new("HangarCardButton", typeof(RectTransform), typeof(Button));
+        GameObject binderRoot = new("UiSfxBinderTest");
+        try
+        {
+            Button button = buttonRoot.GetComponent<Button>();
+            UiSfxAutoBinder binder = binderRoot.AddComponent<UiSfxAutoBinder>();
+            int businessCalls = 0;
+
+            // Mirrors HangarCardItem / HangarView rebuilding the button event at runtime.
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => businessCalls++);
+            InvokeScan(binder);
+            InvokeScan(binder);
+
+            button.onClick.Invoke();
+
+            Assert.That(businessCalls, Is.EqualTo(1));
+        }
+        finally
+        {
+            Object.DestroyImmediate(binderRoot);
+            Object.DestroyImmediate(buttonRoot);
+        }
+    }
+
     private static GameObject CreateSettingsView(string name, out Toggle sound)
     {
         GameObject root = new(name);
@@ -81,6 +109,10 @@ public sealed class GameSfxServiceTests
 
     private static void InvokeUpdate(SfxSettingsBridge bridge) =>
         typeof(SfxSettingsBridge).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(bridge, null);
+
+    private static void InvokeScan(UiSfxAutoBinder binder) =>
+        typeof(UiSfxAutoBinder).GetMethod("Scan", BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(
+            binder, new object[] { "test", false });
 
     private static void SetPrivateField(object target, string name, object value) =>
         target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(target, value);

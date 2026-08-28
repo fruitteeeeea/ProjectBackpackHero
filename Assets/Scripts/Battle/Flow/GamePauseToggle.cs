@@ -62,7 +62,7 @@ namespace BackpackHero.Battle
         public void QuitGame()
         {
             LevelFlowController.EnsureInstance()
-                ?.ResetForLevel(LevelManager.CurrentLevel);
+                ?.PrepareForMenuExit();
             SceneManager.LoadScene(mainMenuSceneName, LoadSceneMode.Single);
         }
 

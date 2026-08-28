@@ -211,32 +211,37 @@ namespace BackpackHero.Battle
         /// <summary>以指定关卡开始全新对局，供正式入口和调试面板复用。</summary>
         public void ResetForLevel(int level)
         {
-            if (bannerRoutine != null)
-            {
-                StopCoroutine(bannerRoutine);
-                bannerRoutine = null;
-            }
-            SetBannerVisible(false);
-
             LevelManager.EnsureInstance()?.SetLevel(level);
-            currentRound = 1;
-            playerWins = 0;
-            enemyWins = 0;
-            hasCompletedRound = false;
-            pendingPlayerDeath = false;
-            pendingEnemyDeath = false;
-            resolutionQueued = false;
-            showingResult = false;
-            isMatchComplete = false;
-            ResetRoundTimer();
-            ResetBackpackHealth();
+            ResetMatchState();
             MatchInitializationVersion++;
             BattleFlowController.EnsureInstance()?.SetPhase(BattlePhase.Preparation);
             MatchInitialized?.Invoke();
             MatchStateChanged?.Invoke();
         }
 
+        /// <summary>
+        /// 离开战斗场景前清理常驻的对局状态。
+        /// 不广播新对局事件，避免仍在当前场景中的背包重新应用初始布局。
+        /// </summary>
+        public void PrepareForMenuExit()
+        {
+            LevelManager.EnsureInstance()?.SetLevel(1);
+            ResetMatchState();
+            BattleFlowController.EnsureInstance()?.SetPhase(BattlePhase.Preparation);
+            MatchStateChanged?.Invoke();
+        }
+
         public void ResetForDebugMatch()
+        {
+            ResetMatchState();
+            MatchInitializationVersion++;
+            BattleFlowController.EnsureInstance()
+                ?.SetPhase(BattlePhase.Preparation);
+            MatchInitialized?.Invoke();
+            MatchStateChanged?.Invoke();
+        }
+
+        private void ResetMatchState()
         {
             if (bannerRoutine != null)
             {
@@ -256,11 +261,6 @@ namespace BackpackHero.Battle
             isMatchComplete = false;
             ResetRoundTimer();
             ResetBackpackHealth();
-            MatchInitializationVersion++;
-            BattleFlowController.EnsureInstance()
-                ?.SetPhase(BattlePhase.Preparation);
-            MatchInitialized?.Invoke();
-            MatchStateChanged?.Invoke();
         }
         private void HandleBattlePhaseChanged(BattlePhase phase)
         {

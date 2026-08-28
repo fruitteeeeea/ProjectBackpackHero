@@ -8,12 +8,20 @@ public sealed class LevelFlowControllerTimerDebugTests
 {
     private GameObject battleObject;
     private GameObject flowObject;
+    private GameObject levelManagerObject;
 
     [TearDown]
     public void TearDown()
     {
         if (flowObject != null) Object.DestroyImmediate(flowObject);
         if (battleObject != null) Object.DestroyImmediate(battleObject);
+        if (levelManagerObject != null)
+        {
+            Object.DestroyImmediate(levelManagerObject);
+            typeof(LevelManager).GetProperty("Instance",
+                BindingFlags.Static | BindingFlags.Public)
+                ?.SetValue(null, null);
+        }
     }
 
     [Test]
@@ -58,6 +66,60 @@ public sealed class LevelFlowControllerTimerDebugTests
         Assert.That(flow.IsMatchComplete, Is.False);
         Assert.That(BattleFlowController.CurrentPhase,
             Is.EqualTo(BattlePhase.Preparation));
+    }
+
+    [Test]
+    public void PrepareForMenuExit_ResetsStateWithoutInitializingMatch()
+    {
+        LevelFlowController flow = CreateFlow();
+        levelManagerObject = LevelManager.EnsureInstance().gameObject;
+        LevelManager.EnsureInstance().SetLevel(3);
+        SetMatchState(flow, 3, 2, 1, true);
+        SetTimer(flow, 10f, true);
+        EnterCombat();
+
+        int initializationVersion =
+            LevelFlowController.MatchInitializationVersion;
+        int initializationCount = 0;
+        LevelFlowController.MatchInitialized += CountInitialization;
+        try
+        {
+            flow.PrepareForMenuExit();
+        }
+        finally
+        {
+            LevelFlowController.MatchInitialized -= CountInitialization;
+        }
+
+        Assert.That(flow.Round, Is.EqualTo(1));
+        Assert.That(flow.PlayerWins, Is.EqualTo(0));
+        Assert.That(flow.EnemyWins, Is.EqualTo(0));
+        Assert.That(flow.IsMatchComplete, Is.False);
+        Assert.That(flow.IsRoundTimerRunning, Is.False);
+        Assert.That(LevelManager.CurrentLevel, Is.EqualTo(1));
+        Assert.That(BattleFlowController.CurrentPhase,
+            Is.EqualTo(BattlePhase.Preparation));
+        Assert.That(LevelFlowController.MatchInitializationVersion,
+            Is.EqualTo(initializationVersion));
+        Assert.That(initializationCount, Is.EqualTo(0));
+
+        int resetVersion = LevelFlowController.MatchInitializationVersion;
+        LevelFlowController.MatchInitialized += CountInitialization;
+        try
+        {
+            flow.ResetForLevel(2);
+        }
+        finally
+        {
+            LevelFlowController.MatchInitialized -= CountInitialization;
+        }
+
+        Assert.That(LevelManager.CurrentLevel, Is.EqualTo(2));
+        Assert.That(LevelFlowController.MatchInitializationVersion,
+            Is.EqualTo(resetVersion + 1));
+        Assert.That(initializationCount, Is.EqualTo(1));
+
+        void CountInitialization() => initializationCount++;
     }
     [Test]
     public void ResultPhase_StopsCombatWithoutEnteringPreparation()

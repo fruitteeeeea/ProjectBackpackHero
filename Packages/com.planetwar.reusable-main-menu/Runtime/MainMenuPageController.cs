@@ -15,6 +15,7 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private RanksView ranksPage;
         [SerializeField] private HangarView hangarPage;
         [SerializeField] private RankInfoView rankInfoPage;
+        [SerializeField] private SettingsView settingsPage;
         [SerializeField] private GameObject bottomBar;
         [SerializeField] private MainBottmChoose tabIndicator;
         [SerializeField] private Transform[] tabTargets;
@@ -24,6 +25,7 @@ namespace PlanetWar.ReusableMainMenu
             var relay = GetComponent<MainMenuActionRelay>();
             if (relay != null) relay.ActionInvoked += OnAction;
             if (rankInfoPage != null) rankInfoPage.CloseRequested += OnRankInfoClosed;
+            if (settingsPage != null) settingsPage.CloseRequested += HideSettings;
         }
 
         private void OnDestroy()
@@ -31,11 +33,13 @@ namespace PlanetWar.ReusableMainMenu
             var relay = GetComponent<MainMenuActionRelay>();
             if (relay != null) relay.ActionInvoked -= OnAction;
             if (rankInfoPage != null) rankInfoPage.CloseRequested -= OnRankInfoClosed;
+            if (settingsPage != null) settingsPage.CloseRequested -= HideSettings;
         }
 
         private void OnAction(MainMenuAction action)
         {
-            if (action == MainMenuAction.Rank) ShowRankInfo();
+            if (action == MainMenuAction.Settings) ShowSettings();
+            else if (action == MainMenuAction.Rank) ShowRankInfo();
             else if (action == MainMenuAction.BottomRank) ShowRanks();
             else if (action == MainMenuAction.BottomCollection) ShowHangar();
             else if (action == MainMenuAction.BottomHome || action == MainMenuAction.BottomBattle) ShowBattle(action == MainMenuAction.BottomBattle ? BattleTabIndex : LockedPlaceholderTabIndex);
@@ -50,6 +54,16 @@ namespace PlanetWar.ReusableMainMenu
             if (rankInfoPage != null) rankInfoPage.Hide();
             if (ranksPage != null) ranksPage.Show();
             SelectTab(RankTabIndex);
+        }
+
+        private void ShowSettings()
+        {
+            if (settingsPage != null) settingsPage.gameObject.SetActive(true);
+        }
+
+        private void HideSettings()
+        {
+            if (settingsPage != null) settingsPage.gameObject.SetActive(false);
         }
 
         private void ShowRankInfo()

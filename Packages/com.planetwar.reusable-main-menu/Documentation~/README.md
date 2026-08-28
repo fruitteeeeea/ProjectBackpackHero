@@ -11,6 +11,16 @@ menu.SetTheme(myTheme);
 
 `MainMenuView` never creates UI, loads scenes, plays sound, reads saves or calls game services. It only exposes semantic button actions. Use `MainMenuTheme` assets stored in the consuming project's `Assets/` directory as the extension point for host-specific presentation data.
 
+## Settings
+
+Version 0.3.0 adds a static modal settings page opened by the existing **Settings** action. `SettingsView` displays sound, music and vibration choices only; it does not call audio, vibration, PlayerPrefs, or privacy APIs. The host supplies the current values with `ApplySettings` and persists or applies `SettingsChanged` itself:
+
+```csharp
+var settings = menu.GetComponentInChildren<SettingsView>(true);
+settings.ApplySettings(new SettingsState(soundEnabled, musicEnabled, vibrationEnabled));
+settings.SettingsChanged += state => SaveAndApply(state);
+```
+
 ## Ranks
 
 Version 0.2.0 includes a static `UIRankList` child of `MainMenu.prefab`. Its twenty `RankRow_01`–`RankRow_20` children are all pre-authored and can be edited directly in the Hierarchy. `RanksView` only assigns data to those serialized rows; it never instantiates UI. The bottom **Ranks** tab opens the page and **Home** restores the main page. `RankEntry` data, country sprites, and the current-player row are editable from the `RanksView` Inspector.

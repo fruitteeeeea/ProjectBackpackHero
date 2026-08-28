@@ -18,3 +18,4 @@ MonoBehaviour:
   aircraftVisual: {fileID: 11400000, guid: 43a162226c0a8374c9c7f62562bc654f, type: 2}
   backpackVisual: {fileID: 11400000, guid: 88eadaa0870ea8448906ada7edd282d0, type: 2}
   floatingDamageText: {fileID: 11400000, guid: 90537464f8e9d0e4badc63cbb50c4a8a, type: 2}
+  artAsset: {fileID: 11400000, guid: 8374a9d1225a4f1196ac57b4d2c8f889, type: 2}

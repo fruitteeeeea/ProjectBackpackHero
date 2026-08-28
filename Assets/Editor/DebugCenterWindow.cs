@@ -41,6 +41,7 @@ namespace BackpackHero.EditorTools
         DamageStatistics,
         BackpackStrength,
         FloatingDamageText,
+        ArtAsset,
         BalanceAdjustment
     }
 
@@ -98,7 +99,7 @@ namespace BackpackHero.EditorTools
                 () => ScriptableObject.CreateInstance<TestShooterDebugWindow>()),
             new(DebugCenterTab.BackgroundPhysics, DebugCenterKind.VisualEffects, "星图物理",
                 () => BackgroundPhysicsDebugRuntime.Instance != null,
-                () => ScriptableObject.CreateInstance<BackgroundPhysicsDebugWindow>(), true),
+                () => ScriptableObject.CreateInstance<BackgroundPhysicsDebugWindow>()),
             new(DebugCenterTab.Level, DebugCenterKind.ProgramTest, "关卡",
                 () => LevelFlowController.Instance != null,
                 () => ScriptableObject.CreateInstance<LevelDebugWindow>()),
@@ -111,6 +112,9 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.FloatingDamageText, DebugCenterKind.VisualEffects, "伤害飘字",
                 () => FloatingDamageTextDebugRuntime.Instance != null,
                 VisualEffectsDebugCenterWindow.CreateFloatingDamageTextContent),
+            new(DebugCenterTab.ArtAsset, DebugCenterKind.VisualEffects, "美术资源调整",
+                () => ArtAssetDebugRuntime.Instance != null,
+                () => ScriptableObject.CreateInstance<ArtAssetDebugWindow>(), true),
             new(DebugCenterTab.GamePacing, DebugCenterKind.GameplayDesign, "游戏节奏",
                 () => GamePacingDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<GamePacingDebugWindow>()),
@@ -352,6 +356,7 @@ namespace BackpackHero.EditorTools
                 case LevelDebugWindow level: level.DrawTab(); break;
                 case AircraftVisualDebugWindow aircraftVisual: aircraftVisual.DrawTab(); break;
                 case BackpackVisualDebugWindow backpackVisual: backpackVisual.DrawTab(); break;
+                case ArtAssetDebugWindow artAsset: artAsset.DrawTab(); break;
                 case LevelDifficultyDebugWindow levelDifficulty: levelDifficulty.DrawTab(); break;
                 case DeckPresetDebugWindow deckPresets: deckPresets.DrawTab(); break;
                 case ItemProgressionDebugWindow itemProgression: itemProgression.DrawTab(); break;

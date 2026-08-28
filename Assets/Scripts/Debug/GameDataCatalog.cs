@@ -17,6 +17,7 @@ namespace BackpackHero.Debugging
         [SerializeField] private AircraftVisualDebugSettings aircraftVisual;
         [SerializeField] private BackpackVisualDebugSettings backpackVisual;
         [SerializeField] private FloatingDamageTextDebugSettings floatingDamageText;
+        [SerializeField] private ArtAssetDebugSettings artAsset;
 
         public GamePacingDebugSettings GamePacing => gamePacing;
         public StyleTendencyDebugSettings StyleTendency => styleTendency;
@@ -24,6 +25,7 @@ namespace BackpackHero.Debugging
         public AircraftVisualDebugSettings AircraftVisual => aircraftVisual;
         public BackpackVisualDebugSettings BackpackVisual => backpackVisual;
         public FloatingDamageTextDebugSettings FloatingDamageText => floatingDamageText;
+        public ArtAssetDebugSettings ArtAsset => artAsset;
 
         public static GameDataCatalog Load()
         {
@@ -34,7 +36,8 @@ namespace BackpackHero.Debugging
         public void SetDefaults(
             GamePacingDebugSettings pacing, StyleTendencyDebugSettings tendency,
             LevelDifficultySettings difficulty, AircraftVisualDebugSettings aircraft,
-            BackpackVisualDebugSettings backpack, FloatingDamageTextDebugSettings floating)
+            BackpackVisualDebugSettings backpack, FloatingDamageTextDebugSettings floating,
+            ArtAssetDebugSettings art)
         {
             gamePacing = pacing;
             styleTendency = tendency;
@@ -42,6 +45,7 @@ namespace BackpackHero.Debugging
             aircraftVisual = aircraft;
             backpackVisual = backpack;
             floatingDamageText = floating;
+            artAsset = art;
         }
     }
 }

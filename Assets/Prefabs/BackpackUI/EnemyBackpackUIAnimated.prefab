@@ -6293,6 +6293,7 @@ GameObject:
   - component: {fileID: 3433739019400812695}
   - component: {fileID: 8691592210643195029}
   - component: {fileID: 3571928046418359576}
+  - component: {fileID: 8012345678901234568}
   m_Layer: 5
   m_Name: BackpackSpaceShip
   m_TagString: Untagged
@@ -6370,6 +6371,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.BackpackSpaceShipPhaseFade
   targetImage: {fileID: 8691592210643195029}
+--- !u!114 &8012345678901234568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8716707909697807581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4274ff8636b0456f9a8c247a277b3d78, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.BackpackShipStyleTarget
+  style: 1
 --- !u!1 &8804080933355889708
 GameObject:
   m_ObjectHideFlags: 0

@@ -36,6 +36,8 @@ namespace BackpackHero.EditorTools
                 "Assets/Resources/BackpackVisual/BackpackVisualDebugSettings.asset", "Assets/GameData/Visual/BackpackVisual.asset");
             FloatingDamageTextDebugSettings floating = Migrate<FloatingDamageTextDebugSettings>(
                 "Assets/Resources/FloatingDamageText/FloatingDamageTextDebugSettings.asset", "Assets/GameData/Visual/FloatingDamageText.asset");
+            ArtAssetDebugSettings art = Migrate<ArtAssetDebugSettings>(
+                null, "Assets/GameData/Visual/ArtAsset.asset");
             EnsureFolder("Assets/Resources");
             GameDataCatalog catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(CatalogPath);
             if (catalog == null)
@@ -43,7 +45,7 @@ namespace BackpackHero.EditorTools
                 catalog = ScriptableObject.CreateInstance<GameDataCatalog>();
                 AssetDatabase.CreateAsset(catalog, CatalogPath);
             }
-            catalog.SetDefaults(pacing, tendency, difficulty, aircraft, backpack, floating);
+            catalog.SetDefaults(pacing, tendency, difficulty, aircraft, backpack, floating, art);
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
 
@@ -62,7 +64,9 @@ namespace BackpackHero.EditorTools
             T existing = AssetDatabase.LoadAssetAtPath<T>(targetPath);
             if (existing != null) return existing;
             T target = ScriptableObject.CreateInstance<T>();
-            T legacy = AssetDatabase.LoadAssetAtPath<T>(legacyPath);
+            T legacy = string.IsNullOrEmpty(legacyPath)
+                ? null
+                : AssetDatabase.LoadAssetAtPath<T>(legacyPath);
             if (legacy != null) EditorUtility.CopySerialized(legacy, target);
             AssetDatabase.CreateAsset(target, targetPath);
             return target;

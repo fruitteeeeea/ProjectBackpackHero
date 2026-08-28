@@ -7,6 +7,56 @@ using UnityEngine.UI;
 
 public sealed class GameSfxServiceTests
 {
+    private const string NonUiPitchPreferenceKey = "BackpackHero.NonUiSfxPitch";
+    private const string NonUiRandomPitchPreferenceKey = "BackpackHero.NonUiSfxRandomPitch";
+    private const string NonUiVolumePreferenceKey = "BackpackHero.NonUiSfxVolume";
+
+    [Test]
+    public void NonUiSfxTuning_ClampsToSafeRanges()
+    {
+        GameSfxTuning tuning = new(-1f, 99f, 99f);
+
+        Assert.That(tuning.BasePitch, Is.EqualTo(GameSfxTuning.MinimumPitch));
+        Assert.That(tuning.RandomPitchOffset, Is.EqualTo(GameSfxTuning.MaximumRandomPitchOffset));
+        Assert.That(tuning.VolumeMultiplier, Is.EqualTo(GameSfxTuning.MaximumVolumeMultiplier));
+    }
+
+    [Test]
+    public void NonUiSfxTuning_AppliesWithoutSavingThenPersistsOnExplicitSave()
+    {
+        ClearNonUiTuningPreferences();
+        GameObject firstRoot = new("FirstSfxTuningService");
+        GameObject secondRoot = null;
+        try
+        {
+            GameSfxService first = firstRoot.AddComponent<GameSfxService>();
+            Assert.That(first.NonUiTuning.BasePitch, Is.EqualTo(1f));
+            Assert.That(first.NonUiTuning.RandomPitchOffset, Is.Zero);
+            Assert.That(first.NonUiTuning.VolumeMultiplier, Is.EqualTo(1f));
+
+            GameSfxTuning preview = new(.8f, .12f, .45f);
+            first.ApplyNonUiTuning(preview);
+            Assert.That(first.NonUiTuning.BasePitch, Is.EqualTo(.8f));
+            Assert.That(PlayerPrefs.HasKey(NonUiPitchPreferenceKey), Is.False);
+
+            first.SaveNonUiTuning(preview);
+            Object.DestroyImmediate(firstRoot);
+            firstRoot = null;
+
+            secondRoot = new GameObject("SecondSfxTuningService");
+            GameSfxService second = secondRoot.AddComponent<GameSfxService>();
+            Assert.That(second.NonUiTuning.BasePitch, Is.EqualTo(.8f));
+            Assert.That(second.NonUiTuning.RandomPitchOffset, Is.EqualTo(.12f));
+            Assert.That(second.NonUiTuning.VolumeMultiplier, Is.EqualTo(.45f));
+        }
+        finally
+        {
+            if (firstRoot != null) Object.DestroyImmediate(firstRoot);
+            if (secondRoot != null) Object.DestroyImmediate(secondRoot);
+            ClearNonUiTuningPreferences();
+        }
+    }
+
     [Test]
     public void ProjectileSfxPriority_IsLaserThenSpreadThenEquipmentThenDefault()
     {
@@ -116,4 +166,12 @@ public sealed class GameSfxServiceTests
 
     private static void SetPrivateField(object target, string name, object value) =>
         target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(target, value);
+
+    private static void ClearNonUiTuningPreferences()
+    {
+        PlayerPrefs.DeleteKey(NonUiPitchPreferenceKey);
+        PlayerPrefs.DeleteKey(NonUiRandomPitchPreferenceKey);
+        PlayerPrefs.DeleteKey(NonUiVolumePreferenceKey);
+        PlayerPrefs.Save();
+    }
 }

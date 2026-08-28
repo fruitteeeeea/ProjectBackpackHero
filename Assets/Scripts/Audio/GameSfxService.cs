@@ -10,6 +10,28 @@ namespace BackpackHero.Audio
 {
     public enum GameSfxId { UiClick, BackpackItem, FighterHit, DefaultProjectile, EquipmentProjectile, LaserProjectile, SpreadProjectile, Victory }
 
+    public readonly struct GameSfxTuning
+    {
+        public const float MinimumPitch = 0.5f;
+        public const float MaximumPitch = 1.25f;
+        public const float MaximumRandomPitchOffset = 0.25f;
+        public const float MinimumVolumeMultiplier = 0f;
+        public const float MaximumVolumeMultiplier = 1f;
+
+        public GameSfxTuning(float basePitch, float randomPitchOffset, float volumeMultiplier)
+        {
+            BasePitch = Mathf.Clamp(basePitch, MinimumPitch, MaximumPitch);
+            RandomPitchOffset = Mathf.Clamp(randomPitchOffset, 0f, MaximumRandomPitchOffset);
+            VolumeMultiplier = Mathf.Clamp(volumeMultiplier, MinimumVolumeMultiplier, MaximumVolumeMultiplier);
+        }
+
+        public float BasePitch { get; }
+        public float RandomPitchOffset { get; }
+        public float VolumeMultiplier { get; }
+
+        public static GameSfxTuning Default => new(1f, 0f, 1f);
+    }
+
     public sealed class GameSfxRateLimiter
     {
         private readonly Dictionary<GameSfxId, float> lastPlayedAt = new();
@@ -26,8 +48,12 @@ namespace BackpackHero.Audio
     public sealed class GameSfxService : MonoBehaviour
     {
         private const string EnabledPreferenceKey = "BackpackHero.SfxEnabled";
+        private const string NonUiPitchPreferenceKey = "BackpackHero.NonUiSfxPitch";
+        private const string NonUiRandomPitchPreferenceKey = "BackpackHero.NonUiSfxRandomPitch";
+        private const string NonUiVolumePreferenceKey = "BackpackHero.NonUiSfxVolume";
         private const float UiVolume = 0.8f;
         private const float CombatVolume = 0.7f;
+        private const int NonUiSourcePoolSize = 8;
         private static readonly Dictionary<GameSfxId, float> MinimumIntervals = new()
         {
             { GameSfxId.FighterHit, 0.08f }, { GameSfxId.DefaultProjectile, 0.06f },
@@ -42,10 +68,13 @@ namespace BackpackHero.Audio
         public bool HasAudioSource => source != null;
         public bool HasCatalog => catalog != null;
         public string DefaultUiClipName => ResolveClip(GameSfxId.UiClick)?.name ?? "<missing>";
+        public GameSfxTuning NonUiTuning { get; private set; } = GameSfxTuning.Default;
 
         private readonly GameSfxRateLimiter rateLimiter = new();
+        private readonly List<AudioSource> nonUiSources = new();
         private AudioSource source;
         private GameSfxCatalog catalog;
+        private int nextNonUiSourceIndex;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void CreateBeforeSceneLoad()
@@ -65,8 +94,13 @@ namespace BackpackHero.Audio
             source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
             source.spatialBlend = 0f;
+            for (int index = 0; index < NonUiSourcePoolSize; index++)
+            {
+                nonUiSources.Add(CreateTwoDimensionalSource());
+            }
             catalog = Resources.Load<GameSfxCatalog>("Audio/GameSfxCatalog");
             IsEnabled = PlayerPrefs.GetInt(EnabledPreferenceKey, 1) != 0;
+            NonUiTuning = LoadNonUiTuning();
         }
 
         private void OnDestroy() { if (Instance == this) Instance = null; }
@@ -75,6 +109,22 @@ namespace BackpackHero.Audio
         {
             IsEnabled = enabled;
             PlayerPrefs.SetInt(EnabledPreferenceKey, enabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
+        public GameSfxTuning LoadSavedNonUiTuning() => LoadNonUiTuning();
+
+        public void ApplyNonUiTuning(GameSfxTuning tuning)
+        {
+            NonUiTuning = tuning;
+        }
+
+        public void SaveNonUiTuning(GameSfxTuning tuning)
+        {
+            ApplyNonUiTuning(tuning);
+            PlayerPrefs.SetFloat(NonUiPitchPreferenceKey, NonUiTuning.BasePitch);
+            PlayerPrefs.SetFloat(NonUiRandomPitchPreferenceKey, NonUiTuning.RandomPitchOffset);
+            PlayerPrefs.SetFloat(NonUiVolumePreferenceKey, NonUiTuning.VolumeMultiplier);
             PlayerPrefs.Save();
         }
 
@@ -91,6 +141,8 @@ namespace BackpackHero.Audio
             Debug.Log($"[SFX-DIAG] {reason}; scene={SceneManager.GetActiveScene().name}; " +
                       $"service={name}; sfxEnabled={IsEnabled}; audioSource={source != null}; " +
                       $"catalog={catalog != null}; defaultUiClip={DefaultUiClipName}; " +
+                      $"nonUiPitch={NonUiTuning.BasePitch:F2}; nonUiRandomPitch={NonUiTuning.RandomPitchOffset:F2}; " +
+                      $"nonUiVolume={NonUiTuning.VolumeMultiplier:F2}; " +
                       $"boundButtons={binder?.BoundButtonCount ?? 0}", this);
         }
 
@@ -124,7 +176,8 @@ namespace BackpackHero.Audio
                 LogPlayOutcome(id, clip, "skipped: clip missing");
                 return;
             }
-            if (source == null)
+            AudioSource playbackSource = id == GameSfxId.UiClick ? source : GetNextNonUiSource();
+            if (playbackSource == null)
             {
                 LogPlayOutcome(id, clip, "skipped: AudioSource missing");
                 return;
@@ -134,8 +187,59 @@ namespace BackpackHero.Audio
                 LogPlayOutcome(id, clip, "skipped: rate limited");
                 return;
             }
-            source.PlayOneShot(clip, id == GameSfxId.UiClick || id == GameSfxId.BackpackItem ? UiVolume : CombatVolume);
+            if (id == GameSfxId.UiClick)
+            {
+                playbackSource.pitch = 1f;
+                playbackSource.PlayOneShot(clip, UiVolume);
+            }
+            else
+            {
+                playbackSource.pitch = GetRandomizedNonUiPitch();
+                float baseVolume = id == GameSfxId.BackpackItem ? UiVolume : CombatVolume;
+                playbackSource.PlayOneShot(clip, baseVolume * NonUiTuning.VolumeMultiplier);
+            }
             LogPlayOutcome(id, clip, "PlayOneShot invoked");
+        }
+
+        private AudioSource CreateTwoDimensionalSource()
+        {
+            AudioSource audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
+            return audioSource;
+        }
+
+        private AudioSource GetNextNonUiSource()
+        {
+            if (nonUiSources.Count == 0) return null;
+            for (int attempt = 0; attempt < nonUiSources.Count; attempt++)
+            {
+                int index = (nextNonUiSourceIndex + attempt) % nonUiSources.Count;
+                AudioSource candidate = nonUiSources[index];
+                if (candidate == null || candidate.isPlaying) continue;
+                nextNonUiSourceIndex = (index + 1) % nonUiSources.Count;
+                return candidate;
+            }
+
+            AudioSource fallback = nonUiSources[nextNonUiSourceIndex];
+            nextNonUiSourceIndex = (nextNonUiSourceIndex + 1) % nonUiSources.Count;
+            return fallback;
+        }
+
+        private float GetRandomizedNonUiPitch()
+        {
+            float offset = Random.Range(-NonUiTuning.RandomPitchOffset, NonUiTuning.RandomPitchOffset);
+            return Mathf.Clamp(NonUiTuning.BasePitch + offset,
+                GameSfxTuning.MinimumPitch, GameSfxTuning.MaximumPitch);
+        }
+
+        private static GameSfxTuning LoadNonUiTuning()
+        {
+            GameSfxTuning defaults = GameSfxTuning.Default;
+            return new GameSfxTuning(
+                PlayerPrefs.GetFloat(NonUiPitchPreferenceKey, defaults.BasePitch),
+                PlayerPrefs.GetFloat(NonUiRandomPitchPreferenceKey, defaults.RandomPitchOffset),
+                PlayerPrefs.GetFloat(NonUiVolumePreferenceKey, defaults.VolumeMultiplier));
         }
 
         private void LogPlayOutcome(GameSfxId id, AudioClip clip, string outcome)

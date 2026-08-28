@@ -1,6 +1,6 @@
 {
   "name": "PlanetWar.ReusableMainMenu.Tests",
-  "references": ["PlanetWar.ReusableMainMenu.Runtime"],
+  "references": ["PlanetWar.ReusableMainMenu.Runtime", "Unity.TextMeshPro", "Unity.ugui"],
   "includePlatforms": [],
   "optionalUnityReferences": ["TestAssemblies"],
   "autoReferenced": false

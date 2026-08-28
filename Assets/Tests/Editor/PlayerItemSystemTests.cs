@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BackpackPrototype;
+using BackpackHero.UI;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -190,6 +191,32 @@ public sealed class PlayerItemSystemTests
         Assert.That(system.GetFragments(aircraft), Is.Zero);
         Assert.That(system.GetFragments(equipment), Is.Zero);
         Assert.That(system.IsUnlocked(aircraft), Is.True);
+    }
+
+    [Test]
+    public void CollectionLevel_UsesUnlockedItemsAndRoundsDown()
+    {
+        ItemData levelTwo = NewItem("level_two");
+        ItemData levelFive = NewItem("level_five");
+        ItemData lockedLevelTen = NewItem("locked_level_ten");
+        PlayerItemSystem system = NewSystem(levelTwo, levelFive, lockedLevelTen);
+        system.GetState(levelTwo).Level = 2;
+        system.GetState(levelFive).Level = 5;
+        system.GetState(lockedLevelTen).Level = 10;
+        system.GetState(lockedLevelTen).Unlocked = false;
+
+        Assert.That(MenuDisplayProfile.CalculateCollectionLevel(system), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void CollectionLevel_WithoutUnlockedItemsFallsBackToDefaultLevel()
+    {
+        ItemData item = NewItem("locked");
+        PlayerItemSystem system = NewSystem(item);
+        system.GetState(item).Unlocked = false;
+
+        Assert.That(MenuDisplayProfile.CalculateCollectionLevel(system),
+            Is.EqualTo(PlayerItemSystem.DefaultLevel));
     }
 
     [Test]

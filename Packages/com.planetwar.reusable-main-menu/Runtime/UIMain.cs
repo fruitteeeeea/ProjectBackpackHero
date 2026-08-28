@@ -22,6 +22,16 @@ public class UIMain : MonoBehaviour
 
     public void ApplyRankProgress(int points, int maximumPoints, string rankName)
     {
+        ApplyProgress(points, maximumPoints, rankName);
+    }
+
+    public void ApplyMainProgress(int points, int maximumPoints, int collectionLevel)
+    {
+        ApplyProgress(points, maximumPoints, $"Level {collectionLevel}");
+    }
+
+    private void ApplyProgress(int points, int maximumPoints, string levelText)
+    {
         // Existing prefabs predate this binding. "New Text" is the authored centre
         // label of the rank slider, so discover it once when no serialized reference
         // has been added yet; future prefab edits can simply wire the fields above.
@@ -30,8 +40,8 @@ public class UIMain : MonoBehaviour
                 if (text.text == "New Text") { rankProgressText = text; break; }
         if (rankProgressSlider == null) rankProgressSlider = GetComponentInChildren<Slider>(true);
         if (rankPointsText != null) rankPointsText.text = points.ToString();
-        if (rankProgressText != null) rankProgressText.text = $"{points:N0}/{maximumPoints:N0}";
-        if (rankNameText != null) rankNameText.text = rankName;
+        if (rankProgressText != null) rankProgressText.text = points.ToString("N0");
+        if (rankNameText != null) rankNameText.text = levelText;
         if (rankProgressSlider != null) rankProgressSlider.value = Mathf.Clamp01((float)points / Mathf.Max(1, maximumPoints));
     }
 

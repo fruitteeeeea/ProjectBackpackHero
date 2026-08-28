@@ -86,7 +86,8 @@ namespace BackpackHero.UI
                 if (system != null) main.ApplyProfile(PlayerName, system.Gold, system.Diamond);
                 RankProgressionSystem progression = RankProgressionSystem.Instance;
                 if (progression != null)
-                    main.ApplyRankProgress(progression.Points, RankProgressionSystem.MaximumPoints, progression.CurrentRankName);
+                    main.ApplyMainProgress(progression.Points, RankProgressionSystem.MaximumPoints,
+                        CalculateCollectionLevel(system));
             }
 
             if (playerAvatar == null) return;
@@ -96,6 +97,24 @@ namespace BackpackHero.UI
                 if (image.name == "headImg")
                     image.sprite = playerAvatar;
             }
+        }
+
+        public static int CalculateCollectionLevel(PlayerItemSystem system)
+        {
+            if (system == null) return PlayerItemSystem.DefaultLevel;
+
+            int totalLevel = 0;
+            int itemCount = 0;
+            foreach (ItemData item in system.GetAllItems())
+            {
+                if (item == null || !system.IsUnlocked(item)) continue;
+                totalLevel += system.GetLevel(item);
+                itemCount++;
+            }
+
+            return itemCount == 0
+                ? PlayerItemSystem.DefaultLevel
+                : totalLevel / itemCount;
         }
 
         private static void ApplyRankProfile()

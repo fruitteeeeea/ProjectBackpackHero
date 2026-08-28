@@ -24,6 +24,10 @@ sysinfo.txt
 *.userprefs
 *.booproj
 
+# Android signing credentials must stay outside version control
+*.keystore
+*.jks
+
 .vsconfig
 
 # Downloaded official Luban toolchain; install.ps1 restores this deterministically.

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Spine.Unity;
+using BackpackHero.Debugging;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,8 +21,8 @@ namespace BackpackPrototype
         UIGetReward rewardView;
         PackSystem packs;
 
-        void Awake() { packs = GetComponent<PackSystem>(); if (packs != null) packs.Changed += Refresh; }
-        void OnDestroy() { if (packs != null) packs.Changed -= Refresh; }
+        void Awake() { packs = GetComponent<PackSystem>(); if (packs != null) packs.Changed += Refresh; FunctionBlockRuntime.StateChanged += OnFunctionBlockChanged; }
+        void OnDestroy() { if (packs != null) packs.Changed -= Refresh; FunctionBlockRuntime.StateChanged -= OnFunctionBlockChanged; }
         void Update()
         {
             if (packContainer == null) TryBuild();
@@ -33,6 +34,12 @@ namespace BackpackPrototype
             if (main == null) return;
             Transform pack = FindChild(main.transform, "Pack");
             if (pack == null) return;
+            packContainer = pack;
+            if (FunctionBlockRuntime.IsPackBlocked)
+            {
+                packContainer.gameObject.SetActive(false);
+                return;
+            }
             canvasRoot = pack.GetComponentInParent<Canvas>()?.transform ?? main.transform;
             // These values, the GridLayoutGroup, and the ItemPack prefab are copied from
             // PlanetWar/Assets/Prefab/UI/UIMain.prefab and ItemPack.prefab respectively.
@@ -40,7 +47,6 @@ namespace BackpackPrototype
             rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
             rect.anchoredPosition = new Vector2(0, -372.5f);
             rect.sizeDelta = new Vector2(586.6886f, 210.7102f);
-            packContainer = pack;
             var grid = pack.GetComponent<GridLayoutGroup>() ?? pack.gameObject.AddComponent<GridLayoutGroup>();
             grid.padding = new RectOffset(5, 0, 0, 0);
             grid.childAlignment = TextAnchor.UpperLeft;
@@ -51,6 +57,23 @@ namespace BackpackPrototype
             grid.constraint = GridLayoutGroup.Constraint.Flexible;
             for (int i = 0; i < PackSystem.SlotCount; i++) slots.Add(CreateSlot(i));
             Refresh();
+        }
+        void OnFunctionBlockChanged(bool milestoneBlocked, bool packBlocked)
+        {
+            if (packContainer == null && !packBlocked) TryBuild();
+            if (packContainer == null) return;
+            packContainer.gameObject.SetActive(!packBlocked);
+            if (packBlocked)
+            {
+                packInfo?.Close();
+                if (rewardView != null) rewardView.gameObject.SetActive(false);
+            }
+            else if (slots.Count == 0)
+            {
+                packContainer = null;
+                TryBuild();
+            }
+            else Refresh();
         }
         ItemPack CreateSlot(int index)
         {
@@ -63,11 +86,13 @@ namespace BackpackPrototype
         }
         internal void ShowPackInfo(int index)
         {
+            if (FunctionBlockRuntime.IsPackBlocked) return;
             if (packInfo == null) packInfo = BuildPackInfo();
             packInfo.Show(index);
         }
         internal void ShowOpen(int index)
         {
+            if (FunctionBlockRuntime.IsPackBlocked) return;
             if (rewardView == null) rewardView = BuildReward();
             rewardView.ShowOpen(index);
         }

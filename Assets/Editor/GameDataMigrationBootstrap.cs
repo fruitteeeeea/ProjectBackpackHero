@@ -38,6 +38,8 @@ namespace BackpackHero.EditorTools
                 "Assets/Resources/FloatingDamageText/FloatingDamageTextDebugSettings.asset", "Assets/GameData/Visual/FloatingDamageText.asset");
             ArtAssetDebugSettings art = Migrate<ArtAssetDebugSettings>(
                 null, "Assets/GameData/Visual/ArtAsset.asset");
+            FunctionBlockSettings functionBlock = Migrate<FunctionBlockSettings>(
+                null, "Assets/GameData/Gameplay/FunctionBlock.asset");
             EnsureFolder("Assets/Resources");
             GameDataCatalog catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(CatalogPath);
             if (catalog == null)
@@ -45,7 +47,7 @@ namespace BackpackHero.EditorTools
                 catalog = ScriptableObject.CreateInstance<GameDataCatalog>();
                 AssetDatabase.CreateAsset(catalog, CatalogPath);
             }
-            catalog.SetDefaults(pacing, tendency, difficulty, aircraft, backpack, floating, art);
+            catalog.SetDefaults(pacing, tendency, difficulty, aircraft, backpack, floating, art, functionBlock);
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
 

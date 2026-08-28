@@ -38,6 +38,7 @@ namespace BackpackHero.EditorTools
         DeckPresets,
         ItemProgression,
         Pack,
+        FunctionBlock,
         DamageStatistics,
         BackpackStrength,
         FloatingDamageText,
@@ -78,7 +79,7 @@ namespace BackpackHero.EditorTools
         {
             new(DebugCenterTab.Runtime, DebugCenterKind.ProgramTest, "Runtime",
                 () => EditorApplication.isPlaying,
-                () => ScriptableObject.CreateInstance<RuntimeDebugWindow>(), true),
+                () => ScriptableObject.CreateInstance<RuntimeDebugWindow>()),
             new(DebugCenterTab.Values, DebugCenterKind.ProgramTest, "数值",
                 () => DebugValueRuntimeBridge.HasTarget,
                 () => ScriptableObject.CreateInstance<DebugValueWindow>()),
@@ -133,6 +134,9 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.Pack, DebugCenterKind.ProgramTest, "卡包",
                 () => EditorApplication.isPlaying && PackSystem.Instance != null,
                 () => ScriptableObject.CreateInstance<PackDebugWindow>()),
+            new(DebugCenterTab.FunctionBlock, DebugCenterKind.ProgramTest, "功能屏蔽",
+                () => EditorApplication.isPlaying && FunctionBlockRuntime.Instance != null,
+                () => ScriptableObject.CreateInstance<FunctionBlockDebugWindow>(), true),
             new(DebugCenterTab.DamageStatistics, DebugCenterKind.GameplayDesign, "DPS 检测",
                 () => EditorApplication.isPlaying && DamageStatisticsRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<DamageStatisticsDebugWindow>()),
@@ -361,6 +365,7 @@ namespace BackpackHero.EditorTools
                 case DeckPresetDebugWindow deckPresets: deckPresets.DrawTab(); break;
                 case ItemProgressionDebugWindow itemProgression: itemProgression.DrawTab(); break;
                 case PackDebugWindow pack: pack.DrawTab(); break;
+                case FunctionBlockDebugWindow functionBlock: functionBlock.DrawTab(); break;
                 case DamageStatisticsDebugWindow damageStatistics: damageStatistics.DrawTab(); break;
                 case BackpackStrengthDebugWindow backpackStrength: backpackStrength.DrawTab(); break;
                 case BalanceAdjustmentDebugWindow balanceAdjustment: balanceAdjustment.DrawTab(); break;

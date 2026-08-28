@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Spine.Unity;
+using BackpackHero.Debugging;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -38,6 +39,7 @@ namespace BackpackPrototype
 
         public void OnClickItem()
         {
+            if (FunctionBlockRuntime.IsPackBlocked) return;
             var state = presenter.Packs.GetSlotState(index);
             if (state == PackState.Empty) return;
             if (state == PackState.Opened) presenter.ShowOpen(index);

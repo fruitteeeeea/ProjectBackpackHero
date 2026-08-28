@@ -601,7 +601,8 @@ namespace BackpackPrototype
                 case BackpackOperationKind.RemoveItem: return combatController.RemoveItem(operation.Item);
                 case BackpackOperationKind.MergeItems:
                     if (!Backpack.TryMerge(operation.Item, operation.SecondaryItem)) return false;
-                    FindView(operation.SecondaryItem)?.PlayMergeFeedback(); return true;
+                    FindView(operation.SecondaryItem)?.PlayMergeFeedback(
+                        playBackpackItemSfx: true); return true;
                 case BackpackOperationKind.MergeShopItem:
                     return TryAutoMergeShopItem(
                         operation.ShopItem, operation.SecondaryItem);
@@ -629,7 +630,6 @@ namespace BackpackPrototype
 
             shopItems.Remove(sourceView);
             ReflowShopItems();
-            FindView(target)?.PlayMergeFeedback();
             sourceView.AnimateRemoval(() =>
             {
                 if (sourceView != null)
@@ -637,7 +637,8 @@ namespace BackpackPrototype
                     sourceView.gameObject.SetActive(false);
                     Destroy(sourceView.gameObject);
                 }
-            });
+            }, playBackpackItemSfx: true);
+            FindView(target)?.PlayMergeFeedback(playBackpackItemSfx: true);
             return true;
         }
 
@@ -1787,7 +1788,7 @@ namespace BackpackPrototype
                 return;
             }
 
-            targetView.PlayMergeFeedback();
+            targetView.PlayMergeFeedback(playBackpackItemSfx: true);
             LogManualBackpackOperation("合成物品");
         }
 
@@ -1973,7 +1974,9 @@ namespace BackpackPrototype
             if (debugAutoOperationRunning)
             {
                 // 保留商店 ItemView，直接播放其进入背包的移动反馈。
-                existing.AnimateToBackpackPosition(item.AnchorCell);
+                existing.AnimateToBackpackPosition(
+                    item.AnchorCell,
+                    playBackpackItemSfx: true);
             }
             else
             {
@@ -1992,7 +1995,9 @@ namespace BackpackPrototype
             ItemView view = FindView(item);
             if (debugAutoOperationRunning)
             {
-                view?.AnimateToBackpackPosition(item.AnchorCell);
+                view?.AnimateToBackpackPosition(
+                    item.AnchorCell,
+                    playBackpackItemSfx: true);
             }
             else
             {
@@ -2057,7 +2062,7 @@ namespace BackpackPrototype
                         view.gameObject.SetActive(false);
                         Destroy(view.gameObject);
                     }
-                });
+                }, playBackpackItemSfx: true);
             }
             else
             {

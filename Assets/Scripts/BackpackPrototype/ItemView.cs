@@ -442,16 +442,26 @@ namespace BackpackPrototype
                 .SetLoops(-1, LoopType.Yoyo);
         }
 
-        public void PlayMergeFeedback()
+        public void PlayMergeFeedback(bool playBackpackItemSfx = false)
         {
             PlayPlacedFeedback();
+            if (playBackpackItemSfx)
+            {
+                PlayBackpackItemSfx();
+            }
         }
 
         /// <summary>供非交互式背包操作者播放一次完整的移动反馈。</summary>
         public void AnimateToBackpackPosition(
             Vector2Int anchorCell,
-            Action completed = null)
+            Action completed = null,
+            bool playBackpackItemSfx = false)
         {
+            if (playBackpackItemSfx)
+            {
+                PlayBackpackItemSfx();
+            }
+
             if (GridView == null || rectTransform == null)
             {
                 completed?.Invoke();
@@ -472,6 +482,10 @@ namespace BackpackPrototype
                 {
                     SetBackpackPosition(anchorCell);
                     PlayPlacedFeedback();
+                    if (playBackpackItemSfx)
+                    {
+                        PlayBackpackItemSfx();
+                    }
                     completed?.Invoke();
                 });
         }
@@ -497,8 +511,15 @@ namespace BackpackPrototype
         }
 
         /// <summary>供非交互式背包操作者播放一次移除反馈。</summary>
-        public void AnimateRemoval(Action completed = null)
+        public void AnimateRemoval(
+            Action completed = null,
+            bool playBackpackItemSfx = false)
         {
+            if (playBackpackItemSfx)
+            {
+                PlayBackpackItemSfx();
+            }
+
             if (rectTransform == null)
             {
                 completed?.Invoke();
@@ -972,7 +993,7 @@ namespace BackpackPrototype
             }
 
             isDragging = true;
-            GameSfxService.Instance?.Play(GameSfxId.BackpackItem);
+            PlayBackpackItemSfx();
             RefreshAircraftGlow();
             RequestSelection();
             canDeleteFromTrash = IsPlacedInBackpack;
@@ -1166,9 +1187,14 @@ namespace BackpackPrototype
             SetBackpackPosition(anchorCell);
             CandidateAnchorCell = null;
             PlayPlacedFeedback();
-            GameSfxService.Instance?.Play(GameSfxId.BackpackItem);
+            PlayBackpackItemSfx();
             PlacedSuccessfully?.Invoke(this);
             return true;
+        }
+
+        private static void PlayBackpackItemSfx()
+        {
+            GameSfxService.Instance?.Play(GameSfxId.BackpackItem);
         }
 
         private bool IsOverTrash(Vector2 screenPosition, Camera eventCamera)

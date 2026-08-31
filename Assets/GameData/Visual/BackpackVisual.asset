@@ -32,4 +32,4 @@ MonoBehaviour:
   aircraftGlowMaximumIntensity: 0.45
   aircraftGlowCycleDuration: 1.2
   aircraftGlowEdgeWidth: 8
-  equipmentBottomPlateGlowEnabled: 0
+  equipmentBottomPlateGlowEnabled: 1

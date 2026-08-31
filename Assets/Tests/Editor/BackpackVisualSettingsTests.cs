@@ -35,7 +35,7 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(settings.AircraftGlowMaximumIntensity, Is.EqualTo(.45f));
         Assert.That(settings.AircraftGlowCycleDuration, Is.EqualTo(1.2f));
         Assert.That(settings.AircraftGlowEdgeWidth, Is.EqualTo(8f));
-        Assert.That(settings.EquipmentBottomPlateGlowEnabled, Is.True);
+        Assert.That(settings.EquipmentBottomPlateGlowEnabled, Is.False);
     }
 
     [Test]
@@ -125,7 +125,7 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(values.AircraftGlowColor, Is.EqualTo(Color.white));
         Assert.That(values.AircraftGlowEdgeWidth,
             Is.GreaterThanOrEqualTo(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth));
-        Assert.That(values.EquipmentBottomPlateGlowEnabled, Is.True);
+        Assert.That(values.EquipmentBottomPlateGlowEnabled, Is.False);
     }
 
     [Test]

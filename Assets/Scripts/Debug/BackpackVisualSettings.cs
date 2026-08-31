@@ -30,7 +30,7 @@ namespace BackpackHero.Debugging
             .18f, .62f, .7f,
             1.17f, 10f, -6f, BackpackPlacementScaleEase.OutElastic,
             .32f, Color.white, 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f, true);
+            true, Color.white, .12f, .45f, 1.2f, 8f, false);
 
         public BackpackVisualSettings(
             bool overridesEnabled,

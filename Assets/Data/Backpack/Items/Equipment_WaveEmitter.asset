@@ -28,7 +28,7 @@ MonoBehaviour:
   backgroundColor: {r: 0.65882355, g: 0.33333334, b: 0.96862745, a: 1}
   itemType: 1
   equipmentColor: {r: 0.20784314, g: 0.07450981, b: 0.3019608, a: 1}
-  bottomPlateDisplayMode: 1
+  bottomPlateDisplayMode: 0
   equipmentEffects:
   - {fileID: 11400000, guid: 43dfdabb0d2ac4caf8300a1bc67dceec, type: 2}
   cd: 3

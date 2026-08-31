@@ -26,7 +26,7 @@ namespace BackpackHero.Debugging
         [SerializeField, Range(0f, 1f)] private float aircraftGlowMaximumIntensity = .45f;
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftGlowCycleDuration)] private float aircraftGlowCycleDuration = 1.2f;
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth)] private float aircraftGlowEdgeWidth = 8f;
-        [SerializeField] private bool equipmentBottomPlateGlowEnabled = true;
+        [SerializeField] private bool equipmentBottomPlateGlowEnabled;
 
         public void SetValues(BackpackVisualSettings values)
         {

@@ -24,7 +24,7 @@ MonoBehaviour:
   backgroundColor: {r: 0.65882355, g: 0.33333334, b: 0.96862745, a: 1}
   itemType: 1
   equipmentColor: {r: 0.20784314, g: 0.07450981, b: 0.3019608, a: 1}
-  bottomPlateDisplayMode: 1
+  bottomPlateDisplayMode: 0
   equipmentEffects:
   - {fileID: 11400000, guid: 88a5268bb1a8d42cc85c14b7adb3ea1b, type: 2}
   cooldownDuration: 3.5

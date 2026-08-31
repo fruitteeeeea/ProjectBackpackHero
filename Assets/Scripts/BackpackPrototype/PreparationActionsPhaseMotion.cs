@@ -106,6 +106,25 @@ namespace BackpackPrototype
                 .CompleteCombatTransitionAfterMotion();
         }
 
+        /// <summary>
+        /// 由显示反馈的 OnComplete 调用，保证商店在背包缩放动画
+        /// 已落到最终值后再计算其局部缩放。
+        /// </summary>
+        public void HandleShowCompleted()
+        {
+            if (requestedPhase != BattlePhase.Preparation ||
+                BattleFlowController.CurrentPhase !=
+                BattlePhase.Preparation)
+            {
+                return;
+            }
+
+            playerBackpackSystem ??=
+                GetComponentInParent<PlayerBackpackSystem>(true);
+            playerBackpackSystem
+                ?.RefreshShopLayoutAfterPreparationMotion();
+        }
+
         private void OnDisable()
         {
             BattleFlowController.PhaseChanged -=

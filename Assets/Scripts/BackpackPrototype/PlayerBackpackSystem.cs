@@ -112,8 +112,6 @@ namespace BackpackPrototype
         private bool isLoadingLayout;
         private bool missingCurveWarningReported;
         private bool shopInitializedForPreparation;
-        private bool shopItemScaleCached;
-        private Vector3 shopItemLocalScale = Vector3.one;
         private RectTransform shopDropZone;
         private RectTransform shopContainer;
         private readonly HashSet<ItemInstance> pendingShopTransfers = new();
@@ -341,7 +339,6 @@ namespace BackpackPrototype
 
             RequestInitialLayoutForNewMatch();
             InitializeShopContainer();
-            CacheShopItemScale();
             RebuildBackpackViews();
             InitializeShopForPreparation();
 
@@ -756,6 +753,22 @@ namespace BackpackPrototype
         public void RefreshShop()
         {
             TryRefreshShop();
+        }
+
+        /// <summary>
+        /// 供准备阶段 UI 的显示动画完成后调用；使用动画结束后的
+        /// 当前层级缩放重新布局商店物品。
+        /// </summary>
+        public void RefreshShopLayoutAfterPreparationMotion()
+        {
+            if (!isReady ||
+                BattleFlowController.CurrentPhase !=
+                BattlePhase.Preparation)
+            {
+                return;
+            }
+
+            ReflowShopItems();
         }
 
         /// <summary>恢复本准备阶段的 Roll 次数，但不刷新商店。</summary>
@@ -1542,42 +1555,35 @@ namespace BackpackPrototype
             ReflowShopItems();
         }
 
-        private Vector3 GetShopItemScale(
-            RectTransform shopSlot)
+        private Vector3 GetShopItemScale()
         {
-            if (!shopItemScaleCached)
+            if (itemLayer == null || shopContainer == null)
             {
-                CacheShopItemScale(shopSlot);
-            }
-
-            return shopItemLocalScale;
-        }
-
-        private void CacheShopItemScale(
-            RectTransform shopSlot = null)
-        {
-            if (shopItemScaleCached)
-            {
-                return;
-            }
-
-            shopSlot ??= FindFirstShopSlot();
-
-            if (itemLayer == null || shopSlot == null)
-            {
-                return;
+                return Vector3.one;
             }
 
             Canvas.ForceUpdateCanvases();
-            Vector3 backpackScale = itemLayer.lossyScale;
-            Vector3 shopScale = shopSlot.lossyScale;
-
-            shopItemLocalScale = new Vector3(
-                DivideScale(backpackScale.x, shopScale.x),
-                DivideScale(backpackScale.y, shopScale.y),
-                1f);
-            shopItemScaleCached = true;
+            return CalculateShopItemLocalScale(
+                itemLayer.lossyScale,
+                shopContainer.lossyScale);
         }
+
+        private static Vector3 CalculateShopItemLocalScale(
+            Vector3 backpackWorldScale,
+            Vector3 shopContainerWorldScale) =>
+            new(
+                DivideScale(
+                    backpackWorldScale.x,
+                    shopContainerWorldScale.x),
+                DivideScale(
+                    backpackWorldScale.y,
+                    shopContainerWorldScale.y),
+                1f);
+
+        private static float GetScaledShopItemWidth(
+            float itemWidth,
+            Vector3 itemScale) =>
+            itemWidth * Mathf.Abs(itemScale.x);
 
         private void InitializeShopContainer()
         {
@@ -1653,8 +1659,10 @@ namespace BackpackPrototype
                 }
             }
 
-            Vector3 itemScale = shopItemLocalScale;
-            float scaledWidth = widestItem;
+            Vector3 itemScale = GetShopItemScale();
+            float scaledWidth = GetScaledShopItemWidth(
+                widestItem,
+                itemScale);
             bool compactLayout =
                 shopItems.Count <= CompactShopItemCount;
             float gap = shopItems.Count > 1

@@ -209,6 +209,12 @@ public sealed class PlayerBackpackSystemTests
         Assert.That(
             hideFeedbacks.FeedbacksList.Count,
             Is.GreaterThanOrEqualTo(3));
+        Assert.That(
+            HasPersistentCompletionCall(
+                showFeedbacks,
+                phaseMotion,
+                "HandleShowCompleted"),
+            Is.True);
 
         SerializedObject serialized =
             new SerializedObject(system);
@@ -337,6 +343,96 @@ public sealed class PlayerBackpackSystemTests
         }
 
         Assert.That(shopSlotCount, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void ShopItemScale_RecomputesFromCurrentParentScales()
+    {
+        GameObject backpackRoot = new GameObject(
+            "Backpack Scale Root", typeof(RectTransform));
+        GameObject itemLayer = new GameObject(
+            "Item Layer", typeof(RectTransform));
+        GameObject shopRoot = new GameObject(
+            "Shop Root", typeof(RectTransform));
+        GameObject shopContainer = new GameObject(
+            "Shop Container", typeof(RectTransform));
+
+        try
+        {
+            itemLayer.transform.SetParent(backpackRoot.transform, false);
+            shopContainer.transform.SetParent(shopRoot.transform, false);
+            backpackRoot.transform.localScale = Vector3.one * .5f;
+            shopRoot.transform.localScale = Vector3.one;
+
+            MethodInfo calculator = typeof(PlayerBackpackSystem)
+                .GetMethod(
+                    "CalculateShopItemLocalScale",
+                    BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.That(calculator, Is.Not.Null);
+
+            Vector3 initialScale = (Vector3)calculator.Invoke(
+                null,
+                new object[]
+                {
+                    itemLayer.transform.lossyScale,
+                    shopContainer.transform.lossyScale,
+                });
+            Assert.That(
+                initialScale,
+                Is.EqualTo(new Vector3(.5f, .5f, 1f)));
+
+            backpackRoot.transform.localScale = Vector3.one * 1.5f;
+            shopRoot.transform.localScale = Vector3.one * .75f;
+            Vector3 refreshedScale = (Vector3)calculator.Invoke(
+                null,
+                new object[]
+                {
+                    itemLayer.transform.lossyScale,
+                    shopContainer.transform.lossyScale,
+                });
+
+            Assert.That(
+                refreshedScale,
+                Is.EqualTo(new Vector3(2f, 2f, 1f)));
+            Assert.That(
+                refreshedScale.x * shopContainer.transform.lossyScale.x,
+                Is.EqualTo(itemLayer.transform.lossyScale.x)
+                    .Within(.001f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(backpackRoot);
+            Object.DestroyImmediate(shopRoot);
+        }
+    }
+
+    [Test]
+    public void ShopLayout_UsesScaledWidthsForEveryItemShape()
+    {
+        MethodInfo scaledWidth = typeof(PlayerBackpackSystem)
+            .GetMethod(
+                "GetScaledShopItemWidth",
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+        Assert.That(scaledWidth, Is.Not.Null);
+
+        Vector3 scale = Vector3.one * 1.5f;
+        Assert.That(
+            (float)scaledWidth.Invoke(null, new object[] { 100f, scale }),
+            Is.EqualTo(150f));
+        Assert.That(
+            (float)scaledWidth.Invoke(null, new object[] { 100f, scale }),
+            Is.EqualTo(150f),
+            "1×2 items retain their one-cell width before scaling.");
+        Assert.That(
+            (float)scaledWidth.Invoke(null, new object[] { 200f, scale }),
+            Is.EqualTo(300f),
+            "2×1 items use their scaled two-cell width.");
+        Assert.That(
+            (float)scaledWidth.Invoke(null, new object[] { 200f, scale }),
+            Is.EqualTo(300f),
+            "L-shaped items use their scaled two-cell bounding width.");
     }
 
     [Test]
@@ -693,6 +789,34 @@ public sealed class PlayerBackpackSystemTests
                 BindingFlags.Instance |
                 BindingFlags.NonPublic)
             ?.Invoke(target, null);
+    }
+
+    private static bool HasPersistentCompletionCall(
+        MMF_Player feedbacks,
+        Object target,
+        string methodName)
+    {
+        SerializedProperty calls = new SerializedObject(feedbacks)
+            .FindProperty(
+                "Events.OnComplete.m_PersistentCalls.m_Calls");
+        if (calls == null)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < calls.arraySize; index++)
+        {
+            SerializedProperty call = calls.GetArrayElementAtIndex(index);
+            if (call.FindPropertyRelative("m_Target")
+                    .objectReferenceValue == target &&
+                call.FindPropertyRelative("m_MethodName")
+                    .stringValue == methodName)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void ResetBattleFlowStatics()

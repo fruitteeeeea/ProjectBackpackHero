@@ -17,7 +17,7 @@ MonoBehaviour:
   squareStyle2: {fileID: 21300000, guid: 07f01caa80c1b47fdad384d9c52b4557, type: 3}
   verticalBarStyle2: {fileID: 6110307778057590723, guid: 91bf72ac70e66e646829d00fec3e6f75, type: 3}
   horizontalBarStyle2: {fileID: 3836832779635166192, guid: c8519ffd6c94e2d479d4db66bd83893a, type: 3}
-  lMissingBottomLeftStyle2: {fileID: 6236314246489749437, guid: 6ea809d43c095bc448de4df31653c29d, type: 3}
+  lMissingBottomLeftStyle2: {fileID: 21300000, guid: 6ea809d43c095bc448de4df31653c29d, type: 3}
   lMissingBottomRightStyle2: {fileID: 1578180853955948841, guid: b16065707e788e64288cc27b84947771, type: 3}
   lMissingTopLeftStyle2: {fileID: 6836789010210245398, guid: 9d2c2a8f8c50bd6498cea28041b698cb, type: 3}
   lMissingTopRightStyle2: {fileID: -8563498419752950959, guid: 3c7ecfd15ef81554c917e9c1e5114ae8, type: 3}

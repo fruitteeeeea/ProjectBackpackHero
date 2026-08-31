@@ -30,4 +30,18 @@ public sealed class HangarItemSnapshotTests
         Assert.That(visible.AdditionalValue, Is.EqualTo("+0.2s"));
         Assert.That(visible.Visible, Is.True);
     }
+
+    [Test]
+    public void Snapshot_PreservesTheEnglishRankUnlockPresentation()
+    {
+        var snapshot = new HangarItemSnapshot(
+            HangarItemKind.Aircraft, "Exploder", "", null, null, false,
+            1, 0, 2, 0, 2f, 1, null, Color.white,
+            "Unlocked at Rank 2", itemId: "aircraft_explosive",
+            unlockRank: 2);
+
+        Assert.That(snapshot.UnlockRequirementText,
+            Is.EqualTo("Unlocked at Rank 2"));
+        Assert.That(snapshot.UnlockRank, Is.EqualTo(2));
+    }
 }

@@ -7,13 +7,15 @@ namespace BackpackHero.Battle
     [Serializable]
     public struct EnemyStrengthMultipliers
     {
+        public const float MinimumTuningMultiplier = .95f;
+        public const float MaximumTuningMultiplier = 1.05f;
         [SerializeField, Min(0.01f)] private float health;
         [SerializeField, Min(0.01f)] private float damage;
 
         public EnemyStrengthMultipliers(float healthMultiplier, float damageMultiplier)
         {
-            health = Mathf.Max(0.01f, healthMultiplier);
-            damage = Mathf.Max(0.01f, damageMultiplier);
+            health = Mathf.Clamp(healthMultiplier, MinimumTuningMultiplier, MaximumTuningMultiplier);
+            damage = Mathf.Clamp(damageMultiplier, MinimumTuningMultiplier, MaximumTuningMultiplier);
         }
 
         public float Health => health;
@@ -50,7 +52,8 @@ namespace BackpackHero.Battle
         {
             EnsureStageArray();
             int levelIndex = Mathf.Clamp(level, 1, LevelCount) - 1;
-            return enemyStages[levelIndex * StageCount + GetStageIndex(round)];
+            EnemyStrengthMultipliers configured = enemyStages[levelIndex * StageCount + GetStageIndex(round)];
+            return new EnemyStrengthMultipliers(configured.Health, configured.Damage);
         }
 
         public void SetPlayerMultipliers(float healthMultiplier, float damageMultiplier)
@@ -90,6 +93,7 @@ namespace BackpackHero.Battle
             backpackRoundHealthMultipliers =
                 (float[])source.backpackRoundHealthMultipliers.Clone();
             enemyStages = (EnemyStrengthMultipliers[])source.enemyStages.Clone();
+            ClampEnemyStageArray();
         }
 
         /// <summary>Copies the immutable table baseline into this mutable Play Mode container.</summary>
@@ -106,6 +110,7 @@ namespace BackpackHero.Battle
                 : CreateDefaultStages();
             EnsureBackpackRoundMultiplierArray();
             EnsureStageArray();
+            ClampEnemyStageArray();
         }
 
         public bool ContentEquals(LevelDifficultySettings other)
@@ -145,6 +150,15 @@ namespace BackpackHero.Battle
             if (enemyStages != null)
                 Array.Copy(enemyStages, defaults, Mathf.Min(enemyStages.Length, defaults.Length));
             enemyStages = defaults;
+        }
+
+        private void ClampEnemyStageArray()
+        {
+            for (int index = 0; index < enemyStages.Length; index++)
+            {
+                EnemyStrengthMultipliers value = enemyStages[index];
+                enemyStages[index] = new EnemyStrengthMultipliers(value.Health, value.Damage);
+            }
         }
 
         private void EnsureBackpackRoundMultiplierArray()
@@ -202,6 +216,7 @@ namespace BackpackHero.Battle
             playerAircraftDamageMultiplier = Mathf.Max(.01f, playerAircraftDamageMultiplier);
             EnsureBackpackRoundMultiplierArray();
             EnsureStageArray();
+            ClampEnemyStageArray();
         }
 #endif
     }

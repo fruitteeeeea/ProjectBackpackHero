@@ -6,15 +6,22 @@ using UnityEngine;
 namespace BackpackPrototype
 {
     [Serializable] public sealed class PlayerItemState { public string ItemId; public bool Unlocked; public int Level; public int FragmentCount; }
-    [Serializable] public sealed class PlayerItemSaveData { public int Gold = 999; public int Diamond = 999; public int CurrencyDefaultsVersion; public int ProgressionVersion; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
+    [Serializable] public sealed class PlayerItemSaveData { public int Gold = 100; public int Diamond; public int CurrencyDefaultsVersion; public int ProgressionVersion; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
     public enum PlayerItemUpgradeResult { Success, NotFound, Locked, MaxLevel, GoldNotEnough, FragmentsNotEnough }
     public enum PlayerDeckResult { Success, InvalidSlot, InvalidItem, Locked, WrongType, Duplicate, Empty }
 
     public sealed class PlayerItemSystem : MonoBehaviour
     {
         public const string SaveKey = "PlayerItemModel";
-        private const int CurrencyDefaultsVersion = 1;
-        private const int CurrentProgressionVersion = 1;
+        private const int CurrencyDefaultsVersion = 2;
+        private const int CurrentProgressionVersion = 2;
+        private const int InitialGold = 100;
+        private const int InitialDiamond = 0;
+        private static readonly string[] InitialItemIds =
+        {
+            "aircraft_charge", "aircraft_first", "aircraft_shield",
+            "equipment_1x2", "equipment_arc_coil"
+        };
         // Kept separate from ItemInstance.MaximumLevel: this is persistent,
         // out-of-match progression, while ItemInstance owns the current-run level.
         public const int DefaultLevel = 1;
@@ -153,7 +160,7 @@ namespace BackpackPrototype
             SaveAndNotify();
         }
 
-        /// <summary>Debug helper: restores the project's default fully unlocked, max-level collection.</summary>
+        /// <summary>Debug helper: restores a fully unlocked, max-level collection.</summary>
         public void RestoreDefaultProgression()
         {
             if (data == null) return;
@@ -185,45 +192,54 @@ namespace BackpackPrototype
         private void Load()
         {
             data = string.IsNullOrEmpty(PlayerPrefs.GetString(SaveKey)) ? new PlayerItemSaveData() : JsonUtility.FromJson<PlayerItemSaveData>(PlayerPrefs.GetString(SaveKey)) ?? new PlayerItemSaveData();
-            if (data.CurrencyDefaultsVersion < CurrencyDefaultsVersion)
-            {
-                // Versions before this field was introduced used 0/0 as the implicit first-run
-                // balance. Migrate that uninitialized state once, while preserving any real
-                // non-zero balance and every later spend-down to zero.
-                if (data.Gold == 0 && data.Diamond == 0)
-                {
-                    data.Gold = 999;
-                    data.Diamond = 999;
-                }
-                data.CurrencyDefaultsVersion = CurrencyDefaultsVersion;
-            }
             data.Items ??= new List<PlayerItemState>();
             string catalogError = null;
             if (catalog != null && catalog.IsValid(out catalogError))
             {
-                bool migrateToLevelTen = data.ProgressionVersion < CurrentProgressionVersion;
-                foreach (ItemData item in catalog.Items)
+                if (data.ProgressionVersion < CurrentProgressionVersion)
                 {
-                    PlayerItemState state = GetState(item);
-                    if (state == null)
+                    // Pre-release saves were deliberately created with every card at Lv10.
+                    // Move them to the real release starting collection exactly once.
+                    ApplyFormalInitialCollection();
+                }
+                else
+                {
+                    foreach (ItemData item in catalog.Items)
                     {
-                        data.Items.Add(new PlayerItemState { ItemId = item.ItemId, Unlocked = true, Level = MaximumLevel, FragmentCount = 0 });
-                    }
-                    else if (migrateToLevelTen)
-                    {
-                        state.Unlocked = true;
-                        state.Level = MaximumLevel;
-                    }
-                    else
-                    {
-                        state.Level = Mathf.Clamp(state.Level, DefaultLevel, MaximumLevel);
+                        PlayerItemState state = GetState(item);
+                        if (state == null)
+                        {
+                            data.Items.Add(new PlayerItemState { ItemId = item.ItemId, Unlocked = false, Level = DefaultLevel, FragmentCount = 0 });
+                        }
+                        else state.Level = Mathf.Clamp(state.Level, DefaultLevel, MaximumLevel);
                     }
                 }
-                if (migrateToLevelTen) data.ProgressionVersion = CurrentProgressionVersion;
             }
             else if (catalog != null) Debug.LogError(catalogError, catalog);
             EnsureDeck();
             Save();
+        }
+
+        private void ApplyFormalInitialCollection()
+        {
+            data.Items.Clear();
+            var initialIds = new HashSet<string>(InitialItemIds);
+            foreach (ItemData item in catalog.Items)
+            {
+                if (item == null) continue;
+                data.Items.Add(new PlayerItemState
+                {
+                    ItemId = item.ItemId,
+                    Unlocked = initialIds.Contains(item.ItemId),
+                    Level = DefaultLevel,
+                    FragmentCount = 0
+                });
+            }
+            data.DeckItemIds = null;
+            data.Gold = InitialGold;
+            data.Diamond = InitialDiamond;
+            data.CurrencyDefaultsVersion = CurrencyDefaultsVersion;
+            data.ProgressionVersion = CurrentProgressionVersion;
         }
         private void EnsureDeck()
         {

@@ -23,14 +23,17 @@ namespace BackpackHero.Battle
         public int TotalScore { get; }
         public int ScoreDelta { get; }
         public IReadOnlyList<BattleResultReward> Rewards { get; }
+        public string AdvisoryText { get; }
 
         public BattleResultData(bool isVictory, int totalScore, int scoreDelta,
-            IReadOnlyList<BattleResultReward> rewards = null)
+            IReadOnlyList<BattleResultReward> rewards = null,
+            string advisoryText = null)
         {
             IsVictory = isVictory;
             TotalScore = totalScore;
             ScoreDelta = scoreDelta;
             Rewards = rewards;
+            AdvisoryText = advisoryText;
         }
 
         public static BattleResultData CreateDefault(bool isVictory, int totalScore = 0)

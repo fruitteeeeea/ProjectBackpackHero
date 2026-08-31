@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BackpackHero.Battle;
 using BackpackHero.Debugging;
+using BackpackHero.Progression;
 using PlanetWar.ReusableMainMenu;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -100,13 +101,18 @@ namespace BackpackPrototype
         private HangarItemSnapshot BuildSnapshot(ItemData item)
         {
             int level = system.GetLevel(item);
+            int unlockRank = RankProgressionSystem.Instance?
+                .GetUnlockRankForItem(item.ItemId) ?? 1;
+            string unlockText = unlockRank <= 1
+                ? "Available from the start"
+                : $"Unlocked at Rank {unlockRank}";
             return new HangarItemSnapshot(
                 item.ItemType == ItemType.Aircraft ? HangarItemKind.Aircraft : HangarItemKind.Equipment,
                 item.ItemName, item.Description, item.Icon, item.Icon, system.IsUnlocked(item), level,
                 system.GetFragments(item), system.GetUpgradeFragmentCost(item), 0,
                 item.CooldownDuration, item.SpawnCount, null, item.BackgroundColor,
-                item.UnlockRequirementText, BuildDetailAttributes(item, level), item.ItemId,
-                PlayerItemSystem.MaximumLevel);
+                unlockText, BuildDetailAttributes(item, level), item.ItemId,
+                PlayerItemSystem.MaximumLevel, unlockRank);
         }
 
         private static HangarDetailAttribute[] BuildDetailAttributes(ItemData item, int level)

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using BackpackHero.Battle;
+using BackpackHero.Progression;
 using UnityEngine;
 
 namespace BackpackPrototype
@@ -60,6 +61,8 @@ namespace BackpackPrototype
         private EnemyBackpackData currentData;
         private DeckPreset currentDeckPreset;
         private DeckPreset runtimeDeckPreset;
+        private EnemyMatchProfile matchProfile;
+        private bool hasMatchProfile;
         private int defaultProgressionLevel =
             PlayerItemSystem.DefaultLevel;
         private int activeProgressionLevel =
@@ -110,6 +113,8 @@ namespace BackpackPrototype
         public int ActiveProgressionLevel => activeProgressionLevel;
         public bool HasProgressionLevelOverride =>
             hasProgressionLevelOverride;
+        public bool HasMatchProfile => hasMatchProfile;
+        public EnemyMatchProfile MatchProfile => matchProfile;
 
         private void Awake()
         {
@@ -128,8 +133,11 @@ namespace BackpackPrototype
             if (!isReady) return;
             if (!hasInitialized)
             {
-                ResetProgressionLevelForNewMatch();
-                SelectRandomPreset();
+                if (!ApplyRankMatchProfile())
+                {
+                    ResetProgressionLevelForNewMatch();
+                    SelectRandomPreset();
+                }
                 hasInitialized = true;
             }
             RequestInitialLayoutForNewMatch();
@@ -172,6 +180,25 @@ namespace BackpackPrototype
             return ApplyLayoutInternal(layout, null);
         }
         public bool ApplyDeckPreset(DeckPreset preset) => SetCurrentDeckPreset(preset) && RandomizeInitialPlacement();
+        /// <summary>Applies the score-resolved enemy deck and out-of-match card level for this match.</summary>
+        public bool ApplyMatchProfile(EnemyMatchProfile profile)
+        {
+            if (profile.DeckPreset == null || !profile.DeckPreset.IsValid(out _))
+            {
+                return false;
+            }
+
+            currentDeckPreset = profile.DeckPreset;
+            currentData = null;
+            matchProfile = profile;
+            hasMatchProfile = true;
+            defaultProgressionLevel = Mathf.Clamp(profile.ProgressionLevel,
+                PlayerItemSystem.DefaultLevel, PlayerItemSystem.MaximumLevel - 1);
+            activeProgressionLevel = defaultProgressionLevel;
+            hasProgressionLevelOverride = false;
+            ResetPreparationState();
+            return true;
+        }
         public bool CanApplyRuntimeDeck(IReadOnlyList<ItemData> deck)
         {
             return isReady &&
@@ -1220,8 +1247,16 @@ namespace BackpackPrototype
 
         private void HandleMatchInitialized()
         {
+            ApplyRankMatchProfile();
             RequestInitialLayoutForNewMatch();
             InitializePreparationForNewMatch();
+        }
+
+        private bool ApplyRankMatchProfile()
+        {
+            RankProgressionSystem progression = RankProgressionSystem.Instance;
+            return progression != null && progression.TryResolveEnemyMatchProfile(
+                out EnemyMatchProfile profile) && ApplyMatchProfile(profile);
         }
 
         /// <summary>

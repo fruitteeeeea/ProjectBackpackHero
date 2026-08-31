@@ -11,6 +11,12 @@ namespace PlanetWar.ReusableMainMenu
     /// </summary>
     public sealed class HangarCardItem : MonoBehaviour
     {
+        private static readonly Color UnlockedNameColor =
+            new(88f / 255f, 97f / 255f, 148f / 255f, 1f);
+        private static readonly Color LockedNameColor =
+            new(118f / 255f, 118f / 255f, 118f / 255f, 1f);
+        private static readonly Color LockedIconTint =
+            new(.46f, .46f, .46f, 1f);
         public enum CardKind { Entity, Spell }
 
         [SerializeField] private HangarView hangar;
@@ -58,7 +64,7 @@ namespace PlanetWar.ReusableMainMenu
             Configure(owner,
                 snapshot.Kind == HangarItemKind.Equipment ? CardKind.Spell : CardKind.Entity,
                 0, snapshot.Name, snapshot.Description, snapshot.Icon, snapshot.LockedIcon,
-                snapshot.Unlocked, deckSlot >= 0, 0, snapshot.Level);
+                snapshot.Unlocked, deckSlot >= 0, snapshot.UnlockRank, snapshot.Level);
         }
 
         public void Configure(HangarView owner, CardKind kind, int id, string displayName,
@@ -173,8 +179,8 @@ namespace PlanetWar.ReusableMainMenu
         {
             var normal = Find(transform, "icon")?.GetComponent<Image>();
             var grey = Find(transform, "icon (1)")?.GetComponent<Image>();
-            if (normal != null) { normal.sprite = icon; normal.gameObject.SetActive(!IsEmptyDeckSlot); }
-            if (grey != null) { grey.sprite = lockedIcon != null ? lockedIcon : icon; grey.gameObject.SetActive(!unlocked); }
+            if (normal != null) { normal.sprite = icon; normal.color = Color.white; normal.gameObject.SetActive(!IsEmptyDeckSlot); }
+            if (grey != null) { grey.sprite = lockedIcon != null ? lockedIcon : icon; grey.color = !unlocked ? LockedIconTint : Color.white; grey.gameObject.SetActive(!unlocked); }
             Image background = FindCardBackground();
             if (background != null)
             {
@@ -194,10 +200,21 @@ namespace PlanetWar.ReusableMainMenu
             // Original ItemCardEquip nests both the grey icon and its background under "Lock".
             // "Lockbg" is only one child, so it cannot be toggled on its own.
             var lockRoot = Find(transform, "Lock");
-            if (lockRoot != null) lockRoot.gameObject.SetActive(!unlocked && !IsEmptyDeckSlot);
+            if (lockRoot != null)
+            {
+                lockRoot.gameObject.SetActive(!unlocked && !IsEmptyDeckSlot);
+                ImageLoader lockLoader = lockRoot.GetComponent<ImageLoader>();
+                if (lockLoader != null)
+                    lockLoader.Select(cardKind == CardKind.Entity ? 0 : 1);
+            }
             var lockBackground = Find(transform, "Lockbg");
             if (lockBackground != null) lockBackground.gameObject.SetActive(!unlocked && !IsEmptyDeckSlot);
             SetText("name", cardName);
+            Transform nameRoot = Find(transform, "name");
+            TMP_Text nameText = nameRoot != null
+                ? nameRoot.GetComponentInChildren<TMP_Text>(true) : null;
+            if (nameText != null)
+                nameText.color = !unlocked ? LockedNameColor : UnlockedNameColor;
             // Original ItemCard uses two separate left-top labels: "lv" is the authored
             // prefix ("Lv"), while "level" is ItemCard.textLevel and receives the number.
             // These references are the direct equivalents of the original ItemCard's authored

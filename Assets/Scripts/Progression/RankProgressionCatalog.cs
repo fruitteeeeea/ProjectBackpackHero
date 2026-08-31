@@ -32,7 +32,7 @@ namespace BackpackHero.Progression
     public sealed class RankProgressionCatalog : ScriptableObject
     {
         [SerializeField] private RankNodeDefinition[] nodes;
-        [SerializeField] private int victoryScore = 30;
+        [SerializeField] private int victoryScore = 100;
         [SerializeField] private int victoryGold = 50;
         [SerializeField] private int victoryDiamondMin = 1;
         [SerializeField] private int victoryDiamondMaxExclusive = 3;
@@ -83,26 +83,26 @@ namespace BackpackHero.Progression
         private static RankNodeDefinition[] BuildPlanetWarNodes()
         {
             var entries = new List<RankNodeDefinition>();
-            Add(entries, 1001, 1, 50, 0, 0, "Glow Belt", new[] { "aircraft_first", "equipment_1x2" });
+            Add(entries, 1001, 1, 50, 0, 0, "Glow Belt");
             Add(entries, 1002, 1, 120, 1, 0, null, rewards: R(G(100)));
-            Add(entries, 1003, 2, 200, 0, 5, "Pale Cluster", new[] { "aircraft_charge", "equipment_arc_coil" });
+            Add(entries, 1003, 2, 200, 0, 0, "Pale Cluster", new[] { "aircraft_explosive", "equipment_rapid_cannon" });
             Add(entries, 1004, 2, 400, 1, 0, null, rewards: R(P(PackId.Green, 5)));
             Add(entries, 1005, 2, 650, 1, 0, null, rewards: R(G(200)));
-            Add(entries, 1006, 3, 1000, 0, 10, "Swift Zone", new[] { "aircraft_shield", "equipment_1x2" });
+            Add(entries, 1006, 3, 1000, 0, 0, "Swift Zone", new[] { "aircraft_sniper", "equipment_wave_emitter" });
             Add(entries, 1007, 3, 1500, 1, 0, null, rewards: R(G(100), P(PackId.Green, 5)));
             Add(entries, 1008, 3, 2000, 1, 0, null, rewards: R(G(150), P(PackId.Green, 5)));
             Add(entries, 1009, 3, 2500, 1, 0, null, rewards: R(G(200), P(PackId.Green, 5)));
             Add(entries, 1010, 3, 3000, 1, 0, null, rewards: R(G(300), P(PackId.Gold, 20)));
-            Add(entries, 1011, 4, 3600, 0, 20, "Deep Outpost", new[] { "aircraft_first", "equipment_arc_coil" });
+            Add(entries, 1011, 4, 3600, 0, 0, "Deep Outpost", new[] { "aircraft_laser", "equipment_laser_link" });
             Add(entries, 1012, 4, 4500, 1, 0, null, rewards: R(G(100), P(PackId.Green, 5), P(PackId.Blue, 1)));
             Add(entries, 1013, 4, 5000, 1, 0, null, rewards: R(G(150), P(PackId.Green, 5), P(PackId.Blue, 1)));
             Add(entries, 1014, 4, 5500, 1, 0, null, rewards: R(G(200), P(PackId.Green, 5), P(PackId.Blue, 1)));
             Add(entries, 1015, 4, 6000, 1, 0, null, rewards: R(G(300), P(PackId.Green, 5), P(PackId.Blue, 1)));
             Add(entries, 1016, 4, 6500, 1, 0, null, rewards: R(G(300), P(PackId.Green, 8), P(PackId.Blue, 1)));
-            Add(entries, 1017, 5, 7000, 0, 20, "Hunt Thicket", new[] { "aircraft_charge", "equipment_1x2" });
+            Add(entries, 1017, 5, 7000, 0, 0, "Hunt Thicket", new[] { "aircraft_shotgun", "equipment_first" });
             int[] fifth = { 8000, 9000, 10000, 12000, 14000, 16000 }; int[] sixth = { 20000, 22000, 24000, 26000, 28000, 30000 }; int[] seventh = { 34000, 36000, 38000, 40000, 42000, 44000 };
-            AddMilestones(entries, 1018, 5, fifth); Add(entries, 1024, 6, 18000, 0, 20, "Dome Nebula", new[] { "aircraft_shield" });
-            AddMilestones(entries, 1025, 6, sixth); Add(entries, 1031, 7, 32000, 0, 20, "Raid Nest", new[] { "aircraft_first" });
+            AddMilestones(entries, 1018, 5, fifth); Add(entries, 1024, 6, 18000, 0, 0, "Dome Nebula", new[] { "aircraft_l" });
+            AddMilestones(entries, 1025, 6, sixth); Add(entries, 1031, 7, 32000, 0, 0, "Raid Nest");
             AddMilestones(entries, 1032, 7, seventh); Add(entries, 1038, 8, 50000, 0, 20, "Conqueror Realm", Array.Empty<string>());
             return entries.ToArray();
         }

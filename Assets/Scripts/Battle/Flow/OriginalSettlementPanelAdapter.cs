@@ -49,7 +49,12 @@ namespace BackpackHero.Battle
             bool victory = data.IsVictory;
             if (titleBackground != null)
                 titleBackground.sprite = victory ? victorySprite : defeatSprite;
-            if (titleText != null) titleText.text = victory ? "Victory" : "Defeat";
+            if (titleText != null)
+            {
+                titleText.text = victory ? "Victory" : "Defeat";
+                if (!string.IsNullOrEmpty(data.AdvisoryText))
+                    titleText.text += $"\n{data.AdvisoryText}";
+            }
             if (scoreText != null) scoreText.text = data.TotalScore.ToString();
             if (deltaText != null)
             {

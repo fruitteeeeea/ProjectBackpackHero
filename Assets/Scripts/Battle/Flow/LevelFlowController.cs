@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq;
 using BackpackHero.Audio;
 using BackpackPrototype;
 using BackpackHero.Progression;
@@ -494,11 +495,36 @@ namespace BackpackHero.Battle
                     FindObjectsInactive.Include);
             RankSettlement settlement = RankProgressionSystem.Instance
                 .SettleMatch(playerWonMatch);
+            string advisory = BuildDefeatAdvisory(settlement);
             presenter?.Show(new BattleResultData(
                 settlement.Victory,
                 settlement.ScoreBefore,
                 settlement.ScoreDelta,
-                settlement.Rewards));
+                settlement.Rewards,
+                advisory));
+        }
+
+        private static string BuildDefeatAdvisory(RankSettlement settlement)
+        {
+            if (settlement.Victory) return null;
+            EnemyBackpackSystem enemy = FindAnyObjectByType<EnemyBackpackSystem>(
+                FindObjectsInactive.Include);
+            string enemyText = null;
+            if (enemy != null && enemy.HasMatchProfile)
+            {
+                EnemyMatchProfile profile = enemy.MatchProfile;
+                string deck = string.Join(" / ", profile.DeckPreset.Slots
+                    .Where(item => item != null).Select(item => item.Name));
+                enemyText = $"敌方：段位 {profile.Rank} · 阶段 {profile.RawStage} · 养成 Lv{profile.ProgressionLevel}\n卡组：{deck}";
+            }
+            string upgradeText = !string.IsNullOrEmpty(settlement.RecommendedItemName)
+                ? $"推荐升级：{settlement.RecommendedItemName}（还差 {settlement.RecommendedFragmentsNeeded} 碎片）"
+                : null;
+            string protectionText = settlement.DowngradeUnlocked
+                ? "下局敌人将降低一个小阶段。"
+                : null;
+            return string.Join("\n", new[] { enemyText, upgradeText, protectionText }
+                .Where(text => !string.IsNullOrEmpty(text)));
         }
 
         private void ResetBackpackHealth()

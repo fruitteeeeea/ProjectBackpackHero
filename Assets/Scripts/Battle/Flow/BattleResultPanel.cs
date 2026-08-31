@@ -17,6 +17,7 @@ namespace BackpackHero.Battle
         [SerializeField] private TextMeshProUGUI titleLabel;
         [SerializeField] private TextMeshProUGUI totalScoreLabel;
         [SerializeField] private TextMeshProUGUI scoreDeltaLabel;
+        [SerializeField] private TextMeshProUGUI advisoryLabel;
         [SerializeField] private Transform rewardsRoot;
         [SerializeField] private List<TextMeshProUGUI> rewardLabels = new();
         [SerializeField] private GameObject victoryConfetti;
@@ -48,14 +49,20 @@ namespace BackpackHero.Battle
         {
             data ??= BattleResultData.CreateDefault(true);
             bool victory = data.IsVictory;
-            int delta = data.ScoreDelta != 0 ? data.ScoreDelta :
-                (victory ? defaultVictoryDelta : defaultDefeatDelta);
+            int delta = data.ScoreDelta;
             int total = data.TotalScore != 0 ? data.TotalScore : defaultTotalScore;
 
             if (titleBackground != null)
                 titleBackground.sprite = victory ? victoryTitleSprite : defeatTitleSprite;
             if (titleLabel != null)
                 titleLabel.text = victory ? "Victory" : "Defeat";
+            if (advisoryLabel != null)
+            {
+                advisoryLabel.text = data.AdvisoryText ?? string.Empty;
+                advisoryLabel.gameObject.SetActive(!string.IsNullOrEmpty(data.AdvisoryText));
+            }
+            else if (!string.IsNullOrEmpty(data.AdvisoryText) && titleLabel != null)
+                titleLabel.text += $"\n{data.AdvisoryText}";
             if (totalScoreLabel != null)
                 totalScoreLabel.text = total.ToString();
             if (scoreDeltaLabel != null)

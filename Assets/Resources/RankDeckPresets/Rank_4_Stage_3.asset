@@ -1,0 +1,14 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc3567a0b5e448f9ec9410037045512, type: 3}
+  m_Name: Rank_4_Stage_3
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.DeckPreset
+  slots:
+  - {fileID: 11400000, guid: 6f2d43cf12b3465aa4404aef06c4f984, type: 2}
+  - {fileID: 11400000, guid: ee27c5917c4254171a17b0f020f2332c, type: 2}
+  - {fileID: 11400000, guid: 3c987ce4efc394e37a25e866476260a1, type: 2}
+  - {fileID: 11400000, guid: 4e2977e6d8b94cfa9f5ac4e84cc61c12, type: 2}
+  - {fileID: 11400000, guid: 8f6a5b4c1d9e4fa0b3c2456789abcdef, type: 2}

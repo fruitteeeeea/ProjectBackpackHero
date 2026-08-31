@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4e30d42b9fa4e9fb8ad4cb860b703d1, type: 3}
   m_Name: FunctionBlock
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.FunctionBlockSettings
-  blockMilestone: 1
-  blockPack: 1
+  blockMilestone: 0
+  blockPack: 0

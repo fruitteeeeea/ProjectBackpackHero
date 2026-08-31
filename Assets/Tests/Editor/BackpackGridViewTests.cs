@@ -11,6 +11,8 @@ public sealed class BackpackGridViewTests
     private GameObject gridObject;
     private RectTransform gridRect;
     private BackpackGridView gridView;
+    private readonly List<GameObject> slotObjects = new();
+    private readonly List<Object> testAssets = new();
 
     [SetUp]
     public void SetUp()
@@ -23,17 +25,77 @@ public sealed class BackpackGridViewTests
         gridRect = gridObject.GetComponent<RectTransform>();
         gridRect.sizeDelta = new Vector2(GridWidth, GridHeight);
         gridView = gridObject.GetComponent<BackpackGridView>();
+        List<BackpackSlotView> slots = CreateSlots(3, 2);
         gridView.Initialize(
             gridRect,
             new Vector2(80f, 80f),
             new Vector2(8f, 8f),
-            new List<BackpackSlotView>());
+            slots);
     }
 
     [TearDown]
     public void TearDown()
     {
+        foreach (GameObject slotObject in slotObjects)
+        {
+            Object.DestroyImmediate(slotObject);
+        }
+
+        foreach (Object testAsset in testAssets)
+        {
+            Object.DestroyImmediate(testAsset);
+        }
+
         Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
+    public void RefreshSlotVisibility_HidesEveryCellOccupiedByMultiCellItem()
+    {
+        BackpackController backpack = new(3, 2);
+        ItemInstance item = NewItem(
+            "two-cell",
+            new[] { Vector2Int.zero, Vector2Int.right });
+        Assert.That(backpack.PlaceItem(item, new Vector2Int(1, 0)), Is.True);
+
+        gridView.RefreshSlotVisibility(backpack);
+
+        Assert.That(SlotImage(new Vector2Int(0, 0)).enabled, Is.True);
+        Assert.That(SlotImage(new Vector2Int(1, 0)).enabled, Is.False);
+        Assert.That(SlotImage(new Vector2Int(2, 0)).enabled, Is.False);
+        Assert.That(SlotImage(new Vector2Int(1, 1)).enabled, Is.True);
+    }
+
+    [Test]
+    public void RefreshSlotVisibility_TemporarilyExposesOnlyDraggedItemCells()
+    {
+        BackpackController backpack = new(3, 2);
+        ItemInstance draggedItem = NewItem("dragged", new[] { Vector2Int.zero });
+        ItemInstance otherItem = NewItem("other", new[] { Vector2Int.zero });
+        Assert.That(backpack.PlaceItem(draggedItem, new Vector2Int(0, 0)), Is.True);
+        Assert.That(backpack.PlaceItem(otherItem, new Vector2Int(2, 1)), Is.True);
+
+        gridView.RefreshSlotVisibility(backpack, draggedItem);
+
+        Assert.That(SlotImage(new Vector2Int(0, 0)).enabled, Is.True);
+        Assert.That(SlotImage(new Vector2Int(2, 1)).enabled, Is.False);
+    }
+
+    [Test]
+    public void ClearPlacementPreview_RestoresOccupiedSlotHiddenState()
+    {
+        BackpackController backpack = new(3, 2);
+        ItemInstance item = NewItem("occupied", new[] { Vector2Int.zero });
+        Assert.That(backpack.PlaceItem(item, new Vector2Int(1, 0)), Is.True);
+        gridView.RefreshSlotVisibility(backpack);
+
+        gridView.ShowPlacementPreview(backpack, item, new Vector2Int(1, 0), item);
+        Assert.That(SlotImage(new Vector2Int(1, 0)).enabled, Is.True);
+
+        gridView.ClearPlacementPreview();
+
+        Assert.That(SlotImage(new Vector2Int(1, 0)).enabled, Is.False);
+        Assert.That(SlotImage(new Vector2Int(0, 1)).enabled, Is.True);
     }
 
     [TestCase(40f, 40f, 0, 0)]
@@ -122,5 +184,58 @@ public sealed class BackpackGridViewTests
             screenPosition,
             null,
             out cell);
+    }
+
+    private List<BackpackSlotView> CreateSlots(int columns, int rows)
+    {
+        List<BackpackSlotView> slots = new();
+        for (int y = 0; y < rows; y++)
+        {
+            for (int x = 0; x < columns; x++)
+            {
+                GameObject slotObject = new(
+                    $"Slot ({x}, {y})",
+                    typeof(RectTransform),
+                    typeof(UnityEngine.UI.Image),
+                    typeof(BackpackSlotView));
+                slotObject.transform.SetParent(gridObject.transform, false);
+                BackpackSlotView slot =
+                    slotObject.GetComponent<BackpackSlotView>();
+                slot.Initialize(new Vector2Int(x, y));
+                slotObjects.Add(slotObject);
+                slots.Add(slot);
+            }
+        }
+
+        return slots;
+    }
+
+    private UnityEngine.UI.Image SlotImage(Vector2Int cell)
+    {
+        foreach (GameObject slotObject in slotObjects)
+        {
+            BackpackSlotView slot =
+                slotObject.GetComponent<BackpackSlotView>();
+            if (slot.Cell == cell)
+            {
+                return slotObject.GetComponent<UnityEngine.UI.Image>();
+            }
+        }
+
+        Assert.Fail($"No slot exists at {cell}.");
+        return null;
+    }
+
+    private ItemInstance NewItem(
+        string id,
+        IReadOnlyList<Vector2Int> offsets)
+    {
+        ItemShapeData shape = ScriptableObject.CreateInstance<ItemShapeData>();
+        testAssets.Add(shape);
+        shape.InitializeForTests("test-shape", null, offsets);
+        ItemData data = ScriptableObject.CreateInstance<ItemData>();
+        testAssets.Add(data);
+        data.InitializeForTests(id, ItemType.Equipment, 1f, shape);
+        return new ItemInstance(id, data, Vector2Int.zero);
     }
 }

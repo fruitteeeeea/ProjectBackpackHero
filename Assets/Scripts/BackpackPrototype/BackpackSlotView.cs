@@ -29,6 +29,8 @@ namespace BackpackPrototype
         private Color illegalPreviewColor =
             new Color(0.86f, 0.22f, 0.18f, 1f);
 
+        private bool occupied;
+
         public Vector2Int Cell => cell;
 
         private void Awake()
@@ -61,10 +63,21 @@ namespace BackpackPrototype
 
             BackpackVisualSettings settings =
                 BackpackVisualDebugRuntime.CurrentSettings;
+            background.enabled = true;
             background.color = settings.OverridesEnabled
                 ? (canPlace ? settings.LegalPreviewColor :
                     settings.IllegalPreviewColor)
                 : (canPlace ? legalPreviewColor : illegalPreviewColor);
+        }
+
+        /// <summary>
+        /// Controls whether a placed item covers this slot's background.
+        /// The slot remains active so its coordinate and input behavior are unchanged.
+        /// </summary>
+        public void SetOccupied(bool isOccupied)
+        {
+            occupied = isOccupied;
+            ClearPreview();
         }
 
         public void ClearPreview()
@@ -77,6 +90,7 @@ namespace BackpackPrototype
             }
 
             background.color = defaultColor;
+            background.enabled = !occupied;
         }
 
         private void CacheBackground()

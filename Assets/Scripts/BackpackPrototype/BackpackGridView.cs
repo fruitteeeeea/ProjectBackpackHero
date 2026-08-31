@@ -147,6 +147,28 @@ namespace BackpackPrototype
             }
         }
 
+        /// <summary>
+        /// Hides the visual background of every slot occupied by an item.
+        /// An optionally ignored item remains visible, which is used while the
+        /// player is dragging an already-placed item away from its old cells.
+        /// </summary>
+        public void RefreshSlotVisibility(
+            BackpackController backpack,
+            ItemInstance temporarilyExposedItem = null)
+        {
+            foreach (BackpackSlotView slot in slots)
+            {
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                ItemInstance occupant = backpack?.GetItemAt(slot.Cell);
+                slot.SetOccupied(
+                    occupant != null && occupant != temporarilyExposedItem);
+            }
+        }
+
         public Vector2 GetItemAnchoredPosition(Vector2Int anchorCell)
         {
             return new Vector2(

@@ -1282,7 +1282,17 @@ namespace BackpackPrototype
             if (Backpack == null) return;
             Backpack.ItemAdded += HandleItemAdded; Backpack.ItemMoved += HandleItemMoved; Backpack.ItemRemoved += HandleItemRemoved; Backpack.Cleared += HandleCleared;
         }
-        private void RebuildViews() { ClearViews(); foreach (ItemInstance item in Items) CreateView(item); }
+        private void RebuildViews()
+        {
+            ClearViews();
+            foreach (ItemInstance item in Items) CreateView(item);
+            RefreshSlotVisibility();
+        }
+
+        private void RefreshSlotVisibility()
+        {
+            gridView?.RefreshSlotVisibility(Backpack);
+        }
         private ItemView CreateView(ItemInstance item)
         {
             if (item == null || FindView(item) != null) return FindView(item);
@@ -1290,14 +1300,34 @@ namespace BackpackPrototype
             ItemView view = Instantiate(prefab, itemLayer, false); view.Bind(item, Backpack, gridView, itemLayer, null, null, gridView.CellSize, gridView.Spacing, combatController); view.SetBackpackPosition(item.AnchorCell); view.SetInteractionEnabled(false); itemViews.Add(view); return view;
         }
         private ItemView FindView(ItemInstance item) { foreach (ItemView view in itemViews) if (view != null && view.Instance == item) return view; return null; }
-        private void HandleItemAdded(ItemInstance item) { ApplyProgressionLevel(item); if (isApplyingData) return; ItemView view = CreateView(item); if (operationRunning) view?.AnimateSpawnInBackpack(); }
-        private void HandleItemMoved(ItemInstance item) { if (isApplyingData) return; ItemView view = FindView(item); if (operationRunning) view?.AnimateToBackpackPosition(item.AnchorCell); else view?.SetBackpackPosition(item.AnchorCell); }
+        private void HandleItemAdded(ItemInstance item)
+        {
+            ApplyProgressionLevel(item);
+            RefreshSlotVisibility();
+            if (isApplyingData) return;
+            ItemView view = CreateView(item);
+            if (operationRunning) view?.AnimateSpawnInBackpack();
+        }
+
+        private void HandleItemMoved(ItemInstance item)
+        {
+            RefreshSlotVisibility();
+            if (isApplyingData) return;
+            ItemView view = FindView(item);
+            if (operationRunning) view?.AnimateToBackpackPosition(item.AnchorCell);
+            else view?.SetBackpackPosition(item.AnchorCell);
+        }
         private void HandleItemRemoved(ItemInstance item)
         {
+            RefreshSlotVisibility();
             if (isApplyingData) return; ItemView view = FindView(item); if (view == null) return; itemViews.Remove(view);
             if (operationRunning) view.AnimateRemoval(() => DestroyView(view)); else DestroyView(view);
         }
-        private void HandleCleared() { if (!isApplyingData) ClearViews(); }
+        private void HandleCleared()
+        {
+            RefreshSlotVisibility();
+            if (!isApplyingData) ClearViews();
+        }
         private void ClearViews() { foreach (ItemView view in itemViews) DestroyView(view); itemViews.Clear(); }
         private static void DestroyView(ItemView view) { if (view == null) return; view.gameObject.SetActive(false); if (Application.isPlaying) Destroy(view.gameObject); else DestroyImmediate(view.gameObject); }
         private ItemView ResolveItemViewPrefab(ItemData data) => ItemViewPrefabSelector.Select(data, itemViewPrefab, itemView1x2Prefab, itemView2x1Prefab, itemViewLMissingBottomLeftPrefab, itemViewLMissingBottomRightPrefab, itemViewLMissingTopLeftPrefab, itemViewLMissingTopRightPrefab);

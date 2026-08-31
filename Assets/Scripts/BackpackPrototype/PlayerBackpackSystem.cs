@@ -1484,6 +1484,16 @@ namespace BackpackPrototype
             {
                 CreateBackpackView(item);
             }
+
+            RefreshSlotVisibility();
+        }
+
+        private void RefreshSlotVisibility(
+            ItemInstance temporarilyExposedItem = null)
+        {
+            gridView?.RefreshSlotVisibility(
+                Backpack,
+                temporarilyExposedItem);
         }
 
         private ItemView CreateBackpackView(
@@ -1823,6 +1833,10 @@ namespace BackpackPrototype
                 SetSelectedItem(null);
             }
 
+            RefreshSlotVisibility(
+                isDragging && source != null && source.IsPlacedInBackpack
+                    ? source.Instance
+                    : null);
             RefreshDragCellVisualization();
         }
 
@@ -1948,6 +1962,8 @@ namespace BackpackPrototype
         private void HandleModelItemAdded(
             ItemInstance item)
         {
+            RefreshSlotVisibility();
+
             if (isLoadingLayout)
             {
                 return;
@@ -1987,6 +2003,8 @@ namespace BackpackPrototype
         private void HandleModelItemMoved(
             ItemInstance item)
         {
+            RefreshSlotVisibility();
+
             if (isLoadingLayout)
             {
                 return;
@@ -2009,6 +2027,8 @@ namespace BackpackPrototype
         private void HandleModelItemRemoved(
             ItemInstance item)
         {
+            RefreshSlotVisibility();
+
             if (isLoadingLayout)
             {
                 return;

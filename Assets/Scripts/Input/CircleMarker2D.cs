@@ -4,11 +4,15 @@ namespace BackpackHero.Input
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(SpriteRenderer))]
     public sealed class CircleMarker2D : MonoBehaviour
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
+        [SerializeField] private Sprite markerSprite;
         [SerializeField] private Color color = Color.white;
         [SerializeField, Min(0.01f)] private float diameter = 1f;
+
+        private bool missingSpriteWarningLogged;
 
         public Color Color
         {
@@ -39,7 +43,16 @@ namespace BackpackHero.Input
         private void OnValidate()
         {
             diameter = Mathf.Max(0.01f, diameter);
-            EnsureSpriteRenderer();
+            if (spriteRenderer == null)
+            {
+                spriteRenderer = GetComponent<SpriteRenderer>();
+            }
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.sortingOrder = 1;
+            }
+
             RefreshVisual();
         }
 
@@ -57,7 +70,22 @@ namespace BackpackHero.Input
 
             if (spriteRenderer.sprite == null)
             {
-                spriteRenderer.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/Knob.psd");
+                spriteRenderer.sprite = markerSprite;
+            }
+
+            if (spriteRenderer.sprite == null)
+            {
+                if (!missingSpriteWarningLogged)
+                {
+                    Debug.LogWarning(
+                        "CircleMarker2D 未配置圆形 Sprite，标记将不可见。",
+                        this);
+                    missingSpriteWarningLogged = true;
+                }
+            }
+            else
+            {
+                missingSpriteWarningLogged = false;
             }
 
             spriteRenderer.sortingOrder = 1;

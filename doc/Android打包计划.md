@@ -16,28 +16,24 @@
 | Target API | Automatic / Unity 默认最高已安装版本 | 正式发布前按商店要求确认 |
 | Android 工具链 | SDK、NDK、OpenJDK 已随 Unity 安装 | 已检查本机安装 |
 
-## 2. 打包前必须确认
+## 2. 已确认的测试包配置
 
 ### 2.1 启动场景与场景清单
 
-当前 Build Profiles/Build Settings 中启用了两个场景，且第一个场景是插件示例：
+测试包固定启用以下两个场景：
 
 1. `Assets/Samples/PlanetWar Reusable Main Menu/0.1.0/Main Menu Demo/MainMenuDemo.unity`
 2. `Assets/Scenes/SampleScene.unity`
 
-构建后的游戏会从第一个场景启动。正式打包前需要确认它是否确实是主菜单；如果不是，应将真正的启动场景放到索引 0，并只保留游戏实际使用的场景。
+构建后的游戏从 `MainMenuDemo` 启动，再进入 `SampleScene`。该顺序已经确认。
 
 ### 2.2 屏幕方向
 
-当前为自动旋转，并允许横屏和竖屏。需要根据游戏设计确定以下其中一种：
-
-- 只允许横屏；
-- 只允许竖屏；
-- 保持自动旋转。
+测试包固定为正向竖屏，禁止倒置竖屏和两个横屏方向，并关闭 Android 可调整窗口模式。
 
 ### 2.3 图标、启动图与显示名称
 
-当前没有发现 Android 平台图标配置。正式包需要补齐自适应图标、传统图标和启动画面，并在真机上检查刘海屏、安全区及不同宽高比。
+测试包使用 `Assets/Art/Images/icon.png` 配置 Android 传统和圆形图标。该图为 110×110 透明 PNG；测试阶段不配置需要独立前景和背景素材的自适应图标。
 
 ### 2.4 签名密钥
 
@@ -48,14 +44,24 @@
 - 备份 keystore、alias 和密码；
 - 发布后丢失密钥可能导致无法更新应用。
 
-### 2.5 当前运行日志中的待处理项
+### 2.5 Unity 6 Sprite 兼容修复
 
-最近一次编辑器试玩能够进入 `SampleScene`，但日志持续报告 Unity 内置 Sprite 路径不存在：
+原项目调用了 Unity 6 已移除的两个内置 Sprite 路径：
 
 - `Assets/Scripts/BackpackPrototype/AircraftEquipmentMarkerDisplay.cs:107` 请求 `UI/Skin/UISprite.psd`；
 - `Assets/Scripts/Input/CircleMarker2D.cs:60` 请求 `UI/Skin/Knob.psd`。
 
-这类资源在 Unity 6 中可能不再可用，Android 包中可能表现为标记图形缺失。生成首个 APK 前，应改为引用项目内的 Sprite，并重新检查 Console 没有相关错误。
+装备色块改用 UGUI 默认白色纹理；圆形标记改用项目内 `NVPaginationDot.png`。构建前测试会确认 Console 不再出现上述资源错误。
+
+### 2.6 首个测试 APK 验证结果（2026-08-28）
+
+- 两个相关 EditMode 测试均通过，Unity 编译无 C# 错误；
+- Unity BuildReport 为 Success，APK 已输出到 `Builds/Android/Development/ProjectBackpackHero-dev.apk`；
+- APK 文件大小为 67,598,772 字节，SHA-256 为 `F48597BABF370830634220E10DA653FDD335957E78F3558C4EC62DEC2F134CB1`；
+- Android SDK 检查确认包名 `com.lanternfoxgames.projectbackpackhero`、应用名 `ProjectBackpackHero`、版本 `1.0 (1)`、最低 API 26、Target API 36、仅 ARM64；
+- 主 Activity 为 `com.unity3d.player.UnityPlayerGameActivity`，方向固定为 portrait、不可调整窗口，传统和圆形图标资源均已打入 APK；
+- APK 使用 Android Debug 证书和 APK Signature Scheme v2 签名；
+- 当前未连接 Android 设备，覆盖安装、启动、竖屏锁定和核心流程冒烟测试仍待真机执行。
 
 ## 3. 两阶段构建流程
 
@@ -102,14 +108,11 @@
 
 ## 4. 推荐执行顺序
 
-1. 确认正式启动场景。
-2. 确认横竖屏策略。
-3. 补齐 Android 图标和启动图。
-4. 替换 Unity 6 中缺失的内置 Sprite 引用。
-5. 切换 Android 平台并解决首次编译错误。
-6. 生成开发 APK，完成真机冒烟测试。
-7. 创建正式 keystore，生成签名 AAB。
-8. 上传内部测试轨道，完成发布前回归。
+1. 运行 Unity 编辑器测试并确认 Sprite 兼容修复通过。
+2. 执行菜单 `工具/Android/构建测试 APK`。
+3. 检查 APK 包名、版本、竖屏声明和图标资源。
+4. 连接 Android 设备后完成安装和真机冒烟测试。
+5. 测试包通过后，再创建正式 keystore 并生成签名 AAB。
 
 ## 5. 版本记录规则
 

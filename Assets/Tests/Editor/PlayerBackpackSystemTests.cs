@@ -918,9 +918,20 @@ public sealed class PlayerBackpackSystemTests
             Assert.That(container.gameObject.activeSelf, Is.True);
             Assert.That(container.childCount, Is.EqualTo(2));
 
+            Image firstMarker =
+                container.GetChild(0).GetComponent<Image>();
+            Image secondMarker =
+                container.GetChild(1).GetComponent<Image>();
+            Assert.That(firstMarker.sprite, Is.Null);
+            Assert.That(firstMarker.mainTexture,
+                Is.SameAs(Texture2D.whiteTexture));
+            Assert.That(firstMarker.color, Is.EqualTo(Color.yellow));
+            Assert.That(secondMarker.color, Is.EqualTo(Color.red));
+
             display.SetColors(new List<Color>());
 
             Assert.That(container.gameObject.activeSelf, Is.False);
+            LogAssert.NoUnexpectedReceived();
         }
         finally
         {

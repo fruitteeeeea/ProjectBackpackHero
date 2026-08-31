@@ -1,10 +1,9 @@
 fileFormatVersion: 2
-guid: f836fe3833d94bf489d3e768541ce06f
+guid: a40c8399af124399b29376aec0c4a1a7
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences:
-  - markerSprite: {fileID: 21300000, guid: 628a23d9e49377a4592b606b84550579, type: 3}
+  defaultReferences: []
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

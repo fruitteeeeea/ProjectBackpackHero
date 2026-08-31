@@ -6547,6 +6547,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 1800000014}
+  markerSprite: {fileID: 21300000, guid: 628a23d9e49377a4592b606b84550579, type: 3}
   color: {r: 0.15, g: 0.85, b: 1, a: 1}
   diameter: 1
 --- !u!212 &1800000014
@@ -6598,7 +6599,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 628a23d9e49377a4592b606b84550579, type: 3}
   m_Color: {r: 0.15, g: 0.85, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -6655,6 +6656,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 1800000024}
+  markerSprite: {fileID: 21300000, guid: 628a23d9e49377a4592b606b84550579, type: 3}
   color: {r: 1, g: 0.25, b: 0.25, a: 1}
   diameter: 1
 --- !u!212 &1800000024
@@ -6706,7 +6708,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 628a23d9e49377a4592b606b84550579, type: 3}
   m_Color: {r: 1, g: 0.25, b: 0.25, a: 1}
   m_FlipX: 0
   m_FlipY: 0

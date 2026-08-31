@@ -104,8 +104,10 @@ namespace BackpackPrototype
                     new Vector2(MarkerSize, MarkerSize);
 
                 Image marker = markerObject.GetComponent<Image>();
-                marker.sprite = Resources.GetBuiltinResource<Sprite>(
-                    "UI/Skin/UISprite.psd");
+                // Unity 6 no longer ships the legacy UI/Skin/UISprite.psd
+                // resource. A sprite-less Image uses UGUI's white texture,
+                // which is exactly what these runtime-tinted markers need.
+                marker.sprite = null;
                 marker.type = Image.Type.Simple;
                 markers.Add(marker);
             }

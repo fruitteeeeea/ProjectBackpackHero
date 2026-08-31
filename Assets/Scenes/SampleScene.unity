@@ -8456,7 +8456,6 @@ MonoBehaviour:
   backgroundRenderer: {fileID: 2098000012}
   overtimeNebulaColor: {r: 0.42, g: 0.02, b: 0.16, a: 1}
   overtimeColorTransitionDuration: 1
-  overtimeSpeedTransitionDuration: 15
   normalTransitionDuration: 1
 --- !u!1 &2101000001
 GameObject:

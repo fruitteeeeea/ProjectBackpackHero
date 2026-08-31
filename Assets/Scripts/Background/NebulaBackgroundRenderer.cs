@@ -16,7 +16,6 @@ namespace BackpackHero.Background
         private const float DefaultDistance = 13f;
         private const float CoveragePadding = 1.06f;
         private static readonly int ColorBId = Shader.PropertyToID("_ColorB");
-        private static readonly int SpeedId = Shader.PropertyToID("_Speed");
 
         [SerializeField] private Camera targetCamera;
         [SerializeField, Min(0.31f)] private float cameraDistance = DefaultDistance;
@@ -24,18 +23,14 @@ namespace BackpackHero.Background
         [SerializeField] private Color overtimeNebulaColor = new(0.42f, 0.02f, 0.16f, 1f);
         [FormerlySerializedAs("overtimeTransitionDuration")]
         [SerializeField, Min(0.01f)] private float overtimeColorTransitionDuration = 1f;
-        [SerializeField, Min(0.01f)] private float overtimeSpeedTransitionDuration = 15f;
         [SerializeField, Min(0.01f)] private float normalTransitionDuration = 1f;
 
         private Material runtimeMaterial;
         private Color normalNebulaColor;
-        private float normalSpeed;
         private bool hasOvertimeVisualState;
         private bool overtimeVisualState;
         private Color colorTransitionStart;
-        private float speedTransitionStart;
         private float colorTransitionElapsed;
-        private float speedTransitionElapsed;
 
         private void OnEnable()
         {
@@ -61,7 +56,6 @@ namespace BackpackHero.Background
         {
             cameraDistance = Mathf.Max(0.31f, cameraDistance);
             overtimeColorTransitionDuration = Mathf.Max(0.01f, overtimeColorTransitionDuration);
-            overtimeSpeedTransitionDuration = Mathf.Max(0.01f, overtimeSpeedTransitionDuration);
             normalTransitionDuration = Mathf.Max(0.01f, normalTransitionDuration);
             ResolveReferences();
             FitToCamera();
@@ -88,14 +82,12 @@ namespace BackpackHero.Background
             }
 
             runtimeMaterial = backgroundRenderer.material;
-            if (runtimeMaterial == null || !runtimeMaterial.HasProperty(ColorBId) ||
-                !runtimeMaterial.HasProperty(SpeedId))
+            if (runtimeMaterial == null || !runtimeMaterial.HasProperty(ColorBId))
             {
                 return;
             }
 
             normalNebulaColor = runtimeMaterial.GetColor(ColorBId);
-            normalSpeed = runtimeMaterial.GetFloat(SpeedId);
         }
 
         private void RefreshOvertimeVisual()
@@ -124,17 +116,6 @@ namespace BackpackHero.Background
                 colorTransitionStart,
                 overtime ? overtimeNebulaColor : normalNebulaColor,
                 Mathf.Clamp01(colorTransitionElapsed / duration)));
-
-            duration = overtime
-                ? overtimeSpeedTransitionDuration
-                : normalTransitionDuration;
-            speedTransitionElapsed += Time.deltaTime;
-            runtimeMaterial.SetFloat(SpeedId, Mathf.Lerp(
-                speedTransitionStart,
-                overtime
-                    ? normalSpeed * LevelFlowController.OvertimeCooldownSpeedMultiplier
-                    : normalSpeed,
-                Mathf.Clamp01(speedTransitionElapsed / duration)));
         }
 
         private void BeginOvertimeVisualTransition(bool overtime)
@@ -142,9 +123,7 @@ namespace BackpackHero.Background
             hasOvertimeVisualState = true;
             overtimeVisualState = overtime;
             colorTransitionStart = runtimeMaterial.GetColor(ColorBId);
-            speedTransitionStart = runtimeMaterial.GetFloat(SpeedId);
             colorTransitionElapsed = 0f;
-            speedTransitionElapsed = 0f;
         }
 
         private void FitToCamera()

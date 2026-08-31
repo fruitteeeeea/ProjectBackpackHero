@@ -178,21 +178,26 @@ public sealed class PlayerItemSystemTests
     }
 
     [Test]
-    public void ResetAllProgression_SetsEveryItemToLevelOneAndClearsFragments()
+    public void ResetAllProgression_ChangesOnlyUnlockedItems()
     {
-        ItemData aircraft = NewItem("reset_aircraft", type: ItemType.Aircraft);
-        ItemData equipment = NewItem("reset_equipment");
-        PlayerItemSystem system = NewSystem(aircraft, equipment);
-        system.AddFragments(aircraft, 7);
-        system.AddFragments(equipment, 3);
+        ItemData aircraft = NewItem("aircraft_charge", type: ItemType.Aircraft);
+        ItemData lockedEquipment = NewItem("locked_equipment");
+        PlayerItemSystem system = NewSystem(aircraft, lockedEquipment);
+        PlayerItemState unlockedState = system.GetState(aircraft);
+        PlayerItemState lockedState = system.GetState(lockedEquipment);
+        unlockedState.Level = 4;
+        unlockedState.FragmentCount = 7;
+        lockedState.Level = 6;
+        lockedState.FragmentCount = 3;
 
         system.ResetAllProgression();
 
         Assert.That(system.GetLevel(aircraft), Is.EqualTo(PlayerItemSystem.DefaultLevel));
-        Assert.That(system.GetLevel(equipment), Is.EqualTo(PlayerItemSystem.DefaultLevel));
         Assert.That(system.GetFragments(aircraft), Is.Zero);
-        Assert.That(system.GetFragments(equipment), Is.Zero);
         Assert.That(system.IsUnlocked(aircraft), Is.True);
+        Assert.That(system.IsUnlocked(lockedEquipment), Is.False);
+        Assert.That(system.GetLevel(lockedEquipment), Is.EqualTo(6));
+        Assert.That(system.GetFragments(lockedEquipment), Is.EqualTo(3));
     }
 
     [Test]

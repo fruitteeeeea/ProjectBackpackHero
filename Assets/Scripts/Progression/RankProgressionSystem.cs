@@ -125,6 +125,21 @@ namespace BackpackHero.Progression
         }
 
         public void BeginMatch() => settlementAppliedForMatch = false;
+
+        /// <summary>Debug helper: restores the rank portion of a new player save.</summary>
+        public void RestoreInitialProgression()
+        {
+            if (data == null || catalog == null) return;
+            data.points = InitialPoints;
+            data.currentNodeId = catalog.Nodes.Count > 0 ? catalog.Nodes[0].id : 1001;
+            data.wins = 0;
+            data.claimedRewardNodeIds.Clear();
+            data.defeatRecovery.Reset();
+            settlementAppliedForMatch = false;
+            RebuildLeaderboard(false);
+            Notify();
+        }
+
         /// <summary>Debug helper: moves rank progress to the final score and node.</summary>
         public void RestoreDefaultProgression()
         {
@@ -132,6 +147,7 @@ namespace BackpackHero.Progression
             data.points = MaximumPoints;
             data.currentNodeId = catalog.Nodes.Count > 0 ? catalog.Nodes[0].id : 1001;
             data.defeatRecovery.Reset();
+            settlementAppliedForMatch = false;
             AdvanceNodes();
             RebuildLeaderboard(false);
             Notify();

@@ -40,12 +40,12 @@ namespace BackpackHero.EditorTools
 
             EditorGUILayout.Space(6f);
             EditorGUILayout.LabelField("养成状态", EditorStyles.boldLabel);
-            if (GUILayout.Button("重置养成（全物品 Lv.1，碎片清零）", GUILayout.Height(28f)))
+            if (GUILayout.Button("重置养成（已解锁物品 Lv.1，碎片清零）", GUILayout.Height(28f)))
             {
                 system.ResetAllProgression();
             }
 
-            if (GUILayout.Button("恢复初始存档（5 张 Lv.1 初始卡）", GUILayout.Height(28f)))
+            if (GUILayout.Button("恢复初始存档（5 张 Lv.1 初始卡，10 分）", GUILayout.Height(28f)))
             {
                 system.RestoreInitialProgression();
             }
@@ -59,7 +59,7 @@ namespace BackpackHero.EditorTools
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.Space(6f);
-            if (GUILayout.Button("恢复默认养成（全解锁、Lv.10、碎片清零）", GUILayout.Height(28f)))
+            if (GUILayout.Button("恢复默认养成（全解锁、Lv.10、50,000 分）", GUILayout.Height(28f)))
             {
                 system.RestoreDefaultProgression();
             }

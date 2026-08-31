@@ -133,14 +133,14 @@ namespace BackpackPrototype
         public void AddFragments(ItemData item, int count) { var state = GetState(item); if (state == null) return; state.FragmentCount = Mathf.Max(0, state.FragmentCount + count); SaveAndNotify(); }
         public void Unlock(ItemData item) { var state = GetState(item); if (state == null || state.Unlocked) return; state.Unlocked = true; SaveAndNotify(); }
 
-        /// <summary>Debug helper: resets every catalog item's level and fragments, keeping its unlock state.</summary>
+        /// <summary>Debug helper: resets only unlocked catalog items, keeping all other progression unchanged.</summary>
         public void ResetAllProgression()
         {
             if (data == null) return;
             foreach (ItemData item in GetAllItems())
             {
                 PlayerItemState state = GetState(item);
-                if (state == null) continue;
+                if (state == null || !state.Unlocked) continue;
                 state.Level = DefaultLevel;
                 state.FragmentCount = 0;
             }
@@ -153,6 +153,7 @@ namespace BackpackPrototype
             if (data == null || catalog == null) return;
             ApplyFormalInitialCollection();
             EnsureDeck();
+            BackpackHero.Progression.RankProgressionSystem.Instance?.RestoreInitialProgression();
             SaveAndNotify();
         }
 

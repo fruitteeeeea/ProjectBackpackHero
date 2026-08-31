@@ -45,6 +45,11 @@ namespace BackpackHero.EditorTools
                 system.ResetAllProgression();
             }
 
+            if (GUILayout.Button("恢复初始存档（5 张 Lv.1 初始卡）", GUILayout.Height(28f)))
+            {
+                system.RestoreInitialProgression();
+            }
+
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("为全部飞机添加对应碎片", EditorStyles.boldLabel);
             EditorGUILayout.BeginHorizontal();

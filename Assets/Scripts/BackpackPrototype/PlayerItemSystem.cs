@@ -147,6 +147,15 @@ namespace BackpackPrototype
             SaveAndNotify();
         }
 
+        /// <summary>Debug helper: restores the release player's five-card starter collection and deck.</summary>
+        public void RestoreInitialProgression()
+        {
+            if (data == null || catalog == null) return;
+            ApplyFormalInitialCollection();
+            EnsureDeck();
+            SaveAndNotify();
+        }
+
         /// <summary>Debug helper: adds the same number of item-specific fragments to every aircraft.</summary>
         public void AddFragmentsToAllAircraft(int count)
         {

@@ -194,6 +194,41 @@ public sealed class PlayerItemSystemTests
     }
 
     [Test]
+    public void RestoreInitialProgression_RestoresFiveStarterCardsDeckAndCurrency()
+    {
+        ItemData charge = NewItem("aircraft_charge", type: ItemType.Aircraft);
+        ItemData first = NewItem("aircraft_first", type: ItemType.Aircraft);
+        ItemData shield = NewItem("aircraft_shield", type: ItemType.Aircraft);
+        ItemData equipment = NewItem("equipment_1x2");
+        ItemData coil = NewItem("equipment_arc_coil");
+        ItemData locked = NewItem("locked_item");
+        PlayerItemSystem system = NewSystem(charge, first, shield, equipment, coil, locked);
+        int changeCount = 0;
+        system.Changed += () => changeCount++;
+        system.RestoreDefaultProgression();
+        system.AddCurrency(900, 50);
+        system.AddFragments(locked, 7);
+
+        system.RestoreInitialProgression();
+
+        Assert.That(system.Gold, Is.EqualTo(100));
+        Assert.That(system.Diamond, Is.Zero);
+        Assert.That(changeCount, Is.GreaterThanOrEqualTo(4));
+        Assert.That(system.GetDeckItems(), Is.EqualTo(new[] { charge, first, shield, equipment, coil }));
+        foreach (ItemData item in system.GetAllItems())
+        {
+            Assert.That(system.GetLevel(item), Is.EqualTo(PlayerItemSystem.DefaultLevel));
+            Assert.That(system.GetFragments(item), Is.Zero);
+        }
+        Assert.That(system.IsUnlocked(charge), Is.True);
+        Assert.That(system.IsUnlocked(first), Is.True);
+        Assert.That(system.IsUnlocked(shield), Is.True);
+        Assert.That(system.IsUnlocked(equipment), Is.True);
+        Assert.That(system.IsUnlocked(coil), Is.True);
+        Assert.That(system.IsUnlocked(locked), Is.False);
+    }
+
+    [Test]
     public void CollectionLevel_UsesUnlockedItemsAndRoundsDown()
     {
         ItemData levelTwo = NewItem("level_two");

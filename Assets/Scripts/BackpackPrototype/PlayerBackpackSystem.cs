@@ -48,6 +48,8 @@ namespace BackpackPrototype
         private const int MaximumAircraftAppearancesPerPreparation = 2;
         private const float ShopHorizontalPadding = 24f;
         private const float CompactShopItemSpacing = 64f;
+        private const float ShopAppearanceDelay = .5f;
+        private const float ShopAppearanceFadeDuration = .3f;
         private const float PreferredShopCompositionChance = .6f;
         private const float PreviousShopItemWeightMultiplier = .1f;
 
@@ -818,6 +820,8 @@ namespace BackpackPrototype
                 CreateShopItem(item);
             }
 
+            PlayShopItemAppearances();
+
             RecordAircraftAppearances(
                 nextShopItems,
                 aircraftAppearancesThisPreparation);
@@ -1553,6 +1557,16 @@ namespace BackpackPrototype
 
             shopItems.Add(view);
             ReflowShopItems();
+        }
+
+        private void PlayShopItemAppearances()
+        {
+            foreach (ItemView view in shopItems)
+            {
+                view?.PlayShopAppearance(
+                    ShopAppearanceDelay,
+                    ShopAppearanceFadeDuration);
+            }
         }
 
         private Vector3 GetShopItemScale()

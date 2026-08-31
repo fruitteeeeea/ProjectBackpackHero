@@ -72,12 +72,16 @@ namespace BackpackPrototype
         private Tween cooldownFlashTween;
         private Tween mergeFlashTween;
         private Tween shopTransitionTween;
+        private Tween shopAppearanceTween;
         private bool mergeHighlightActive;
         private bool isDeletePreviewActive;
         private float cooldownFlashAmount;
         private float mergeFlashAmount;
         private bool isDragging;
         private bool canDeleteFromTrash;
+        private bool interactionEnabled;
+        private bool shopAppearanceActive;
+        private float shopAppearanceAlpha = 1f;
         private Vector2 shapeCellSize;
         private Vector2 shapeSpacing;
         private Vector2 placementFeedbackAnchoredPosition;
@@ -383,12 +387,37 @@ namespace BackpackPrototype
             RefreshAircraftGlow();
         }
 
+        /// <summary>
+        /// 新生成的商店候选统一使用延迟渐显，避免背包缩放动画完成时
+        /// 物品尺寸瞬间变化。出现期间不接收交互。
+        /// </summary>
+        public void PlayShopAppearance(
+            float delay,
+            float fadeDuration)
+        {
+            CancelShopAppearance(restoreVisibility: false);
+            shopAppearanceActive = true;
+            SetShopAppearanceAlpha(0f);
+            RefreshInteractionState();
+
+            shopAppearanceTween = DOTween.Sequence()
+                .AppendInterval(Mathf.Max(0f, delay))
+                .Append(DOTween.To(
+                    () => shopAppearanceAlpha,
+                    SetShopAppearanceAlpha,
+                    1f,
+                    Mathf.Max(.01f, fadeDuration))
+                    .SetEase(Ease.OutCubic))
+                .OnComplete(CompleteShopAppearance);
+        }
+
         public void TweenToShopPosition(
             RectTransform shopContainer,
             Vector2 anchoredPosition,
             Vector3 scale,
             Vector3? startWorldPosition = null)
         {
+            CancelShopAppearance();
             shopTransitionTween?.Kill();
             float duration = GetBackpackVisualSettings().ShopFlightDuration;
             if (startWorldPosition.HasValue)
@@ -889,9 +918,10 @@ namespace BackpackPrototype
             }
         }
         
-        public void SetInteractionEnabled(bool interactionEnabled)
+        public void SetInteractionEnabled(bool enabled)
         {
-            if (!interactionEnabled && isDragging)
+            interactionEnabled = enabled;
+            if (!enabled && isDragging)
             {
                 isDragging = false;
                 dragPositionTween?.Kill();
@@ -902,10 +932,64 @@ namespace BackpackPrototype
                 DragStateChanged?.Invoke(this, false);
             }
 
+            RefreshInteractionState();
+        }
+
+        private void CompleteShopAppearance()
+        {
+            shopAppearanceTween = null;
+            shopAppearanceActive = false;
+            SetShopAppearanceAlpha(1f);
+            RefreshInteractionState();
+        }
+
+        private void CancelShopAppearance(
+            bool restoreVisibility = true)
+        {
+            shopAppearanceTween?.Kill();
+            shopAppearanceTween = null;
+            if (!shopAppearanceActive)
+            {
+                return;
+            }
+
+            shopAppearanceActive = false;
+            if (restoreVisibility)
+            {
+                SetShopAppearanceAlpha(1f);
+            }
+
+            RefreshInteractionState();
+        }
+
+        private void SetShopAppearanceAlpha(float alpha)
+        {
+            shopAppearanceAlpha = Mathf.Clamp01(alpha);
             if (canvasGroup != null)
             {
-                canvasGroup.interactable = interactionEnabled;
-                canvasGroup.blocksRaycasts = interactionEnabled;
+                canvasGroup.alpha = shopAppearanceAlpha;
+            }
+
+            if (aircraftGlowImage != null)
+            {
+                Color glowColor = aircraftGlowImage.color;
+                glowColor.a = shopAppearanceAlpha;
+                aircraftGlowImage.color = glowColor;
+            }
+        }
+
+        private void RefreshInteractionState()
+        {
+            if (canvasGroup == null)
+            {
+                return;
+            }
+
+            bool enabled = interactionEnabled && !shopAppearanceActive;
+            canvasGroup.interactable = enabled;
+            canvasGroup.blocksRaycasts = enabled;
+            if (!shopAppearanceActive)
+            {
                 canvasGroup.alpha = 1f;
             }
         }
@@ -969,6 +1053,7 @@ namespace BackpackPrototype
                 return;
             }
 
+            CancelShopAppearance();
             Instance.AnchorCell = anchorCell;
             IsPlacedInBackpack = true;
             rectTransform.SetParent(BackpackItemLayer, false);
@@ -1081,8 +1166,7 @@ namespace BackpackPrototype
             dragPositionTween?.Kill();
             dragPositionTween = null;
             DragStateChanged?.Invoke(this, false);
-            canvasGroup.blocksRaycasts = true;
-            canvasGroup.alpha = 1f;
+            RefreshInteractionState();
             GridView?.ClearPlacementPreview();
 
             bool deletesFromTrash =
@@ -1448,6 +1532,7 @@ namespace BackpackPrototype
             cooldownFlashTween?.Kill();
             mergeFlashTween?.Kill();
             shopTransitionTween?.Kill();
+            shopAppearanceTween?.Kill();
             BackpackVisualDebugRuntime.SettingsChanged -=
                 HandleBackpackVisualSettingsChanged;
             ArtAssetDebugRuntime.SettingsChanged -=

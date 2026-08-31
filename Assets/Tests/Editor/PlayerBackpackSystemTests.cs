@@ -1,5 +1,6 @@
 using BackpackHero.Battle;
 using BackpackPrototype;
+using DG.Tweening;
 using MoreMountains.Feedbacks;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -30,6 +31,59 @@ public sealed class PlayerBackpackSystemTests
             typeof(IPointerClickHandler).IsAssignableFrom(
                 typeof(ItemView)),
             Is.False);
+    }
+
+    [Test]
+    public void ShopAppearance_HidesAndDisablesItemUntilCompleted()
+    {
+        GameObject itemObject = new GameObject(
+            "Shop Appearance Item",
+            typeof(RectTransform),
+            typeof(CanvasGroup),
+            typeof(ItemView));
+        GameObject shopObject = new GameObject(
+            "Shop Container",
+            typeof(RectTransform));
+
+        try
+        {
+            ItemView view = itemObject.GetComponent<ItemView>();
+            CanvasGroup canvasGroup = itemObject.GetComponent<CanvasGroup>();
+            view.SetInteractionEnabled(true);
+            view.PlayShopAppearance(.5f, .3f);
+
+            Assert.That(canvasGroup.alpha, Is.Zero);
+            Assert.That(canvasGroup.interactable, Is.False);
+            Assert.That(canvasGroup.blocksRaycasts, Is.False);
+
+            FieldInfo appearanceTweenField = typeof(ItemView).GetField(
+                "shopAppearanceTween",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(appearanceTweenField, Is.Not.Null);
+            Tween appearanceTween = appearanceTweenField.GetValue(view)
+                as Tween;
+            Assert.That(appearanceTween, Is.Not.Null);
+            appearanceTween.Complete(true);
+
+            Assert.That(canvasGroup.alpha, Is.EqualTo(1f));
+            Assert.That(canvasGroup.interactable, Is.True);
+            Assert.That(canvasGroup.blocksRaycasts, Is.True);
+
+            view.PlayShopAppearance(.5f, .3f);
+            view.TweenToShopPosition(
+                shopObject.GetComponent<RectTransform>(),
+                Vector2.zero,
+                Vector3.one);
+
+            Assert.That(canvasGroup.alpha, Is.EqualTo(1f));
+            Assert.That(canvasGroup.interactable, Is.True);
+            Assert.That(canvasGroup.blocksRaycasts, Is.True);
+        }
+        finally
+        {
+            Object.DestroyImmediate(itemObject);
+            Object.DestroyImmediate(shopObject);
+        }
     }
 
     [Test]

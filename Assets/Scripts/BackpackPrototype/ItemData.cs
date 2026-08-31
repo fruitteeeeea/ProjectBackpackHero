@@ -39,6 +39,11 @@ namespace BackpackPrototype
         [SerializeField] private ItemType itemType = ItemType.Equipment;
         [SerializeField] private Color equipmentColor = Color.white;
 
+        [Header("Backpack Visual")]
+        [Tooltip("Normal 保留常规底板亮度；Glow 使用屏幕式亮化，让底板更明亮。")]
+        [SerializeField] private BottomPlateDisplayMode bottomPlateDisplayMode =
+            BottomPlateDisplayMode.Normal;
+
         [Header("Equipment Effects")]
         [SerializeField] private List<EquipmentEffectDefinition> equipmentEffects = new();
         [SerializeField, FormerlySerializedAs("cooldownDuration")] private float cd = 3f;
@@ -103,6 +108,7 @@ namespace BackpackPrototype
         public Color BackgroundColor => backgroundColor;
         public ItemType ItemType => Config?.ItemType ?? itemType;
         public Color EquipmentColor => equipmentColor;
+        public BottomPlateDisplayMode BottomPlateDisplayMode => bottomPlateDisplayMode;
         public IReadOnlyList<EquipmentEffectDefinition> EquipmentEffects =>
             ItemType == ItemType.Equipment && equipmentEffects != null
                 ? equipmentEffects : Array.Empty<EquipmentEffectDefinition>();

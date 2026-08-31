@@ -30,7 +30,7 @@ namespace BackpackHero.Debugging
             .18f, .62f, .7f,
             1.17f, 10f, -6f, BackpackPlacementScaleEase.OutElastic,
             .32f, Color.white, 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f);
+            true, Color.white, .12f, .45f, 1.2f, 8f, true);
 
         public BackpackVisualSettings(
             bool overridesEnabled,
@@ -52,7 +52,8 @@ namespace BackpackHero.Debugging
             float aircraftGlowMinimumIntensity,
             float aircraftGlowMaximumIntensity,
             float aircraftGlowCycleDuration,
-            float aircraftGlowEdgeWidth)
+            float aircraftGlowEdgeWidth,
+            bool equipmentBottomPlateGlowEnabled)
         {
             OverridesEnabled = overridesEnabled;
             DragOpacity = Mathf.Clamp(dragOpacity, MinimumDragOpacity,
@@ -82,6 +83,7 @@ namespace BackpackHero.Debugging
                 MinimumAircraftGlowCycleDuration, aircraftGlowCycleDuration);
             AircraftGlowEdgeWidth = Mathf.Max(MinimumAircraftGlowEdgeWidth,
                 aircraftGlowEdgeWidth);
+            EquipmentBottomPlateGlowEnabled = equipmentBottomPlateGlowEnabled;
         }
 
         public bool OverridesEnabled { get; }
@@ -104,6 +106,7 @@ namespace BackpackHero.Debugging
         public float AircraftGlowMaximumIntensity { get; }
         public float AircraftGlowCycleDuration { get; }
         public float AircraftGlowEdgeWidth { get; }
+        public bool EquipmentBottomPlateGlowEnabled { get; }
         public bool UsesFactionLevelColor => !OverridesEnabled ||
             IsWhiteRgb(LevelFontColor);
 
@@ -120,7 +123,8 @@ namespace BackpackHero.Debugging
             ShopFlightDuration, LevelFontColor, LevelFontSize,
             AircraftGlowEnabled, AircraftGlowColor,
             AircraftGlowMinimumIntensity, AircraftGlowMaximumIntensity,
-            AircraftGlowCycleDuration, AircraftGlowEdgeWidth);
+            AircraftGlowCycleDuration, AircraftGlowEdgeWidth,
+            EquipmentBottomPlateGlowEnabled);
 
         private static bool IsWhiteRgb(Color color) =>
             Mathf.Approximately(color.r, 1f) &&
@@ -155,7 +159,9 @@ namespace BackpackHero.Debugging
             Mathf.Approximately(AircraftGlowCycleDuration,
                 other.AircraftGlowCycleDuration) &&
             Mathf.Approximately(AircraftGlowEdgeWidth,
-                other.AircraftGlowEdgeWidth);
+                other.AircraftGlowEdgeWidth) &&
+            EquipmentBottomPlateGlowEnabled ==
+                other.EquipmentBottomPlateGlowEnabled;
 
         public override bool Equals(object obj) =>
             obj is BackpackVisualSettings other && Equals(other);
@@ -183,7 +189,9 @@ namespace BackpackHero.Debugging
                 hash = (hash * 31) + AircraftGlowMinimumIntensity.GetHashCode();
                 hash = (hash * 31) + AircraftGlowMaximumIntensity.GetHashCode();
                 hash = (hash * 31) + AircraftGlowCycleDuration.GetHashCode();
-                return (hash * 31) + AircraftGlowEdgeWidth.GetHashCode();
+                hash = (hash * 31) + AircraftGlowEdgeWidth.GetHashCode();
+                return (hash * 31) +
+                    (EquipmentBottomPlateGlowEnabled ? 1 : 0);
             }
         }
     }

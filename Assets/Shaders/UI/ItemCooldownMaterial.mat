@@ -50,6 +50,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _ColorMask: 15
+    - _BottomPlateDisplayMode: 0
+    - _BottomPlateGlowStrength: 0.68
     - _AircraftGlowCycleDuration: 1.2
     - _AircraftGlowMaximumIntensity: 0.45
     - _AircraftGlowMinimumIntensity: 0.12

@@ -38,6 +38,9 @@ namespace BackpackPrototype
         private static readonly int PatternTilingId =
             Shader.PropertyToID("_PatternTiling");
 
+        private static readonly int BottomPlateDisplayModeId =
+            Shader.PropertyToID("_BottomPlateDisplayMode");
+
         private static readonly int AircraftGlowRenderModeId =
             Shader.PropertyToID("_AircraftGlowRenderMode");
 
@@ -839,6 +842,22 @@ namespace BackpackPrototype
                 backgroundCooldownMaterial.SetVector(
                     PatternTilingId,
                     GetPatternTiling());
+
+                BackpackVisualSettings settings =
+                    BackpackVisualDebugRuntime.CurrentSettings;
+                bool shouldUseEquipmentGlow = Instance != null &&
+                    Instance.Data != null &&
+                    Instance.Data.ItemType == ItemType.Equipment &&
+                    Instance.Data.BottomPlateDisplayMode ==
+                        BottomPlateDisplayMode.Glow &&
+                    settings.OverridesEnabled &&
+                    settings.EquipmentBottomPlateGlowEnabled;
+                float bottomPlateDisplayMode = shouldUseEquipmentGlow
+                    ? (float)BottomPlateDisplayMode.Glow
+                    : (float)BottomPlateDisplayMode.Normal;
+                backgroundCooldownMaterial.SetFloat(
+                    BottomPlateDisplayModeId,
+                    bottomPlateDisplayMode);
             }
 
             if (iconCooldownMaterial != null)
@@ -1554,6 +1573,7 @@ namespace BackpackPrototype
         private void HandleBackpackVisualSettingsChanged(
             BackpackVisualSettings _)
         {
+            ApplyItemVisualStyle();
             RefreshLevelLabel();
             RefreshBottomPlateVisual();
             RefreshAircraftGlow();

@@ -35,6 +35,7 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(settings.AircraftGlowMaximumIntensity, Is.EqualTo(.45f));
         Assert.That(settings.AircraftGlowCycleDuration, Is.EqualTo(1.2f));
         Assert.That(settings.AircraftGlowEdgeWidth, Is.EqualTo(8f));
+        Assert.That(settings.EquipmentBottomPlateGlowEnabled, Is.True);
     }
 
     [Test]
@@ -45,7 +46,7 @@ public sealed class BackpackVisualSettingsTests
         BackpackVisualSettings expected = new(false, -1f, Color.red,
             Color.blue, -1f, 2f, -2f, .5f, 13f, -9f,
             BackpackPlacementScaleEase.OutCubic, -3f, Color.green, -4f,
-            true, Color.magenta, -1f, 2f, -3f, -4f);
+            true, Color.magenta, -1f, 2f, -3f, -4f, false);
         try
         {
             asset.SetValues(expected);
@@ -78,6 +79,7 @@ public sealed class BackpackVisualSettingsTests
                 Is.EqualTo(BackpackVisualSettings.MinimumAircraftGlowCycleDuration));
             Assert.That(actual.AircraftGlowEdgeWidth,
                 Is.EqualTo(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth));
+            Assert.That(actual.EquipmentBottomPlateGlowEnabled, Is.False);
             Assert.That(actual.GetPlacementScaleDotweenEase(),
                 Is.EqualTo(DG.Tweening.Ease.OutCubic));
             Assert.That(BackpackVisualSettings.Default
@@ -96,11 +98,11 @@ public sealed class BackpackVisualSettingsTests
             Color.magenta, .18f, .62f, .7f, 1.17f, 10f, -6f,
             BackpackPlacementScaleEase.OutElastic, .32f,
             new Color(1f, 1f, 1f, .2f), 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f);
+            true, Color.white, .12f, .45f, 1.2f, 8f, true);
         BackpackVisualSettings custom = new(true, .5f, Color.yellow,
             Color.magenta, .18f, .62f, .7f, 1.17f, 10f, -6f,
             BackpackPlacementScaleEase.OutElastic, .32f, Color.green, 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f);
+            true, Color.white, .12f, .45f, 1.2f, 8f, true);
 
         Assert.That(white.UsesFactionLevelColor, Is.True);
         Assert.That(custom.UsesFactionLevelColor, Is.False);
@@ -123,6 +125,7 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(values.AircraftGlowColor, Is.EqualTo(Color.white));
         Assert.That(values.AircraftGlowEdgeWidth,
             Is.GreaterThanOrEqualTo(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth));
+        Assert.That(values.EquipmentBottomPlateGlowEnabled, Is.True);
     }
 
     [Test]

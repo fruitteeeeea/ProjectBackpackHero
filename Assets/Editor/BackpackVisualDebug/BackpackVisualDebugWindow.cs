@@ -151,6 +151,13 @@ namespace BackpackHero.EditorTools
                 BackpackVisualSettings.MinimumAircraftGlowEdgeWidth,
                 EditorGUILayout.FloatField("边缘宽度", current.AircraftGlowEdgeWidth));
 
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("装备底板显示", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("控制配置为 Glow 的装备底板是否使用滤色亮化；关闭时回退为 Normal。",
+                MessageType.None);
+            bool equipmentBottomPlateGlowEnabled = EditorGUILayout.Toggle(
+                "启用装备底板 Glow", current.EquipmentBottomPlateGlowEnabled);
+
             draft.Value = new BackpackVisualSettings(
                 current.OverridesEnabled, dragOpacity, legalPreviewColor,
                 illegalPreviewColor, mergeFlashMinimum, mergeFlashMaximum,
@@ -160,7 +167,8 @@ namespace BackpackHero.EditorTools
                 shopFlightDuration, levelFontColor, levelFontSize,
                 aircraftGlowEnabled, aircraftGlowColor,
                 aircraftGlowMinimumIntensity, aircraftGlowMaximumIntensity,
-                aircraftGlowCycleDuration, aircraftGlowEdgeWidth);
+                aircraftGlowCycleDuration, aircraftGlowEdgeWidth,
+                equipmentBottomPlateGlowEnabled);
         }
 
         private void DrawPersistence(BackpackVisualDebugRuntime runtime)

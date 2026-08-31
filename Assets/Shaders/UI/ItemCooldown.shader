@@ -54,6 +54,16 @@ Shader "Backpack/UI/Item Cooldown"
             Vector
         ) = (1, 1, 0, 0)
 
+        [Enum(Normal, 0, Glow, 1)] _BottomPlateDisplayMode (
+            "Bottom Plate Display Mode",
+            Float
+        ) = 0
+
+        _BottomPlateGlowStrength (
+            "Bottom Plate Glow Strength",
+            Range(0, 1)
+        ) = 0.68
+
         _AircraftGlowRenderMode (
             "Aircraft Glow Render Mode",
             Range(0, 1)
@@ -201,6 +211,8 @@ Shader "Backpack/UI/Item Cooldown"
             float _GrayOverlayStrength;
             float _PatternOverlayStrength;
             float4 _PatternTiling;
+            float _BottomPlateDisplayMode;
+            float _BottomPlateGlowStrength;
             float _AircraftGlowRenderMode;
             fixed4 _AircraftGlowColor;
             float _AircraftGlowMinimumIntensity;
@@ -378,6 +390,17 @@ Shader "Backpack/UI/Item Cooldown"
                             patternColor,
                             gradientMask *
                             saturate(_PatternOverlayStrength));
+                }
+
+                // Glow 采用 Screen（滤色）混合：保留底板的颜色与纹理细节，
+                // 同时抬升暗部和边框亮度。该模式仅由背景材质启用，图标不受影响。
+                if (_BottomPlateDisplayMode > 0.5)
+                {
+                    fixed3 glowSource = saturate(spriteColor.rgb * 1.45 + 0.12);
+                    fixed3 screenColor = 1.0 -
+                        (1.0 - spriteColor.rgb) * (1.0 - glowSource);
+                    spriteColor.rgb = lerp(spriteColor.rgb, screenColor,
+                        saturate(_BottomPlateGlowStrength));
                 }
 
                 spriteColor.rgb =

@@ -26,6 +26,7 @@ namespace BackpackHero.Debugging
         [SerializeField, Range(0f, 1f)] private float aircraftGlowMaximumIntensity = .45f;
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftGlowCycleDuration)] private float aircraftGlowCycleDuration = 1.2f;
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth)] private float aircraftGlowEdgeWidth = 8f;
+        [SerializeField] private bool equipmentBottomPlateGlowEnabled = true;
 
         public void SetValues(BackpackVisualSettings values)
         {
@@ -49,6 +50,7 @@ namespace BackpackHero.Debugging
             aircraftGlowMaximumIntensity = values.AircraftGlowMaximumIntensity;
             aircraftGlowCycleDuration = values.AircraftGlowCycleDuration;
             aircraftGlowEdgeWidth = values.AircraftGlowEdgeWidth;
+            equipmentBottomPlateGlowEnabled = values.EquipmentBottomPlateGlowEnabled;
         }
 
         public BackpackVisualSettings GetValues() => new(
@@ -59,7 +61,8 @@ namespace BackpackHero.Debugging
             shopFlightDuration, levelFontColor, levelFontSize,
             aircraftGlowEnabled, aircraftGlowColor,
             aircraftGlowMinimumIntensity, aircraftGlowMaximumIntensity,
-            aircraftGlowCycleDuration, aircraftGlowEdgeWidth);
+            aircraftGlowCycleDuration, aircraftGlowEdgeWidth,
+            equipmentBottomPlateGlowEnabled);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

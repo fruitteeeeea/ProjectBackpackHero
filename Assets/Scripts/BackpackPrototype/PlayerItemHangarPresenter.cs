@@ -58,12 +58,11 @@ namespace BackpackPrototype
             foreach (ItemData item in system.GetDeckItems())
                 deck.Add(item != null ? BuildSnapshot(item) : default);
 
-            // Preserve catalog order inside each category, but always expose aircraft before
-            // equipment in the collection.  Progression is currently uniform (all items are
-            // unlocked and max level), so it deliberately does not affect the sort order.
-            var collection = system.GetAllItems()
-                .Where(item => item != null && !system.IsEquipped(item))
-                .OrderBy(item => item.ItemType == ItemType.Aircraft ? 0 : 1)
+            var collection = OrderCollectionItems(
+                    system.GetAllItems(),
+                    system.IsEquipped,
+                    system.IsUnlocked,
+                    GetUnlockRank)
                 .Select(BuildSnapshot)
                 .ToList();
 
@@ -98,11 +97,37 @@ namespace BackpackPrototype
             return null;
         }
 
+        private static IEnumerable<ItemData> OrderCollectionItems(
+            IEnumerable<ItemData> items,
+            System.Func<ItemData, bool> isEquipped,
+            System.Func<ItemData, bool> isUnlocked,
+            System.Func<ItemData, int> getUnlockRank)
+        {
+            if (items == null) return System.Array.Empty<ItemData>();
+            return items
+                .Select((item, catalogIndex) => new
+                {
+                    Item = item,
+                    CatalogIndex = catalogIndex,
+                    Unlocked = item != null && isUnlocked(item),
+                    UnlockRank = item != null ? getUnlockRank(item) : 1
+                })
+                .Where(entry => entry.Item != null && !isEquipped(entry.Item))
+                .OrderBy(entry => entry.Item.ItemType == ItemType.Aircraft ? 0 : 1)
+                .ThenBy(entry => entry.Unlocked ? 0 : 1)
+                .ThenBy(entry => entry.Unlocked ? 0 : entry.UnlockRank)
+                .ThenBy(entry => entry.CatalogIndex)
+                .Select(entry => entry.Item)
+                .ToArray();
+        }
+
+        private static int GetUnlockRank(ItemData item) =>
+            RankProgressionSystem.Instance?.GetUnlockRankForItem(item.ItemId) ?? 1;
+
         private HangarItemSnapshot BuildSnapshot(ItemData item)
         {
             int level = system.GetLevel(item);
-            int unlockRank = RankProgressionSystem.Instance?
-                .GetUnlockRankForItem(item.ItemId) ?? 1;
+            int unlockRank = GetUnlockRank(item);
             string unlockText = unlockRank <= 1
                 ? "Available from the start"
                 : $"Unlocked at Rank {unlockRank}";

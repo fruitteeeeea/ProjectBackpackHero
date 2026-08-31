@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using BackpackPrototype;
 using BackpackHero.UI;
 using NUnit.Framework;
@@ -226,6 +228,50 @@ public sealed class PlayerItemSystemTests
         Assert.That(system.IsUnlocked(equipment), Is.True);
         Assert.That(system.IsUnlocked(coil), Is.True);
         Assert.That(system.IsUnlocked(locked), Is.False);
+    }
+
+    [Test]
+    public void HangarCollection_SeparatesTypesAndSortsLockedItemsByUnlockRank()
+    {
+        ItemData aircraftUnlocked = NewItem("aircraft_unlocked", type: ItemType.Aircraft);
+        ItemData aircraftRankTwoFirst = NewItem("aircraft_rank_two_first", type: ItemType.Aircraft);
+        ItemData aircraftRankFour = NewItem("aircraft_rank_four", type: ItemType.Aircraft);
+        ItemData aircraftRankTwoSecond = NewItem("aircraft_rank_two_second", type: ItemType.Aircraft);
+        ItemData aircraftEquipped = NewItem("aircraft_equipped", type: ItemType.Aircraft);
+        ItemData equipmentUnlocked = NewItem("equipment_unlocked");
+        ItemData equipmentRankTwo = NewItem("equipment_rank_two");
+        ItemData[] catalog =
+        {
+            aircraftRankTwoFirst, aircraftUnlocked, aircraftRankFour,
+            aircraftRankTwoSecond, aircraftEquipped, equipmentRankTwo, equipmentUnlocked
+        };
+        var unlocked = new HashSet<ItemData> { aircraftUnlocked, equipmentUnlocked };
+        var ranks = new Dictionary<ItemData, int>
+        {
+            [aircraftRankTwoFirst] = 2,
+            [aircraftRankFour] = 4,
+            [aircraftRankTwoSecond] = 2,
+            [aircraftEquipped] = 1,
+            [equipmentRankTwo] = 2
+        };
+        MethodInfo method = typeof(PlayerItemHangarPresenter).GetMethod(
+            "OrderCollectionItems", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.That(method, Is.Not.Null);
+
+        IEnumerable<ItemData> result = (IEnumerable<ItemData>)method.Invoke(null,
+            new object[]
+            {
+                catalog,
+                new System.Func<ItemData, bool>(item => item == aircraftEquipped),
+                new System.Func<ItemData, bool>(unlocked.Contains),
+                new System.Func<ItemData, int>(item => ranks.TryGetValue(item, out int rank) ? rank : 1)
+            });
+
+        Assert.That(result.ToArray(), Is.EqualTo(new[]
+        {
+            aircraftUnlocked, aircraftRankTwoFirst, aircraftRankTwoSecond,
+            aircraftRankFour, equipmentUnlocked, equipmentRankTwo
+        }));
     }
 
     [Test]

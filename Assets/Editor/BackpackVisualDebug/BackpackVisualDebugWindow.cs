@@ -133,7 +133,7 @@ namespace BackpackHero.EditorTools
 
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("底板高亮", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("开启后所有物品按等级配色；仅玩家背包内的飞机在准备阶段显示呼吸光晕。",
+            EditorGUILayout.HelpBox("控制既有的等级配色和仅限玩家背包飞机准备阶段的呼吸光晕；启用颜色品质模式后，底板保留美术原色。",
                 MessageType.None);
             bool aircraftGlowEnabled = EditorGUILayout.Toggle("启用底板高亮",
                 current.AircraftGlowEnabled);
@@ -158,6 +158,31 @@ namespace BackpackHero.EditorTools
             bool equipmentBottomPlateGlowEnabled = EditorGUILayout.Toggle(
                 "启用装备底板 Glow", current.EquipmentBottomPlateGlowEnabled);
 
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("颜色品质", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("开启后按局内等级显示美术品质底板：Lv.1 绿、Lv.2 蓝、Lv.3 紫。",
+                MessageType.None);
+            bool colorQualityModeEnabled = EditorGUILayout.Toggle(
+                "启用颜色品质模式", current.ColorQualityModeEnabled);
+            ItemQualityPalette itemQualityPalette =
+                (ItemQualityPalette)EditorGUILayout.ObjectField(
+                    "品质底板资源", current.ItemQualityPalette,
+                    typeof(ItemQualityPalette), false);
+            bool aircraftQualityPulseEnabled = EditorGUILayout.Toggle(
+                "启用飞机呼吸脉冲", current.AircraftQualityPulseEnabled);
+            float aircraftQualityPulseInterval = Mathf.Max(
+                BackpackVisualSettings.MinimumAircraftQualityPulseInterval,
+                EditorGUILayout.FloatField("飞机呼吸间隔（秒）",
+                    current.AircraftQualityPulseInterval));
+            float aircraftQualityPulseScaleMultiplier = Mathf.Max(
+                BackpackVisualSettings.MinimumAircraftQualityPulseScale,
+                EditorGUILayout.FloatField("飞机呼吸放大倍数",
+                    current.AircraftQualityPulseScaleMultiplier));
+            float aircraftQualityPulseTweenDuration = Mathf.Max(
+                BackpackVisualSettings.MinimumAircraftQualityPulseTweenDuration,
+                EditorGUILayout.FloatField("飞机呼吸 Tween 时间（秒）",
+                    current.AircraftQualityPulseTweenDuration));
+
             draft.Value = new BackpackVisualSettings(
                 current.OverridesEnabled, dragOpacity, legalPreviewColor,
                 illegalPreviewColor, mergeFlashMinimum, mergeFlashMaximum,
@@ -168,7 +193,11 @@ namespace BackpackHero.EditorTools
                 aircraftGlowEnabled, aircraftGlowColor,
                 aircraftGlowMinimumIntensity, aircraftGlowMaximumIntensity,
                 aircraftGlowCycleDuration, aircraftGlowEdgeWidth,
-                equipmentBottomPlateGlowEnabled);
+                equipmentBottomPlateGlowEnabled, colorQualityModeEnabled,
+                itemQualityPalette, aircraftQualityPulseEnabled,
+                aircraftQualityPulseInterval,
+                aircraftQualityPulseScaleMultiplier,
+                aircraftQualityPulseTweenDuration);
         }
 
         private void DrawPersistence(BackpackVisualDebugRuntime runtime)

@@ -26,10 +26,16 @@ MonoBehaviour:
   shopFlightDuration: 0.32
   levelFontColor: {r: 1, g: 1, b: 1, a: 1}
   levelFontSize: 24
-  aircraftGlowEnabled: 0
+  aircraftGlowEnabled: 1
   aircraftGlowColor: {r: 1, g: 1, b: 1, a: 1}
-  aircraftGlowMinimumIntensity: 0.12
-  aircraftGlowMaximumIntensity: 0.45
+  aircraftGlowMinimumIntensity: 0.8521
+  aircraftGlowMaximumIntensity: 1
   aircraftGlowCycleDuration: 1.2
   aircraftGlowEdgeWidth: 8
-  equipmentBottomPlateGlowEnabled: 1
+  equipmentBottomPlateGlowEnabled: 0
+  colorQualityModeEnabled: 1
+  itemQualityPalette: {fileID: 11400000, guid: d7b9785bd9b7499aad4fb87a0767fa09, type: 2}
+  aircraftQualityPulseEnabled: 0
+  aircraftQualityPulseInterval: 0.8
+  aircraftQualityPulseScaleMultiplier: 1.12
+  aircraftQualityPulseTweenDuration: 0.45

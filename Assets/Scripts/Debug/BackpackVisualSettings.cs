@@ -22,6 +22,9 @@ namespace BackpackHero.Debugging
         public const float MinimumLevelFontSize = 0.01f;
         public const float MinimumAircraftGlowCycleDuration = 0.01f;
         public const float MinimumAircraftGlowEdgeWidth = 0f;
+        public const float MinimumAircraftQualityPulseInterval = 0f;
+        public const float MinimumAircraftQualityPulseScale = 1f;
+        public const float MinimumAircraftQualityPulseTweenDuration = 0.01f;
 
         public static BackpackVisualSettings Default => new(
             true, .5f,
@@ -30,7 +33,8 @@ namespace BackpackHero.Debugging
             .18f, .62f, .7f,
             1.17f, 10f, -6f, BackpackPlacementScaleEase.OutElastic,
             .32f, Color.white, 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f, false);
+            true, Color.white, .12f, .45f, 1.2f, 8f, false, true, null, true,
+            .8f, 1.12f, .45f);
 
         public BackpackVisualSettings(
             bool overridesEnabled,
@@ -53,7 +57,13 @@ namespace BackpackHero.Debugging
             float aircraftGlowMaximumIntensity,
             float aircraftGlowCycleDuration,
             float aircraftGlowEdgeWidth,
-            bool equipmentBottomPlateGlowEnabled)
+            bool equipmentBottomPlateGlowEnabled,
+            bool colorQualityModeEnabled,
+            ItemQualityPalette itemQualityPalette,
+            bool aircraftQualityPulseEnabled,
+            float aircraftQualityPulseInterval,
+            float aircraftQualityPulseScaleMultiplier,
+            float aircraftQualityPulseTweenDuration)
         {
             OverridesEnabled = overridesEnabled;
             DragOpacity = Mathf.Clamp(dragOpacity, MinimumDragOpacity,
@@ -84,6 +94,18 @@ namespace BackpackHero.Debugging
             AircraftGlowEdgeWidth = Mathf.Max(MinimumAircraftGlowEdgeWidth,
                 aircraftGlowEdgeWidth);
             EquipmentBottomPlateGlowEnabled = equipmentBottomPlateGlowEnabled;
+            ColorQualityModeEnabled = colorQualityModeEnabled;
+            ItemQualityPalette = itemQualityPalette;
+            AircraftQualityPulseEnabled = aircraftQualityPulseEnabled;
+            AircraftQualityPulseInterval = Mathf.Max(
+                MinimumAircraftQualityPulseInterval,
+                aircraftQualityPulseInterval);
+            AircraftQualityPulseScaleMultiplier = Mathf.Max(
+                MinimumAircraftQualityPulseScale,
+                aircraftQualityPulseScaleMultiplier);
+            AircraftQualityPulseTweenDuration = Mathf.Max(
+                MinimumAircraftQualityPulseTweenDuration,
+                aircraftQualityPulseTweenDuration);
         }
 
         public bool OverridesEnabled { get; }
@@ -107,6 +129,12 @@ namespace BackpackHero.Debugging
         public float AircraftGlowCycleDuration { get; }
         public float AircraftGlowEdgeWidth { get; }
         public bool EquipmentBottomPlateGlowEnabled { get; }
+        public bool ColorQualityModeEnabled { get; }
+        public ItemQualityPalette ItemQualityPalette { get; }
+        public bool AircraftQualityPulseEnabled { get; }
+        public float AircraftQualityPulseInterval { get; }
+        public float AircraftQualityPulseScaleMultiplier { get; }
+        public float AircraftQualityPulseTweenDuration { get; }
         public bool UsesFactionLevelColor => !OverridesEnabled ||
             IsWhiteRgb(LevelFontColor);
 
@@ -124,7 +152,11 @@ namespace BackpackHero.Debugging
             AircraftGlowEnabled, AircraftGlowColor,
             AircraftGlowMinimumIntensity, AircraftGlowMaximumIntensity,
             AircraftGlowCycleDuration, AircraftGlowEdgeWidth,
-            EquipmentBottomPlateGlowEnabled);
+            EquipmentBottomPlateGlowEnabled, ColorQualityModeEnabled,
+            ItemQualityPalette, AircraftQualityPulseEnabled,
+            AircraftQualityPulseInterval,
+            AircraftQualityPulseScaleMultiplier,
+            AircraftQualityPulseTweenDuration);
 
         private static bool IsWhiteRgb(Color color) =>
             Mathf.Approximately(color.r, 1f) &&
@@ -161,7 +193,16 @@ namespace BackpackHero.Debugging
             Mathf.Approximately(AircraftGlowEdgeWidth,
                 other.AircraftGlowEdgeWidth) &&
             EquipmentBottomPlateGlowEnabled ==
-                other.EquipmentBottomPlateGlowEnabled;
+                other.EquipmentBottomPlateGlowEnabled &&
+            ColorQualityModeEnabled == other.ColorQualityModeEnabled &&
+            ItemQualityPalette == other.ItemQualityPalette &&
+            AircraftQualityPulseEnabled == other.AircraftQualityPulseEnabled &&
+            Mathf.Approximately(AircraftQualityPulseInterval,
+                other.AircraftQualityPulseInterval) &&
+            Mathf.Approximately(AircraftQualityPulseScaleMultiplier,
+                other.AircraftQualityPulseScaleMultiplier) &&
+            Mathf.Approximately(AircraftQualityPulseTweenDuration,
+                other.AircraftQualityPulseTweenDuration);
 
         public override bool Equals(object obj) =>
             obj is BackpackVisualSettings other && Equals(other);
@@ -190,8 +231,17 @@ namespace BackpackHero.Debugging
                 hash = (hash * 31) + AircraftGlowMaximumIntensity.GetHashCode();
                 hash = (hash * 31) + AircraftGlowCycleDuration.GetHashCode();
                 hash = (hash * 31) + AircraftGlowEdgeWidth.GetHashCode();
-                return (hash * 31) +
+                hash = (hash * 31) +
                     (EquipmentBottomPlateGlowEnabled ? 1 : 0);
+                hash = (hash * 31) + (ColorQualityModeEnabled ? 1 : 0);
+                hash = (hash * 31) +
+                    (ItemQualityPalette != null ? ItemQualityPalette.GetHashCode() : 0);
+                hash = (hash * 31) + (AircraftQualityPulseEnabled ? 1 : 0);
+                hash = (hash * 31) + AircraftQualityPulseInterval.GetHashCode();
+                hash = (hash * 31) +
+                    AircraftQualityPulseScaleMultiplier.GetHashCode();
+                return (hash * 31) +
+                    AircraftQualityPulseTweenDuration.GetHashCode();
             }
         }
     }

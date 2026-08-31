@@ -27,6 +27,12 @@ namespace BackpackHero.Debugging
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftGlowCycleDuration)] private float aircraftGlowCycleDuration = 1.2f;
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth)] private float aircraftGlowEdgeWidth = 8f;
         [SerializeField] private bool equipmentBottomPlateGlowEnabled;
+        [SerializeField] private bool colorQualityModeEnabled = true;
+        [SerializeField] private ItemQualityPalette itemQualityPalette;
+        [SerializeField] private bool aircraftQualityPulseEnabled = true;
+        [SerializeField, Min(BackpackVisualSettings.MinimumAircraftQualityPulseInterval)] private float aircraftQualityPulseInterval = .8f;
+        [SerializeField, Min(BackpackVisualSettings.MinimumAircraftQualityPulseScale)] private float aircraftQualityPulseScaleMultiplier = 1.12f;
+        [SerializeField, Min(BackpackVisualSettings.MinimumAircraftQualityPulseTweenDuration)] private float aircraftQualityPulseTweenDuration = .45f;
 
         public void SetValues(BackpackVisualSettings values)
         {
@@ -51,6 +57,14 @@ namespace BackpackHero.Debugging
             aircraftGlowCycleDuration = values.AircraftGlowCycleDuration;
             aircraftGlowEdgeWidth = values.AircraftGlowEdgeWidth;
             equipmentBottomPlateGlowEnabled = values.EquipmentBottomPlateGlowEnabled;
+            colorQualityModeEnabled = values.ColorQualityModeEnabled;
+            itemQualityPalette = values.ItemQualityPalette;
+            aircraftQualityPulseEnabled = values.AircraftQualityPulseEnabled;
+            aircraftQualityPulseInterval = values.AircraftQualityPulseInterval;
+            aircraftQualityPulseScaleMultiplier =
+                values.AircraftQualityPulseScaleMultiplier;
+            aircraftQualityPulseTweenDuration =
+                values.AircraftQualityPulseTweenDuration;
         }
 
         public BackpackVisualSettings GetValues() => new(
@@ -62,7 +76,11 @@ namespace BackpackHero.Debugging
             aircraftGlowEnabled, aircraftGlowColor,
             aircraftGlowMinimumIntensity, aircraftGlowMaximumIntensity,
             aircraftGlowCycleDuration, aircraftGlowEdgeWidth,
-            equipmentBottomPlateGlowEnabled);
+            equipmentBottomPlateGlowEnabled, colorQualityModeEnabled,
+            itemQualityPalette, aircraftQualityPulseEnabled,
+            aircraftQualityPulseInterval,
+            aircraftQualityPulseScaleMultiplier,
+            aircraftQualityPulseTweenDuration);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

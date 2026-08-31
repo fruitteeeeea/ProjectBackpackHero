@@ -36,6 +36,14 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(settings.AircraftGlowCycleDuration, Is.EqualTo(1.2f));
         Assert.That(settings.AircraftGlowEdgeWidth, Is.EqualTo(8f));
         Assert.That(settings.EquipmentBottomPlateGlowEnabled, Is.False);
+        Assert.That(settings.ColorQualityModeEnabled, Is.True);
+        Assert.That(settings.ItemQualityPalette, Is.Null);
+        Assert.That(settings.AircraftQualityPulseEnabled, Is.True);
+        Assert.That(settings.AircraftQualityPulseInterval, Is.EqualTo(.8f));
+        Assert.That(settings.AircraftQualityPulseScaleMultiplier,
+            Is.EqualTo(1.12f));
+        Assert.That(settings.AircraftQualityPulseTweenDuration,
+            Is.EqualTo(.45f));
     }
 
     [Test]
@@ -46,7 +54,8 @@ public sealed class BackpackVisualSettingsTests
         BackpackVisualSettings expected = new(false, -1f, Color.red,
             Color.blue, -1f, 2f, -2f, .5f, 13f, -9f,
             BackpackPlacementScaleEase.OutCubic, -3f, Color.green, -4f,
-            true, Color.magenta, -1f, 2f, -3f, -4f, false);
+            true, Color.magenta, -1f, 2f, -3f, -4f, false, false, null, false,
+            -1f, .5f, -2f);
         try
         {
             asset.SetValues(expected);
@@ -80,6 +89,15 @@ public sealed class BackpackVisualSettingsTests
             Assert.That(actual.AircraftGlowEdgeWidth,
                 Is.EqualTo(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth));
             Assert.That(actual.EquipmentBottomPlateGlowEnabled, Is.False);
+            Assert.That(actual.ColorQualityModeEnabled, Is.False);
+            Assert.That(actual.ItemQualityPalette, Is.Null);
+            Assert.That(actual.AircraftQualityPulseEnabled, Is.False);
+            Assert.That(actual.AircraftQualityPulseInterval,
+                Is.EqualTo(BackpackVisualSettings.MinimumAircraftQualityPulseInterval));
+            Assert.That(actual.AircraftQualityPulseScaleMultiplier,
+                Is.EqualTo(BackpackVisualSettings.MinimumAircraftQualityPulseScale));
+            Assert.That(actual.AircraftQualityPulseTweenDuration,
+                Is.EqualTo(BackpackVisualSettings.MinimumAircraftQualityPulseTweenDuration));
             Assert.That(actual.GetPlacementScaleDotweenEase(),
                 Is.EqualTo(DG.Tweening.Ease.OutCubic));
             Assert.That(BackpackVisualSettings.Default
@@ -98,11 +116,13 @@ public sealed class BackpackVisualSettingsTests
             Color.magenta, .18f, .62f, .7f, 1.17f, 10f, -6f,
             BackpackPlacementScaleEase.OutElastic, .32f,
             new Color(1f, 1f, 1f, .2f), 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f, true);
+            true, Color.white, .12f, .45f, 1.2f, 8f, true, true, null, true,
+            .8f, 1.12f, .45f);
         BackpackVisualSettings custom = new(true, .5f, Color.yellow,
             Color.magenta, .18f, .62f, .7f, 1.17f, 10f, -6f,
             BackpackPlacementScaleEase.OutElastic, .32f, Color.green, 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f, true);
+            true, Color.white, .12f, .45f, 1.2f, 8f, true, true, null, true,
+            .8f, 1.12f, .45f);
 
         Assert.That(white.UsesFactionLevelColor, Is.True);
         Assert.That(custom.UsesFactionLevelColor, Is.False);
@@ -115,7 +135,7 @@ public sealed class BackpackVisualSettingsTests
     {
         BackpackVisualDebugSettings asset =
             AssetDatabase.LoadAssetAtPath<BackpackVisualDebugSettings>(
-                "Assets/Resources/BackpackVisual/BackpackVisualDebugSettings.asset");
+                "Assets/GameData/Visual/BackpackVisual.asset");
 
         Assert.That(asset, Is.Not.Null);
         BackpackVisualSettings values = asset.GetValues();
@@ -126,6 +146,14 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(values.AircraftGlowEdgeWidth,
             Is.GreaterThanOrEqualTo(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth));
         Assert.That(values.EquipmentBottomPlateGlowEnabled, Is.False);
+        Assert.That(values.ColorQualityModeEnabled, Is.True);
+        Assert.That(values.ItemQualityPalette, Is.Not.Null);
+        Assert.That(values.AircraftQualityPulseEnabled, Is.True);
+        Assert.That(values.AircraftQualityPulseInterval, Is.EqualTo(.8f));
+        Assert.That(values.AircraftQualityPulseScaleMultiplier,
+            Is.EqualTo(1.12f));
+        Assert.That(values.AircraftQualityPulseTweenDuration,
+            Is.EqualTo(.45f));
     }
 
     [Test]
@@ -155,6 +183,35 @@ public sealed class BackpackVisualSettingsTests
     }
 
     [Test]
+    public void AircraftQualityPulse_RequiresQualityModePlayerBackpackAircraft()
+    {
+        Assert.That(ItemView.IsAircraftQualityPulseEligible(true, true,
+            ItemType.Aircraft, true, BattleFaction.Player,
+            BattlePhase.Preparation, false), Is.True);
+        Assert.That(ItemView.IsAircraftQualityPulseEligible(false, true,
+            ItemType.Aircraft, true, BattleFaction.Player,
+            BattlePhase.Preparation, false), Is.False);
+        Assert.That(ItemView.IsAircraftQualityPulseEligible(true, false,
+            ItemType.Aircraft, true, BattleFaction.Player,
+            BattlePhase.Preparation, false), Is.False);
+        Assert.That(ItemView.IsAircraftQualityPulseEligible(true, true,
+            ItemType.Equipment, true, BattleFaction.Player,
+            BattlePhase.Preparation, false), Is.False);
+        Assert.That(ItemView.IsAircraftQualityPulseEligible(true, true,
+            ItemType.Aircraft, false, BattleFaction.Player,
+            BattlePhase.Preparation, false), Is.False);
+        Assert.That(ItemView.IsAircraftQualityPulseEligible(true, true,
+            ItemType.Aircraft, true, BattleFaction.Enemy,
+            BattlePhase.Preparation, false), Is.False);
+        Assert.That(ItemView.IsAircraftQualityPulseEligible(true, true,
+            ItemType.Aircraft, true, BattleFaction.Player,
+            BattlePhase.Combat, false), Is.False);
+        Assert.That(ItemView.IsAircraftQualityPulseEligible(true, true,
+            ItemType.Aircraft, true, BattleFaction.Player,
+            BattlePhase.Preparation, true), Is.False);
+    }
+
+    [Test]
     public void BottomPlateHighlight_UsesLevelColorsAndHidesOnlyEquipmentLabels()
     {
         Color original = Color.red;
@@ -175,5 +232,16 @@ public sealed class BackpackVisualSettingsTests
             ItemType.Aircraft), Is.False);
         Assert.That(ItemView.ShouldHideEquipmentLevelLabel(false,
             ItemType.Equipment), Is.False);
+    }
+
+    [Test]
+    public void ColorQualityMode_UsesAuthoredSpriteColorInsteadOfCodeTint()
+    {
+        Color original = new(.2f, .4f, .6f, 1f);
+
+        Assert.That(ItemView.GetBottomPlateTint(original, 2, true, true),
+            Is.EqualTo(Color.white));
+        Assert.That(ItemView.GetBottomPlateTint(original, 2, true, false),
+            Is.EqualTo(ItemView.GetBottomPlateColor(original, 2, true)));
     }
 }

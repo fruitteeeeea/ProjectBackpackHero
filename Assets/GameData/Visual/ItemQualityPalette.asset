@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2799487867641309133f0224d461c04, type: 3}
+  m_Name: ItemQualityPalette
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.ItemQualityPalette
+  qualitySprites:
+  - quality: 1
+    verticalBar: {fileID: 6110307778057590723, guid: 78da1925898be0f4baf02505bb02bf6e, type: 3}
+    horizontalBar: {fileID: 3836832779635166192, guid: 1fbe8e916e82bc049a19d0a25a52d2d3, type: 3}
+    lMissingBottomLeft: {fileID: 6236314246489749437, guid: 69dba6767f146124f97bf6bfd2d8d92a, type: 3}
+    lMissingBottomRight: {fileID: 1578180853955948841, guid: 14a62971ab09107458830e13fb918369, type: 3}
+    lMissingTopLeft: {fileID: 6836789010210245398, guid: 7fe709446d0959a4387a0664fcab97bd, type: 3}
+    lMissingTopRight: {fileID: -8563498419752950959, guid: 82859bee36c609b41add73e40e7786bb, type: 3}
+  - quality: 2
+    verticalBar: {fileID: 6110307778057590723, guid: 812a40e405d5e45448d110fad701adba, type: 3}
+    horizontalBar: {fileID: 3836832779635166192, guid: 9e5c5cee86560c44da45bfe1bacd5f3f, type: 3}
+    lMissingBottomLeft: {fileID: 6236314246489749437, guid: 626e3311468639145a4c4ad649714399, type: 3}
+    lMissingBottomRight: {fileID: 1578180853955948841, guid: ca05f4e667dc8f84cb546adbaeda46cc, type: 3}
+    lMissingTopLeft: {fileID: 6836789010210245398, guid: b54f86a21137f8641a2c67823a8908b0, type: 3}
+    lMissingTopRight: {fileID: -8563498419752950959, guid: 8fa5d8405e6e66044bea4fcce2df1f01, type: 3}
+  - quality: 3
+    verticalBar: {fileID: 6110307778057590723, guid: 6930c98b2eb6c764cba0d8a5c80c347c, type: 3}
+    horizontalBar: {fileID: 3836832779635166192, guid: a1b5648d433d58b47a412518b9b840fd, type: 3}
+    lMissingBottomLeft: {fileID: 6236314246489749437, guid: b2c2d604ec0f49c48a3ecf280240fe96, type: 3}
+    lMissingBottomRight: {fileID: 1578180853955948841, guid: ba763cbf12f4ddc428b7d19d0e990599, type: 3}
+    lMissingTopLeft: {fileID: 6836789010210245398, guid: 5c45489216919e843a27ce6331db9f44, type: 3}
+    lMissingTopRight: {fileID: -8563498419752950959, guid: c555c7361093edd4da63025dec82a940, type: 3}
+  - quality: 4
+    verticalBar: {fileID: 6110307778057590723, guid: b63c46ed47e5a234ab94cc649f8b6500, type: 3}
+    horizontalBar: {fileID: 3836832779635166192, guid: 49e8a7a2ecd80ce4a93038f58b2f4f64, type: 3}
+    lMissingBottomLeft: {fileID: 6236314246489749437, guid: e844d790ec7aedc42b814b6d96053ad9, type: 3}
+    lMissingBottomRight: {fileID: 1578180853955948841, guid: f75fcd7f2621f4646a3f890396877407, type: 3}
+    lMissingTopLeft: {fileID: 6836789010210245398, guid: 7fb786c217be1134fb7acc6ae23ef3ae, type: 3}
+    lMissingTopRight: {fileID: -8563498419752950959, guid: 0bf4e643aee34324cab8639311220a4b, type: 3}

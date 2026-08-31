@@ -76,6 +76,7 @@ namespace BackpackPrototype
         private Tween mergeFlashTween;
         private Tween shopTransitionTween;
         private Tween shopAppearanceTween;
+        private Tween aircraftQualityPulseTween;
         private bool mergeHighlightActive;
         private bool isDeletePreviewActive;
         private float cooldownFlashAmount;
@@ -105,6 +106,7 @@ namespace BackpackPrototype
         private Material iconCooldownMaterial;
         private Image aircraftGlowImage;
         private Material aircraftGlowMaterial;
+        private Image aircraftQualityPulseImage;
         private Sprite style1BackgroundSprite;
 
         public ItemInstance Instance { get; private set; }
@@ -321,6 +323,7 @@ namespace BackpackPrototype
             }
 
             ResizeToShape(cellSize, spacing);
+            ApplyItemBaseStyle();
 
             if (background != null &&
                 instance != null &&
@@ -366,6 +369,7 @@ namespace BackpackPrototype
                 HandleBackpackVisualSettingsChanged;
             BattleFlowController.PhaseChanged += HandleBattlePhaseChanged;
             RefreshAircraftGlow();
+            RefreshAircraftQualityPulse();
         }
 
         public void SetShopDropZone(RectTransform shopDropZone)
@@ -388,6 +392,7 @@ namespace BackpackPrototype
             rectTransform.localRotation = Quaternion.identity;
             IsPlacedInBackpack = false;
             RefreshAircraftGlow();
+            RefreshAircraftQualityPulse();
         }
 
         /// <summary>
@@ -433,6 +438,7 @@ namespace BackpackPrototype
             rectTransform.pivot = new Vector2(.5f, .5f);
             IsPlacedInBackpack = false;
             RefreshAircraftGlow();
+            RefreshAircraftQualityPulse();
 
             shopTransitionTween = DOTween.Sequence()
                 .Join(rectTransform.DOAnchorPos(anchoredPosition, duration)
@@ -602,6 +608,7 @@ namespace BackpackPrototype
         private void InitializeCooldownMaterials()
         {
             ReleaseAircraftGlow();
+            ReleaseAircraftQualityPulse();
             ReleaseCooldownMaterials();
 
             originalBackgroundMaterial =
@@ -634,6 +641,7 @@ namespace BackpackPrototype
             mergeFlashAmount = 0f;
             ApplyFlashAmount();
             InitializeAircraftGlow();
+            RefreshAircraftQualityPulse();
         }
 
         private void InitializeAircraftGlow()
@@ -777,6 +785,19 @@ namespace BackpackPrototype
             itemType == ItemType.Aircraft && isPlacedInBackpack &&
             faction == BattleFaction.Player && phase == BattlePhase.Preparation;
 
+        public static bool IsAircraftQualityPulseEligible(
+            bool colorQualityModeActive,
+            bool aircraftQualityPulseEnabled,
+            ItemType itemType,
+            bool isPlacedInBackpack,
+            BattleFaction faction,
+            BattlePhase phase,
+            bool isDragging) =>
+            colorQualityModeActive && aircraftQualityPulseEnabled &&
+            itemType == ItemType.Aircraft &&
+            isPlacedInBackpack && faction == BattleFaction.Player &&
+            phase == BattlePhase.Preparation && !isDragging;
+
         private void HandleCooldownCompleted(
             ItemInstance completedItem)
         {
@@ -851,7 +872,8 @@ namespace BackpackPrototype
                     Instance.Data.BottomPlateDisplayMode ==
                         BottomPlateDisplayMode.Glow &&
                     settings.OverridesEnabled &&
-                    settings.EquipmentBottomPlateGlowEnabled;
+                    settings.EquipmentBottomPlateGlowEnabled &&
+                    !IsColorQualityModeActive(settings);
                 float bottomPlateDisplayMode = shouldUseEquipmentGlow
                     ? (float)BottomPlateDisplayMode.Glow
                     : (float)BottomPlateDisplayMode.Normal;
@@ -891,6 +913,7 @@ namespace BackpackPrototype
         {
             if (item == Instance)
             {
+                ApplyItemBaseStyle();
                 RefreshLevelLabel();
                 RefreshBottomPlateVisual();
             }
@@ -1046,6 +1069,174 @@ namespace BackpackPrototype
             }
         }
 
+        private void RefreshAircraftQualityPulse()
+        {
+            StopAircraftQualityPulse();
+
+            BackpackVisualSettings settings =
+                BackpackVisualDebugRuntime.CurrentSettings;
+            ItemType itemType = Instance != null && Instance.Data != null
+                ? Instance.Data.ItemType
+                : ItemType.Equipment;
+            BattleFaction faction = CombatController == null
+                ? BattleFaction.Player
+                : CombatController.Faction;
+            if (!IsAircraftQualityPulseEligible(
+                    IsColorQualityModeActive(settings),
+                    settings.AircraftQualityPulseEnabled, itemType,
+                    IsPlacedInBackpack, faction,
+                    BattleFlowController.CurrentPhase, isDragging) ||
+                !EnsureAircraftQualityPulseImage())
+            {
+                return;
+            }
+
+            RectTransform pulseTransform =
+                aircraftQualityPulseImage.rectTransform;
+            aircraftQualityPulseTween = DOTween.Sequence()
+                .AppendInterval(settings.AircraftQualityPulseInterval)
+                .AppendCallback(PrepareAircraftQualityPulse)
+                .Append(pulseTransform.DOScale(
+                    rectTransform.localScale *
+                    settings.AircraftQualityPulseScaleMultiplier,
+                    settings.AircraftQualityPulseTweenDuration)
+                    .SetEase(Ease.OutCubic))
+                .Join(DOTween.To(
+                    () => aircraftQualityPulseImage.color.a,
+                    SetAircraftQualityPulseAlpha,
+                    0f,
+                    settings.AircraftQualityPulseTweenDuration)
+                    .SetEase(Ease.OutCubic))
+                .OnComplete(() =>
+                {
+                    aircraftQualityPulseTween = null;
+                    ResetAircraftQualityPulseImage();
+                    RefreshAircraftQualityPulse();
+                });
+        }
+
+        private bool EnsureAircraftQualityPulseImage()
+        {
+            if (aircraftQualityPulseImage != null)
+            {
+                return true;
+            }
+
+            if (background == null || background.sprite == null ||
+                rectTransform == null)
+            {
+                return false;
+            }
+
+            GameObject pulseObject = new("Aircraft Quality Pulse",
+                typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            Transform pulseParent = transform.parent != null
+                ? transform.parent
+                : transform;
+            pulseObject.transform.SetParent(pulseParent, false);
+            pulseObject.transform.SetSiblingIndex(transform.GetSiblingIndex());
+            aircraftQualityPulseImage = pulseObject.GetComponent<Image>();
+            aircraftQualityPulseImage.raycastTarget = false;
+            ResetAircraftQualityPulseImage();
+            return true;
+        }
+
+        private void PrepareAircraftQualityPulse()
+        {
+            if (aircraftQualityPulseImage == null)
+            {
+                return;
+            }
+
+            SyncAircraftQualityPulseImage();
+            aircraftQualityPulseImage.gameObject.SetActive(true);
+        }
+
+        private void SetAircraftQualityPulseAlpha(float value)
+        {
+            if (aircraftQualityPulseImage == null)
+            {
+                return;
+            }
+
+            Color color = aircraftQualityPulseImage.color;
+            color.a = value;
+            aircraftQualityPulseImage.color = color;
+        }
+
+        private void StopAircraftQualityPulse()
+        {
+            aircraftQualityPulseTween?.Kill();
+            aircraftQualityPulseTween = null;
+            ResetAircraftQualityPulseImage();
+        }
+
+        private void ResetAircraftQualityPulseImage()
+        {
+            if (aircraftQualityPulseImage == null)
+            {
+                return;
+            }
+
+            SyncAircraftQualityPulseImage();
+            aircraftQualityPulseImage.gameObject.SetActive(false);
+        }
+
+        private void SyncAircraftQualityPulseImage()
+        {
+            if (aircraftQualityPulseImage == null || background == null ||
+                rectTransform == null)
+            {
+                return;
+            }
+
+            RectTransform pulseTransform =
+                aircraftQualityPulseImage.rectTransform;
+            Transform targetParent = rectTransform.parent;
+            if (targetParent != null && pulseTransform.parent != targetParent)
+            {
+                pulseTransform.SetParent(targetParent, false);
+            }
+
+            pulseTransform.SetSiblingIndex(rectTransform.GetSiblingIndex());
+            pulseTransform.anchorMin = rectTransform.anchorMin;
+            pulseTransform.anchorMax = rectTransform.anchorMax;
+            Vector2 pulsePivot = new(.5f, .5f);
+            Vector2 scaledRectSize = Vector2.Scale(
+                rectTransform.rect.size,
+                new Vector2(rectTransform.localScale.x,
+                    rectTransform.localScale.y));
+            Vector2 pivotToCenter = Vector2.Scale(
+                pulsePivot - rectTransform.pivot,
+                scaledRectSize);
+            Vector3 rotatedPivotToCenter = rectTransform.localRotation *
+                new Vector3(pivotToCenter.x, pivotToCenter.y, 0f);
+            // 背包物品通常使用左上 Pivot。脉冲层改为中心 Pivot 后，
+            // 先补偿到原底板的几何中心，放大才会向四周均匀扩张。
+            pulseTransform.pivot = pulsePivot;
+            pulseTransform.anchoredPosition = rectTransform.anchoredPosition +
+                new Vector2(rotatedPivotToCenter.x, rotatedPivotToCenter.y);
+            pulseTransform.sizeDelta = rectTransform.sizeDelta;
+            pulseTransform.localScale = rectTransform.localScale;
+            pulseTransform.localRotation = rectTransform.localRotation;
+            aircraftQualityPulseImage.sprite = background.sprite;
+            aircraftQualityPulseImage.type = background.type;
+            aircraftQualityPulseImage.preserveAspect = background.preserveAspect;
+            aircraftQualityPulseImage.material = background.material;
+            aircraftQualityPulseImage.color = background.color;
+        }
+
+        private void ReleaseAircraftQualityPulse()
+        {
+            aircraftQualityPulseTween?.Kill();
+            aircraftQualityPulseTween = null;
+            if (aircraftQualityPulseImage != null)
+            {
+                Destroy(aircraftQualityPulseImage.gameObject);
+                aircraftQualityPulseImage = null;
+            }
+        }
+
         private static void ReleaseCooldownMaterial(
             Image targetImage,
             Material runtimeMaterial,
@@ -1085,6 +1276,7 @@ namespace BackpackPrototype
             rectTransform.pivot = new Vector2(0f, 1f);
             rectTransform.anchoredPosition = GridView.GetItemAnchoredPosition(anchorCell);
             RefreshAircraftGlow();
+            RefreshAircraftQualityPulse();
         }
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -1099,6 +1291,7 @@ namespace BackpackPrototype
             isDragging = true;
             PlayBackpackItemSfx();
             RefreshAircraftGlow();
+            RefreshAircraftQualityPulse();
             RequestSelection();
             canDeleteFromTrash = IsPlacedInBackpack;
             originalParent = rectTransform.parent;
@@ -1182,6 +1375,7 @@ namespace BackpackPrototype
         {
             isDragging = false;
             RefreshAircraftGlow();
+            RefreshAircraftQualityPulse();
             dragPositionTween?.Kill();
             dragPositionTween = null;
             DragStateChanged?.Invoke(this, false);
@@ -1552,6 +1746,7 @@ namespace BackpackPrototype
             mergeFlashTween?.Kill();
             shopTransitionTween?.Kill();
             shopAppearanceTween?.Kill();
+            ReleaseAircraftQualityPulse();
             BackpackVisualDebugRuntime.SettingsChanged -=
                 HandleBackpackVisualSettingsChanged;
             ArtAssetDebugRuntime.SettingsChanged -=
@@ -1573,10 +1768,12 @@ namespace BackpackPrototype
         private void HandleBackpackVisualSettingsChanged(
             BackpackVisualSettings _)
         {
+            ApplyItemBaseStyle();
             ApplyItemVisualStyle();
             RefreshLevelLabel();
             RefreshBottomPlateVisual();
             RefreshAircraftGlow();
+            RefreshAircraftQualityPulse();
             if (mergeHighlightActive)
             {
                 SetMergeHighlight(true);
@@ -1596,8 +1793,9 @@ namespace BackpackPrototype
                 return;
             }
 
-            Sprite sprite = ArtAssetDebugRuntime.GetCurrentItemBaseSprite(
+            Sprite fallback = ArtAssetDebugRuntime.GetCurrentItemBaseSprite(
                 itemBaseShape, style1BackgroundSprite);
+            Sprite sprite = ResolveBottomPlateSprite(fallback);
             if (sprite == null)
             {
                 return;
@@ -1610,11 +1808,34 @@ namespace BackpackPrototype
                 SyncAircraftGlowTransform();
                 RefreshAircraftGlow();
             }
+            if (aircraftQualityPulseImage != null)
+            {
+                RefreshAircraftQualityPulse();
+            }
         }
+
+        private Sprite ResolveBottomPlateSprite(Sprite fallback)
+        {
+            BackpackVisualSettings settings =
+                BackpackVisualDebugRuntime.CurrentSettings;
+            if (!IsColorQualityModeActive(settings) || Instance == null)
+            {
+                return fallback;
+            }
+
+            return settings.ItemQualityPalette.GetSpriteForLevel(
+                Instance.Level, itemBaseShape) ?? fallback;
+        }
+
+        private static bool IsColorQualityModeActive(
+            BackpackVisualSettings settings) =>
+            settings.OverridesEnabled && settings.ColorQualityModeEnabled &&
+            settings.ItemQualityPalette != null;
 
         private void HandleBattlePhaseChanged(BattlePhase _)
         {
             RefreshAircraftGlow();
+            RefreshAircraftQualityPulse();
         }
 
         private void EnsureLevelLabel()
@@ -1710,10 +1931,11 @@ namespace BackpackPrototype
 
             BackpackVisualSettings settings =
                 BackpackVisualDebugRuntime.CurrentSettings;
-            Color baseColor = GetBottomPlateColor(
+            Color baseColor = GetBottomPlateTint(
                 Instance.Data.BackgroundColor,
                 Instance.Level,
-                settings.OverridesEnabled && settings.AircraftGlowEnabled);
+                settings.OverridesEnabled && settings.AircraftGlowEnabled,
+                IsColorQualityModeActive(settings));
             background.color = isDeletePreviewActive
                 ? new Color(1f, 0.08f, 0.08f, baseColor.a)
                 : baseColor;
@@ -1737,6 +1959,16 @@ namespace BackpackPrototype
                 _ => new Color(.65882355f, .33333334f, .96862745f, 1f)
             };
         }
+
+        public static Color GetBottomPlateTint(
+            Color originalColor,
+            int itemLevel,
+            bool bottomPlateHighlightEnabled,
+            bool colorQualityModeEnabled) =>
+            colorQualityModeEnabled
+                ? Color.white
+                : GetBottomPlateColor(originalColor, itemLevel,
+                    bottomPlateHighlightEnabled);
 
         public static bool ShouldHideEquipmentLevelLabel(
             bool bottomPlateHighlightEnabled,

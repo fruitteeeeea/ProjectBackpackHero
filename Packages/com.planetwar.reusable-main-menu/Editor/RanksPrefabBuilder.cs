@@ -246,7 +246,10 @@ namespace PlanetWar.ReusableMainMenu.Editor
             var slider = root.GetComponent<RankInfoSlider>() ?? root.AddComponent<RankInfoSlider>();
             slider.sliderProgress = root.GetComponent<Slider>();
             slider.txtProgress = Find(root.transform, "value")?.GetComponent<TextMeshProUGUI>();
-            slider.objSlideArea = Find(root.transform, "Handle Slide Area")?.gameObject;
+            Transform slideArea = Find(root.transform, "Handle Slide Area");
+            if (slideArea == null && slider.sliderProgress != null && slider.sliderProgress.handleRect != null)
+                slideArea = slider.sliderProgress.handleRect.parent;
+            slider.objSlideArea = slideArea != null ? slideArea.gameObject : null;
             EditorUtility.SetDirty(slider);
             return slider;
         }

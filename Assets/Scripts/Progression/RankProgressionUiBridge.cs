@@ -7,6 +7,7 @@ namespace BackpackHero.Progression
     /// <summary>Connects the reusable menu assembly to the game-specific saved progression state.</summary>
     public sealed class RankProgressionUiBridge : MonoBehaviour
     {
+        private UIGetReward rewardView;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Ensure()
         {
@@ -30,9 +31,25 @@ namespace BackpackHero.Progression
 
         private bool Claim(int id)
         {
-            if (RankProgressionSystem.Instance == null || !RankProgressionSystem.Instance.ClaimReward(id, out _)) return false;
+            if (RankProgressionSystem.Instance == null ||
+                !RankProgressionSystem.Instance.ClaimReward(id, out _, out PackReward rewards)) return false;
+            ShowRewards(rewards);
             RefreshVisibleRankPages();
             return true;
+        }
+
+        private void ShowRewards(PackReward rewards)
+        {
+            if (rewardView == null)
+            {
+                MainMenuView menu = FindFirstObjectByType<MainMenuView>(FindObjectsInactive.Include);
+                if (menu == null) return;
+                GameObject prefab = Resources.Load<GameObject>("PackUI/Source/Prefabs/UIGetReward");
+                if (prefab == null) return;
+                Transform canvas = menu.GetComponentInParent<Canvas>()?.transform ?? menu.transform;
+                rewardView = Instantiate(prefab, canvas).GetComponent<UIGetReward>();
+            }
+            rewardView?.ShowRewards(rewards);
         }
 
         private static void RefreshVisibleRankPages()

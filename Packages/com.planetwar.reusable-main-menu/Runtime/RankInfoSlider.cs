@@ -10,8 +10,6 @@ namespace PlanetWar.ReusableMainMenu
         public TextMeshProUGUI txtProgress;
         public GameObject objSlideArea;
 
-        private TextMeshProUGUI handleProgressText;
-
         public bool SetProgress(RankInfoEntry entry, RankInfoEntry previous, RankInfoEntry next, int point)
         {
             EnsureBindings();
@@ -19,7 +17,7 @@ namespace PlanetWar.ReusableMainMenu
             if (next == null || previous == null)
             {
                 if (point <= entry.score && entry.id != 1001) value = 0f;
-                else value = (float)point / Mathf.Max(1, entry.score);
+                else value = (float)point / entry.score;
             }
             else
             {
@@ -29,37 +27,42 @@ namespace PlanetWar.ReusableMainMenu
                 }
                 else
                 {
-                    float sum = Mathf.Max(1, entry.score - previous.score);
+                    float sum = entry.score - previous.score;
                     float cur = point - previous.score;
-                    value = Mathf.Clamp01(cur / sum);
+                    value = cur / sum;
                     if (entry.type == 1) value *= 0.5f;
                 }
             }
 
             bool isActive = point == entry.score || (value > 0f && value < 1f);
-            SetValue(value, point);
+            if (sliderProgress != null) sliderProgress.value = value;
             if (objSlideArea != null) objSlideArea.SetActive(isActive);
+            if (txtProgress != null) txtProgress.text = point.ToString();
             return isActive;
         }
 
         public void SetValue(float value, int point)
         {
             EnsureBindings();
-            if (sliderProgress != null) sliderProgress.value = Mathf.Clamp01(value);
+            if (sliderProgress != null) sliderProgress.value = value;
             if (objSlideArea != null) objSlideArea.SetActive(value > 0f && value < 1f);
             if (txtProgress != null) txtProgress.text = point.ToString();
-            if (handleProgressText != null && handleProgressText != txtProgress) handleProgressText.text = point.ToString();
         }
 
         private void EnsureBindings()
         {
             if (sliderProgress == null) sliderProgress = GetComponentInChildren<Slider>(true);
-            if (sliderProgress != null && handleProgressText == null && sliderProgress.handleRect != null)
-                handleProgressText = sliderProgress.handleRect.GetComponentInChildren<TextMeshProUGUI>(true);
-            if (txtProgress == null) txtProgress = handleProgressText;
+            if (txtProgress == null && sliderProgress != null && sliderProgress.handleRect != null)
+                txtProgress = sliderProgress.handleRect.GetComponentInChildren<TextMeshProUGUI>(true);
             if (objSlideArea == null)
             {
                 Transform area = FindChild(transform, "Handle Slide Area");
+                // The migrated reward template keeps its handle area as a sibling of
+                // Slider. The original prefab serializes that container directly;
+                // derive the same reference from Slider.handleRect for existing
+                // baked menus where the serialized reference is missing.
+                if (area == null && sliderProgress != null && sliderProgress.handleRect != null)
+                    area = sliderProgress.handleRect.parent;
                 if (area != null) objSlideArea = area.gameObject;
             }
         }

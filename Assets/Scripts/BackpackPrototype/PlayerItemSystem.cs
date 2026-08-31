@@ -181,6 +181,7 @@ namespace BackpackPrototype
                 state.Level = MaximumLevel;
                 state.FragmentCount = 0;
             }
+            BackpackHero.Progression.RankProgressionSystem.Instance?.RestoreDefaultProgression();
             SaveAndNotify();
         }
 

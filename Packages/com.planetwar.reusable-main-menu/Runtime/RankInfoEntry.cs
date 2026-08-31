@@ -13,6 +13,14 @@ namespace PlanetWar.ReusableMainMenu
     }
 
     [Serializable]
+    public sealed class RankInfoUnlockItem
+    {
+        public Sprite icon;
+        public string displayName;
+        public bool isEquipment;
+    }
+
+    [Serializable]
     public sealed class RankInfoEntry
     {
         public int id;
@@ -21,6 +29,7 @@ namespace PlanetWar.ReusableMainMenu
         public int type;
         public string enName;
         public int[] unlockIds;
+        public RankInfoUnlockItem[] unlocks;
         public RankInfoReward[] rewards;
         public Sprite iconSprite;
         public Sprite lockedIconSprite;

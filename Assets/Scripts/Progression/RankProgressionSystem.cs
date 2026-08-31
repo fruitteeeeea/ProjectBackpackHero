@@ -34,6 +34,7 @@ namespace BackpackHero.Progression
     {
         public const string SaveKey = "RankProgressionModel";
         public const int MaximumPoints = 50000;
+        public const int InitialPoints = 10;
         private const int SaveVersion = 3;
         private const string CatalogPath = "RankProgressionCatalog";
         private const string EnemyDifficultyCatalogPath = "RankEnemyDifficultyCatalog";
@@ -65,9 +66,9 @@ namespace BackpackHero.Progression
         private void Normalize() { if (catalog.Find(data.currentNodeId) == null) data.currentNodeId = catalog.Nodes.Count > 0 ? catalog.Nodes[0].id : 1001; data.claimedRewardNodeIds ??= new List<int>(); data.leaderboard ??= new List<RankLeaderboardEntry>(); data.defeatRecovery ??= new RankDefeatRecoveryState(); data.points = Mathf.Clamp(data.points, 0, MaximumPoints); }
         private void MigrateToFormalProgression()
         {
-            // Pre-release builds started at max rank. The first formal version starts
-            // everybody at the beginning so rank rewards and card unlocks remain meaningful.
-            data.points = 0;
+            // Pre-release builds started at max rank. The formal starting save begins
+            // at 10 points so rank rewards and card unlocks remain meaningful.
+            data.points = InitialPoints;
             data.currentNodeId = catalog.Nodes.Count > 0 ? catalog.Nodes[0].id : 1001;
             data.wins = 0;
             data.claimedRewardNodeIds = new List<int>();
@@ -124,6 +125,17 @@ namespace BackpackHero.Progression
         }
 
         public void BeginMatch() => settlementAppliedForMatch = false;
+        /// <summary>Debug helper: moves rank progress to the final score and node.</summary>
+        public void RestoreDefaultProgression()
+        {
+            if (data == null || catalog == null) return;
+            data.points = MaximumPoints;
+            data.currentNodeId = catalog.Nodes.Count > 0 ? catalog.Nodes[0].id : 1001;
+            data.defeatRecovery.Reset();
+            AdvanceNodes();
+            RebuildLeaderboard(false);
+            Notify();
+        }
         public bool TryResolveEnemyMatchProfile(out EnemyMatchProfile profile) =>
             RankEnemyDifficultyResolver.TryResolve(enemyDifficultyCatalog, Points,
                 CurrentNodeId, DefeatRecovery, out profile);
@@ -136,18 +148,64 @@ namespace BackpackHero.Progression
         }
         public bool IsRewardClaimed(int nodeId) => data.claimedRewardNodeIds.Contains(nodeId);
         public bool CanClaimReward(int nodeId) { var node = catalog.Find(nodeId); return node != null && node.type == 1 && Points >= node.score && !IsRewardClaimed(nodeId); }
-        public bool ClaimReward(int nodeId, out IReadOnlyList<BattleResultReward> displayRewards)
+        public bool ClaimReward(int nodeId, out IReadOnlyList<BattleResultReward> displayRewards) =>
+            ClaimReward(nodeId, out displayRewards, out _);
+
+        public bool ClaimReward(int nodeId, out IReadOnlyList<BattleResultReward> displayRewards,
+            out PackReward instantPackRewards)
         {
-            displayRewards = Array.Empty<BattleResultReward>(); if (!CanClaimReward(nodeId)) return false;
-            var node = catalog.Find(nodeId); var display = new List<BattleResultReward>();
+            displayRewards = Array.Empty<BattleResultReward>();
+            instantPackRewards = default;
+            if (!CanClaimReward(nodeId)) return false;
+
+            RankNodeDefinition node = catalog.Find(nodeId);
+            PlayerItemSystem player = PlayerItemSystem.Instance;
+            PackSystem packs = PackSystem.Instance;
+            if (player == null) return false;
+            foreach (RankRewardDefinition reward in node.rewards ?? Array.Empty<RankRewardDefinition>())
+                if (reward != null && reward.amount > 0 &&
+                    reward.type == RankRewardDefinition.RewardType.Pack &&
+                    (packs == null || packs.GetDefinition(reward.pack) == null)) return false;
+
+            int totalGold = 0;
+            int totalDiamond = 0;
+            var totalFragments = new Dictionary<ItemData, int>();
+            var display = new List<BattleResultReward>();
             foreach (var reward in node.rewards ?? Array.Empty<RankRewardDefinition>())
             {
                 if (reward == null || reward.amount <= 0) continue;
-                if (reward.type == RankRewardDefinition.RewardType.Gold) { PlayerItemSystem.Instance?.AddCurrency(reward.amount); display.Add(new BattleResultReward("GOLD", reward.amount)); }
-                else if (reward.type == RankRewardDefinition.RewardType.Diamond) { PlayerItemSystem.Instance?.AddCurrency(0, reward.amount); display.Add(new BattleResultReward("DIAMOND", reward.amount)); }
-                else if (reward.type == RankRewardDefinition.RewardType.Pack) { int granted = 0; for (int i = 0; i < reward.amount; i++) if (PackSystem.Instance != null && PackSystem.Instance.TryAddPack(reward.pack)) granted++; if (granted > 0) display.Add(new BattleResultReward(reward.pack.ToString().ToUpperInvariant(), granted)); }
+                if (reward.type == RankRewardDefinition.RewardType.Gold)
+                {
+                    player.AddCurrency(reward.amount);
+                    totalGold += reward.amount;
+                }
+                else if (reward.type == RankRewardDefinition.RewardType.Diamond)
+                {
+                    player.AddCurrency(0, reward.amount);
+                    totalDiamond += reward.amount;
+                }
+                else if (reward.type == RankRewardDefinition.RewardType.Pack)
+                {
+                    for (int i = 0; i < reward.amount; i++)
+                    {
+                        packs.TryGrantInstantPack(reward.pack, out PackReward packReward);
+                        totalGold += packReward.Gold;
+                        totalDiamond += packReward.Diamond;
+                        foreach (var pair in packReward.Fragments)
+                            totalFragments[pair.Key] = totalFragments.TryGetValue(pair.Key, out int amount)
+                                ? amount + pair.Value : pair.Value;
+                    }
+                }
             }
-            data.claimedRewardNodeIds.Add(nodeId); displayRewards = display; Notify(); return true;
+            if (totalGold > 0) display.Add(new BattleResultReward("GOLD", totalGold));
+            if (totalDiamond > 0) display.Add(new BattleResultReward("DIAMOND", totalDiamond));
+            foreach (var pair in totalFragments)
+                display.Add(new BattleResultReward($"{pair.Key.Name} FRAGMENT", pair.Value));
+            instantPackRewards = new PackReward(totalGold, totalDiamond, totalFragments);
+            data.claimedRewardNodeIds.Add(nodeId);
+            displayRewards = display;
+            Notify();
+            return true;
         }
         public IReadOnlyList<RankLeaderboardEntry> GetLeaderboard() => data.leaderboard;
         public string CurrentRankName => GetRankNameForScore(Points);

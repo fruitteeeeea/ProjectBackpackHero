@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f194352b69971a468493345960da35d, type: 3}
+  m_Name: RankProgressionCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Progression.RankProgressionCatalog
+  nodes:
+  - {id: 1001, level: 1, score: 50, type: 0, loseScore: 0, rankName: Glow Belt, unlockItemIds: [], rewards: []}
+  - id: 1002
+    level: 1
+    score: 120
+    type: 1
+    loseScore: 5
+    rankName: 
+    unlockItemIds: []
+    rewards: [{type: 0, amount: 100, pack: 10001}]
+  - {id: 1003, level: 2, score: 200, type: 0, loseScore: 5, rankName: Pale Cluster, unlockItemIds: [aircraft_explosive, equipment_rapid_cannon], rewards: []}
+  - {id: 1004, level: 2, score: 400, type: 1, loseScore: 5, rankName: , unlockItemIds: [], rewards: [{type: 2, amount: 5, pack: 10001}]}
+  - {id: 1005, level: 2, score: 650, type: 1, loseScore: 10, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 200, pack: 10001}]}
+  - {id: 1006, level: 3, score: 1000, type: 0, loseScore: 10, rankName: Swift Zone, unlockItemIds: [aircraft_sniper, equipment_wave_emitter], rewards: []}
+  - {id: 1007, level: 3, score: 1500, type: 1, loseScore: 10, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 100, pack: 10001}, {type: 2, amount: 5, pack: 10001}]}
+  - {id: 1008, level: 3, score: 2000, type: 1, loseScore: 15, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 150, pack: 10001}, {type: 2, amount: 5, pack: 10001}]}
+  - {id: 1009, level: 3, score: 2500, type: 1, loseScore: 15, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 200, pack: 10001}, {type: 2, amount: 5, pack: 10001}]}
+  - {id: 1010, level: 3, score: 3000, type: 1, loseScore: 15, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 20, pack: 10001}]}
+  - {id: 1011, level: 4, score: 3600, type: 0, loseScore: 20, rankName: Deep Outpost, unlockItemIds: [aircraft_laser, equipment_laser_link], rewards: []}
+  - {id: 1012, level: 4, score: 4500, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 100, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1013, level: 4, score: 5000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 150, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1014, level: 4, score: 5500, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 200, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1015, level: 4, score: 6000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1016, level: 4, score: 6500, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 8, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1017, level: 5, score: 7000, type: 0, loseScore: 20, rankName: Hunt Thicket, unlockItemIds: [aircraft_shotgun, equipment_first], rewards: []}
+  - {id: 1018, level: 5, score: 8000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 100, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1019, level: 5, score: 9000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 150, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1020, level: 5, score: 10000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 200, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1021, level: 5, score: 12000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1022, level: 5, score: 14000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 8, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1023, level: 5, score: 16000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 8, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1024, level: 6, score: 18000, type: 0, loseScore: 20, rankName: Dome Nebula, unlockItemIds: [aircraft_l], rewards: []}
+  - {id: 1025, level: 6, score: 20000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 100, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1026, level: 6, score: 22000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 150, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1027, level: 6, score: 24000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 200, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1028, level: 6, score: 26000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1029, level: 6, score: 28000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 8, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1030, level: 6, score: 30000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 8, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1031, level: 7, score: 32000, type: 0, loseScore: 20, rankName: Raid Nest, unlockItemIds: [], rewards: []}
+  - {id: 1032, level: 7, score: 34000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 100, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1033, level: 7, score: 36000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 150, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1034, level: 7, score: 38000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 200, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1035, level: 7, score: 40000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 5, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1036, level: 7, score: 42000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 8, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1037, level: 7, score: 44000, type: 1, loseScore: 20, rankName: , unlockItemIds: [], rewards: [{type: 0, amount: 300, pack: 10001}, {type: 2, amount: 8, pack: 10001}, {type: 2, amount: 1, pack: 10002}]}
+  - {id: 1038, level: 8, score: 50000, type: 0, loseScore: 20, rankName: Conqueror Realm, unlockItemIds: [], rewards: []}
+  victoryScore: 100
+  victoryGold: 50
+  victoryDiamondMin: 1
+  victoryDiamondMaxExclusive: 3

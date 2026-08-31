@@ -54,6 +54,34 @@ namespace BackpackPrototype
             StartPackAnimation("wait", true);
         }
 
+        /// <summary>Shows an already-settled reward bundle, used by rank milestones.</summary>
+        public void ShowRewards(PackReward reward)
+        {
+            StopPresentationRoutines();
+            ResetRewardItems();
+            index = -1;
+            settled = true;
+            presentationState = PresentationState.RevealingRewards;
+            gameObject.SetActive(true);
+            if (packSpine != null) packSpine.gameObject.SetActive(false);
+            if (spine != null) spine.gameObject.SetActive(false);
+            if (objAnimation != null) objAnimation.SetActive(false);
+            if (root != null) root.gameObject.SetActive(true);
+            if (txtTitle != null) txtTitle.text = string.Empty;
+
+            List<System.Action<ItemReward>> bindings = new();
+            if (reward.Gold > 0) bindings.Add(item => item.BindCurrency(false, reward.Gold, true));
+            if (reward.Diamond > 0) bindings.Add(item => item.BindCurrency(true, reward.Diamond, true));
+            foreach (KeyValuePair<ItemData, int> pair in reward.Fragments)
+            {
+                ItemData item = pair.Key;
+                int amount = pair.Value;
+                if (item != null && amount > 0)
+                    bindings.Add(view => view.BindItemFragment(item, amount, true));
+            }
+            revealRoutine = StartCoroutine(RevealRewards(bindings));
+        }
+
         public void OnClickBg()
         {
             switch (presentationState)

@@ -88,7 +88,6 @@ namespace PlanetWar.ReusableMainMenu
             {
                 var entry = entries[i];
                 var item = scroll.GetItemByIndex(j);
-                j++;
                 if (item == null) continue;
 
                 var previous = i > 0 ? entries[i - 1] : null;
@@ -99,51 +98,31 @@ namespace PlanetWar.ReusableMainMenu
                 {
                     var view = item.GetComponent<RankInfoItemMainView>();
                     if (view != null) isCurrent = view.SetItem(entry, previous, next, currentPlayerRankPoint, currentMissionId);
-                    if (isCurrent) tempSliderRank = view != null ? view.sliderRank : null;
+                    if (isCurrent)
+                    {
+                        scrollToIndex = j;
+                        if (tempSliderRank != null) tempSliderRank.SetValue(0f, currentPlayerRankPoint);
+                        tempSliderRank = view != null ? view.sliderRank : null;
+                    }
                 }
                 else
                 {
                     var view = item.GetComponent<RankInfoItemRewardView>();
                     if (view != null) isCurrent = view.SetItem(entry, previous, next, currentPlayerRankPoint);
-                    if (isCurrent) tempSliderRank = view != null ? view.sliderRank : null;
+                    if (isCurrent)
+                    {
+                        scrollToIndex = j;
+                        if (tempSliderRank != null) tempSliderRank.SetValue(0f, currentPlayerRankPoint);
+                        tempSliderRank = view != null ? view.sliderRank : null;
+                    }
                 }
 
-                // At the score cap the final node is fully complete, rather than being
-                // an in-between slider value. It still needs to be the scroll target.
-                if (!isCurrent && i == entries.Length - 1 && currentPlayerRankPoint >= entry.score)
-                {
-                    isCurrent = true;
-                    tempSliderRank = entry.type == 0
-                        ? item.GetComponent<RankInfoItemMainView>()?.sliderRank
-                        : item.GetComponent<RankInfoItemRewardView>()?.sliderRank;
-                }
-
-                if (isCurrent)
-                {
-                    scrollToIndex = j - 1;
-                    if (tempSliderRank != null)
-                        tempSliderRank.SetValue(i == entries.Length - 1 && currentPlayerRankPoint >= entry.score ? 1f : 0f, currentPlayerRankPoint);
-                }
+                j++;
             }
 
-            // The original UI is drawn from highest score to lowest score. Do not
-            // infer the target from slider visibility: completed thresholds (notably
-            // 50,000) have a full slider and must still be the opening destination.
-            scrollToIndex = GetReachedNodeDisplayIndex();
+            if (scrollToIndex == -1) scrollToIndex = configs.Count - 1;
             isScrollToIndex = true;
             StartCoroutine(CenterAfterLayout());
-        }
-
-        private int GetReachedNodeDisplayIndex()
-        {
-            if (entries == null || entries.Length == 0) return -1;
-            int reachedIndex = 0;
-            for (int i = 0; i < entries.Length; i++)
-            {
-                if (entries[i] != null && entries[i].score <= currentPlayerRankPoint) reachedIndex = i;
-                else if (entries[i] != null && entries[i].score > currentPlayerRankPoint) break;
-            }
-            return entries.Length - 1 - reachedIndex;
         }
 
         private static bool SameEntries(RankInfoEntry[] current, RankInfoEntry[] incoming)

@@ -22,7 +22,8 @@ namespace PlanetWar.ReusableMainMenu
 
             if (countText != null)
             {
-                countText.text = reward.count.ToString();
+                countText.gameObject.SetActive(reward.count > 0);
+                countText.text = reward.count > 0 ? reward.count.ToString() : string.Empty;
                 countText.color = locked ? Color.gray : Color.white;
             }
             if (claimedMark != null) claimedMark.SetActive(claimed);

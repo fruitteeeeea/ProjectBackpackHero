@@ -238,10 +238,23 @@ namespace PlanetWar.ReusableMainMenu
             if (startIndex < 0) startIndex = ~startIndex;
             if (startIndex > 0) startIndex--;
             startIndex = Mathf.Clamp(startIndex, 0, totalItemCount - 1);
+            while (startIndex > 0)
+            {
+                float start = itemPositions[startIndex];
+                float end = start + (startIndex < itemLengths.Count ? itemLengths[startIndex] : 0f);
+                if (end < viewMin) { startIndex++; break; }
+                startIndex--;
+            }
 
             int endIndex = itemPositions.BinarySearch(viewMax);
             if (endIndex < 0) endIndex = ~endIndex;
             endIndex = Mathf.Clamp(endIndex, 0, totalItemCount - 1);
+            while (endIndex < totalItemCount - 1)
+            {
+                float start = itemPositions[endIndex];
+                if (start > viewMax) { endIndex--; break; }
+                endIndex++;
+            }
             if (endIndex < startIndex) endIndex = startIndex;
 
             if (lastVisibleStart == -1)
@@ -249,18 +262,28 @@ namespace PlanetWar.ReusableMainMenu
                 for (int i = 0; i < totalItemCount; i++)
                 {
                     bool visible = i >= startIndex && i <= endIndex;
-                    if (allItems.TryGetValue(i, out var go) && go != null) go.SetActive(visible);
+                    if (allItems.TryGetValue(i, out var go) && go != null && go.activeSelf != visible)
+                        go.SetActive(visible);
+                }
+                lastVisibleStart = startIndex;
+                lastVisibleEnd = endIndex;
+                return;
+            }
+
+            for (int i = lastVisibleStart; i <= lastVisibleEnd; i++)
+            {
+                if (i < startIndex || i > endIndex)
+                {
+                    if (allItems.TryGetValue(i, out var go) && go != null && go.activeSelf)
+                        go.SetActive(false);
                 }
             }
-            else
+            for (int i = startIndex; i <= endIndex; i++)
             {
-                for (int i = lastVisibleStart; i <= lastVisibleEnd && i < totalItemCount; i++)
+                if (i < lastVisibleStart || i > lastVisibleEnd)
                 {
-                    if ((i < startIndex || i > endIndex) && allItems.TryGetValue(i, out var go) && go != null) go.SetActive(false);
-                }
-                for (int i = startIndex; i <= endIndex && i < totalItemCount; i++)
-                {
-                    if ((i < lastVisibleStart || i > lastVisibleEnd) && allItems.TryGetValue(i, out var go) && go != null) go.SetActive(true);
+                    if (allItems.TryGetValue(i, out var go) && go != null && !go.activeSelf)
+                        go.SetActive(true);
                 }
             }
 

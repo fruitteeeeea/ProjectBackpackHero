@@ -172,10 +172,37 @@ namespace BackpackHero.UI
                     id = node.id, level = node.level, score = node.score, type = node.type,
                     enName = node.rankName ?? string.Empty,
                     iconSprite = rankIcon, lockedIconSprite = lockedRankIcon,
+                    unlocks = BuildRankUnlocks(node),
                     rewards = BuildRankRewards(node, artwork?.rewards)
                 };
             }
             return result;
+        }
+
+        private static RankInfoUnlockItem[] BuildRankUnlocks(RankNodeDefinition node)
+        {
+            if (node?.unlockItemIds == null || node.unlockItemIds.Length == 0)
+                return System.Array.Empty<RankInfoUnlockItem>();
+
+            PlayerItemSystem player = PlayerItemSystem.Instance;
+            var unlocks = new List<RankInfoUnlockItem>();
+            foreach (string id in node.unlockItemIds)
+            {
+                ItemData item = null;
+                if (player != null)
+                {
+                    foreach (ItemData candidate in player.GetAllItems())
+                        if (candidate != null && candidate.ItemId == id) { item = candidate; break; }
+                }
+                if (item == null) continue;
+                unlocks.Add(new RankInfoUnlockItem
+                {
+                    icon = item.Icon,
+                    displayName = item.ItemName,
+                    isEquipment = item.ItemType == ItemType.Equipment
+                });
+            }
+            return unlocks.ToArray();
         }
 
         private static Sprite LoadRankSprite(int level, bool locked)

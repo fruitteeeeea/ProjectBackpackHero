@@ -40,8 +40,8 @@ namespace PlanetWar.ReusableMainMenu
                 imgBlack.gameObject.SetActive(locked && entry.lockedIconSprite != null);
             }
 
-            bool hasRewards = entry.rewards != null && entry.rewards.Length > 0;
-            if (rewardContainer != null) rewardContainer.gameObject.SetActive(hasRewards);
+            RankInfoUnlockItem[] unlocks = entry.unlocks ?? System.Array.Empty<RankInfoUnlockItem>();
+            if (rewardContainer != null) rewardContainer.gameObject.SetActive(unlocks.Length > 0);
             if (itemReward != null) itemReward.SetActive(false);
             // The authored template contains preview reward cards. They are not part
             // of this promotion node and must never leak into a cloned row.
@@ -51,9 +51,9 @@ namespace PlanetWar.ReusableMainMenu
                 if (item != null) item.SetActive(false);
             }
 
-            if (hasRewards && rewardContainer != null && itemReward != null)
+            if (unlocks.Length > 0 && rewardContainer != null && itemReward != null)
             {
-                for (int i = 0; i < entry.rewards.Length; i++)
+                for (int i = 0; i < unlocks.Length; i++)
                 {
                     GameObject item = null;
                     if (i < rewardItems.Count) item = rewardItems[i];
@@ -64,7 +64,14 @@ namespace PlanetWar.ReusableMainMenu
                     }
                     var view = item.GetComponent<RankInfoRewardItemView>();
                     if (view == null) view = item.AddComponent<RankInfoRewardItemView>();
-                    view.Bind(entry.rewards[i], locked);
+                    RankInfoUnlockItem unlock = unlocks[i];
+                    view.Bind(new RankInfoReward
+                    {
+                        icon = unlock?.icon,
+                        displayName = unlock?.displayName,
+                        count = 0,
+                        isPack = false
+                    }, locked);
                 }
             }
 

@@ -92,7 +92,7 @@ namespace BackpackHero.Progression
             Add(entries, 1007, 3, 1500, 1, 0, null, rewards: R(G(100), P(PackId.Green, 5)));
             Add(entries, 1008, 3, 2000, 1, 0, null, rewards: R(G(150), P(PackId.Green, 5)));
             Add(entries, 1009, 3, 2500, 1, 0, null, rewards: R(G(200), P(PackId.Green, 5)));
-            Add(entries, 1010, 3, 3000, 1, 0, null, rewards: R(G(300), P(PackId.Gold, 20)));
+            Add(entries, 1010, 3, 3000, 1, 0, null, rewards: R(G(300), P(PackId.Green, 20)));
             Add(entries, 1011, 4, 3600, 0, 0, "Deep Outpost", new[] { "aircraft_laser", "equipment_laser_link" });
             Add(entries, 1012, 4, 4500, 1, 0, null, rewards: R(G(100), P(PackId.Green, 5), P(PackId.Blue, 1)));
             Add(entries, 1013, 4, 5000, 1, 0, null, rewards: R(G(150), P(PackId.Green, 5), P(PackId.Blue, 1)));

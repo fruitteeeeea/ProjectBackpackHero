@@ -65,7 +65,43 @@ namespace BackpackPrototype
         public bool ReduceOpenTime(int index, int seconds) { var slot = Slot(index); if (slot == null || GetSlotState(index) != PackState.Opening || seconds <= 0) return false; slot.OpenTimeUtcMs -= seconds * 1000L; SaveAndNotify(); return true; }
         /// <summary>Clears all pack slots without touching player currencies or item progression.</summary>
         public void ClearAllPacks() { for (int i = 0; i < SlotCount; i++) data.Slots[i] = new PackSlotData(); SaveAndNotify(); }
-        public bool TrySettleReward(int index, out PackReward reward) { reward = default; if (!TryOpenPack(index)) return false; var d = GetDefinition(Slot(index).Id); var player = PlayerItemSystem.Instance; if (d == null || player == null) return false; int gold = UnityEngine.Random.Range(d.GoldMin, d.GoldMax), diamond = UnityEngine.Random.Range(d.DiamondMin, d.DiamondMax), draws = UnityEngine.Random.Range(d.FragmentMin, d.FragmentMax); var pool = player.GetAllItems().Where(x => x != null && player.IsUnlocked(x)).ToArray(); var fragments = new Dictionary<ItemData, int>(); for (int i = 0; i < draws && pool.Length > 0; i++) { var item = pool[UnityEngine.Random.Range(0, pool.Length)]; fragments[item] = fragments.TryGetValue(item, out int value) ? value + 1 : 1; } player.AddCurrency(gold, diamond); foreach (var item in fragments) player.AddFragments(item.Key, item.Value); data.Slots[index] = new PackSlotData(); SaveAndNotify(); reward = new PackReward(gold, diamond, fragments); return true; }
+        /// <summary>Settles a card pack immediately without placing it in the four-slot timed queue.</summary>
+        public bool TryGrantInstantPack(PackId id, out PackReward reward)
+        {
+            reward = default;
+            PackDefinition definition = GetDefinition(id);
+            PlayerItemSystem player = PlayerItemSystem.Instance;
+            if (definition == null || player == null) return false;
+
+            int gold = UnityEngine.Random.Range(definition.GoldMin, definition.GoldMax);
+            int diamond = UnityEngine.Random.Range(definition.DiamondMin, definition.DiamondMax);
+            int draws = UnityEngine.Random.Range(definition.FragmentMin, definition.FragmentMax);
+            ItemData[] pool = player.GetAllItems()
+                .Where(item => item != null && player.IsUnlocked(item))
+                .ToArray();
+            var fragments = new Dictionary<ItemData, int>();
+            for (int i = 0; i < draws && pool.Length > 0; i++)
+            {
+                ItemData item = pool[UnityEngine.Random.Range(0, pool.Length)];
+                fragments[item] = fragments.TryGetValue(item, out int value) ? value + 1 : 1;
+            }
+
+            player.AddCurrency(gold, diamond);
+            foreach (var pair in fragments) player.AddFragments(pair.Key, pair.Value);
+            reward = new PackReward(gold, diamond, fragments);
+            return true;
+        }
+
+        public bool TrySettleReward(int index, out PackReward reward)
+        {
+            reward = default;
+            if (!TryOpenPack(index)) return false;
+            PackSlotData slot = Slot(index);
+            if (slot == null || !TryGrantInstantPack(slot.Id, out reward)) return false;
+            data.Slots[index] = new PackSlotData();
+            SaveAndNotify();
+            return true;
+        }
         PackSlotData Slot(int index) => index >= 0 && index < SlotCount ? data?.Slots[index] : null;
 
         int FindActiveOpeningSlotIndex()

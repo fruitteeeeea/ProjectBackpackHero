@@ -23,6 +23,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
         private const string Art = Package + "/Art/Ranks/";
         private const string RankInfoArt = Package + "/Art/RankInfo/";
         private const string HangarArt = Package + "/Art/Hangar/Icon/";
+        private static readonly Vector3 RankInfoUnlockIconScale = new Vector3(.392f, .392f, 1f);
         private static TMP_FontAsset textFont;
 
         [InitializeOnLoadMethod]
@@ -233,6 +234,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
             if (root == null) return;
             var view = root.GetComponent<RankInfoRewardItemView>() ?? root.AddComponent<RankInfoRewardItemView>();
             view.icon = FindDirectChild(root.transform, "icon")?.GetComponent<UnityEngine.UI.Image>();
+            if (view.icon != null) view.icon.rectTransform.localScale = RankInfoUnlockIconScale;
             view.resIcon = FindDirectChild(root.transform, "res")?.GetComponent<UnityEngine.UI.Image>();
             view.packIcon = FindDirectChild(root.transform, "pack")?.GetComponent<UnityEngine.UI.Image>();
             view.countText = FindDirectChild(root.transform, "count")?.GetComponent<TextMeshProUGUI>();

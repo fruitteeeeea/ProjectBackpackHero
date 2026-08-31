@@ -2,6 +2,7 @@ using BackpackHero.Progression;
 using BackpackPrototype;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 
 public sealed class RankProgressionCatalogTests
 {
@@ -70,6 +71,22 @@ public sealed class RankProgressionCatalogTests
             Is.EqualTo(new[] { "aircraft_l" }));
         Assert.That(catalog.Find(1031).unlockItemIds, Is.Empty);
         Assert.That(catalog.Find(1038).unlockItemIds, Is.Empty);
+    }
+
+    [Test]
+    public void RankInfoUnlockCardTemplate_UsesReducedIconScale()
+    {
+        GameObject menu = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Packages/com.planetwar.reusable-main-menu/Prefabs/MainMenu.prefab");
+
+        Assert.That(menu, Is.Not.Null);
+        Transform unlockIcon = menu.transform.Find("UIRankInfo/ItemRankMain/reward/item/icon");
+        Transform rewardResourceIcon = menu.transform.Find("UIRankInfo/ItemRankReward/reward/item/res");
+
+        Assert.That(unlockIcon, Is.Not.Null);
+        Assert.That(unlockIcon.localScale, Is.EqualTo(new Vector3(.392f, .392f, 1f)));
+        Assert.That(rewardResourceIcon, Is.Not.Null);
+        Assert.That(rewardResourceIcon.localScale, Is.EqualTo(new Vector3(.56f, .56f, 1f)));
     }
 
     private static ExpectedReward Gold(int amount) =>

@@ -7,6 +7,7 @@ using BackpackHero.Debugging;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.TextCore.LowLevel;
 using UnityEngine.UI;
 
 namespace BackpackPrototype
@@ -18,6 +19,11 @@ namespace BackpackPrototype
         private const float IconScale = .75f;
         private const float LevelBadgeSize = 35f;
         private const float LevelBadgeCircleBrightness = .85f;
+        private const float LevelBadgeNumberOutlineWidth = .36f;
+        private const string LevelBadgeFontResourcePath = "Fonts/Milker SDF";
+        private const string LevelBadgeSourceFontResourcePath = "Fonts/Milker";
+        private const string LevelBadgeDigits = "0123456789";
+        private const float AuthoredBottomPlateCellSize = 128f;
 
         [SerializeField] private Image background;
         [SerializeField] private Image icon;
@@ -114,6 +120,7 @@ namespace BackpackPrototype
         private Image levelBadgeCircleImage;
         private TextMeshProUGUI levelBadgeNumber;
         private Sprite style1BackgroundSprite;
+        private static TMP_FontAsset levelBadgeFont;
 
         public ItemInstance Instance { get; private set; }
         public BackpackController Backpack { get; private set; }
@@ -340,6 +347,7 @@ namespace BackpackPrototype
                     instance.Data.BackgroundColor;
                 background.type = Image.Type.Simple;
                 background.preserveAspect = false;
+                UpdateBottomPlateLayout();
             }
 
             if (icon != null &&
@@ -718,6 +726,10 @@ namespace BackpackPrototype
             SyncAircraftGlowTransform();
             RectTransform glowTransform = aircraftGlowImage.rectTransform;
             Vector2 baseSize = rectTransform.rect.size;
+            if (background != null)
+            {
+                baseSize = background.rectTransform.rect.size;
+            }
             Vector2 expandedSize = baseSize +
                 new Vector2(edgeWidth * 2f, edgeWidth * 2f);
             aircraftGlowMaterial.SetVector(AircraftGlowPaddingId, new Vector4(
@@ -770,13 +782,9 @@ namespace BackpackPrototype
             Vector2 expansion = new Vector2(edgeWidth * 2f, edgeWidth * 2f);
             glowTransform.anchorMin = rectTransform.anchorMin;
             glowTransform.anchorMax = rectTransform.anchorMax;
-            glowTransform.pivot = rectTransform.pivot;
-            // ItemView 常用左上 Pivot。仅扩大 sizeDelta 会让光晕只向右下
-            // 偏移；根据 Pivot 平移半个扩展尺寸，使原底板仍位于光晕中心。
-            glowTransform.anchoredPosition = rectTransform.anchoredPosition +
-                Vector2.Scale(rectTransform.pivot * 2f - Vector2.one,
-                    expansion * .5f);
-            glowTransform.sizeDelta = rectTransform.sizeDelta + expansion;
+            glowTransform.pivot = new Vector2(.5f, .5f);
+            glowTransform.anchoredPosition = GetBottomPlateCenterInParent();
+            glowTransform.sizeDelta = GetBottomPlateSize() + expansion;
             glowTransform.localScale = rectTransform.localScale;
             glowTransform.localRotation = rectTransform.localRotation;
         }
@@ -906,8 +914,9 @@ namespace BackpackPrototype
                 return new Vector4(1f, 1f, 0f, 0f);
             }
 
-            Vector2 backgroundSize =
-                background.rectTransform.rect.size;
+            // Pattern tiling follows logical occupied cells, not the visual
+            // overflow added around the bottom plate for its glow.
+            Vector2 backgroundSize = rectTransform.rect.size;
 
             return new Vector4(
                 Mathf.Max(1f, backgroundSize.x / shapeCellSize.x),
@@ -1208,22 +1217,9 @@ namespace BackpackPrototype
             pulseTransform.SetSiblingIndex(rectTransform.GetSiblingIndex());
             pulseTransform.anchorMin = rectTransform.anchorMin;
             pulseTransform.anchorMax = rectTransform.anchorMax;
-            Vector2 pulsePivot = new(.5f, .5f);
-            Vector2 scaledRectSize = Vector2.Scale(
-                rectTransform.rect.size,
-                new Vector2(rectTransform.localScale.x,
-                    rectTransform.localScale.y));
-            Vector2 pivotToCenter = Vector2.Scale(
-                pulsePivot - rectTransform.pivot,
-                scaledRectSize);
-            Vector3 rotatedPivotToCenter = rectTransform.localRotation *
-                new Vector3(pivotToCenter.x, pivotToCenter.y, 0f);
-            // 背包物品通常使用左上 Pivot。脉冲层改为中心 Pivot 后，
-            // 先补偿到原底板的几何中心，放大才会向四周均匀扩张。
-            pulseTransform.pivot = pulsePivot;
-            pulseTransform.anchoredPosition = rectTransform.anchoredPosition +
-                new Vector2(rotatedPivotToCenter.x, rotatedPivotToCenter.y);
-            pulseTransform.sizeDelta = rectTransform.sizeDelta;
+            pulseTransform.pivot = new Vector2(.5f, .5f);
+            pulseTransform.anchoredPosition = GetBottomPlateCenterInParent();
+            pulseTransform.sizeDelta = GetBottomPlateSize();
             pulseTransform.localScale = rectTransform.localScale;
             pulseTransform.localRotation = rectTransform.localRotation;
             aircraftQualityPulseImage.sprite = background.sprite;
@@ -1809,6 +1805,7 @@ namespace BackpackPrototype
             }
 
             background.sprite = sprite;
+            UpdateBottomPlateLayout();
             if (aircraftGlowImage != null)
             {
                 aircraftGlowImage.sprite = sprite;
@@ -2032,15 +2029,28 @@ namespace BackpackPrototype
                 levelBadgeNumber.alignment = TextAlignmentOptions.Center;
                 levelBadgeNumber.enableWordWrapping = false;
                 levelBadgeNumber.overflowMode = TextOverflowModes.Overflow;
-                levelBadgeNumber.font = TMP_Settings.defaultFontAsset;
+                levelBadgeNumber.font = GetLevelBadgeFont();
                 levelBadgeNumber.fontSize = 19f;
                 levelBadgeNumber.fontStyle = FontStyles.Bold;
-                levelBadgeNumber.outlineWidth = 0.18f;
+                levelBadgeNumber.outlineWidth = LevelBadgeNumberOutlineWidth;
             }
+
+            ApplyLevelBadgeNumberFont();
 
             UpdateLevelBadgeLayout();
 
             return levelBadgeCircleImage != null && levelBadgeNumber != null;
+        }
+
+        private void ApplyLevelBadgeNumberFont()
+        {
+            if (levelBadgeNumber == null)
+            {
+                return;
+            }
+
+            levelBadgeNumber.font = GetLevelBadgeFont();
+            levelBadgeNumber.outlineWidth = LevelBadgeNumberOutlineWidth;
         }
 
         private void SetLevelBadgeVisible(bool visible)
@@ -2049,6 +2059,36 @@ namespace BackpackPrototype
             {
                 levelBadgeCircleImage.gameObject.SetActive(visible);
             }
+        }
+
+        private static TMP_FontAsset GetLevelBadgeFont()
+        {
+            TMP_FontAsset persistedFont = Resources.Load<TMP_FontAsset>(
+                LevelBadgeFontResourcePath);
+            if (persistedFont != null)
+            {
+                return persistedFont;
+            }
+
+            // The editor creates the persisted asset during its next refresh.
+            // Until that happens, use Milker directly instead of caching the
+            // project default font for the rest of the current play session.
+            if (levelBadgeFont == null)
+            {
+                Font sourceFont = Resources.Load<Font>(
+                    LevelBadgeSourceFontResourcePath);
+                if (sourceFont != null)
+                {
+                    levelBadgeFont = TMP_FontAsset.CreateFontAsset(sourceFont,
+                        90, 9, GlyphRenderMode.SDFAA, 256, 256,
+                        AtlasPopulationMode.Dynamic, true);
+                    levelBadgeFont.TryAddCharacters(LevelBadgeDigits,
+                        out _);
+                }
+            }
+
+            return levelBadgeFont != null ? levelBadgeFont :
+                TMP_Settings.defaultFontAsset;
         }
 
         private void RefreshBottomPlateVisual()
@@ -2125,6 +2165,66 @@ namespace BackpackPrototype
             var width = (bounds.x + 1) * cellSize.x + bounds.x * spacing.x;
             var height = (bounds.y + 1) * cellSize.y + bounds.y * spacing.y;
             rectTransform.sizeDelta = new Vector2(width, height);
+            UpdateBottomPlateLayout();
+        }
+
+        /// <summary>
+        /// Keeps the original 128 px-per-cell art aligned with the logical
+        /// item bounds while allowing the authored outer glow to overflow.
+        /// </summary>
+        private void UpdateBottomPlateLayout()
+        {
+            if (background == null || background.transform == transform ||
+                background.sprite == null || Instance?.Data == null)
+            {
+                return;
+            }
+
+            Vector2Int bounds = GetShapeBounds(Instance.Data.ShapeOffsets);
+            Vector2Int cellCount = bounds + Vector2Int.one;
+            RectTransform plateTransform = background.rectTransform;
+            plateTransform.anchorMin = new Vector2(.5f, .5f);
+            plateTransform.anchorMax = new Vector2(.5f, .5f);
+            plateTransform.pivot = new Vector2(.5f, .5f);
+            plateTransform.anchoredPosition = Vector2.zero;
+            plateTransform.sizeDelta = CalculateBottomPlateDisplaySize(
+                rectTransform.rect.size, cellCount, background.sprite.rect.size);
+        }
+
+        private Vector2 GetBottomPlateSize() =>
+            background != null ? background.rectTransform.rect.size :
+            rectTransform.rect.size;
+
+        private Vector2 GetBottomPlateCenterInParent()
+        {
+            Vector2 scaledRootSize = Vector2.Scale(rectTransform.rect.size,
+                new Vector2(rectTransform.localScale.x,
+                    rectTransform.localScale.y));
+            Vector2 pivotToCenter = Vector2.Scale(
+                new Vector2(.5f, .5f) - rectTransform.pivot,
+                scaledRootSize);
+            Vector3 rotatedPivotToCenter = rectTransform.localRotation *
+                new Vector3(pivotToCenter.x, pivotToCenter.y, 0f);
+            return rectTransform.anchoredPosition +
+                new Vector2(rotatedPivotToCenter.x, rotatedPivotToCenter.y);
+        }
+
+        private static Vector2 CalculateBottomPlateDisplaySize(
+            Vector2 logicalSize,
+            Vector2Int cellCount,
+            Vector2 spriteSize)
+        {
+            if (cellCount.x <= 0 || cellCount.y <= 0 ||
+                spriteSize.x <= 0f || spriteSize.y <= 0f)
+            {
+                return logicalSize;
+            }
+
+            return new Vector2(
+                spriteSize.x * logicalSize.x /
+                    (cellCount.x * AuthoredBottomPlateCellSize),
+                spriteSize.y * logicalSize.y /
+                    (cellCount.y * AuthoredBottomPlateCellSize));
         }
 
         private void UpdateIconGeometricCenter()

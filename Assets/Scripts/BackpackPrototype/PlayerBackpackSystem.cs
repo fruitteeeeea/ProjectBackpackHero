@@ -424,6 +424,7 @@ namespace BackpackPrototype
         {
             return isReady &&
                    Backpack != null &&
+                   HasCompleteDeck(deck) &&
                    DeckPreset.IsValidSlots(deck, out _) &&
                    DeckLayoutBuilder.TryBuild(
                        deck,
@@ -431,6 +432,25 @@ namespace BackpackPrototype
                        Backpack.Height,
                        null,
                        out _);
+        }
+
+        private static bool HasCompleteDeck(
+            IReadOnlyList<ItemData> deck)
+        {
+            if (deck == null || deck.Count != PlayerItemSystem.DeckSlotCount)
+            {
+                return false;
+            }
+
+            foreach (ItemData item in deck)
+            {
+                if (item == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>调试用：复用敌方初始摆放规划器安排当前玩家 Deck。</summary>
@@ -790,7 +810,7 @@ namespace BackpackPrototype
             return true;
         }
 
-        private bool RefreshShopInternal()
+        private bool RefreshShopInternal(bool requireTwoAircraft = false)
         {
             InitializeShopContainer();
             if (shopContainer == null)
@@ -816,7 +836,8 @@ namespace BackpackPrototype
             List<ItemData> nextShopItems = BuildShopRoll(
                 deckCatalog,
                 previousShopItems,
-                aircraftAppearancesThisPreparation);
+                aircraftAppearancesThisPreparation,
+                requireTwoAircraft);
 
             ClearShopViews();
             foreach (ItemData item in nextShopItems)
@@ -858,6 +879,24 @@ namespace BackpackPrototype
             IReadOnlyDictionary<string, int>
                 aircraftAppearancesThisPreparation)
         {
+            return BuildShopRoll(
+                deckCatalog,
+                previousShopItems,
+                aircraftAppearancesThisPreparation,
+                false);
+        }
+
+        /// <summary>
+        /// 生成一轮商店候选。首局首抽可要求两架飞机，等价于只保留
+        /// 满足该组成规则的随机结果，避免无上限重抽。
+        /// </summary>
+        private static List<ItemData> BuildShopRoll(
+            IReadOnlyList<ItemData> deckCatalog,
+            IReadOnlyCollection<ItemData> previousShopItems,
+            IReadOnlyDictionary<string, int>
+                aircraftAppearancesThisPreparation,
+            bool requireTwoAircraft)
+        {
             List<ItemData> selected = new(ShopRollItemCount);
             List<ItemData> aircraft = new();
             List<ItemData> equipment = new();
@@ -879,7 +918,7 @@ namespace BackpackPrototype
                 }
             }
 
-            bool usePreferredComposition =
+            bool usePreferredComposition = requireTwoAircraft ||
                 aircraft.Count > 0 && equipment.Count > 0 &&
                 UnityEngine.Random.value <
                 PreferredShopCompositionChance;
@@ -1356,7 +1395,9 @@ namespace BackpackPrototype
             shopInitializedForPreparation = true;
             aircraftAppearancesThisPreparation.Clear();
             remainingRolls = RollsPerPreparation;
-            RefreshShopInternal();
+            RefreshShopInternal(
+                appliedShopInitializationVersion !=
+                LevelFlowController.MatchInitializationVersion);
             NotifyRollStateChanged();
         }
 

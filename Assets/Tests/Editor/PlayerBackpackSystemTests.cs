@@ -108,7 +108,13 @@ public sealed class PlayerBackpackSystemTests
             };
             MethodInfo builder = typeof(PlayerBackpackSystem).GetMethod(
                 "BuildShopRoll",
-                BindingFlags.Static | BindingFlags.NonPublic);
+                BindingFlags.Static | BindingFlags.NonPublic,
+                null, new[]
+                {
+                    typeof(IReadOnlyList<ItemData>),
+                    typeof(IReadOnlyCollection<ItemData>),
+                    typeof(IReadOnlyDictionary<string, int>)
+                }, null);
 
             Assert.That(builder, Is.Not.Null);
 
@@ -170,7 +176,13 @@ public sealed class PlayerBackpackSystemTests
             var appearances = new Dictionary<string, int>();
             MethodInfo builder = typeof(PlayerBackpackSystem).GetMethod(
                 "BuildShopRoll",
-                BindingFlags.Static | BindingFlags.NonPublic);
+                BindingFlags.Static | BindingFlags.NonPublic,
+                null, new[]
+                {
+                    typeof(IReadOnlyList<ItemData>),
+                    typeof(IReadOnlyCollection<ItemData>),
+                    typeof(IReadOnlyDictionary<string, int>)
+                }, null);
             MethodInfo recorder = typeof(PlayerBackpackSystem).GetMethod(
                 "RecordAircraftAppearances",
                 BindingFlags.Static | BindingFlags.NonPublic);
@@ -397,6 +409,56 @@ public sealed class PlayerBackpackSystemTests
         }
 
         Assert.That(shopSlotCount, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void InitialShopRoll_AlwaysUsesTwoAircraftAndOneEquipment()
+    {
+        ItemShapeData shape = ScriptableObject.CreateInstance<ItemShapeData>();
+        ItemData aircraftOne = ScriptableObject.CreateInstance<ItemData>();
+        ItemData aircraftTwo = ScriptableObject.CreateInstance<ItemData>();
+        ItemData equipment = ScriptableObject.CreateInstance<ItemData>();
+
+        try
+        {
+            shape.InitializeForTests("One Cell", null, new[] { Vector2Int.zero });
+            aircraftOne.InitializeForTests("Aircraft One", ItemType.Aircraft, 1f, shape);
+            aircraftTwo.InitializeForTests("Aircraft Two", ItemType.Aircraft, 1f, shape);
+            equipment.InitializeForTests("Equipment", ItemType.Equipment, 1f, shape);
+            aircraftOne.ConfigurePlayerProgressForTests("aircraft-one");
+            aircraftTwo.ConfigurePlayerProgressForTests("aircraft-two");
+            equipment.ConfigurePlayerProgressForTests("equipment");
+
+            MethodInfo builder = typeof(PlayerBackpackSystem).GetMethod(
+                "BuildShopRoll", BindingFlags.Static | BindingFlags.NonPublic,
+                null, new[]
+                {
+                    typeof(IReadOnlyList<ItemData>),
+                    typeof(IReadOnlyCollection<ItemData>),
+                    typeof(IReadOnlyDictionary<string, int>), typeof(bool)
+                }, null);
+            Assert.That(builder, Is.Not.Null);
+
+            for (int seed = 0; seed < 100; seed++)
+            {
+                Random.InitState(seed);
+                var result = (List<ItemData>)builder.Invoke(null, new object[]
+                {
+                    new List<ItemData> { aircraftOne, aircraftTwo, equipment },
+                    new List<ItemData>(), new Dictionary<string, int>(), true
+                });
+                Assert.That(result, Has.Count.EqualTo(3));
+                Assert.That(CountItemsOfType(result, ItemType.Aircraft), Is.EqualTo(2));
+                Assert.That(CountItemsOfType(result, ItemType.Equipment), Is.EqualTo(1));
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(aircraftOne);
+            Object.DestroyImmediate(aircraftTwo);
+            Object.DestroyImmediate(equipment);
+            Object.DestroyImmediate(shape);
+        }
     }
 
     [Test]

@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Collections.Generic;
 using BackpackHero.Battle;
 using BackpackPrototype;
 using MoreMountains.Feedbacks;
@@ -231,6 +232,57 @@ public sealed class EnemyBackpackSystemTests
         foreach (BackpackLayoutItem placement in layout)
         {
             Assert.That(placement.AnchorCell.x, Is.InRange(1, 5));
+        }
+    }
+
+    [Test]
+    public void InitialHiddenShopRoll_AlwaysUsesTwoAircraftAndOneEquipment()
+    {
+        ItemShapeData shape = ScriptableObject.CreateInstance<ItemShapeData>();
+        ItemData aircraftOne = ScriptableObject.CreateInstance<ItemData>();
+        ItemData aircraftTwo = ScriptableObject.CreateInstance<ItemData>();
+        ItemData equipment = ScriptableObject.CreateInstance<ItemData>();
+
+        try
+        {
+            shape.InitializeForTests("One Cell", null,
+                new[] { Vector2Int.zero });
+            aircraftOne.InitializeForTests("Aircraft One",
+                ItemType.Aircraft, 1f, shape);
+            aircraftTwo.InitializeForTests("Aircraft Two",
+                ItemType.Aircraft, 1f, shape);
+            equipment.InitializeForTests("Equipment",
+                ItemType.Equipment, 1f, shape);
+            MethodInfo builder = typeof(EnemyBackpackSystem).GetMethod(
+                "BuildHiddenShopRoll",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(builder, Is.Not.Null);
+
+            for (int seed = 0; seed < 100; seed++)
+            {
+                Random.InitState(seed);
+                var result = (List<ItemData>)builder.Invoke(null,
+                    new object[]
+                    {
+                        new List<ItemData>
+                        {
+                            aircraftOne, aircraftTwo, equipment
+                        },
+                        true
+                    });
+                Assert.That(result, Has.Count.EqualTo(3));
+                Assert.That(CountItemsOfType(result, ItemType.Aircraft),
+                    Is.EqualTo(2));
+                Assert.That(CountItemsOfType(result, ItemType.Equipment),
+                    Is.EqualTo(1));
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(aircraftOne);
+            Object.DestroyImmediate(aircraftTwo);
+            Object.DestroyImmediate(equipment);
+            Object.DestroyImmediate(shape);
         }
     }
 
@@ -657,6 +709,22 @@ public sealed class EnemyBackpackSystemTests
             instance.GetComponent<
                 EnemyBackpackSystem>(),
             "Awake");
+    }
+
+    private static int CountItemsOfType(
+        IEnumerable<ItemData> items,
+        ItemType type)
+    {
+        int count = 0;
+        foreach (ItemData item in items)
+        {
+            if (item != null && item.ItemType == type)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     private static void Invoke(

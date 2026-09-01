@@ -124,7 +124,7 @@ namespace BackpackPrototype
                 hasInitialized = true;
             }
             RequestInitialLayoutForNewMatch();
-            InitializePreparation();
+            InitializePreparationForNewMatch();
         }
         private void Update()
         {
@@ -534,7 +534,9 @@ namespace BackpackPrototype
             if (phase == BattlePhase.Preparation)
             {
                 TryApplyInitialLayoutForMatch();
-                InitializePreparation();
+                InitializePreparation(
+                    appliedPreparationInitializationVersion !=
+                    LevelFlowController.MatchInitializationVersion);
                 if (CanOperate())
                 {
                     appliedPreparationInitializationVersion =
@@ -550,11 +552,12 @@ namespace BackpackPrototype
                 }
             }
         }
-        private void InitializePreparation()
+        private void InitializePreparation(
+            bool requireTwoAircraft = false)
         {
             if (!CanOperate()) return;
             ResetPreparationState();
-            RefreshHiddenShop();
+            RefreshHiddenShop(requireTwoAircraft);
         }
         private void ResetProgressionLevelForNewMatch()
         {
@@ -593,11 +596,73 @@ namespace BackpackPrototype
             return item;
         }
 
-        private void RefreshHiddenShop()
+        private void RefreshHiddenShop(bool requireTwoAircraft = false)
         {
-            shopItems.Clear(); if (currentDeckPreset == null) return;
-            List<ItemData> source = new(); foreach (ItemData item in currentDeckPreset.Slots) if (item != null) source.Add(item);
-            for (int index = 0; index < ShopRollItemCount && source.Count > 0; index++) shopItems.Add(source[UnityEngine.Random.Range(0, source.Count)]);
+            shopItems.Clear();
+            if (currentDeckPreset == null) return;
+
+            shopItems.AddRange(BuildHiddenShopRoll(
+                currentDeckPreset.Slots,
+                requireTwoAircraft));
+        }
+
+        /// <summary>
+        /// 敌人首局首抽固定保留两架飞机；其余抽取仍使用当前预设，
+        /// 且沿用敌方商店允许重复的规则。
+        /// </summary>
+        private static List<ItemData> BuildHiddenShopRoll(
+            IReadOnlyList<ItemData> deck,
+            bool requireTwoAircraft)
+        {
+            List<ItemData> source = new();
+            List<ItemData> aircraft = new();
+            List<ItemData> nonAircraft = new();
+            if (deck != null)
+            {
+                foreach (ItemData item in deck)
+                {
+                    if (item == null) continue;
+                    source.Add(item);
+                    if (item.ItemType == ItemType.Aircraft)
+                    {
+                        aircraft.Add(item);
+                    }
+                    else
+                    {
+                        nonAircraft.Add(item);
+                    }
+                }
+            }
+
+            List<ItemData> selected = new(ShopRollItemCount);
+            if (requireTwoAircraft && aircraft.Count > 0)
+            {
+                for (int index = 0; index < 2; index++)
+                {
+                    selected.Add(aircraft[UnityEngine.Random.Range(
+                        0, aircraft.Count)]);
+                }
+
+                IReadOnlyList<ItemData> thirdItemCandidates =
+                    nonAircraft.Count > 0 ? nonAircraft : source;
+                if (thirdItemCandidates.Count > 0)
+                {
+                    selected.Add(thirdItemCandidates[UnityEngine.Random.Range(
+                        0, thirdItemCandidates.Count)]);
+                }
+
+                return selected;
+            }
+
+            for (int index = 0;
+                 index < ShopRollItemCount && source.Count > 0;
+                 index++)
+            {
+                selected.Add(source[UnityEngine.Random.Range(
+                    0, source.Count)]);
+            }
+
+            return selected;
         }
 
         private bool ApplyLayoutInternal(IReadOnlyList<BackpackLayoutItem> layout, EnemyBackpackData sourceData)
@@ -646,7 +711,8 @@ namespace BackpackPrototype
                 return;
             }
 
-            InitializePreparation();
+            InitializePreparation(
+                appliedPreparationInitializationVersion != version);
             if (CanOperate())
             {
                 appliedPreparationInitializationVersion = version;

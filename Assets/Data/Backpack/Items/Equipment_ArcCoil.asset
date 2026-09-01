@@ -12,23 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db0628d6a014d80b89aaf76fa73d6dc, type: 3}
   m_Name: Equipment_ArcCoil
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.ItemData
+  id: equipment_arc_coil
+  initiallyUnlocked: 1
+  unlockRequirementText: Unlocked by default
+  cost: 0
+  debris: 0
   upgradeFragmentsLevel1: 2
   upgradeFragmentsLevel9: 100
   aircraftHealthMultiplierRange: {x: 1, y: 1.4}
   aircraftDamageMultiplierRange: {x: 1, y: 1.4}
   equipmentIntervalMultiplierRange: {x: 1, y: 0.8}
-  itemId: equipment_arc_coil
-  itemName: Arc Coil
-  description: Adds chain-lightning shots to adjacent fighters.
-  icon: {fileID: 6671908658173119883, guid: 589cb737dd48f43fc9d1216c2e973ab0, type: 3}
+  name: Arc Coil
+  desc: Adds chain-lightning shots to adjacent fighters.
+  icon: {fileID: 21300000, guid: 2d3f4ca022877504fb7dc3b0a38338c4, type: 3}
   backgroundColor: {r: 0.65882355, g: 0.33333334, b: 0.96862745, a: 1}
   itemType: 1
   equipmentColor: {r: 0.20784314, g: 0.07450981, b: 0.3019608, a: 1}
   bottomPlateDisplayMode: 0
   equipmentEffects:
   - {fileID: 11400000, guid: 88a5268bb1a8d42cc85c14b7adb3ea1b, type: 2}
-  cooldownDuration: 3.5
-  spawnCount: 1
+  cd: 3.5
+  price: 0
+  count: 1
+  equipmentItemModifier: 1
+  applyEquipmentItemModifierToProjectileStats: 0
   shape: {fileID: 11400000, guid: 779de2dbf4b6144469f76b3c6dc34fda, type: 2}
   aircraftCooldownReductionLevel2: 0.2
   aircraftCooldownReductionLevel3: 0.4

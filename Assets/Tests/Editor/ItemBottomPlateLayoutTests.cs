@@ -187,6 +187,17 @@ public sealed class ItemBottomPlateLayoutTests
     }
 
     [Test]
+    public void ItemIconScale_AppliesEquipmentMultiplierOnlyToEquipment()
+    {
+        BackpackVisualSettings settings = CreateIconScaleSettings(1.2f, 1.4f);
+
+        Assert.That(GetItemIconScale(settings, ItemType.Aircraft),
+            Is.EqualTo(1.2f));
+        Assert.That(GetItemIconScale(settings, ItemType.Equipment),
+            Is.EqualTo(1.68f));
+    }
+
+    [Test]
     public void QualityLevelBadgeTypography_UsesConfiguredValuesAndFallsBackToMilker()
     {
         GameObject root = new("Item", typeof(RectTransform),
@@ -284,10 +295,21 @@ public sealed class ItemBottomPlateLayoutTests
         8f, false, true, null, font, fontSize, outlineWidth, true,
         .8f, 1.12f, .45f);
 
-    private static BackpackVisualSettings CreateIconScaleSettings(float iconScale) => new(
+    private static float GetItemIconScale(BackpackVisualSettings settings,
+        ItemType itemType)
+    {
+        MethodInfo method = typeof(ItemView).GetMethod("GetItemIconScale",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        return (float)method.Invoke(null, new object[] { settings, itemType });
+    }
+
+    private static BackpackVisualSettings CreateIconScaleSettings(float iconScale,
+        float equipmentIconScale = BackpackVisualSettings.DefaultEquipmentItemIconScale) => new(
         true, .5f, Color.white, Color.white, .18f, .62f, .7f,
         1.17f, 10f, -6f, BackpackPlacementScaleEase.OutElastic,
         .32f, Color.white, 16f, true, Color.white, .12f, .45f, 1.2f,
         8f, false, true, null, null, 19f, .36f, true,
-        .8f, 1.12f, .45f, iconScale);
+        .8f, 1.12f, .45f, iconScale,
+        BackpackVisualSettings.DefaultBackpackHealthBarVerticalOffset,
+        equipmentIconScale);
 }

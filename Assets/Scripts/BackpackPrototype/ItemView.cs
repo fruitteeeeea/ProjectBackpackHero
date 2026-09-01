@@ -2281,9 +2281,16 @@ namespace BackpackPrototype
             iconRect.pivot = new Vector2(.5f, .5f);
             iconRect.anchoredPosition =
                 GetImageGeometricCenterLocalPosition();
-            iconRect.localScale = Vector3.one * settings.ItemIconScale;
+            iconRect.localScale = Vector3.one * GetItemIconScale(settings,
+                Instance?.Data?.ItemType ?? ItemType.Aircraft);
             UpdateLevelBadgeLayout();
         }
+
+        private static float GetItemIconScale(BackpackVisualSettings settings,
+            ItemType itemType) => settings.ItemIconScale *
+            (itemType == ItemType.Equipment
+                ? settings.EquipmentItemIconScale
+                : 1f);
 
         private void UpdateLevelBadgeLayout()
         {

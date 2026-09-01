@@ -24,6 +24,10 @@ namespace BackpackHero.Debugging
         [SerializeField, Range(BackpackVisualSettings.MinimumItemIconScale,
             BackpackVisualSettings.MaximumItemIconScale)]
         private float itemIconScale = BackpackVisualSettings.DefaultItemIconScale;
+        [SerializeField, Range(BackpackVisualSettings.MinimumEquipmentItemIconScale,
+            BackpackVisualSettings.MaximumEquipmentItemIconScale)]
+        private float equipmentItemIconScale =
+            BackpackVisualSettings.DefaultEquipmentItemIconScale;
         [SerializeField] private bool aircraftGlowEnabled = true;
         [SerializeField] private Color aircraftGlowColor = Color.white;
         [SerializeField, Range(0f, 1f)] private float aircraftGlowMinimumIntensity = .12f;
@@ -61,6 +65,7 @@ namespace BackpackHero.Debugging
             levelFontColor = values.LevelFontColor;
             levelFontSize = values.LevelFontSize;
             itemIconScale = values.ItemIconScale;
+            equipmentItemIconScale = values.EquipmentItemIconScale;
             aircraftGlowEnabled = values.AircraftGlowEnabled;
             aircraftGlowColor = values.AircraftGlowColor;
             aircraftGlowMinimumIntensity = values.AircraftGlowMinimumIntensity;
@@ -99,7 +104,7 @@ namespace BackpackHero.Debugging
             aircraftQualityPulseInterval,
             aircraftQualityPulseScaleMultiplier,
             aircraftQualityPulseTweenDuration, itemIconScale,
-            backpackHealthBarVerticalOffset);
+            backpackHealthBarVerticalOffset, equipmentItemIconScale);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

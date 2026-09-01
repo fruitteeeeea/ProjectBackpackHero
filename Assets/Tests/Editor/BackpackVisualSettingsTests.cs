@@ -32,6 +32,8 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(settings.LevelFontSize, Is.EqualTo(16f));
         Assert.That(settings.ItemIconScale,
             Is.EqualTo(BackpackVisualSettings.DefaultItemIconScale));
+        Assert.That(settings.EquipmentItemIconScale,
+            Is.EqualTo(BackpackVisualSettings.DefaultEquipmentItemIconScale));
         Assert.That(settings.AircraftGlowEnabled, Is.True);
         Assert.That(settings.AircraftGlowColor, Is.EqualTo(Color.white));
         Assert.That(settings.AircraftGlowMinimumIntensity, Is.EqualTo(.12f));
@@ -64,7 +66,7 @@ public sealed class BackpackVisualSettingsTests
             BackpackPlacementScaleEase.OutCubic, -3f, Color.green, -4f,
             true, Color.magenta, -1f, 2f, -3f, -4f, false, false, null,
             TMP_Settings.defaultFontAsset, -5f, 2f, false,
-            -1f, .5f, -2f, 9f, -3f);
+            -1f, .5f, -2f, 9f, -3f, -3f);
         try
         {
             asset.SetValues(expected);
@@ -91,6 +93,8 @@ public sealed class BackpackVisualSettingsTests
                 Is.EqualTo(BackpackVisualSettings.MinimumLevelFontSize));
             Assert.That(actual.ItemIconScale,
                 Is.EqualTo(BackpackVisualSettings.MaximumItemIconScale));
+            Assert.That(actual.EquipmentItemIconScale,
+                Is.EqualTo(BackpackVisualSettings.MinimumEquipmentItemIconScale));
             Assert.That(actual.AircraftGlowEnabled, Is.True);
             Assert.That(actual.AircraftGlowColor, Is.EqualTo(Color.magenta));
             Assert.That(actual.AircraftGlowMinimumIntensity, Is.Zero);
@@ -125,6 +129,9 @@ public sealed class BackpackVisualSettingsTests
                 .WithBackpackHealthBarVerticalOffset(-1f)
                 .BackpackHealthBarVerticalOffset,
                 Is.EqualTo(BackpackVisualSettings.MinimumBackpackHealthBarVerticalOffset));
+            Assert.That(BackpackVisualSettings.Default
+                .WithEquipmentItemIconScale(9f).EquipmentItemIconScale,
+                Is.EqualTo(BackpackVisualSettings.MaximumEquipmentItemIconScale));
         }
         finally
         {
@@ -169,6 +176,8 @@ public sealed class BackpackVisualSettingsTests
             Is.GreaterThanOrEqualTo(BackpackVisualSettings.MinimumLevelFontSize));
         Assert.That(values.ItemIconScale,
             Is.EqualTo(BackpackVisualSettings.DefaultItemIconScale));
+        Assert.That(values.EquipmentItemIconScale,
+            Is.EqualTo(BackpackVisualSettings.DefaultEquipmentItemIconScale));
         Assert.That(values.AircraftGlowColor, Is.EqualTo(Color.white));
         Assert.That(values.AircraftGlowEdgeWidth,
             Is.GreaterThanOrEqualTo(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth));

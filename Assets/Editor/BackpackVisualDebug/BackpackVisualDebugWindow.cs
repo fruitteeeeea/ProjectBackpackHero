@@ -150,6 +150,12 @@ namespace BackpackHero.EditorTools
                 BackpackVisualSettings.MinimumItemIconScale,
                 BackpackVisualSettings.MaximumItemIconScale);
             bool itemIconScaleChanged = EditorGUI.EndChangeCheck();
+            EditorGUI.BeginChangeCheck();
+            float equipmentItemIconScale = EditorGUILayout.Slider("装备 Icon 系数",
+                current.EquipmentItemIconScale,
+                BackpackVisualSettings.MinimumEquipmentItemIconScale,
+                BackpackVisualSettings.MaximumEquipmentItemIconScale);
+            bool equipmentItemIconScaleChanged = EditorGUI.EndChangeCheck();
 
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("底板高亮", EditorStyles.boldLabel);
@@ -232,9 +238,10 @@ namespace BackpackHero.EditorTools
                 aircraftQualityPulseInterval,
                 aircraftQualityPulseScaleMultiplier,
                 aircraftQualityPulseTweenDuration, itemIconScale,
-                backpackHealthBarVerticalOffset);
+                backpackHealthBarVerticalOffset, equipmentItemIconScale);
 
-            if (itemIconScaleChanged || backpackHealthBarOffsetChanged)
+            if (itemIconScaleChanged || equipmentItemIconScaleChanged ||
+                backpackHealthBarOffsetChanged)
             {
                 runtime.SetSettings(draft.Value);
             }

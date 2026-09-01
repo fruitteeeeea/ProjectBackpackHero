@@ -15,7 +15,7 @@ public static class BuildAndroidForTesting
     public const string GameScenePath =
         "Assets/Scenes/SampleScene.unity";
     public const string IconPath =
-        "Assets/Art/Images/icon.png";
+        "Assets/Art/Images/icon/icon.png";
     public const string OutputRelativePath =
         "Builds/Android/Development/ProjectBackpackHero-dev.apk";
 

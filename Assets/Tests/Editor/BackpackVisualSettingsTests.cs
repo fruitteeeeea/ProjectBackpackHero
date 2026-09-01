@@ -50,6 +50,8 @@ public sealed class BackpackVisualSettingsTests
             Is.EqualTo(1.12f));
         Assert.That(settings.AircraftQualityPulseTweenDuration,
             Is.EqualTo(.45f));
+        Assert.That(settings.BackpackHealthBarVerticalOffset,
+            Is.EqualTo(BackpackVisualSettings.DefaultBackpackHealthBarVerticalOffset));
     }
 
     [Test]
@@ -62,7 +64,7 @@ public sealed class BackpackVisualSettingsTests
             BackpackPlacementScaleEase.OutCubic, -3f, Color.green, -4f,
             true, Color.magenta, -1f, 2f, -3f, -4f, false, false, null,
             TMP_Settings.defaultFontAsset, -5f, 2f, false,
-            -1f, .5f, -2f, 9f);
+            -1f, .5f, -2f, 9f, -3f);
         try
         {
             asset.SetValues(expected);
@@ -113,10 +115,16 @@ public sealed class BackpackVisualSettingsTests
                 Is.EqualTo(BackpackVisualSettings.MinimumAircraftQualityPulseScale));
             Assert.That(actual.AircraftQualityPulseTweenDuration,
                 Is.EqualTo(BackpackVisualSettings.MinimumAircraftQualityPulseTweenDuration));
+            Assert.That(actual.BackpackHealthBarVerticalOffset,
+                Is.EqualTo(BackpackVisualSettings.MinimumBackpackHealthBarVerticalOffset));
             Assert.That(actual.GetPlacementScaleDotweenEase(),
                 Is.EqualTo(DG.Tweening.Ease.OutCubic));
             Assert.That(BackpackVisualSettings.Default
                 .WithOverridesEnabled(false).OverridesEnabled, Is.False);
+            Assert.That(BackpackVisualSettings.Default
+                .WithBackpackHealthBarVerticalOffset(-1f)
+                .BackpackHealthBarVerticalOffset,
+                Is.EqualTo(BackpackVisualSettings.MinimumBackpackHealthBarVerticalOffset));
         }
         finally
         {
@@ -178,6 +186,8 @@ public sealed class BackpackVisualSettingsTests
             Is.EqualTo(1.12f));
         Assert.That(values.AircraftQualityPulseTweenDuration,
             Is.EqualTo(.45f));
+        Assert.That(values.BackpackHealthBarVerticalOffset,
+            Is.EqualTo(1.15f));
     }
 
     [Test]

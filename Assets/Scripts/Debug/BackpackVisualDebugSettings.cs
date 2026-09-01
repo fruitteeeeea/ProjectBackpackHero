@@ -40,6 +40,9 @@ namespace BackpackHero.Debugging
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftQualityPulseInterval)] private float aircraftQualityPulseInterval = .8f;
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftQualityPulseScale)] private float aircraftQualityPulseScaleMultiplier = 1.12f;
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftQualityPulseTweenDuration)] private float aircraftQualityPulseTweenDuration = .45f;
+        [SerializeField, Min(BackpackVisualSettings.MinimumBackpackHealthBarVerticalOffset)]
+        private float backpackHealthBarVerticalOffset =
+            BackpackVisualSettings.DefaultBackpackHealthBarVerticalOffset;
 
         public void SetValues(BackpackVisualSettings values)
         {
@@ -76,6 +79,8 @@ namespace BackpackHero.Debugging
                 values.AircraftQualityPulseScaleMultiplier;
             aircraftQualityPulseTweenDuration =
                 values.AircraftQualityPulseTweenDuration;
+            backpackHealthBarVerticalOffset =
+                values.BackpackHealthBarVerticalOffset;
         }
 
         public BackpackVisualSettings GetValues() => new(
@@ -93,7 +98,8 @@ namespace BackpackHero.Debugging
             aircraftQualityPulseEnabled,
             aircraftQualityPulseInterval,
             aircraftQualityPulseScaleMultiplier,
-            aircraftQualityPulseTweenDuration, itemIconScale);
+            aircraftQualityPulseTweenDuration, itemIconScale,
+            backpackHealthBarVerticalOffset);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

@@ -43,3 +43,4 @@ MonoBehaviour:
   aircraftQualityPulseInterval: 0.8
   aircraftQualityPulseScaleMultiplier: 1.12
   aircraftQualityPulseTweenDuration: 0.45
+  backpackHealthBarVerticalOffset: 1.25

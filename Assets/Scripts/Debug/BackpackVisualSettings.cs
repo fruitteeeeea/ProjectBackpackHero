@@ -32,6 +32,8 @@ namespace BackpackHero.Debugging
         public const float MinimumAircraftQualityPulseInterval = 0f;
         public const float MinimumAircraftQualityPulseScale = 1f;
         public const float MinimumAircraftQualityPulseTweenDuration = 0.01f;
+        public const float MinimumBackpackHealthBarVerticalOffset = 0f;
+        public const float DefaultBackpackHealthBarVerticalOffset = 1.15f;
 
         public static BackpackVisualSettings Default => new(
             true, .5f,
@@ -42,7 +44,8 @@ namespace BackpackHero.Debugging
             .32f, Color.white, 16f,
             true, Color.white, .12f, .45f, 1.2f, 8f, false, true, null,
             null, 19f, .36f, true,
-            .8f, 1.12f, .45f);
+            .8f, 1.12f, .45f, DefaultItemIconScale,
+            DefaultBackpackHealthBarVerticalOffset);
 
         public BackpackVisualSettings(
             bool overridesEnabled,
@@ -75,7 +78,9 @@ namespace BackpackHero.Debugging
             float aircraftQualityPulseInterval,
             float aircraftQualityPulseScaleMultiplier,
             float aircraftQualityPulseTweenDuration,
-            float itemIconScale = DefaultItemIconScale)
+            float itemIconScale = DefaultItemIconScale,
+            float backpackHealthBarVerticalOffset =
+                DefaultBackpackHealthBarVerticalOffset)
         {
             OverridesEnabled = overridesEnabled;
             DragOpacity = Mathf.Clamp(dragOpacity, MinimumDragOpacity,
@@ -126,6 +131,9 @@ namespace BackpackHero.Debugging
                 aircraftQualityPulseTweenDuration);
             ItemIconScale = Mathf.Clamp(itemIconScale, MinimumItemIconScale,
                 MaximumItemIconScale);
+            BackpackHealthBarVerticalOffset = Mathf.Max(
+                MinimumBackpackHealthBarVerticalOffset,
+                backpackHealthBarVerticalOffset);
         }
 
         public bool OverridesEnabled { get; }
@@ -159,6 +167,7 @@ namespace BackpackHero.Debugging
         public float AircraftQualityPulseInterval { get; }
         public float AircraftQualityPulseScaleMultiplier { get; }
         public float AircraftQualityPulseTweenDuration { get; }
+        public float BackpackHealthBarVerticalOffset { get; }
         public bool UsesFactionLevelColor => !OverridesEnabled ||
             IsWhiteRgb(LevelFontColor);
 
@@ -182,7 +191,26 @@ namespace BackpackHero.Debugging
             AircraftQualityPulseEnabled,
             AircraftQualityPulseInterval,
             AircraftQualityPulseScaleMultiplier,
-            AircraftQualityPulseTweenDuration, ItemIconScale);
+            AircraftQualityPulseTweenDuration, ItemIconScale,
+            BackpackHealthBarVerticalOffset);
+
+        public BackpackVisualSettings WithBackpackHealthBarVerticalOffset(
+            float value) => new(
+            OverridesEnabled, DragOpacity, LegalPreviewColor, IllegalPreviewColor,
+            MergeFlashMinimum, MergeFlashMaximum, MergeFlashCycleDuration,
+            PlacementScaleMultiplier, PlacementPositiveRotationDegrees,
+            PlacementNegativeRotationDegrees, PlacementScaleEase,
+            ShopFlightDuration, LevelFontColor, LevelFontSize,
+            AircraftGlowEnabled, AircraftGlowColor,
+            AircraftGlowMinimumIntensity, AircraftGlowMaximumIntensity,
+            AircraftGlowCycleDuration, AircraftGlowEdgeWidth,
+            EquipmentBottomPlateGlowEnabled, ColorQualityModeEnabled,
+            ItemQualityPalette, QualityLevelBadgeFont,
+            QualityLevelBadgeFontSize, QualityLevelBadgeOutlineWidth,
+            AircraftQualityPulseEnabled,
+            AircraftQualityPulseInterval,
+            AircraftQualityPulseScaleMultiplier,
+            AircraftQualityPulseTweenDuration, ItemIconScale, value);
 
         private static bool IsWhiteRgb(Color color) =>
             Mathf.Approximately(color.r, 1f) &&
@@ -234,7 +262,9 @@ namespace BackpackHero.Debugging
             Mathf.Approximately(AircraftQualityPulseScaleMultiplier,
                 other.AircraftQualityPulseScaleMultiplier) &&
             Mathf.Approximately(AircraftQualityPulseTweenDuration,
-                other.AircraftQualityPulseTweenDuration);
+                other.AircraftQualityPulseTweenDuration) &&
+            Mathf.Approximately(BackpackHealthBarVerticalOffset,
+                other.BackpackHealthBarVerticalOffset);
 
         public override bool Equals(object obj) =>
             obj is BackpackVisualSettings other && Equals(other);
@@ -277,8 +307,10 @@ namespace BackpackHero.Debugging
                 hash = (hash * 31) + AircraftQualityPulseInterval.GetHashCode();
                 hash = (hash * 31) +
                     AircraftQualityPulseScaleMultiplier.GetHashCode();
-                return (hash * 31) +
+                hash = (hash * 31) +
                     AircraftQualityPulseTweenDuration.GetHashCode();
+                return (hash * 31) +
+                    BackpackHealthBarVerticalOffset.GetHashCode();
             }
         }
     }

@@ -30,6 +30,13 @@ public sealed class WorldSpaceHealthBarFollower2D :
         UpdateTransform();
     }
 
+    public void SetWorldOffsetY(
+        float newY)
+    {
+        worldOffset.y = newY;
+        UpdateTransform();
+    }
+
     private void LateUpdate()
     {
         UpdateTransform();

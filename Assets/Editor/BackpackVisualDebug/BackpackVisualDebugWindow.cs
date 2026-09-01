@@ -133,6 +133,16 @@ namespace BackpackHero.EditorTools
                 EditorGUILayout.FloatField("等级字体大小", current.LevelFontSize));
 
             EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("背包血条", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            float backpackHealthBarVerticalOffset = Mathf.Max(
+                BackpackVisualSettings.MinimumBackpackHealthBarVerticalOffset,
+                EditorGUILayout.FloatField("垂直偏移",
+                    current.BackpackHealthBarVerticalOffset));
+            bool backpackHealthBarOffsetChanged =
+                EditorGUI.EndChangeCheck();
+
+            EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("物品图标", EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
             float itemIconScale = EditorGUILayout.Slider("统一 Icon 缩放",
@@ -221,9 +231,10 @@ namespace BackpackHero.EditorTools
                 aircraftQualityPulseEnabled,
                 aircraftQualityPulseInterval,
                 aircraftQualityPulseScaleMultiplier,
-                aircraftQualityPulseTweenDuration, itemIconScale);
+                aircraftQualityPulseTweenDuration, itemIconScale,
+                backpackHealthBarVerticalOffset);
 
-            if (itemIconScaleChanged)
+            if (itemIconScaleChanged || backpackHealthBarOffsetChanged)
             {
                 runtime.SetSettings(draft.Value);
             }

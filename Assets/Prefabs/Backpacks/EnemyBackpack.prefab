@@ -95,7 +95,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 412158199208982114, guid: 24a011552d5284264b2b9c09c513c261, type: 3}
       propertyPath: worldOffset.y
-      value: -1.05
+      value: -1.15
       objectReference: {fileID: 0}
     - target: {fileID: 880010000000000002, guid: 24a011552d5284264b2b9c09c513c261, type: 3}
       propertyPath: defaultPlacements.Array.size

@@ -553,7 +553,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldSpaceHealthBarFollower2D
   target: {fileID: 3907970746525924259}
-  worldOffset: {x: 0, y: 1.05, z: 0}
+  worldOffset: {x: 0, y: 1.15, z: 0}
   keepWorldRotation: 1
 --- !u!1001 &6567572603906528799
 PrefabInstance:

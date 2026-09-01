@@ -99,6 +99,8 @@ namespace BackpackHero.Battle
             ConfigureHurtBoxLayers();
             
             ConfigureHealthBars();
+            ApplyHealthBarVerticalOffset(
+                BackpackVisualDebugRuntime.CurrentSettings);
             ApplyPacingHealth();
             ApplyCombatPresentation(
                 BattleFlowController.IsCombatPhase);
@@ -112,6 +114,8 @@ namespace BackpackHero.Battle
                 HandlePacingChanged;
             LevelDifficultyRuntime.Changed +=
                 HandleLevelDifficultyChanged;
+            BackpackVisualDebugRuntime.SettingsChanged +=
+                HandleBackpackVisualSettingsChanged;
         }
 
         private void OnDisable()
@@ -122,6 +126,8 @@ namespace BackpackHero.Battle
                 HandlePacingChanged;
             LevelDifficultyRuntime.Changed -=
                 HandleLevelDifficultyChanged;
+            BackpackVisualDebugRuntime.SettingsChanged -=
+                HandleBackpackVisualSettingsChanged;
         }
 
         private void Start()
@@ -145,6 +151,12 @@ namespace BackpackHero.Battle
         private void HandleLevelDifficultyChanged()
         {
             ApplyPacingHealth();
+        }
+
+        private void HandleBackpackVisualSettingsChanged(
+            BackpackVisualSettings settings)
+        {
+            ApplyHealthBarVerticalOffset(settings);
         }
 
         private void ApplyPacingHealth()
@@ -230,6 +242,24 @@ namespace BackpackHero.Battle
 
                     follower.SetTarget(transform);
                 }
+            }
+        }
+
+        private void ApplyHealthBarVerticalOffset(
+            BackpackVisualSettings settings)
+        {
+            if (healthBarFollowers == null)
+            {
+                return;
+            }
+
+            float verticalOffset =
+                Faction == BattleFaction.Enemy
+                    ? -settings.BackpackHealthBarVerticalOffset
+                    : settings.BackpackHealthBarVerticalOffset;
+            foreach (WorldSpaceHealthBarFollower2D follower in healthBarFollowers)
+            {
+                follower?.SetWorldOffsetY(verticalOffset);
             }
         }
 

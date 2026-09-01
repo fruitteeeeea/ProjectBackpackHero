@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using BackpackHero.Battle;
+using BackpackHero.Debugging;
 using BackpackHero.Input;
 using UnityEngine;
 using UnityEngine.UI;
@@ -470,7 +471,10 @@ namespace BackpackPrototype
             applyingInitialLayout = true;
             try
             {
-                if (RandomizeInitialPlacementWithEnemyAI())
+                bool applied = InitialBackpackItemAutoPlacementDebug.IsEnabled
+                    ? RandomizeInitialPlacementWithEnemyAI()
+                    : LoadLayout(Array.Empty<BackpackLayoutItem>());
+                if (applied)
                 {
                     initialLayoutPending = false;
                     appliedInitialLayoutVersion = pendingInitialLayoutVersion;

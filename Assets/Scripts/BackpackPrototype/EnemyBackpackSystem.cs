@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using BackpackHero.Battle;
+using BackpackHero.Debugging;
 using BackpackHero.Progression;
 using UnityEngine;
 
@@ -256,9 +257,12 @@ namespace BackpackPrototype
         private void TryApplyInitialLayoutForMatch()
         {
             if (!initialLayoutPending || !CanOperate()) return;
-            if (currentDeckPreset != null
-                ? RandomizeInitialPlacement()
-                : RestoreDefaultData())
+            bool applied = InitialBackpackItemAutoPlacementDebug.IsEnabled
+                ? (currentDeckPreset != null
+                    ? RandomizeInitialPlacement()
+                    : RestoreDefaultData())
+                : LoadLayout(Array.Empty<BackpackLayoutItem>());
+            if (applied)
             {
                 initialLayoutPending = false;
                 appliedInitialLayoutVersion = pendingInitialLayoutVersion;

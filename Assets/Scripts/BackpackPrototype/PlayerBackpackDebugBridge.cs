@@ -5,6 +5,9 @@ using BackpackHero.Battle;
 using BackpackHero.Debugging;
 using UnityEngine;
 using UnityEngine.InputSystem;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Unity.Profiling;
+#endif
 
 namespace BackpackPrototype
 {
@@ -16,6 +19,11 @@ namespace BackpackPrototype
     public sealed class PlayerBackpackDebugBridge :
         MonoBehaviour
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static readonly ProfilerMarker RefreshSnapshotMarker =
+            new("SampleScenePerf.PlayerBackpackDebugBridge.RefreshSnapshot");
+#endif
+
         [SerializeField]
         private PlayerBackpackSystem playerBackpackSystem;
 
@@ -349,6 +357,7 @@ namespace BackpackPrototype
             preset.SetRuntimeState(
                 GamePacingDebugRuntime.Instance?.GameSpeed ?? 1f,
                 flight != null ? flight.Mode : RandomFlightCurveMode.Off,
+                InitialBackpackItemAutoPlacementDebug.IsEnabled,
                 playerProgressionLevel,
                 enemyBackpackSystem.ActiveProgressionLevel,
                 enemyBackpackSystem.CurrentDeckPreset,
@@ -379,6 +388,8 @@ namespace BackpackPrototype
             }
 
             // 先完成所有不写状态的校验，随后才开始重置并修改当前对局。
+            InitialBackpackItemAutoPlacementDebug.SetEnabled(
+                preset.AutoAddConfiguredItems);
             LevelFlowController.EnsureInstance()?.ResetForDebugMatch();
             if (!playerBackpackSystem.TryApplyRuntimeDeck(preset.PlayerDeck) ||
                 !enemyBackpackSystem.TryApplyRuntimeDeck(preset.EnemyDeck) ||
@@ -658,6 +669,10 @@ namespace BackpackPrototype
 
         public void RefreshSnapshot()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            using (RefreshSnapshotMarker.Auto())
+            {
+#endif
             if (playerBackpackSystem == null)
             {
                 snapshot =
@@ -715,6 +730,9 @@ namespace BackpackPrototype
                     items);
 
             RefreshEnemySnapshot();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            }
+#endif
         }
 
         private void RefreshEnemySnapshot()

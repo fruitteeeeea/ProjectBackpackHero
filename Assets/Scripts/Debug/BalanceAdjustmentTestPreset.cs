@@ -26,6 +26,7 @@ namespace BackpackHero.Debugging
 
         [SerializeField, Range(0f, 2f)] private float gameSpeed = 1f;
         [SerializeField] private RandomFlightCurveMode randomFlightMode;
+        [SerializeField] private bool autoAddConfiguredItems;
         [SerializeField, Range(1, 10)] private int playerProgressionLevel = 1;
         [SerializeField, Range(1, 10)] private int enemyProgressionLevel = 1;
         [SerializeField] private DeckPreset enemySourcePreset;
@@ -36,6 +37,7 @@ namespace BackpackHero.Debugging
 
         public float GameSpeed => gameSpeed;
         public RandomFlightCurveMode RandomFlightMode => randomFlightMode;
+        public bool AutoAddConfiguredItems => autoAddConfiguredItems;
         public int PlayerProgressionLevel => playerProgressionLevel;
         public int EnemyProgressionLevel => enemyProgressionLevel;
         public DeckPreset EnemySourcePreset => enemySourcePreset;
@@ -49,6 +51,7 @@ namespace BackpackHero.Debugging
             if (source == null) return;
             gameSpeed = source.gameSpeed;
             randomFlightMode = source.randomFlightMode;
+            autoAddConfiguredItems = source.autoAddConfiguredItems;
             playerProgressionLevel = source.playerProgressionLevel;
             enemyProgressionLevel = source.enemyProgressionLevel;
             enemySourcePreset = source.enemySourcePreset;
@@ -63,6 +66,7 @@ namespace BackpackHero.Debugging
             return other != null &&
                 Mathf.Approximately(gameSpeed, other.gameSpeed) &&
                 randomFlightMode == other.randomFlightMode &&
+                autoAddConfiguredItems == other.autoAddConfiguredItems &&
                 playerProgressionLevel == other.playerProgressionLevel &&
                 enemyProgressionLevel == other.enemyProgressionLevel &&
                 enemySourcePreset == other.enemySourcePreset &&
@@ -89,12 +93,14 @@ namespace BackpackHero.Debugging
         }
 
         public void SetRuntimeState(float speed, RandomFlightCurveMode flightMode,
+            bool autoAddItems,
             int playerLevel, int enemyLevel, DeckPreset enemyPreset,
             IEnumerable<ItemData> playerDeckItems, IEnumerable<ItemData> enemyDeckItems,
             IEnumerable<LayoutEntry> playerLayoutItems, IEnumerable<LayoutEntry> enemyLayoutItems)
         {
             gameSpeed = Mathf.Clamp(speed, 0f, 2f);
             randomFlightMode = flightMode;
+            autoAddConfiguredItems = autoAddItems;
             playerProgressionLevel = Mathf.Clamp(playerLevel, 1, 10);
             enemyProgressionLevel = Mathf.Clamp(enemyLevel, 1, 10);
             enemySourcePreset = enemyPreset;

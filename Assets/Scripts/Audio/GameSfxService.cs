@@ -5,6 +5,9 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Unity.Profiling;
+#endif
 
 namespace BackpackHero.Audio
 {
@@ -279,6 +282,11 @@ namespace BackpackHero.Audio
 
     public sealed class UiSfxAutoBinder : MonoBehaviour
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static readonly ProfilerMarker ScanMarker =
+            new("SampleScenePerf.UiSfxAutoBinder.Scan");
+#endif
+
         private readonly Dictionary<Button, UnityAction> bindings = new();
         private float nextScanAt;
         public int BoundButtonCount => bindings.Count;
@@ -289,6 +297,10 @@ namespace BackpackHero.Audio
         private void OnSceneLoaded(Scene scene, LoadSceneMode _) => Scan($"scene loaded: {scene.name}", true);
         private void Scan(string reason, bool logEvenWithoutNewBindings)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            using (ScanMarker.Auto())
+            {
+#endif
             int discovered = 0;
             int newlyBound = 0;
             foreach (Button button in FindObjectsByType<Button>(FindObjectsInactive.Exclude))
@@ -318,6 +330,9 @@ namespace BackpackHero.Audio
                           $"activeButtons={discovered}; newlyBound={newlyBound}; reboundCallbacks={discovered}; " +
                           $"totalBound={bindings.Count}", this);
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            }
+#endif
         }
 
         private void RemoveDestroyedBindings()
@@ -360,10 +375,19 @@ namespace BackpackHero.Audio
 
     public sealed class SfxSettingsBridge : MonoBehaviour
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static readonly ProfilerMarker UpdateMarker =
+            new("SampleScenePerf.SfxSettingsBridge.Update");
+#endif
+
         private readonly HashSet<SettingsView> boundViews = new();
 
         private void Update()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            using (UpdateMarker.Auto())
+            {
+#endif
             foreach (SettingsView view in FindObjectsByType<SettingsView>(FindObjectsInactive.Include))
             {
                 if (view == null || !boundViews.Add(view)) continue;
@@ -372,6 +396,9 @@ namespace BackpackHero.Audio
             }
 
             boundViews.RemoveWhere(view => view == null);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            }
+#endif
         }
 
         private void OnDestroy()

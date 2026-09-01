@@ -97,13 +97,26 @@ namespace BackpackPrototype
 
         private void Start()
         {
-            if (backpack.Items.Count == 0)
+            if (backpack.Items.Count == 0 &&
+                !IsOwnedByReadyBackpackSystem())
             {
                 RestoreDefaultLayout();
             }
 
             HandlePhaseChanged(
                 BattleFlowController.CurrentPhase);
+        }
+
+        /// <summary>
+        /// 玩家和敌人背包系统会在新对局事件中决定初始布局。
+        /// 不能在该事件之后再由 Controller 的启动兜底覆盖空布局。
+        /// </summary>
+        private bool IsOwnedByReadyBackpackSystem()
+        {
+            return (TryGetComponent(out PlayerBackpackSystem player) &&
+                    player.IsReady) ||
+                   (TryGetComponent(out EnemyBackpackSystem enemy) &&
+                    enemy.IsReady);
         }
 
         private void Update()

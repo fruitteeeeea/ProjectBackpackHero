@@ -108,6 +108,7 @@ namespace BackpackHero.EditorTools
         {
             EditorGUILayout.LabelField("操作调整", EditorStyles.boldLabel);
             DrawGameSpeed();
+            DrawInitialBackpackItemPlacement();
             DrawFlightRoute(bridge);
             DrawProgressionLevels(bridge);
             DrawAutomatedPlacement(bridge);
@@ -127,6 +128,24 @@ namespace BackpackHero.EditorTools
                 if (GUILayout.Button("恢复正常游戏速度（1x）")) runtime.SetGameSpeed(1f);
                 if (GUILayout.Button("暂停游戏（0x）")) runtime.SetGameSpeed(0f);
             }
+        }
+
+        private static void DrawInitialBackpackItemPlacement()
+        {
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("开局背包", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            bool enabled = EditorGUILayout.Toggle(
+                "自动添加配置物品",
+                InitialBackpackItemAutoPlacementDebug.IsEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                InitialBackpackItemAutoPlacementDebug.SetEnabled(enabled);
+            }
+
+            EditorGUILayout.HelpBox(
+                "仅在下一次新对局或点击“重启对局”后生效；关闭时双方背包开局为空。",
+                MessageType.None);
         }
 
         private static void DrawFlightRoute(PlayerBackpackDebugBridge bridge)

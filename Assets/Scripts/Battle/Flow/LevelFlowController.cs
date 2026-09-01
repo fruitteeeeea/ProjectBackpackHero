@@ -5,6 +5,9 @@ using BackpackHero.Audio;
 using BackpackPrototype;
 using BackpackHero.Progression;
 using UnityEngine;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Unity.Profiling;
+#endif
 
 namespace BackpackHero.Battle
 {
@@ -15,6 +18,11 @@ namespace BackpackHero.Battle
     [DefaultExecutionOrder(-100)]
     public sealed class LevelFlowController : MonoBehaviour
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static readonly ProfilerMarker ResolveTargetsMarker =
+            new("SampleScenePerf.LevelFlowController.ResolveTargets");
+#endif
+
         public const int WinsRequired = 2;
         public const int MaximumRounds = 3;
         public const float RoundDurationSeconds = 60f;
@@ -332,6 +340,10 @@ namespace BackpackHero.Battle
 
         private void ResolveTargets()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            using (ResolveTargetsMarker.Auto())
+            {
+#endif
             BattleBackpackTarget2D foundPlayer = null;
             BattleBackpackTarget2D foundEnemy = null;
             foreach (BattleBackpackTarget2D target in
@@ -352,6 +364,9 @@ namespace BackpackHero.Battle
                 HandlePlayerDied);
             BindTarget(ref enemyTarget, foundEnemy,
                 HandleEnemyDied);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            }
+#endif
         }
 
         private static void BindTarget(

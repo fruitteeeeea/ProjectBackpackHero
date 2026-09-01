@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using BackpackHero.Battle;
 using UnityEngine;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Unity.Profiling;
+#endif
 
 namespace BackpackPrototype
 {
@@ -22,6 +25,11 @@ namespace BackpackPrototype
 
     public static class BackpackOperationPlanner
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static readonly ProfilerMarker SelectionMarker =
+            new("SampleScenePerf.BackpackOperationPlanner.TrySelectBest");
+#endif
+
         public static bool TrySelectBest(BackpackController backpack,
             IReadOnlyList<ItemData> shopItems, int remainingRolls,
             out BackpackOperation selected)
@@ -31,6 +39,24 @@ namespace BackpackPrototype
         }
 
         public static bool TrySelectBest(BackpackController backpack,
+            IReadOnlyList<ItemData> shopItems, int remainingRolls,
+            BackpackOperationSelectionMode mode,
+            ISet<string> visitedLayouts,
+            out BackpackOperation selected)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            using (SelectionMarker.Auto())
+            {
+                return TrySelectBestCore(backpack, shopItems, remainingRolls,
+                    mode, visitedLayouts, out selected);
+            }
+#else
+            return TrySelectBestCore(backpack, shopItems, remainingRolls,
+                mode, visitedLayouts, out selected);
+#endif
+        }
+
+        private static bool TrySelectBestCore(BackpackController backpack,
             IReadOnlyList<ItemData> shopItems, int remainingRolls,
             BackpackOperationSelectionMode mode,
             ISet<string> visitedLayouts,

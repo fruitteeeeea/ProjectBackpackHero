@@ -45,6 +45,25 @@ public sealed class ItemShapeGeometryTests
             Is.EqualTo((Vector2)corner));
     }
 
+    [TestCaseSource(nameof(BottomLeftOccupiedCellShapes))]
+    public void TryGetBottomLeftOccupiedCell_ReturnsLeftmostCellOfLowestRow(
+        Vector2Int[] shape,
+        Vector2Int expected)
+    {
+        bool found = ItemShapeGeometry.TryGetBottomLeftOccupiedCell(
+            shape, out Vector2Int actual);
+
+        Assert.That(found, Is.True);
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void TryGetBottomLeftOccupiedCell_EmptyShape_ReturnsFalse()
+    {
+        Assert.That(ItemShapeGeometry.TryGetBottomLeftOccupiedCell(
+            System.Array.Empty<Vector2Int>(), out _), Is.False);
+    }
+
     private static object[] RectangularShapes =
     {
         new object[]
@@ -56,6 +75,57 @@ public sealed class ItemShapeGeometryTests
         {
             new[] { new Vector2Int(0, 0), new Vector2Int(1, 0) },
             new Vector2(.5f, 0f),
+        },
+    };
+
+    private static object[] BottomLeftOccupiedCellShapes =
+    {
+        new object[] { new[] { Vector2Int.zero }, Vector2Int.zero },
+        new object[]
+        {
+            new[] { Vector2Int.zero, Vector2Int.right },
+            Vector2Int.zero,
+        },
+        new object[]
+        {
+            new[] { Vector2Int.zero, Vector2Int.down },
+            Vector2Int.down,
+        },
+        new object[]
+        {
+            new[]
+            {
+                new Vector2Int(0, 0), new Vector2Int(1, 0),
+                new Vector2Int(1, 1),
+            },
+            new Vector2Int(1, 1),
+        },
+        new object[]
+        {
+            new[]
+            {
+                new Vector2Int(0, 0), new Vector2Int(1, 0),
+                new Vector2Int(0, 1),
+            },
+            new Vector2Int(0, 1),
+        },
+        new object[]
+        {
+            new[]
+            {
+                new Vector2Int(0, 0), new Vector2Int(0, 1),
+                new Vector2Int(1, 1),
+            },
+            new Vector2Int(0, 1),
+        },
+        new object[]
+        {
+            new[]
+            {
+                new Vector2Int(1, 0), new Vector2Int(0, 1),
+                new Vector2Int(1, 1),
+            },
+            new Vector2Int(0, 1),
         },
     };
 }

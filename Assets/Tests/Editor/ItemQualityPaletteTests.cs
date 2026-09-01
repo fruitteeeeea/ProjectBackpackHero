@@ -1,6 +1,7 @@
 using BackpackHero.Debugging;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 
 public sealed class ItemQualityPaletteTests
 {
@@ -33,6 +34,9 @@ public sealed class ItemQualityPaletteTests
                 Assert.That(palette.GetSprite(quality, shape), Is.Not.Null,
                     $"{quality}/{shape}");
             }
+
+            Assert.That(palette.GetLevelBadgeCircle(quality), Is.Not.Null,
+                $"{quality}/LevelBadgeCircle");
         }
 
         Assert.That(palette.GetSprite(ItemQuality.Green,
@@ -65,6 +69,10 @@ public sealed class ItemQualityPaletteTests
                 colorFolder, "item_L_rot360.png");
             AssertSpritePath(palette, quality, ItemBaseShape.LMissingTopRight,
                 colorFolder, "item_L_rot000.png");
+            Assert.That(AssetDatabase.GetAssetPath(
+                    palette.GetLevelBadgeCircle(quality)),
+                Does.EndWith($"{colorFolder}/circle.png"),
+                $"{quality}/LevelBadgeCircle");
         }
     }
 
@@ -79,6 +87,41 @@ public sealed class ItemQualityPaletteTests
             AssetDatabase.LoadAssetAtPath<ItemQualityPalette>(PalettePath);
 
         Assert.That(palette.GetQualityForLevel(level), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Palette_MapsLevelBadgesAndOutlineColorsToQuality()
+    {
+        ItemQualityPalette palette =
+            AssetDatabase.LoadAssetAtPath<ItemQualityPalette>(PalettePath);
+
+        Assert.That(palette.TryGetLevelBadgeForLevel(1,
+            out Sprite greenCircle, out Color greenOutline), Is.True);
+        Assert.That(AssetDatabase.GetAssetPath(greenCircle),
+            Does.EndWith("绿/circle.png"));
+        Assert.That(greenOutline,
+            Is.EqualTo(new Color(19f / 255f, 128f / 255f, 75f / 255f, 1f)));
+
+        Assert.That(palette.TryGetLevelBadgeForLevel(2,
+            out Sprite blueCircle, out Color blueOutline), Is.True);
+        Assert.That(AssetDatabase.GetAssetPath(blueCircle),
+            Does.EndWith("蓝/circle.png"));
+        Assert.That(blueOutline,
+            Is.EqualTo(new Color(45f / 255f, 129f / 255f, 162f / 255f, 1f)));
+
+        Assert.That(palette.TryGetLevelBadgeForLevel(3,
+            out Sprite purpleCircle, out Color purpleOutline), Is.True);
+        Assert.That(AssetDatabase.GetAssetPath(purpleCircle),
+            Does.EndWith("紫/circle.png"));
+        Assert.That(purpleOutline,
+            Is.EqualTo(new Color(140f / 255f, 44f / 255f, 175f / 255f, 1f)));
+
+        Assert.That(palette.TryGetLevelBadgeForLevel(99,
+            out Sprite cappedCircle, out Color cappedOutline), Is.True);
+        Assert.That(cappedCircle, Is.EqualTo(purpleCircle));
+        Assert.That(cappedOutline, Is.EqualTo(purpleOutline));
+        Assert.That(palette.GetLevelBadgeOutlineColor(ItemQuality.Orange),
+            Is.EqualTo(new Color(133f / 255f, 99f / 255f, 0f, 1f)));
     }
 
     [Test]

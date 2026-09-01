@@ -8,6 +8,34 @@ namespace BackpackPrototype
     /// </summary>
     public static class ItemShapeGeometry
     {
+        /// <summary>
+        /// Returns the leftmost occupied cell on the shape's lowest row.
+        /// Shape coordinates start from the top-left cell.
+        /// </summary>
+        public static bool TryGetBottomLeftOccupiedCell(
+            IReadOnlyList<Vector2Int> shapeOffsets,
+            out Vector2Int cell)
+        {
+            cell = Vector2Int.zero;
+            if (shapeOffsets == null || shapeOffsets.Count == 0)
+            {
+                return false;
+            }
+
+            cell = shapeOffsets[0];
+            for (int index = 1; index < shapeOffsets.Count; index++)
+            {
+                Vector2Int candidate = shapeOffsets[index];
+                if (candidate.y > cell.y ||
+                    candidate.y == cell.y && candidate.x < cell.x)
+                {
+                    cell = candidate;
+                }
+            }
+
+            return true;
+        }
+
         public static Vector2 CalculateCenter(
             IReadOnlyList<Vector2Int> shapeOffsets)
         {

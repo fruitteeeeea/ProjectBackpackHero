@@ -26,8 +26,12 @@ namespace BackpackHero.Debugging
             [SerializeField] private Sprite lMissingBottomRight;
             [SerializeField] private Sprite lMissingTopLeft;
             [SerializeField] private Sprite lMissingTopRight;
+            [SerializeField] private Sprite levelBadgeCircle;
+            [SerializeField] private Color levelBadgeOutlineColor;
 
             public ItemQuality Quality => quality;
+            public Sprite LevelBadgeCircle => levelBadgeCircle;
+            public Color LevelBadgeOutlineColor => levelBadgeOutlineColor;
 
             public Sprite GetSprite(ItemBaseShape shape) => shape switch
             {
@@ -63,5 +67,39 @@ namespace BackpackHero.Debugging
 
         public Sprite GetSpriteForLevel(int itemLevel, ItemBaseShape shape) =>
             GetSprite(GetQualityForLevel(itemLevel), shape);
+
+        public Sprite GetLevelBadgeCircle(ItemQuality quality)
+        {
+            foreach (QualitySprites entry in qualitySprites)
+            {
+                if (entry.Quality == quality) return entry.LevelBadgeCircle;
+            }
+
+            return null;
+        }
+
+        public Color GetLevelBadgeOutlineColor(ItemQuality quality)
+        {
+            foreach (QualitySprites entry in qualitySprites)
+            {
+                if (entry.Quality == quality)
+                {
+                    return entry.LevelBadgeOutlineColor;
+                }
+            }
+
+            return Color.black;
+        }
+
+        public bool TryGetLevelBadgeForLevel(
+            int itemLevel,
+            out Sprite circle,
+            out Color outlineColor)
+        {
+            ItemQuality quality = GetQualityForLevel(itemLevel);
+            circle = GetLevelBadgeCircle(quality);
+            outlineColor = GetLevelBadgeOutlineColor(quality);
+            return circle != null;
+        }
     }
 }

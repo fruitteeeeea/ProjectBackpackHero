@@ -15,6 +15,10 @@ namespace BackpackPrototype
     [RequireComponent(typeof(CanvasGroup))]
     public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, ICanvasRaycastFilter
     {
+        private const float IconScale = .75f;
+        private const float LevelBadgeSize = 35f;
+        private const float LevelBadgeCircleBrightness = .85f;
+
         [SerializeField] private Image background;
         [SerializeField] private Image icon;
         [SerializeField] private Text label;
@@ -107,6 +111,8 @@ namespace BackpackPrototype
         private Image aircraftGlowImage;
         private Material aircraftGlowMaterial;
         private Image aircraftQualityPulseImage;
+        private Image levelBadgeCircleImage;
+        private TextMeshProUGUI levelBadgeNumber;
         private Sprite style1BackgroundSprite;
 
         public ItemInstance Instance { get; private set; }
@@ -257,6 +263,7 @@ namespace BackpackPrototype
             }
 
             EnsureLevelLabel();
+            EnsureLevelBadge();
         }
 
         private void Update()
@@ -1884,17 +1891,25 @@ namespace BackpackPrototype
 
             if (levelLabel == null || Instance == null)
             {
+                SetLevelBadgeVisible(false);
                 return;
             }
 
+            BackpackVisualSettings settings =
+                BackpackVisualDebugRuntime.CurrentSettings;
+            if (TryRefreshQualityLevelBadge(settings))
+            {
+                levelLabel.enabled = false;
+                return;
+            }
+
+            SetLevelBadgeVisible(false);
             bool isPlayer = CombatController == null ||
                 CombatController.Faction == BattleFaction.Player;
             levelLabel.text = $"lv.{Instance.Level}";
             Color factionColor = isPlayer
                 ? new Color(0.28f, 0.78f, 1f, 1f)
                 : new Color(1f, 0.34f, 0.12f, 1f);
-            BackpackVisualSettings settings =
-                BackpackVisualDebugRuntime.CurrentSettings;
             bool bottomPlateHighlightEnabled =
                 settings.OverridesEnabled && settings.AircraftGlowEnabled;
             levelLabel.enabled = !ShouldHideEquipmentLevelLabel(
@@ -1918,6 +1933,121 @@ namespace BackpackPrototype
             {
                 levelLabel.color = new Color(1f, 0.76f, 0.76f,
                     levelLabel.color.a);
+            }
+        }
+
+        private bool TryRefreshQualityLevelBadge(
+            BackpackVisualSettings settings)
+        {
+            if (!IsColorQualityModeActive(settings) || icon == null ||
+                !icon.enabled || !EnsureLevelBadge() ||
+                !settings.ItemQualityPalette.TryGetLevelBadgeForLevel(
+                    Instance.Level, out Sprite circle, out Color outlineColor))
+            {
+                return false;
+            }
+
+            levelBadgeCircleImage.sprite = circle;
+            levelBadgeCircleImage.type = Image.Type.Simple;
+            levelBadgeCircleImage.preserveAspect = true;
+            levelBadgeCircleImage.color = new Color(
+                LevelBadgeCircleBrightness, LevelBadgeCircleBrightness,
+                LevelBadgeCircleBrightness, 1f);
+            levelBadgeNumber.text = Instance.Level.ToString();
+            levelBadgeNumber.color = isDeletePreviewActive
+                ? new Color(1f, 0.76f, 0.76f, 1f)
+                : Color.white;
+            levelBadgeNumber.outlineColor = outlineColor;
+            UpdateLevelBadgeLayout();
+            SetLevelBadgeVisible(true);
+            return true;
+        }
+
+        private bool EnsureLevelBadge()
+        {
+            if (icon == null)
+            {
+                return false;
+            }
+
+            if (levelBadgeCircleImage == null)
+            {
+                Transform existing = transform.Find("LevelBadge");
+                if (existing == null)
+                {
+                    existing = icon.transform.Find("LevelBadge");
+                }
+
+                levelBadgeCircleImage = existing != null
+                    ? existing.GetComponent<Image>()
+                    : null;
+            }
+
+            if (levelBadgeCircleImage == null)
+            {
+                GameObject badgeObject = new("LevelBadge", typeof(RectTransform),
+                    typeof(CanvasRenderer), typeof(Image));
+                badgeObject.transform.SetParent(transform, false);
+                levelBadgeCircleImage = badgeObject.GetComponent<Image>();
+                RectTransform badgeRect = levelBadgeCircleImage.rectTransform;
+                badgeRect.anchorMin = new Vector2(0f, 1f);
+                badgeRect.anchorMax = new Vector2(0f, 1f);
+                badgeRect.pivot = new Vector2(.5f, .5f);
+                badgeRect.anchoredPosition = Vector2.zero;
+                badgeRect.sizeDelta = Vector2.one * LevelBadgeSize;
+                levelBadgeCircleImage.raycastTarget = false;
+                levelBadgeCircleImage.gameObject.SetActive(false);
+            }
+
+            if (levelBadgeCircleImage.transform.parent != transform)
+            {
+                levelBadgeCircleImage.transform.SetParent(transform, false);
+            }
+
+            levelBadgeCircleImage.transform.SetAsLastSibling();
+
+            if (levelBadgeNumber == null)
+            {
+                Transform existing = levelBadgeCircleImage.transform.Find(
+                    "LevelNumber");
+                levelBadgeNumber = existing != null
+                    ? existing.GetComponent<TextMeshProUGUI>()
+                    : null;
+            }
+
+            if (levelBadgeNumber == null)
+            {
+                GameObject numberObject = new("LevelNumber", typeof(RectTransform),
+                    typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+                numberObject.transform.SetParent(
+                    levelBadgeCircleImage.transform, false);
+                levelBadgeNumber = numberObject.GetComponent<TextMeshProUGUI>();
+                RectTransform numberRect = levelBadgeNumber.rectTransform;
+                numberRect.anchorMin = new Vector2(.5f, .5f);
+                numberRect.anchorMax = new Vector2(.5f, .5f);
+                numberRect.pivot = new Vector2(.5f, .5f);
+                numberRect.anchoredPosition = Vector2.zero;
+                numberRect.sizeDelta = Vector2.one * LevelBadgeSize;
+                levelBadgeNumber.raycastTarget = false;
+                levelBadgeNumber.alignment = TextAlignmentOptions.Center;
+                levelBadgeNumber.enableWordWrapping = false;
+                levelBadgeNumber.overflowMode = TextOverflowModes.Overflow;
+                levelBadgeNumber.font = TMP_Settings.defaultFontAsset;
+                levelBadgeNumber.fontSize = 19f;
+                levelBadgeNumber.fontStyle = FontStyles.Bold;
+                levelBadgeNumber.outlineWidth = 0.18f;
+            }
+
+            UpdateLevelBadgeLayout();
+
+            return levelBadgeCircleImage != null && levelBadgeNumber != null;
+        }
+
+        private void SetLevelBadgeVisible(bool visible)
+        {
+            if (levelBadgeCircleImage != null)
+            {
+                levelBadgeCircleImage.gameObject.SetActive(visible);
             }
         }
 
@@ -2010,6 +2140,33 @@ namespace BackpackPrototype
             iconRect.pivot = new Vector2(.5f, .5f);
             iconRect.anchoredPosition =
                 GetImageGeometricCenterLocalPosition();
+            iconRect.localScale = Vector3.one * IconScale;
+            UpdateLevelBadgeLayout();
+        }
+
+        private void UpdateLevelBadgeLayout()
+        {
+            if (levelBadgeCircleImage == null || Instance?.Data == null ||
+                shapeCellSize.x <= 0f || shapeCellSize.y <= 0f ||
+                rectTransform == null ||
+                !ItemShapeGeometry.TryGetBottomLeftOccupiedCell(
+                    Instance.Data.ShapeOffsets, out Vector2Int cell))
+            {
+                return;
+            }
+
+            Vector2 pitch = shapeCellSize + shapeSpacing;
+            RectTransform badgeRect = levelBadgeCircleImage.rectTransform;
+            // 背包物品进入网格后使用左上 Pivot；徽章也固定使用左上
+            // 锚点，避免将父节点中心偏移再次叠加到格子坐标上。
+            badgeRect.anchorMin = new Vector2(0f, 1f);
+            badgeRect.anchorMax = new Vector2(0f, 1f);
+            badgeRect.pivot = new Vector2(.5f, .5f);
+            badgeRect.sizeDelta = Vector2.one * LevelBadgeSize;
+            badgeRect.anchoredPosition = new Vector2(
+                cell.x * pitch.x + LevelBadgeSize * .5f,
+                -cell.y * pitch.y - shapeCellSize.y +
+                    LevelBadgeSize * .5f);
         }
 
         private Vector2 GetImageGeometricCenterLocalPosition()

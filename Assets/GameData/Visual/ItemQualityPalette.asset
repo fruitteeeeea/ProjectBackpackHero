@@ -20,6 +20,8 @@ MonoBehaviour:
     lMissingBottomRight: {fileID: 1578180853955948841, guid: 14a62971ab09107458830e13fb918369, type: 3}
     lMissingTopLeft: {fileID: 6836789010210245398, guid: 7fe709446d0959a4387a0664fcab97bd, type: 3}
     lMissingTopRight: {fileID: -8563498419752950959, guid: 82859bee36c609b41add73e40e7786bb, type: 3}
+    levelBadgeCircle: {fileID: -6231044458718751821, guid: 7081d8df65c2eb441951175a7bd01d2a, type: 3}
+    levelBadgeOutlineColor: {r: 0.07450981, g: 0.5019608, b: 0.29411766, a: 1}
   - quality: 2
     verticalBar: {fileID: 6110307778057590723, guid: 812a40e405d5e45448d110fad701adba, type: 3}
     horizontalBar: {fileID: 3836832779635166192, guid: 9e5c5cee86560c44da45bfe1bacd5f3f, type: 3}
@@ -27,6 +29,8 @@ MonoBehaviour:
     lMissingBottomRight: {fileID: 1578180853955948841, guid: ca05f4e667dc8f84cb546adbaeda46cc, type: 3}
     lMissingTopLeft: {fileID: 6836789010210245398, guid: b54f86a21137f8641a2c67823a8908b0, type: 3}
     lMissingTopRight: {fileID: -8563498419752950959, guid: 8fa5d8405e6e66044bea4fcce2df1f01, type: 3}
+    levelBadgeCircle: {fileID: -6231044458718751821, guid: 4687bc59f6093cb47b3bc0a955423aab, type: 3}
+    levelBadgeOutlineColor: {r: 0.1764706, g: 0.5058824, b: 0.63529414, a: 1}
   - quality: 3
     verticalBar: {fileID: 6110307778057590723, guid: 6930c98b2eb6c764cba0d8a5c80c347c, type: 3}
     horizontalBar: {fileID: 3836832779635166192, guid: a1b5648d433d58b47a412518b9b840fd, type: 3}
@@ -34,6 +38,8 @@ MonoBehaviour:
     lMissingBottomRight: {fileID: 1578180853955948841, guid: ba763cbf12f4ddc428b7d19d0e990599, type: 3}
     lMissingTopLeft: {fileID: 6836789010210245398, guid: 5c45489216919e843a27ce6331db9f44, type: 3}
     lMissingTopRight: {fileID: -8563498419752950959, guid: c555c7361093edd4da63025dec82a940, type: 3}
+    levelBadgeCircle: {fileID: -6231044458718751821, guid: d0b0a9dd502a99144b7ab76dd7253291, type: 3}
+    levelBadgeOutlineColor: {r: 0.54901963, g: 0.17254902, b: 0.6862745, a: 1}
   - quality: 4
     verticalBar: {fileID: 6110307778057590723, guid: b63c46ed47e5a234ab94cc649f8b6500, type: 3}
     horizontalBar: {fileID: 3836832779635166192, guid: 49e8a7a2ecd80ce4a93038f58b2f4f64, type: 3}
@@ -41,3 +47,5 @@ MonoBehaviour:
     lMissingBottomRight: {fileID: 1578180853955948841, guid: f75fcd7f2621f4646a3f890396877407, type: 3}
     lMissingTopLeft: {fileID: 6836789010210245398, guid: 7fb786c217be1134fb7acc6ae23ef3ae, type: 3}
     lMissingTopRight: {fileID: -8563498419752950959, guid: 0bf4e643aee34324cab8639311220a4b, type: 3}
+    levelBadgeCircle: {fileID: -6231044458718751821, guid: 62a77761c25fa6e40a5122b160228225, type: 3}
+    levelBadgeOutlineColor: {r: 0.52156866, g: 0.3882353, b: 0, a: 1}

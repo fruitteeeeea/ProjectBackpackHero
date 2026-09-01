@@ -70,17 +70,16 @@ namespace BackpackHero.EditorTools
                 EditorGUILayout.LabelField("养成等级", hasUniformLevel
                     ? $"Lv.{level}"
                     : "混合等级（未启用临时统一覆写）");
-                EditorGUILayout.LabelField("背包配置", isPlayer ? DescribePlayerDeck(player) : enemy.CurrentDeckPreset?.name ?? "未选择预设", EditorStyles.wordWrappedLabel);
+                EditorGUILayout.LabelField("背包配置", isPlayer
+                    ? BalanceAdjustmentDeckDisplay.DescribePlayer(player.ActiveDeckItems)
+                    : BalanceAdjustmentDeckDisplay.DescribeEnemy(
+                        enemy.CurrentDeckPreset?.Slots,
+                        enemy.CurrentDeckPreset?.name ?? "未选择预设"),
+                    EditorStyles.wordWrappedLabel);
                 BackpackController backpack = isPlayer ? player.Backpack : enemy.Backpack;
                 EditorGUILayout.LabelField("背包强度", backpack != null ? BackpackStrengthCalculator.Calculate(backpack).TotalScore.ToString("0.##") : "-");
                 DrawDamageSummary(faction);
             }
-        }
-
-        private static string DescribePlayerDeck(PlayerBackpackSystem player)
-        {
-            IReadOnlyList<ItemData> deck = player.ActiveDeckItems;
-            return "当前玩家 Deck：" + string.Join(" / ", deck.Select(item => item != null ? item.ItemName : "空"));
         }
 
         private static void DrawDamageSummary(BattleFaction faction)
@@ -262,5 +261,84 @@ namespace BackpackHero.EditorTools
         }
 
         private void OnDisable() => persistence.Dispose();
+    }
+
+    /// <summary>将当前运行时 Deck 映射为通用预设名；未命中时提供原有的显示文案。</summary>
+    internal static class BalanceAdjustmentDeckDisplay
+    {
+        private const string SharedPresetFolder =
+            "Assets/Data/Backpack/DeckPresets";
+
+        internal static string DescribePlayer(IReadOnlyList<ItemData> deck)
+        {
+            string presetName = FindSharedPresetName(deck);
+            return !string.IsNullOrEmpty(presetName)
+                ? presetName
+                : "当前玩家 Deck：" + DescribeSlots(deck);
+        }
+
+        internal static string DescribeEnemy(IReadOnlyList<ItemData> deck,
+            string fallbackName)
+        {
+            string presetName = FindSharedPresetName(deck);
+            return !string.IsNullOrEmpty(presetName)
+                ? presetName
+                : fallbackName;
+        }
+
+        internal static string FindSharedPresetName(
+            IReadOnlyList<ItemData> deck)
+        {
+            if (deck == null)
+            {
+                return null;
+            }
+
+            foreach (string path in AssetDatabase.FindAssets(
+                         "t:DeckPreset", new[] { SharedPresetFolder })
+                     .Select(AssetDatabase.GUIDToAssetPath)
+                     .OrderBy(path => path, System.StringComparer.Ordinal))
+            {
+                DeckPreset preset = AssetDatabase.LoadAssetAtPath<DeckPreset>(
+                    path);
+                if (preset != null && SlotsMatch(deck, preset.Slots))
+                {
+                    return preset.name;
+                }
+            }
+
+            return null;
+        }
+
+        internal static bool SlotsMatch(IReadOnlyList<ItemData> first,
+            IReadOnlyList<ItemData> second)
+        {
+            if (first == null || second == null ||
+                first.Count != PlayerItemSystem.DeckSlotCount ||
+                second.Count != PlayerItemSystem.DeckSlotCount)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < PlayerItemSystem.DeckSlotCount;
+                 index++)
+            {
+                if (first[index] != second[index])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static string DescribeSlots(IReadOnlyList<ItemData> deck)
+        {
+            return deck == null
+                ? "-"
+                : string.Join(" / ", deck.Select(item => item != null
+                    ? item.ItemName
+                    : "空"));
+        }
     }
 }

@@ -162,6 +162,31 @@ public sealed class ItemBottomPlateLayoutTests
     }
 
     [Test]
+    public void BackpackVisualSettingsChange_UpdatesItemIconScale()
+    {
+        GameObject root = new("Item", typeof(RectTransform),
+            typeof(CanvasGroup), typeof(ItemView));
+        GameObject iconObject = new("ItemIcon", typeof(RectTransform),
+            typeof(CanvasRenderer), typeof(Image));
+        try
+        {
+            iconObject.transform.SetParent(root.transform, false);
+            ItemView view = root.GetComponent<ItemView>();
+            SetField(view, "icon", iconObject.GetComponent<Image>());
+
+            InvokePrivate(view, "HandleBackpackVisualSettingsChanged",
+                CreateIconScaleSettings(1.4f));
+
+            Assert.That(iconObject.transform.localScale,
+                Is.EqualTo(Vector3.one * 1.4f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
     public void QualityLevelBadgeTypography_UsesConfiguredValuesAndFallsBackToMilker()
     {
         GameObject root = new("Item", typeof(RectTransform),
@@ -258,4 +283,11 @@ public sealed class ItemBottomPlateLayoutTests
         .32f, Color.white, 16f, true, Color.white, .12f, .45f, 1.2f,
         8f, false, true, null, font, fontSize, outlineWidth, true,
         .8f, 1.12f, .45f);
+
+    private static BackpackVisualSettings CreateIconScaleSettings(float iconScale) => new(
+        true, .5f, Color.white, Color.white, .18f, .62f, .7f,
+        1.17f, 10f, -6f, BackpackPlacementScaleEase.OutElastic,
+        .32f, Color.white, 16f, true, Color.white, .12f, .45f, 1.2f,
+        8f, false, true, null, null, 19f, .36f, true,
+        .8f, 1.12f, .45f, iconScale);
 }

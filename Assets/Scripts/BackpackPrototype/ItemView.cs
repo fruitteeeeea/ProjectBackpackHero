@@ -16,7 +16,6 @@ namespace BackpackPrototype
     [RequireComponent(typeof(CanvasGroup))]
     public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, ICanvasRaycastFilter
     {
-        private const float IconScale = .75f;
         private const float LevelBadgeSize = 35f;
         private const float LevelBadgeCircleBrightness = .85f;
         private const float LevelBadgeNumberFontSize = 19f;
@@ -1771,8 +1770,11 @@ namespace BackpackPrototype
         }
 
         private void HandleBackpackVisualSettingsChanged(
-            BackpackVisualSettings _)
+            BackpackVisualSettings settings)
         {
+            UpdateIconGeometricCenter(settings.OverridesEnabled
+                ? settings
+                : BackpackVisualSettings.Default);
             ApplyItemBaseStyle();
             ApplyItemVisualStyle();
             RefreshLevelLabel();
@@ -2263,6 +2265,11 @@ namespace BackpackPrototype
 
         private void UpdateIconGeometricCenter()
         {
+            UpdateIconGeometricCenter(GetBackpackVisualSettings());
+        }
+
+        private void UpdateIconGeometricCenter(BackpackVisualSettings settings)
+        {
             if (icon == null)
             {
                 return;
@@ -2274,7 +2281,7 @@ namespace BackpackPrototype
             iconRect.pivot = new Vector2(.5f, .5f);
             iconRect.anchoredPosition =
                 GetImageGeometricCenterLocalPosition();
-            iconRect.localScale = Vector3.one * IconScale;
+            iconRect.localScale = Vector3.one * settings.ItemIconScale;
             UpdateLevelBadgeLayout();
         }
 

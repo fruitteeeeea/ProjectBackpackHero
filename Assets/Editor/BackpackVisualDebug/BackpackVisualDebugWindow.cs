@@ -36,7 +36,7 @@ namespace BackpackHero.EditorTools
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
             DrawOverrideToggle();
             DrawSettingsTarget();
-            DrawVisualSettings();
+            DrawVisualSettings(runtime);
             DrawPersistence(runtime);
             EditorGUILayout.EndScrollView();
         }
@@ -80,7 +80,7 @@ namespace BackpackHero.EditorTools
                 EditorStyles.miniLabel);
         }
 
-        private void DrawVisualSettings()
+        private void DrawVisualSettings(BackpackVisualDebugRuntime runtime)
         {
             BackpackVisualSettings current = draft.Value;
             EditorGUILayout.Space(8f);
@@ -131,6 +131,15 @@ namespace BackpackHero.EditorTools
             float levelFontSize = Mathf.Max(
                 BackpackVisualSettings.MinimumLevelFontSize,
                 EditorGUILayout.FloatField("等级字体大小", current.LevelFontSize));
+
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("物品图标", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            float itemIconScale = EditorGUILayout.Slider("统一 Icon 缩放",
+                current.ItemIconScale,
+                BackpackVisualSettings.MinimumItemIconScale,
+                BackpackVisualSettings.MaximumItemIconScale);
+            bool itemIconScaleChanged = EditorGUI.EndChangeCheck();
 
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("底板高亮", EditorStyles.boldLabel);
@@ -212,7 +221,12 @@ namespace BackpackHero.EditorTools
                 aircraftQualityPulseEnabled,
                 aircraftQualityPulseInterval,
                 aircraftQualityPulseScaleMultiplier,
-                aircraftQualityPulseTweenDuration);
+                aircraftQualityPulseTweenDuration, itemIconScale);
+
+            if (itemIconScaleChanged)
+            {
+                runtime.SetSettings(draft.Value);
+            }
         }
 
         private void DrawPersistence(BackpackVisualDebugRuntime runtime)

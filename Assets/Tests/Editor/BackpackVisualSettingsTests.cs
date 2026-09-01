@@ -30,6 +30,8 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(settings.ShopFlightDuration, Is.EqualTo(.32f));
         Assert.That(settings.LevelFontColor, Is.EqualTo(Color.white));
         Assert.That(settings.LevelFontSize, Is.EqualTo(16f));
+        Assert.That(settings.ItemIconScale,
+            Is.EqualTo(BackpackVisualSettings.DefaultItemIconScale));
         Assert.That(settings.AircraftGlowEnabled, Is.True);
         Assert.That(settings.AircraftGlowColor, Is.EqualTo(Color.white));
         Assert.That(settings.AircraftGlowMinimumIntensity, Is.EqualTo(.12f));
@@ -60,7 +62,7 @@ public sealed class BackpackVisualSettingsTests
             BackpackPlacementScaleEase.OutCubic, -3f, Color.green, -4f,
             true, Color.magenta, -1f, 2f, -3f, -4f, false, false, null,
             TMP_Settings.defaultFontAsset, -5f, 2f, false,
-            -1f, .5f, -2f);
+            -1f, .5f, -2f, 9f);
         try
         {
             asset.SetValues(expected);
@@ -85,6 +87,8 @@ public sealed class BackpackVisualSettingsTests
             Assert.That(actual.LevelFontColor, Is.EqualTo(Color.green));
             Assert.That(actual.LevelFontSize,
                 Is.EqualTo(BackpackVisualSettings.MinimumLevelFontSize));
+            Assert.That(actual.ItemIconScale,
+                Is.EqualTo(BackpackVisualSettings.MaximumItemIconScale));
             Assert.That(actual.AircraftGlowEnabled, Is.True);
             Assert.That(actual.AircraftGlowColor, Is.EqualTo(Color.magenta));
             Assert.That(actual.AircraftGlowMinimumIntensity, Is.Zero);
@@ -155,6 +159,8 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(values.LevelFontColor, Is.EqualTo(Color.white));
         Assert.That(values.LevelFontSize,
             Is.GreaterThanOrEqualTo(BackpackVisualSettings.MinimumLevelFontSize));
+        Assert.That(values.ItemIconScale,
+            Is.EqualTo(BackpackVisualSettings.DefaultItemIconScale));
         Assert.That(values.AircraftGlowColor, Is.EqualTo(Color.white));
         Assert.That(values.AircraftGlowEdgeWidth,
             Is.GreaterThanOrEqualTo(BackpackVisualSettings.MinimumAircraftGlowEdgeWidth));

@@ -21,6 +21,9 @@ namespace BackpackHero.Debugging
         public const float MinimumPlacementScale = 1f;
         public const float MinimumShopFlightDuration = 0.01f;
         public const float MinimumLevelFontSize = 0.01f;
+        public const float DefaultItemIconScale = .75f;
+        public const float MinimumItemIconScale = .1f;
+        public const float MaximumItemIconScale = 2f;
         public const float MinimumQualityLevelBadgeFontSize = 0.01f;
         public const float MinimumQualityLevelBadgeOutlineWidth = 0f;
         public const float MaximumQualityLevelBadgeOutlineWidth = 1f;
@@ -71,7 +74,8 @@ namespace BackpackHero.Debugging
             bool aircraftQualityPulseEnabled,
             float aircraftQualityPulseInterval,
             float aircraftQualityPulseScaleMultiplier,
-            float aircraftQualityPulseTweenDuration)
+            float aircraftQualityPulseTweenDuration,
+            float itemIconScale = DefaultItemIconScale)
         {
             OverridesEnabled = overridesEnabled;
             DragOpacity = Mathf.Clamp(dragOpacity, MinimumDragOpacity,
@@ -120,6 +124,8 @@ namespace BackpackHero.Debugging
             AircraftQualityPulseTweenDuration = Mathf.Max(
                 MinimumAircraftQualityPulseTweenDuration,
                 aircraftQualityPulseTweenDuration);
+            ItemIconScale = Mathf.Clamp(itemIconScale, MinimumItemIconScale,
+                MaximumItemIconScale);
         }
 
         public bool OverridesEnabled { get; }
@@ -136,6 +142,7 @@ namespace BackpackHero.Debugging
         public float ShopFlightDuration { get; }
         public Color LevelFontColor { get; }
         public float LevelFontSize { get; }
+        public float ItemIconScale { get; }
         public bool AircraftGlowEnabled { get; }
         public Color AircraftGlowColor { get; }
         public float AircraftGlowMinimumIntensity { get; }
@@ -175,7 +182,7 @@ namespace BackpackHero.Debugging
             AircraftQualityPulseEnabled,
             AircraftQualityPulseInterval,
             AircraftQualityPulseScaleMultiplier,
-            AircraftQualityPulseTweenDuration);
+            AircraftQualityPulseTweenDuration, ItemIconScale);
 
         private static bool IsWhiteRgb(Color color) =>
             Mathf.Approximately(color.r, 1f) &&
@@ -201,6 +208,7 @@ namespace BackpackHero.Debugging
             Mathf.Approximately(ShopFlightDuration, other.ShopFlightDuration) &&
             LevelFontColor.Equals(other.LevelFontColor) &&
             Mathf.Approximately(LevelFontSize, other.LevelFontSize) &&
+            Mathf.Approximately(ItemIconScale, other.ItemIconScale) &&
             AircraftGlowEnabled == other.AircraftGlowEnabled &&
             AircraftGlowColor.Equals(other.AircraftGlowColor) &&
             Mathf.Approximately(AircraftGlowMinimumIntensity,
@@ -249,6 +257,7 @@ namespace BackpackHero.Debugging
                 hash = (hash * 31) + ShopFlightDuration.GetHashCode();
                 hash = (hash * 31) + LevelFontColor.GetHashCode();
                 hash = (hash * 31) + LevelFontSize.GetHashCode();
+                hash = (hash * 31) + ItemIconScale.GetHashCode();
                 hash = (hash * 31) + (AircraftGlowEnabled ? 1 : 0);
                 hash = (hash * 31) + AircraftGlowColor.GetHashCode();
                 hash = (hash * 31) + AircraftGlowMinimumIntensity.GetHashCode();

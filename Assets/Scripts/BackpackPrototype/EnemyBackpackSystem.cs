@@ -176,7 +176,7 @@ namespace BackpackPrototype
             matchProfile = profile;
             hasMatchProfile = true;
             defaultProgressionLevel = Mathf.Clamp(profile.ProgressionLevel,
-                PlayerItemSystem.DefaultLevel, PlayerItemSystem.MaximumLevel - 1);
+                PlayerItemSystem.DefaultLevel, PlayerItemSystem.MaximumLevel);
             activeProgressionLevel = defaultProgressionLevel;
             hasProgressionLevelOverride = false;
             ResetPreparationState();

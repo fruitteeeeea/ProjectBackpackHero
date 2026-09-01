@@ -2,10 +2,14 @@ using BackpackHero.Battle;
 using BackpackHero.Debugging;
 using BackpackPrototype;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 public sealed class GamePacingMultipliersTests
 {
+    private const string GamePacingAssetPath =
+        "Assets/GameData/Gameplay/GamePacing.asset";
+
     private GameObject runtimeObject;
 
     [TearDown]
@@ -26,6 +30,18 @@ public sealed class GamePacingMultipliersTests
         Assert.That(values.PlayerOverallStrength, Is.EqualTo(1f));
         Assert.That(values.EnemyOverallStrength, Is.EqualTo(1f));
         Assert.That(values.WhiteboardCooldown, Is.EqualTo(1f));
+    }
+
+    [Test]
+    public void FormalSettings_UsePointNineEnemyOverallStrength()
+    {
+        GamePacingDebugSettings settings =
+            AssetDatabase.LoadAssetAtPath<GamePacingDebugSettings>(
+                GamePacingAssetPath);
+
+        Assert.That(settings, Is.Not.Null);
+        Assert.That(settings.EnemyOverallStrengthMultiplier,
+            Is.EqualTo(0.9f));
     }
 
     [Test]

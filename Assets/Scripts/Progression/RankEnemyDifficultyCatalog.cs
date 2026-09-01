@@ -69,7 +69,7 @@ namespace BackpackHero.Progression
                     string deckError = null;
                     bool validStage = value != null &&
                         value.progressionLevel >= PlayerItemSystem.DefaultLevel &&
-                        value.progressionLevel <= PlayerItemSystem.MaximumLevel - 1 &&
+                        value.progressionLevel <= PlayerItemSystem.MaximumLevel &&
                         value.deckPreset != null &&
                         IsFullDeck(value.deckPreset, out deckError);
                     if (!validStage)

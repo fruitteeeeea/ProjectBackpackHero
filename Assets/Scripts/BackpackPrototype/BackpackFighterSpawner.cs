@@ -398,20 +398,17 @@ namespace BackpackPrototype
                     ? factionMember.Faction
                     : BattleFaction.Player;
 
+            Vector2 progressionMultipliers =
+                GetFighterProgressionMultipliers(request.Item);
+
             fighter.Initialize(
                 definition,
                 faction,
                 faction == BattleFaction.Player
                     ? playerColor
                     : enemyColor,
-                faction == BattleFaction.Player
-                    ? request.Item.Data.GetAircraftHealthMultiplierForProgressionLevel(
-                        request.Item.ProgressionLevel)
-                    : 1f,
-                faction == BattleFaction.Player
-                    ? request.Item.Data.GetAircraftDamageMultiplierForProgressionLevel(
-                        request.Item.ProgressionLevel)
-                    : 1f);
+                progressionMultipliers.x,
+                progressionMultipliers.y);
             fighter.SetDamageSourceItem(request.Item);
 
             fighterObject.name =
@@ -473,6 +470,21 @@ namespace BackpackPrototype
                 request.Item);
 
             return fighterObject;
+        }
+
+        private static Vector2 GetFighterProgressionMultipliers(
+            ItemInstance item)
+        {
+            if (item?.Data == null)
+            {
+                return Vector2.one;
+            }
+
+            return new Vector2(
+                item.Data.GetAircraftHealthMultiplierForProgressionLevel(
+                    item.ProgressionLevel),
+                item.Data.GetAircraftDamageMultiplierForProgressionLevel(
+                    item.ProgressionLevel));
         }
 
         private void ConfigureAdjacentEquipmentMarkers(

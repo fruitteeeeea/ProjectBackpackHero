@@ -691,6 +691,40 @@ public sealed class PlayerBackpackSystemTests
     }
 
     [Test]
+    public void FighterSpawner_UsesItemProgressionForEnemyAircraft()
+    {
+        ItemData aircraft = ScriptableObject.CreateInstance<ItemData>();
+        try
+        {
+            aircraft.InitializeForTests(
+                "Enemy Progression Aircraft", ItemType.Aircraft, 1f, null);
+            aircraft.SetOutOfMatchProgressionForTests(
+                2, 100, new Vector2(1f, 1.4f), new Vector2(1f, 1.4f),
+                Vector2.one);
+
+            MethodInfo resolver = typeof(BackpackFighterSpawner).GetMethod(
+                "GetFighterProgressionMultipliers",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(resolver, Is.Not.Null);
+
+            var levelOne = new ItemInstance(
+                "enemy-aircraft-1", aircraft, Vector2Int.zero);
+            var levelTen = new ItemInstance(
+                "enemy-aircraft-10", aircraft, Vector2Int.zero);
+            levelTen.SetProgressionLevel(PlayerItemSystem.MaximumLevel);
+
+            Assert.That((Vector2)resolver.Invoke(null, new object[] { levelOne }),
+                Is.EqualTo(Vector2.one));
+            Assert.That((Vector2)resolver.Invoke(null, new object[] { levelTen }),
+                Is.EqualTo(new Vector2(1.4f, 1.4f)));
+        }
+        finally
+        {
+            Object.DestroyImmediate(aircraft);
+        }
+    }
+
+    [Test]
     public void LoadLayout_RejectsOverlapWithoutChangingCurrentLayout()
     {
         GameObject prefab =

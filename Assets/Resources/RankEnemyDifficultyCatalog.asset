@@ -15,75 +15,75 @@ MonoBehaviour:
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000001, type: 2}
     - progressionLevel: 1
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000002, type: 2}
-    - progressionLevel: 1
+    - progressionLevel: 2
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000003, type: 2}
   - rank: 2
     minimumPoints: 200
     maximumPoints: 999
     stages:
-    - progressionLevel: 1
+    - progressionLevel: 2
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000004, type: 2}
-    - progressionLevel: 2
+    - progressionLevel: 3
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000005, type: 2}
-    - progressionLevel: 2
+    - progressionLevel: 3
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000006, type: 2}
   - rank: 3
     minimumPoints: 1000
     maximumPoints: 3599
     stages:
-    - progressionLevel: 2
-      deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000007, type: 2}
-    - progressionLevel: 2
-      deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000008, type: 2}
     - progressionLevel: 3
+      deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000007, type: 2}
+    - progressionLevel: 4
+      deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000008, type: 2}
+    - progressionLevel: 4
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000009, type: 2}
   - rank: 4
     minimumPoints: 3600
     maximumPoints: 6999
     stages:
-    - progressionLevel: 3
+    - progressionLevel: 5
       deckPreset: {fileID: 11400000, guid: c000000000000000000000000000000a, type: 2}
-    - progressionLevel: 3
+    - progressionLevel: 5
       deckPreset: {fileID: 11400000, guid: c000000000000000000000000000000b, type: 2}
-    - progressionLevel: 4
+    - progressionLevel: 5
       deckPreset: {fileID: 11400000, guid: c000000000000000000000000000000c, type: 2}
   - rank: 5
     minimumPoints: 7000
     maximumPoints: 17999
     stages:
-    - progressionLevel: 4
+    - progressionLevel: 6
       deckPreset: {fileID: 11400000, guid: c000000000000000000000000000000d, type: 2}
-    - progressionLevel: 4
+    - progressionLevel: 6
       deckPreset: {fileID: 11400000, guid: c000000000000000000000000000000e, type: 2}
-    - progressionLevel: 5
+    - progressionLevel: 6
       deckPreset: {fileID: 11400000, guid: c000000000000000000000000000000f, type: 2}
   - rank: 6
     minimumPoints: 18000
     maximumPoints: 31999
     stages:
-    - progressionLevel: 5
+    - progressionLevel: 7
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000010, type: 2}
-    - progressionLevel: 5
+    - progressionLevel: 7
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000011, type: 2}
-    - progressionLevel: 6
+    - progressionLevel: 8
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000012, type: 2}
   - rank: 7
     minimumPoints: 32000
     maximumPoints: 49999
     stages:
-    - progressionLevel: 6
+    - progressionLevel: 8
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000013, type: 2}
-    - progressionLevel: 7
+    - progressionLevel: 8
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000014, type: 2}
-    - progressionLevel: 7
+    - progressionLevel: 9
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000015, type: 2}
   - rank: 8
     minimumPoints: 50000
     maximumPoints: 50000
     stages:
-    - progressionLevel: 8
-      deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000016, type: 2}
-    - progressionLevel: 8
-      deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000017, type: 2}
     - progressionLevel: 9
+      deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000016, type: 2}
+    - progressionLevel: 10
+      deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000017, type: 2}
+    - progressionLevel: 10
       deckPreset: {fileID: 11400000, guid: c0000000000000000000000000000018, type: 2}

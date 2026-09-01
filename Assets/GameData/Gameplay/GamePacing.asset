@@ -18,6 +18,6 @@ MonoBehaviour:
   playerBackpackHealthMultiplier: 1
   enemyBackpackHealthMultiplier: 1
   playerOverallStrengthMultiplier: 1
-  enemyOverallStrengthMultiplier: 1
+  enemyOverallStrengthMultiplier: 0.9
   whiteboardCooldownMultiplier: 2
   damageFloatingTextMagicNumber: 16

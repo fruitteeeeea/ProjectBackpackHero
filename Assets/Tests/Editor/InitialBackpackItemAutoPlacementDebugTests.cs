@@ -145,6 +145,28 @@ public sealed class InitialBackpackItemAutoPlacementDebugTests
     }
 
     [Test]
+    public void FormalEnemyOperation_NonEmptyShopWithoutDirectGain_ExploresRoll()
+    {
+        GameObject instance = CreateReadyEnemyWithEmptyShop(
+            out EnemyBackpackSystem system);
+
+        try
+        {
+            ((List<ItemData>)GetPrivateField(system, "shopItems")).Add(null);
+            RunOneFormalEnemyOperation(system);
+
+            Assert.That(system.ShopItems, Has.Count.EqualTo(3));
+            Assert.That(system.RemainingShopRolls, Is.EqualTo(0));
+            Assert.That(system.RemainingOperations,
+                Is.EqualTo(system.MaximumOperations - 1));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(instance);
+        }
+    }
+
+    [Test]
     public void FormalEnemyOperation_EmptyShopWithoutRoll_DoesNotConsumeOperationAllowance()
     {
         GameObject instance = CreateReadyEnemyWithEmptyShop(

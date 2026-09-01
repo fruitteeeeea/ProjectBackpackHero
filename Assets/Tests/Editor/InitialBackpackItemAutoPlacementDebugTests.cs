@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using BackpackHero.Debugging;
 using BackpackPrototype;
@@ -119,6 +121,101 @@ public sealed class InitialBackpackItemAutoPlacementDebugTests
         {
             UnityEngine.Object.DestroyImmediate(instance);
         }
+    }
+
+    [Test]
+    public void FormalEnemyOperation_EmptyShopWithRoll_RefreshesShopAndConsumesBothAllowances()
+    {
+        GameObject instance = CreateReadyEnemyWithEmptyShop(
+            out EnemyBackpackSystem system);
+
+        try
+        {
+            RunOneFormalEnemyOperation(system);
+
+            Assert.That(system.ShopItems, Has.Count.EqualTo(3));
+            Assert.That(system.RemainingShopRolls, Is.EqualTo(0));
+            Assert.That(system.RemainingOperations,
+                Is.EqualTo(system.MaximumOperations - 1));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(instance);
+        }
+    }
+
+    [Test]
+    public void FormalEnemyOperation_EmptyShopWithoutRoll_DoesNotConsumeOperationAllowance()
+    {
+        GameObject instance = CreateReadyEnemyWithEmptyShop(
+            out EnemyBackpackSystem system);
+
+        try
+        {
+            SetPrivateField(system, "remainingShopRolls", 0);
+            RunOneFormalEnemyOperation(system);
+
+            Assert.That(system.ShopItems, Is.Empty);
+            Assert.That(system.RemainingOperations,
+                Is.EqualTo(system.MaximumOperations));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(instance);
+        }
+    }
+
+    [Test]
+    public void ExploreMode_EmptyShopWithRoll_StillSelectsRoll()
+    {
+        BackpackController backpack = new(7, 4);
+
+        Assert.That(BackpackOperationPlanner.TrySelectBest(
+            backpack, Array.Empty<ItemData>(), 1,
+            BackpackOperationSelectionMode.ExploreNonDecreasing,
+            new HashSet<string>(), out BackpackOperation operation), Is.True);
+        Assert.That(operation.Kind, Is.EqualTo(BackpackOperationKind.RollShop));
+    }
+
+    private static GameObject CreateReadyEnemyWithEmptyShop(
+        out EnemyBackpackSystem system)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/Backpacks/EnemyBackpack.prefab");
+        GameObject instance = UnityEngine.Object.Instantiate(prefab);
+        InvokeAwake(instance.GetComponent<BackpackCombatController>());
+        InvokeAwake(instance.GetComponent<BackpackFighterSpawner>());
+        system = instance.GetComponent<EnemyBackpackSystem>();
+        InvokeAwake(system);
+        Assert.That(system.SetCurrentDeckPreset(system.DefaultDeckPreset),
+            Is.True);
+        ((List<ItemData>)GetPrivateField(system, "shopItems")).Clear();
+        return instance;
+    }
+
+    private static void RunOneFormalEnemyOperation(EnemyBackpackSystem system)
+    {
+        IEnumerator operation = (IEnumerator)system.GetType().GetMethod(
+            "RunOperation", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(system, null);
+        Assert.That(operation.MoveNext(), Is.True);
+    }
+
+    private static object GetPrivateField(object target, string name)
+    {
+        FieldInfo field = target.GetType().GetField(name,
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null);
+        return field.GetValue(target);
+    }
+
+    private static void SetPrivateField(object target, string name,
+        object value)
+    {
+        FieldInfo field = target.GetType().GetField(name,
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null);
+        field.SetValue(target, value);
     }
 
     private static void InvokeAwake(object target)

@@ -426,6 +426,26 @@ namespace BackpackPrototype
         private bool TryExecuteOperation()
         {
             if (!CanOperate()) return false;
+
+            // Roll 本身不会直接改变背包分数，严格增益评分器不会选择它。
+            // 但隐藏商店已清空时，必须先消耗一次可用 Roll 才能产生后续加分候选。
+            if (shopItems.Count == 0 && remainingShopRolls > 0)
+            {
+                BackpackOperation roll = new()
+                {
+                    Kind = BackpackOperationKind.RollShop,
+                };
+                float rollScoreBefore = BackpackStrengthCalculator
+                    .Calculate(Backpack).TotalScore;
+                if (TryExecutePlannedOperation(roll))
+                {
+                    BackpackOperationDebugLogger.Log(BattleFaction.Enemy,
+                        roll, rollScoreBefore, Backpack, shopItems,
+                        remainingShopRolls, this);
+                    return true;
+                }
+            }
+
             if (!BackpackOperationPlanner.TrySelectBest(
                     Backpack, shopItems, remainingShopRolls,
                     out BackpackOperation operation))

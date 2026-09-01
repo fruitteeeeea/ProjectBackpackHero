@@ -53,7 +53,7 @@
     "equipmentEffectIntervalReductionLevel2": 0.1,
     "equipmentEffectIntervalReductionLevel3": 0.2,
     "fighterId": "fighter_charge",
-    "shapeId": "shape_l_missing_bottom_left"
+    "shapeId": "shape_1x2"
   },
   {
     "id": "aircraft_shield",
@@ -165,7 +165,7 @@
     "equipmentEffectIntervalReductionLevel2": 0.1,
     "equipmentEffectIntervalReductionLevel3": 0.2,
     "fighterId": "fighter_laser",
-    "shapeId": "shape_1x2"
+    "shapeId": "shape_2x1"
   },
   {
     "id": "aircraft_shotgun",
@@ -333,7 +333,7 @@
     "equipmentEffectIntervalReductionLevel2": 0.1,
     "equipmentEffectIntervalReductionLevel3": 0.2,
     "fighterId": "",
-    "shapeId": "shape_1x2"
+    "shapeId": "shape_2x1"
   },
   {
     "id": "equipment_1x2",
@@ -389,6 +389,6 @@
     "equipmentEffectIntervalReductionLevel2": 0.1,
     "equipmentEffectIntervalReductionLevel3": 0.2,
     "fighterId": "",
-    "shapeId": "shape_1x2"
+    "shapeId": "shape_2x1"
   }
 ]

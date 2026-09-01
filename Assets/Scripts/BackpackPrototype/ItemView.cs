@@ -19,7 +19,9 @@ namespace BackpackPrototype
         private const float IconScale = .75f;
         private const float LevelBadgeSize = 35f;
         private const float LevelBadgeCircleBrightness = .85f;
+        private const float LevelBadgeNumberFontSize = 19f;
         private const float LevelBadgeNumberOutlineWidth = .36f;
+        private const string LevelBadgeOutlineKeyword = "OUTLINE_ON";
         private const string LevelBadgeFontResourcePath = "Fonts/Milker SDF";
         private const string LevelBadgeSourceFontResourcePath = "Fonts/Milker";
         private const string LevelBadgeDigits = "0123456789";
@@ -1950,6 +1952,7 @@ namespace BackpackPrototype
             levelBadgeCircleImage.color = new Color(
                 LevelBadgeCircleBrightness, LevelBadgeCircleBrightness,
                 LevelBadgeCircleBrightness, 1f);
+            ApplyQualityLevelBadgeTypography(settings);
             levelBadgeNumber.text = Instance.Level.ToString();
             levelBadgeNumber.color = isDeletePreviewActive
                 ? new Color(1f, 0.76f, 0.76f, 1f)
@@ -2030,19 +2033,19 @@ namespace BackpackPrototype
                 levelBadgeNumber.enableWordWrapping = false;
                 levelBadgeNumber.overflowMode = TextOverflowModes.Overflow;
                 levelBadgeNumber.font = GetLevelBadgeFont();
-                levelBadgeNumber.fontSize = 19f;
+                levelBadgeNumber.fontSize = LevelBadgeNumberFontSize;
                 levelBadgeNumber.fontStyle = FontStyles.Bold;
                 levelBadgeNumber.outlineWidth = LevelBadgeNumberOutlineWidth;
             }
 
-            ApplyLevelBadgeNumberFont();
+            ApplyDefaultLevelBadgeTypography();
 
             UpdateLevelBadgeLayout();
 
             return levelBadgeCircleImage != null && levelBadgeNumber != null;
         }
 
-        private void ApplyLevelBadgeNumberFont()
+        private void ApplyDefaultLevelBadgeTypography()
         {
             if (levelBadgeNumber == null)
             {
@@ -2050,7 +2053,38 @@ namespace BackpackPrototype
             }
 
             levelBadgeNumber.font = GetLevelBadgeFont();
+            levelBadgeNumber.fontSize = LevelBadgeNumberFontSize;
             levelBadgeNumber.outlineWidth = LevelBadgeNumberOutlineWidth;
+            EnableLevelBadgeOutlineKeyword();
+        }
+
+        private void ApplyQualityLevelBadgeTypography(
+            BackpackVisualSettings settings)
+        {
+            if (levelBadgeNumber == null)
+            {
+                return;
+            }
+
+            levelBadgeNumber.font = settings.QualityLevelBadgeFont != null
+                ? settings.QualityLevelBadgeFont
+                : GetLevelBadgeFont();
+            levelBadgeNumber.fontSize = settings.QualityLevelBadgeFontSize;
+            levelBadgeNumber.outlineWidth =
+                settings.QualityLevelBadgeOutlineWidth;
+            EnableLevelBadgeOutlineKeyword();
+        }
+
+        private void EnableLevelBadgeOutlineKeyword()
+        {
+            Material material = levelBadgeNumber.fontMaterial;
+            if (material == null)
+            {
+                return;
+            }
+
+            material.EnableKeyword(LevelBadgeOutlineKeyword);
+            levelBadgeNumber.SetMaterialDirty();
         }
 
         private void SetLevelBadgeVisible(bool visible)

@@ -34,7 +34,7 @@ MonoBehaviour:
   cd: 3
   price: 0
   count: 1
-  shape: {fileID: 11400000, guid: 4bdacc5ad9df346c79f167525a03c158, type: 2}
+  shape: {fileID: 11400000, guid: 779de2dbf4b6144469f76b3c6dc34fda, type: 2}
   aircraftCooldownReductionLevel2: 0.2
   aircraftCooldownReductionLevel3: 0.4
   equipmentEffectIntervalReductionLevel2: 0.1

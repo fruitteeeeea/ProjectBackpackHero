@@ -35,6 +35,9 @@ MonoBehaviour:
   equipmentBottomPlateGlowEnabled: 0
   colorQualityModeEnabled: 1
   itemQualityPalette: {fileID: 11400000, guid: d7b9785bd9b7499aad4fb87a0767fa09, type: 2}
+  qualityLevelBadgeFont: {fileID: 11400000, guid: a450f20adbfede945859741877e773bb, type: 2}
+  qualityLevelBadgeFontSize: 19
+  qualityLevelBadgeOutlineWidth: 0.5
   aircraftQualityPulseEnabled: 0
   aircraftQualityPulseInterval: 0.8
   aircraftQualityPulseScaleMultiplier: 1.12

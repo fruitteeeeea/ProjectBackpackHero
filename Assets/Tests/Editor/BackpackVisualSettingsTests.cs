@@ -2,6 +2,7 @@ using BackpackHero.Debugging;
 using BackpackHero.Battle;
 using BackpackPrototype;
 using NUnit.Framework;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 
@@ -38,6 +39,9 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(settings.EquipmentBottomPlateGlowEnabled, Is.False);
         Assert.That(settings.ColorQualityModeEnabled, Is.True);
         Assert.That(settings.ItemQualityPalette, Is.Null);
+        Assert.That(settings.QualityLevelBadgeFont, Is.Null);
+        Assert.That(settings.QualityLevelBadgeFontSize, Is.EqualTo(19f));
+        Assert.That(settings.QualityLevelBadgeOutlineWidth, Is.EqualTo(.36f));
         Assert.That(settings.AircraftQualityPulseEnabled, Is.True);
         Assert.That(settings.AircraftQualityPulseInterval, Is.EqualTo(.8f));
         Assert.That(settings.AircraftQualityPulseScaleMultiplier,
@@ -54,7 +58,8 @@ public sealed class BackpackVisualSettingsTests
         BackpackVisualSettings expected = new(false, -1f, Color.red,
             Color.blue, -1f, 2f, -2f, .5f, 13f, -9f,
             BackpackPlacementScaleEase.OutCubic, -3f, Color.green, -4f,
-            true, Color.magenta, -1f, 2f, -3f, -4f, false, false, null, false,
+            true, Color.magenta, -1f, 2f, -3f, -4f, false, false, null,
+            TMP_Settings.defaultFontAsset, -5f, 2f, false,
             -1f, .5f, -2f);
         try
         {
@@ -91,6 +96,12 @@ public sealed class BackpackVisualSettingsTests
             Assert.That(actual.EquipmentBottomPlateGlowEnabled, Is.False);
             Assert.That(actual.ColorQualityModeEnabled, Is.False);
             Assert.That(actual.ItemQualityPalette, Is.Null);
+            Assert.That(actual.QualityLevelBadgeFont,
+                Is.SameAs(TMP_Settings.defaultFontAsset));
+            Assert.That(actual.QualityLevelBadgeFontSize,
+                Is.EqualTo(BackpackVisualSettings.MinimumQualityLevelBadgeFontSize));
+            Assert.That(actual.QualityLevelBadgeOutlineWidth,
+                Is.EqualTo(BackpackVisualSettings.MaximumQualityLevelBadgeOutlineWidth));
             Assert.That(actual.AircraftQualityPulseEnabled, Is.False);
             Assert.That(actual.AircraftQualityPulseInterval,
                 Is.EqualTo(BackpackVisualSettings.MinimumAircraftQualityPulseInterval));
@@ -116,12 +127,14 @@ public sealed class BackpackVisualSettingsTests
             Color.magenta, .18f, .62f, .7f, 1.17f, 10f, -6f,
             BackpackPlacementScaleEase.OutElastic, .32f,
             new Color(1f, 1f, 1f, .2f), 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f, true, true, null, true,
+            true, Color.white, .12f, .45f, 1.2f, 8f, true, true, null,
+            null, 19f, .36f, true,
             .8f, 1.12f, .45f);
         BackpackVisualSettings custom = new(true, .5f, Color.yellow,
             Color.magenta, .18f, .62f, .7f, 1.17f, 10f, -6f,
             BackpackPlacementScaleEase.OutElastic, .32f, Color.green, 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f, true, true, null, true,
+            true, Color.white, .12f, .45f, 1.2f, 8f, true, true, null,
+            null, 19f, .36f, true,
             .8f, 1.12f, .45f);
 
         Assert.That(white.UsesFactionLevelColor, Is.True);
@@ -148,6 +161,11 @@ public sealed class BackpackVisualSettingsTests
         Assert.That(values.EquipmentBottomPlateGlowEnabled, Is.False);
         Assert.That(values.ColorQualityModeEnabled, Is.True);
         Assert.That(values.ItemQualityPalette, Is.Not.Null);
+        Assert.That(values.QualityLevelBadgeFont,
+            Is.SameAs(AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
+                "Assets/Resources/Fonts/Milker SDF.asset")));
+        Assert.That(values.QualityLevelBadgeFontSize, Is.EqualTo(19f));
+        Assert.That(values.QualityLevelBadgeOutlineWidth, Is.EqualTo(.36f));
         Assert.That(values.AircraftQualityPulseEnabled, Is.True);
         Assert.That(values.AircraftQualityPulseInterval, Is.EqualTo(.8f));
         Assert.That(values.AircraftQualityPulseScaleMultiplier,

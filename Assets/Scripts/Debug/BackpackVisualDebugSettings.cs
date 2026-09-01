@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 namespace BackpackHero.Debugging
@@ -29,6 +30,9 @@ namespace BackpackHero.Debugging
         [SerializeField] private bool equipmentBottomPlateGlowEnabled;
         [SerializeField] private bool colorQualityModeEnabled = true;
         [SerializeField] private ItemQualityPalette itemQualityPalette;
+        [SerializeField] private TMP_FontAsset qualityLevelBadgeFont;
+        [SerializeField, Min(BackpackVisualSettings.MinimumQualityLevelBadgeFontSize)] private float qualityLevelBadgeFontSize = 19f;
+        [SerializeField, Range(BackpackVisualSettings.MinimumQualityLevelBadgeOutlineWidth, BackpackVisualSettings.MaximumQualityLevelBadgeOutlineWidth)] private float qualityLevelBadgeOutlineWidth = .36f;
         [SerializeField] private bool aircraftQualityPulseEnabled = true;
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftQualityPulseInterval)] private float aircraftQualityPulseInterval = .8f;
         [SerializeField, Min(BackpackVisualSettings.MinimumAircraftQualityPulseScale)] private float aircraftQualityPulseScaleMultiplier = 1.12f;
@@ -59,6 +63,9 @@ namespace BackpackHero.Debugging
             equipmentBottomPlateGlowEnabled = values.EquipmentBottomPlateGlowEnabled;
             colorQualityModeEnabled = values.ColorQualityModeEnabled;
             itemQualityPalette = values.ItemQualityPalette;
+            qualityLevelBadgeFont = values.QualityLevelBadgeFont;
+            qualityLevelBadgeFontSize = values.QualityLevelBadgeFontSize;
+            qualityLevelBadgeOutlineWidth = values.QualityLevelBadgeOutlineWidth;
             aircraftQualityPulseEnabled = values.AircraftQualityPulseEnabled;
             aircraftQualityPulseInterval = values.AircraftQualityPulseInterval;
             aircraftQualityPulseScaleMultiplier =
@@ -77,7 +84,9 @@ namespace BackpackHero.Debugging
             aircraftGlowMinimumIntensity, aircraftGlowMaximumIntensity,
             aircraftGlowCycleDuration, aircraftGlowEdgeWidth,
             equipmentBottomPlateGlowEnabled, colorQualityModeEnabled,
-            itemQualityPalette, aircraftQualityPulseEnabled,
+            itemQualityPalette, qualityLevelBadgeFont,
+            qualityLevelBadgeFontSize, qualityLevelBadgeOutlineWidth,
+            aircraftQualityPulseEnabled,
             aircraftQualityPulseInterval,
             aircraftQualityPulseScaleMultiplier,
             aircraftQualityPulseTweenDuration);

@@ -162,6 +162,45 @@ public sealed class ItemBottomPlateLayoutTests
     }
 
     [Test]
+    public void QualityLevelBadgeTypography_UsesConfiguredValuesAndFallsBackToMilker()
+    {
+        GameObject root = new("Item", typeof(RectTransform),
+            typeof(CanvasGroup), typeof(ItemView));
+        GameObject iconObject = new("ItemIcon", typeof(RectTransform),
+            typeof(CanvasRenderer), typeof(Image));
+        try
+        {
+            iconObject.transform.SetParent(root.transform, false);
+            ItemView view = root.GetComponent<ItemView>();
+            SetField(view, "icon", iconObject.GetComponent<Image>());
+            InvokePrivate(view, "EnsureLevelBadge");
+
+            TextMeshProUGUI number = root.transform.Find(
+                "LevelBadge/LevelNumber").GetComponent<TextMeshProUGUI>();
+            BackpackVisualSettings custom = CreateQualityBadgeSettings(
+                TMP_Settings.defaultFontAsset, 26f, .73f);
+            InvokePrivate(view, "ApplyQualityLevelBadgeTypography", custom);
+
+            Assert.That(number.font, Is.SameAs(TMP_Settings.defaultFontAsset));
+            Assert.That(number.fontSize, Is.EqualTo(26f));
+            Assert.That(number.outlineWidth, Is.EqualTo(.73f));
+            Assert.That(number.fontMaterial.IsKeywordEnabled("OUTLINE_ON"),
+                Is.True);
+
+            InvokePrivate(view, "ApplyQualityLevelBadgeTypography",
+                CreateQualityBadgeSettings(null, 19f, .36f));
+            Assert.That(number.font,
+                Is.SameAs(Resources.Load<TMP_FontAsset>("Fonts/Milker SDF")));
+            Assert.That(number.fontMaterial.IsKeywordEnabled("OUTLINE_ON"),
+                Is.True);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
     public void MilkerLevelBadgeFontAsset_ContainsEveryLevelDigit()
     {
         TMP_FontAsset font = Resources.Load<TMP_FontAsset>("Fonts/Milker SDF");
@@ -203,4 +242,20 @@ public sealed class ItemBottomPlateLayoutTests
             BindingFlags.Instance | BindingFlags.NonPublic)
             .SetValue(target, value);
     }
+
+    private static void InvokePrivate(ItemView view, string methodName,
+        params object[] arguments)
+    {
+        typeof(ItemView).GetMethod(methodName,
+            BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(view, arguments);
+    }
+
+    private static BackpackVisualSettings CreateQualityBadgeSettings(
+        TMP_FontAsset font, float fontSize, float outlineWidth) => new(
+        true, .5f, Color.white, Color.white, .18f, .62f, .7f,
+        1.17f, 10f, -6f, BackpackPlacementScaleEase.OutElastic,
+        .32f, Color.white, 16f, true, Color.white, .12f, .45f, 1.2f,
+        8f, false, true, null, font, fontSize, outlineWidth, true,
+        .8f, 1.12f, .45f);
 }

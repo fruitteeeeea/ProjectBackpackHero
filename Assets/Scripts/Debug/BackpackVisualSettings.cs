@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 
 namespace BackpackHero.Debugging
@@ -20,6 +21,9 @@ namespace BackpackHero.Debugging
         public const float MinimumPlacementScale = 1f;
         public const float MinimumShopFlightDuration = 0.01f;
         public const float MinimumLevelFontSize = 0.01f;
+        public const float MinimumQualityLevelBadgeFontSize = 0.01f;
+        public const float MinimumQualityLevelBadgeOutlineWidth = 0f;
+        public const float MaximumQualityLevelBadgeOutlineWidth = 1f;
         public const float MinimumAircraftGlowCycleDuration = 0.01f;
         public const float MinimumAircraftGlowEdgeWidth = 0f;
         public const float MinimumAircraftQualityPulseInterval = 0f;
@@ -33,7 +37,8 @@ namespace BackpackHero.Debugging
             .18f, .62f, .7f,
             1.17f, 10f, -6f, BackpackPlacementScaleEase.OutElastic,
             .32f, Color.white, 16f,
-            true, Color.white, .12f, .45f, 1.2f, 8f, false, true, null, true,
+            true, Color.white, .12f, .45f, 1.2f, 8f, false, true, null,
+            null, 19f, .36f, true,
             .8f, 1.12f, .45f);
 
         public BackpackVisualSettings(
@@ -60,6 +65,9 @@ namespace BackpackHero.Debugging
             bool equipmentBottomPlateGlowEnabled,
             bool colorQualityModeEnabled,
             ItemQualityPalette itemQualityPalette,
+            TMP_FontAsset qualityLevelBadgeFont,
+            float qualityLevelBadgeFontSize,
+            float qualityLevelBadgeOutlineWidth,
             bool aircraftQualityPulseEnabled,
             float aircraftQualityPulseInterval,
             float aircraftQualityPulseScaleMultiplier,
@@ -96,6 +104,12 @@ namespace BackpackHero.Debugging
             EquipmentBottomPlateGlowEnabled = equipmentBottomPlateGlowEnabled;
             ColorQualityModeEnabled = colorQualityModeEnabled;
             ItemQualityPalette = itemQualityPalette;
+            QualityLevelBadgeFont = qualityLevelBadgeFont;
+            QualityLevelBadgeFontSize = Mathf.Max(
+                MinimumQualityLevelBadgeFontSize, qualityLevelBadgeFontSize);
+            QualityLevelBadgeOutlineWidth = Mathf.Clamp(
+                qualityLevelBadgeOutlineWidth, MinimumQualityLevelBadgeOutlineWidth,
+                MaximumQualityLevelBadgeOutlineWidth);
             AircraftQualityPulseEnabled = aircraftQualityPulseEnabled;
             AircraftQualityPulseInterval = Mathf.Max(
                 MinimumAircraftQualityPulseInterval,
@@ -131,6 +145,9 @@ namespace BackpackHero.Debugging
         public bool EquipmentBottomPlateGlowEnabled { get; }
         public bool ColorQualityModeEnabled { get; }
         public ItemQualityPalette ItemQualityPalette { get; }
+        public TMP_FontAsset QualityLevelBadgeFont { get; }
+        public float QualityLevelBadgeFontSize { get; }
+        public float QualityLevelBadgeOutlineWidth { get; }
         public bool AircraftQualityPulseEnabled { get; }
         public float AircraftQualityPulseInterval { get; }
         public float AircraftQualityPulseScaleMultiplier { get; }
@@ -153,7 +170,9 @@ namespace BackpackHero.Debugging
             AircraftGlowMinimumIntensity, AircraftGlowMaximumIntensity,
             AircraftGlowCycleDuration, AircraftGlowEdgeWidth,
             EquipmentBottomPlateGlowEnabled, ColorQualityModeEnabled,
-            ItemQualityPalette, AircraftQualityPulseEnabled,
+            ItemQualityPalette, QualityLevelBadgeFont,
+            QualityLevelBadgeFontSize, QualityLevelBadgeOutlineWidth,
+            AircraftQualityPulseEnabled,
             AircraftQualityPulseInterval,
             AircraftQualityPulseScaleMultiplier,
             AircraftQualityPulseTweenDuration);
@@ -196,6 +215,11 @@ namespace BackpackHero.Debugging
                 other.EquipmentBottomPlateGlowEnabled &&
             ColorQualityModeEnabled == other.ColorQualityModeEnabled &&
             ItemQualityPalette == other.ItemQualityPalette &&
+            QualityLevelBadgeFont == other.QualityLevelBadgeFont &&
+            Mathf.Approximately(QualityLevelBadgeFontSize,
+                other.QualityLevelBadgeFontSize) &&
+            Mathf.Approximately(QualityLevelBadgeOutlineWidth,
+                other.QualityLevelBadgeOutlineWidth) &&
             AircraftQualityPulseEnabled == other.AircraftQualityPulseEnabled &&
             Mathf.Approximately(AircraftQualityPulseInterval,
                 other.AircraftQualityPulseInterval) &&
@@ -236,6 +260,10 @@ namespace BackpackHero.Debugging
                 hash = (hash * 31) + (ColorQualityModeEnabled ? 1 : 0);
                 hash = (hash * 31) +
                     (ItemQualityPalette != null ? ItemQualityPalette.GetHashCode() : 0);
+                hash = (hash * 31) + (QualityLevelBadgeFont != null
+                    ? QualityLevelBadgeFont.GetHashCode() : 0);
+                hash = (hash * 31) + QualityLevelBadgeFontSize.GetHashCode();
+                hash = (hash * 31) + QualityLevelBadgeOutlineWidth.GetHashCode();
                 hash = (hash * 31) + (AircraftQualityPulseEnabled ? 1 : 0);
                 hash = (hash * 31) + AircraftQualityPulseInterval.GetHashCode();
                 hash = (hash * 31) +

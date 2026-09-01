@@ -1,4 +1,5 @@
 using BackpackHero.Debugging;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 
@@ -168,6 +169,18 @@ namespace BackpackHero.EditorTools
                 (ItemQualityPalette)EditorGUILayout.ObjectField(
                     "品质底板资源", current.ItemQualityPalette,
                     typeof(ItemQualityPalette), false);
+            TMP_FontAsset qualityLevelBadgeFont =
+                (TMP_FontAsset)EditorGUILayout.ObjectField(
+                    "等级徽章字体", current.QualityLevelBadgeFont,
+                    typeof(TMP_FontAsset), false);
+            float qualityLevelBadgeFontSize = Mathf.Max(
+                BackpackVisualSettings.MinimumQualityLevelBadgeFontSize,
+                EditorGUILayout.FloatField("等级徽章字号",
+                    current.QualityLevelBadgeFontSize));
+            float qualityLevelBadgeOutlineWidth = EditorGUILayout.Slider(
+                "等级徽章描边宽度", current.QualityLevelBadgeOutlineWidth,
+                BackpackVisualSettings.MinimumQualityLevelBadgeOutlineWidth,
+                BackpackVisualSettings.MaximumQualityLevelBadgeOutlineWidth);
             bool aircraftQualityPulseEnabled = EditorGUILayout.Toggle(
                 "启用飞机呼吸脉冲", current.AircraftQualityPulseEnabled);
             float aircraftQualityPulseInterval = Mathf.Max(
@@ -194,7 +207,9 @@ namespace BackpackHero.EditorTools
                 aircraftGlowMinimumIntensity, aircraftGlowMaximumIntensity,
                 aircraftGlowCycleDuration, aircraftGlowEdgeWidth,
                 equipmentBottomPlateGlowEnabled, colorQualityModeEnabled,
-                itemQualityPalette, aircraftQualityPulseEnabled,
+                itemQualityPalette, qualityLevelBadgeFont,
+                qualityLevelBadgeFontSize, qualityLevelBadgeOutlineWidth,
+                aircraftQualityPulseEnabled,
                 aircraftQualityPulseInterval,
                 aircraftQualityPulseScaleMultiplier,
                 aircraftQualityPulseTweenDuration);

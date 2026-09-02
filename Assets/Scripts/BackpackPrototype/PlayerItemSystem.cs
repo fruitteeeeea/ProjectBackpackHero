@@ -8,7 +8,7 @@ namespace BackpackPrototype
     [Serializable] public sealed class PlayerItemState { public string ItemId; public bool Unlocked; public int Level; public int FragmentCount; }
     [Serializable] public sealed class PlayerItemSaveData { public int Gold = 100; public int Diamond; public int CurrencyDefaultsVersion; public int ProgressionVersion; public List<PlayerItemState> Items = new(); public List<string> DeckItemIds; }
     public enum PlayerItemUpgradeResult { Success, NotFound, Locked, MaxLevel, GoldNotEnough, FragmentsNotEnough }
-    public enum PlayerDeckResult { Success, InvalidSlot, InvalidItem, Locked, WrongType, Duplicate, Empty, DeckLocked }
+    public enum PlayerDeckResult { Success, InvalidSlot, InvalidItem, Locked, WrongType, Duplicate, Empty }
 
     public sealed class PlayerItemSystem : MonoBehaviour
     {
@@ -103,7 +103,10 @@ namespace BackpackPrototype
         {
             EnsureDeck();
             if (!IsValidDeckSlot(slot)) return PlayerDeckResult.InvalidSlot;
-            return PlayerDeckResult.DeckLocked;
+            if (string.IsNullOrEmpty(data.DeckItemIds[slot])) return PlayerDeckResult.Empty;
+            data.DeckItemIds[slot] = null;
+            SaveAndNotify();
+            return PlayerDeckResult.Success;
         }
         public PlayerDeckResult TryApplyDeck(IReadOnlyList<ItemData> deck)
         {
@@ -114,11 +117,7 @@ namespace BackpackPrototype
             for (int slot = 0; slot < DeckSlotCount; slot++)
             {
                 ItemData item = deck[slot];
-                if (item == null)
-                {
-                    RestoreInitialDeckConfiguration();
-                    return PlayerDeckResult.Success;
-                }
+                if (item == null) { ids.Add(null); continue; }
                 if (FindItemById(item.ItemId) != item) return PlayerDeckResult.InvalidItem;
                 if (!IsUnlocked(item)) return PlayerDeckResult.Locked;
                 if (!IsDeckSlotFor(item, slot)) return PlayerDeckResult.WrongType;
@@ -256,6 +255,7 @@ namespace BackpackPrototype
         private void EnsureDeck()
         {
             if (data == null) return;
+            bool needsInitialDeck = data.DeckItemIds == null;
             data.DeckItemIds ??= new List<string>();
             while (data.DeckItemIds.Count < DeckSlotCount) data.DeckItemIds.Add(null);
             if (data.DeckItemIds.Count > DeckSlotCount) data.DeckItemIds.RemoveRange(DeckSlotCount, data.DeckItemIds.Count - DeckSlotCount);
@@ -265,17 +265,10 @@ namespace BackpackPrototype
                 ItemData item = FindItemById(data.DeckItemIds[slot]);
                 if (item == null || !IsUnlocked(item) || !IsDeckSlotFor(item, slot) || !used.Add(item.ItemId)) data.DeckItemIds[slot] = null;
             }
-            if (catalog == null) return;
-            FillInitialDeck(InitialItemIds, used);
+            if (!needsInitialDeck || catalog == null) return;
+            FillInitialDeck(new[] { "aircraft_charge", "aircraft_first", "aircraft_shield", "equipment_1x2", "equipment_arc_coil" }, used);
             FillInitialDeck(ItemType.Aircraft, 0, AircraftDeckSlotCount, used);
             FillInitialDeck(ItemType.Equipment, AircraftDeckSlotCount, EquipmentDeckSlotCount, used);
-        }
-
-        private void RestoreInitialDeckConfiguration()
-        {
-            data.DeckItemIds = new List<string>();
-            EnsureDeck();
-            SaveAndNotify();
         }
         private void FillInitialDeck(IEnumerable<string> ids, HashSet<string> used)
         {

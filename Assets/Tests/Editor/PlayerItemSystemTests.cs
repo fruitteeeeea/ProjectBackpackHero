@@ -178,68 +178,6 @@ public sealed class PlayerItemSystemTests
     }
 
     [Test]
-    public void Deck_CannotBeCleared_AndEmptyRuntimeInputRestoresInitialConfiguration()
-    {
-        ItemData aircraftOne = NewItem("aircraft_one", type: ItemType.Aircraft);
-        ItemData aircraftTwo = NewItem("aircraft_two", type: ItemType.Aircraft);
-        ItemData aircraftThree = NewItem("aircraft_three", type: ItemType.Aircraft);
-        ItemData equipmentOne = NewItem("equipment_one");
-        ItemData equipmentTwo = NewItem("equipment_two");
-        PlayerItemSystem system = NewSystem(
-            aircraftOne, aircraftTwo, aircraftThree, equipmentOne, equipmentTwo);
-
-        Assert.That(system.TryApplyDeck(new[]
-        {
-            aircraftOne, aircraftTwo, aircraftThree, equipmentOne, equipmentTwo
-        }), Is.EqualTo(PlayerDeckResult.Success));
-        Assert.That(system.ClearDeckSlot(0), Is.EqualTo(PlayerDeckResult.DeckLocked));
-        Assert.That(system.TryApplyDeck(new[]
-        {
-            aircraftOne, aircraftTwo, null, equipmentOne, equipmentTwo
-        }), Is.EqualTo(PlayerDeckResult.Success));
-        Assert.That(system.GetDeckItems(), Is.EqualTo(new[]
-        {
-            aircraftOne, aircraftTwo, aircraftThree, equipmentOne, equipmentTwo
-        }));
-    }
-
-    [Test]
-    public void IncompleteSavedDeck_IsRestoredToTheInitialFiveCardConfiguration()
-    {
-        ItemData charge = NewItem("aircraft_charge", type: ItemType.Aircraft);
-        ItemData first = NewItem("aircraft_first", type: ItemType.Aircraft);
-        ItemData shield = NewItem("aircraft_shield", type: ItemType.Aircraft);
-        ItemData equipment = NewItem("equipment_1x2");
-        ItemData coil = NewItem("equipment_arc_coil");
-        PlayerPrefs.SetString(PlayerItemSystem.SaveKey,
-            JsonUtility.ToJson(new PlayerItemSaveData
-            {
-                ProgressionVersion = 2,
-                Items = new List<PlayerItemState>
-                {
-                    new() { ItemId = charge.ItemId, Unlocked = true, Level = 1 },
-                    new() { ItemId = first.ItemId, Unlocked = true, Level = 1 },
-                    new() { ItemId = shield.ItemId, Unlocked = true, Level = 1 },
-                    new() { ItemId = equipment.ItemId, Unlocked = true, Level = 1 },
-                    new() { ItemId = coil.ItemId, Unlocked = true, Level = 1 },
-                },
-                DeckItemIds = new List<string>
-                {
-                    charge.ItemId, null, shield.ItemId, equipment.ItemId, null
-                }
-            }));
-        PlayerPrefs.Save();
-
-        PlayerItemSystem system = NewSystem(
-            charge, first, shield, equipment, coil);
-
-        Assert.That(system.GetDeckItems(), Is.EqualTo(new[]
-        {
-            charge, first, shield, equipment, coil
-        }));
-    }
-
-    [Test]
     public void ResetAllProgression_ChangesOnlyUnlockedItems()
     {
         ItemData aircraft = NewItem("aircraft_charge", type: ItemType.Aircraft);

@@ -37,6 +37,9 @@ namespace BackpackHero.Debugging
         public const float MinimumAircraftQualityPulseTweenDuration = 0.01f;
         public const float MinimumBackpackHealthBarVerticalOffset = 0f;
         public const float DefaultBackpackHealthBarVerticalOffset = 1.15f;
+        public const float MinimumDragAnchorBottomInsetRatio = 0f;
+        public const float MaximumDragAnchorBottomInsetRatio = .5f;
+        public const float DefaultDragAnchorBottomInsetRatio = 0f;
 
         public static BackpackVisualSettings Default => new(
             true, .5f,
@@ -49,7 +52,8 @@ namespace BackpackHero.Debugging
             null, 19f, .36f, true,
             .8f, 1.12f, .45f, DefaultItemIconScale,
             DefaultBackpackHealthBarVerticalOffset,
-            DefaultEquipmentItemIconScale);
+            DefaultEquipmentItemIconScale,
+            DefaultDragAnchorBottomInsetRatio);
 
         public BackpackVisualSettings(
             bool overridesEnabled,
@@ -85,7 +89,9 @@ namespace BackpackHero.Debugging
             float itemIconScale = DefaultItemIconScale,
             float backpackHealthBarVerticalOffset =
                 DefaultBackpackHealthBarVerticalOffset,
-            float equipmentItemIconScale = DefaultEquipmentItemIconScale)
+            float equipmentItemIconScale = DefaultEquipmentItemIconScale,
+            float dragAnchorBottomInsetRatio =
+                DefaultDragAnchorBottomInsetRatio)
         {
             OverridesEnabled = overridesEnabled;
             DragOpacity = Mathf.Clamp(dragOpacity, MinimumDragOpacity,
@@ -141,6 +147,9 @@ namespace BackpackHero.Debugging
                 backpackHealthBarVerticalOffset);
             EquipmentItemIconScale = Mathf.Clamp(equipmentItemIconScale,
                 MinimumEquipmentItemIconScale, MaximumEquipmentItemIconScale);
+            DragAnchorBottomInsetRatio = Mathf.Clamp(dragAnchorBottomInsetRatio,
+                MinimumDragAnchorBottomInsetRatio,
+                MaximumDragAnchorBottomInsetRatio);
         }
 
         public bool OverridesEnabled { get; }
@@ -176,6 +185,7 @@ namespace BackpackHero.Debugging
         public float AircraftQualityPulseTweenDuration { get; }
         public float BackpackHealthBarVerticalOffset { get; }
         public float EquipmentItemIconScale { get; }
+        public float DragAnchorBottomInsetRatio { get; }
         public bool UsesFactionLevelColor => !OverridesEnabled ||
             IsWhiteRgb(LevelFontColor);
 
@@ -200,7 +210,8 @@ namespace BackpackHero.Debugging
             AircraftQualityPulseInterval,
             AircraftQualityPulseScaleMultiplier,
             AircraftQualityPulseTweenDuration, ItemIconScale,
-            BackpackHealthBarVerticalOffset, EquipmentItemIconScale);
+            BackpackHealthBarVerticalOffset, EquipmentItemIconScale,
+            DragAnchorBottomInsetRatio);
 
         public BackpackVisualSettings WithBackpackHealthBarVerticalOffset(
             float value) => new(
@@ -219,7 +230,7 @@ namespace BackpackHero.Debugging
             AircraftQualityPulseInterval,
             AircraftQualityPulseScaleMultiplier,
             AircraftQualityPulseTweenDuration, ItemIconScale, value,
-            EquipmentItemIconScale);
+            EquipmentItemIconScale, DragAnchorBottomInsetRatio);
 
         public BackpackVisualSettings WithEquipmentItemIconScale(
             float value) => new(
@@ -238,7 +249,26 @@ namespace BackpackHero.Debugging
             AircraftQualityPulseInterval,
             AircraftQualityPulseScaleMultiplier,
             AircraftQualityPulseTweenDuration, ItemIconScale,
-            BackpackHealthBarVerticalOffset, value);
+            BackpackHealthBarVerticalOffset, value, DragAnchorBottomInsetRatio);
+
+        public BackpackVisualSettings WithDragAnchorBottomInsetRatio(
+            float value) => new(
+            OverridesEnabled, DragOpacity, LegalPreviewColor, IllegalPreviewColor,
+            MergeFlashMinimum, MergeFlashMaximum, MergeFlashCycleDuration,
+            PlacementScaleMultiplier, PlacementPositiveRotationDegrees,
+            PlacementNegativeRotationDegrees, PlacementScaleEase,
+            ShopFlightDuration, LevelFontColor, LevelFontSize,
+            AircraftGlowEnabled, AircraftGlowColor,
+            AircraftGlowMinimumIntensity, AircraftGlowMaximumIntensity,
+            AircraftGlowCycleDuration, AircraftGlowEdgeWidth,
+            EquipmentBottomPlateGlowEnabled, ColorQualityModeEnabled,
+            ItemQualityPalette, QualityLevelBadgeFont,
+            QualityLevelBadgeFontSize, QualityLevelBadgeOutlineWidth,
+            AircraftQualityPulseEnabled,
+            AircraftQualityPulseInterval,
+            AircraftQualityPulseScaleMultiplier,
+            AircraftQualityPulseTweenDuration, ItemIconScale,
+            BackpackHealthBarVerticalOffset, EquipmentItemIconScale, value);
 
         private static bool IsWhiteRgb(Color color) =>
             Mathf.Approximately(color.r, 1f) &&
@@ -294,7 +324,9 @@ namespace BackpackHero.Debugging
             Mathf.Approximately(BackpackHealthBarVerticalOffset,
                 other.BackpackHealthBarVerticalOffset) &&
             Mathf.Approximately(EquipmentItemIconScale,
-                other.EquipmentItemIconScale);
+                other.EquipmentItemIconScale) &&
+            Mathf.Approximately(DragAnchorBottomInsetRatio,
+                other.DragAnchorBottomInsetRatio);
 
         public override bool Equals(object obj) =>
             obj is BackpackVisualSettings other && Equals(other);
@@ -341,7 +373,8 @@ namespace BackpackHero.Debugging
                     AircraftQualityPulseTweenDuration.GetHashCode();
                 hash = (hash * 31) +
                     BackpackHealthBarVerticalOffset.GetHashCode();
-                return (hash * 31) + EquipmentItemIconScale.GetHashCode();
+                hash = (hash * 31) + EquipmentItemIconScale.GetHashCode();
+                return (hash * 31) + DragAnchorBottomInsetRatio.GetHashCode();
             }
         }
     }

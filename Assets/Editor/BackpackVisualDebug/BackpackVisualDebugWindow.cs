@@ -87,6 +87,13 @@ namespace BackpackHero.EditorTools
             EditorGUILayout.LabelField("拖起物品", EditorStyles.boldLabel);
             float dragOpacity = EditorGUILayout.Slider("拖动物品透明度",
                 current.DragOpacity, 0f, 1f);
+            EditorGUI.BeginChangeCheck();
+            float dragAnchorBottomInsetRatio = EditorGUILayout.Slider(
+                "锚点距最下格底边（格高比例）",
+                current.DragAnchorBottomInsetRatio,
+                BackpackVisualSettings.MinimumDragAnchorBottomInsetRatio,
+                BackpackVisualSettings.MaximumDragAnchorBottomInsetRatio);
+            bool dragAnchorBottomInsetRatioChanged = EditorGUI.EndChangeCheck();
 
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("拖动格子预览", EditorStyles.boldLabel);
@@ -238,10 +245,11 @@ namespace BackpackHero.EditorTools
                 aircraftQualityPulseInterval,
                 aircraftQualityPulseScaleMultiplier,
                 aircraftQualityPulseTweenDuration, itemIconScale,
-                backpackHealthBarVerticalOffset, equipmentItemIconScale);
+                backpackHealthBarVerticalOffset, equipmentItemIconScale,
+                dragAnchorBottomInsetRatio);
 
             if (itemIconScaleChanged || equipmentItemIconScaleChanged ||
-                backpackHealthBarOffsetChanged)
+                backpackHealthBarOffsetChanged || dragAnchorBottomInsetRatioChanged)
             {
                 runtime.SetSettings(draft.Value);
             }

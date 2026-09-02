@@ -47,6 +47,10 @@ namespace BackpackHero.Debugging
         [SerializeField, Min(BackpackVisualSettings.MinimumBackpackHealthBarVerticalOffset)]
         private float backpackHealthBarVerticalOffset =
             BackpackVisualSettings.DefaultBackpackHealthBarVerticalOffset;
+        [SerializeField, Range(BackpackVisualSettings.MinimumDragAnchorBottomInsetRatio,
+            BackpackVisualSettings.MaximumDragAnchorBottomInsetRatio)]
+        private float dragAnchorBottomInsetRatio =
+            BackpackVisualSettings.DefaultDragAnchorBottomInsetRatio;
 
         public void SetValues(BackpackVisualSettings values)
         {
@@ -86,6 +90,7 @@ namespace BackpackHero.Debugging
                 values.AircraftQualityPulseTweenDuration;
             backpackHealthBarVerticalOffset =
                 values.BackpackHealthBarVerticalOffset;
+            dragAnchorBottomInsetRatio = values.DragAnchorBottomInsetRatio;
         }
 
         public BackpackVisualSettings GetValues() => new(
@@ -104,7 +109,8 @@ namespace BackpackHero.Debugging
             aircraftQualityPulseInterval,
             aircraftQualityPulseScaleMultiplier,
             aircraftQualityPulseTweenDuration, itemIconScale,
-            backpackHealthBarVerticalOffset, equipmentItemIconScale);
+            backpackHealthBarVerticalOffset, equipmentItemIconScale,
+            dragAnchorBottomInsetRatio);
 
 #if UNITY_EDITOR
         private void OnValidate() => SetValues(GetValues());

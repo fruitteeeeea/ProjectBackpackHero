@@ -45,3 +45,4 @@ MonoBehaviour:
   aircraftQualityPulseScaleMultiplier: 1.12
   aircraftQualityPulseTweenDuration: 0.45
   backpackHealthBarVerticalOffset: 1.25
+  dragAnchorBottomInsetRatio: 0.4

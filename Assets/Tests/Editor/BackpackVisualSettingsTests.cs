@@ -54,6 +54,8 @@ public sealed class BackpackVisualSettingsTests
             Is.EqualTo(.45f));
         Assert.That(settings.BackpackHealthBarVerticalOffset,
             Is.EqualTo(BackpackVisualSettings.DefaultBackpackHealthBarVerticalOffset));
+        Assert.That(settings.DragAnchorBottomInsetRatio,
+            Is.EqualTo(BackpackVisualSettings.DefaultDragAnchorBottomInsetRatio));
     }
 
     [Test]
@@ -66,7 +68,7 @@ public sealed class BackpackVisualSettingsTests
             BackpackPlacementScaleEase.OutCubic, -3f, Color.green, -4f,
             true, Color.magenta, -1f, 2f, -3f, -4f, false, false, null,
             TMP_Settings.defaultFontAsset, -5f, 2f, false,
-            -1f, .5f, -2f, 9f, -3f, -3f);
+            -1f, .5f, -2f, 9f, -3f, -3f, -3f);
         try
         {
             asset.SetValues(expected);
@@ -121,6 +123,8 @@ public sealed class BackpackVisualSettingsTests
                 Is.EqualTo(BackpackVisualSettings.MinimumAircraftQualityPulseTweenDuration));
             Assert.That(actual.BackpackHealthBarVerticalOffset,
                 Is.EqualTo(BackpackVisualSettings.MinimumBackpackHealthBarVerticalOffset));
+            Assert.That(actual.DragAnchorBottomInsetRatio,
+                Is.EqualTo(BackpackVisualSettings.MinimumDragAnchorBottomInsetRatio));
             Assert.That(actual.GetPlacementScaleDotweenEase(),
                 Is.EqualTo(DG.Tweening.Ease.OutCubic));
             Assert.That(BackpackVisualSettings.Default
@@ -132,6 +136,9 @@ public sealed class BackpackVisualSettingsTests
             Assert.That(BackpackVisualSettings.Default
                 .WithEquipmentItemIconScale(9f).EquipmentItemIconScale,
                 Is.EqualTo(BackpackVisualSettings.MaximumEquipmentItemIconScale));
+            Assert.That(BackpackVisualSettings.Default
+                .WithDragAnchorBottomInsetRatio(9f).DragAnchorBottomInsetRatio,
+                Is.EqualTo(BackpackVisualSettings.MaximumDragAnchorBottomInsetRatio));
         }
         finally
         {
@@ -197,6 +204,7 @@ public sealed class BackpackVisualSettingsTests
             Is.EqualTo(.45f));
         Assert.That(values.BackpackHealthBarVerticalOffset,
             Is.EqualTo(1.15f));
+        Assert.That(values.DragAnchorBottomInsetRatio, Is.Zero);
     }
 
     [Test]

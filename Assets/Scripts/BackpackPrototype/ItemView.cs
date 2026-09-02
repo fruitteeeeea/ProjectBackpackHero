@@ -110,6 +110,9 @@ namespace BackpackPrototype
         private float defaultLevelLabelFontSize;
         private bool levelLabelFontSizeCached;
         private bool deletePreviewColorsCached;
+        private Vector2 lastDragScreenPosition;
+        private Camera lastDragEventCamera;
+        private bool hasDragPointerPosition;
         
         private Material originalBackgroundMaterial;
         private Material originalIconMaterial;
@@ -1330,6 +1333,7 @@ namespace BackpackPrototype
                 rectTransform.SetAsLastSibling();
             }
 
+            CacheDragPointer(eventData.position, eventData.pressEventCamera);
             TweenDragVisualToPointer(
                 eventData.position,
                 eventData.pressEventCamera);
@@ -1342,6 +1346,7 @@ namespace BackpackPrototype
 
         public void OnDrag(PointerEventData eventData)
         {
+            CacheDragPointer(eventData.position, eventData.pressEventCamera);
             TweenDragVisualToPointer(
                 eventData.position,
                 eventData.pressEventCamera);
@@ -1378,6 +1383,7 @@ namespace BackpackPrototype
         public void OnEndDrag(PointerEventData eventData)
         {
             isDragging = false;
+            hasDragPointerPosition = false;
             RefreshAircraftGlow();
             RefreshAircraftQualityPulse();
             dragPositionTween?.Kill();
@@ -1784,6 +1790,12 @@ namespace BackpackPrototype
             if (mergeHighlightActive)
             {
                 SetMergeHighlight(true);
+            }
+
+            if (isDragging && hasDragPointerPosition)
+            {
+                SetDragVisualToPointer(lastDragScreenPosition,
+                    lastDragEventCamera, instant: true);
             }
         }
 
@@ -2398,6 +2410,21 @@ namespace BackpackPrototype
             Vector2 screenPosition,
             Camera eventCamera)
         {
+            SetDragVisualToPointer(screenPosition, eventCamera, instant: false);
+        }
+
+        private void CacheDragPointer(Vector2 screenPosition, Camera eventCamera)
+        {
+            lastDragScreenPosition = screenPosition;
+            lastDragEventCamera = eventCamera;
+            hasDragPointerPosition = true;
+        }
+
+        private void SetDragVisualToPointer(
+            Vector2 screenPosition,
+            Camera eventCamera,
+            bool instant)
+        {
             if (!(rectTransform.parent is RectTransform parentRect) ||
                 !RectTransformUtility.ScreenPointToWorldPointInRectangle(
                     parentRect,
@@ -2411,6 +2438,12 @@ namespace BackpackPrototype
             Vector3 targetPosition = pointerWorldPosition -
                 GetGrabAnchorWorldOffset();
             dragPositionTween?.Kill();
+            if (instant)
+            {
+                rectTransform.position = targetPosition;
+                return;
+            }
+
             dragPositionTween = rectTransform.DOMove(
                     targetPosition,
                     0.12f)
@@ -2419,15 +2452,27 @@ namespace BackpackPrototype
 
         private Vector3 GetGrabAnchorWorldOffset()
         {
-            Vector2 pitch = shapeCellSize + shapeSpacing;
-            Rect rect = rectTransform.rect;
-            Vector3 localAnchor = new Vector3(
-                rect.xMin + GrabAnchorOffset.x * pitch.x +
-                    shapeCellSize.x * 0.5f,
-                rect.yMax - GrabAnchorOffset.y * pitch.y -
-                    shapeCellSize.y);
+            Vector3 localAnchor = CalculateGrabAnchorLocalOffset(
+                rectTransform.rect, shapeCellSize, shapeSpacing,
+                GrabAnchorOffset,
+                GetBackpackVisualSettings().DragAnchorBottomInsetRatio);
 
             return rectTransform.TransformVector(localAnchor);
+        }
+
+        private static Vector3 CalculateGrabAnchorLocalOffset(
+            Rect rect,
+            Vector2 cellSize,
+            Vector2 spacing,
+            Vector2 grabAnchorOffset,
+            float bottomInsetRatio)
+        {
+            Vector2 pitch = cellSize + spacing;
+            return new Vector3(
+                rect.xMin + grabAnchorOffset.x * pitch.x +
+                    cellSize.x * .5f,
+                rect.yMax - grabAnchorOffset.y * pitch.y - cellSize.y +
+                    cellSize.y * bottomInsetRatio);
         }
 
         private static Vector2Int GetShapeBounds(IReadOnlyList<Vector2Int> offsets)

@@ -28,11 +28,12 @@ namespace PlanetWar.ReusableMainMenu
         [SerializeField] private TMP_Text[] attributeAddValueTexts;
         [SerializeField] private Slider progressionSlider;
         [SerializeField] private TMP_Text progressionText;
+        [SerializeField] private HangarShapePreview shapePreview;
 
         public void Configure(GameObject upgrade, GameObject equip, GameObject progress, GameObject actions,
             TMP_Text name, TMP_Text description, TMP_Text lockLabel, HangarCardItem preview,
             TMP_Text[] attributeValues = null, TMP_Text[] attributeLabels = null,
-            TMP_Text[] attributeAddValues = null)
+            TMP_Text[] attributeAddValues = null, HangarShapePreview shape = null)
         {
             upgradeButton = upgrade;
             equipButton = equip;
@@ -45,6 +46,7 @@ namespace PlanetWar.ReusableMainMenu
             attributeValueTexts = attributeValues;
             attributeLabelTexts = attributeLabels;
             attributeAddValueTexts = attributeAddValues;
+            shapePreview = shape;
         }
 
         public void ShowPreview(HangarCardItem card)
@@ -88,6 +90,7 @@ namespace PlanetWar.ReusableMainMenu
 
             if (snapshot.Name != null)
             {
+                if (shapePreview != null) shapePreview.Show(snapshot.ShapeOffsets);
                 ApplyDetailAttributes(snapshot);
                 if (lockText != null) lockText.text = snapshot.Unlocked ? string.Empty : string.IsNullOrEmpty(snapshot.UnlockRequirementText) ? "Locked" : snapshot.UnlockRequirementText;
                 // Match the source UICardInfo.Refresh contract: btnUpgrade is visible only

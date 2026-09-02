@@ -137,7 +137,7 @@ namespace BackpackPrototype
                 system.GetFragments(item), system.GetUpgradeFragmentCost(item), 0,
                 item.CooldownDuration, item.SpawnCount, null, item.BackgroundColor,
                 unlockText, BuildDetailAttributes(item, level), item.ItemId,
-                PlayerItemSystem.MaximumLevel, unlockRank);
+                PlayerItemSystem.MaximumLevel, unlockRank, item.ShapeOffsets);
         }
 
         private static HangarDetailAttribute[] BuildDetailAttributes(ItemData item, int level)

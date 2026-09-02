@@ -23,6 +23,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
         private const string Art = Package + "/Art/Ranks/";
         private const string RankInfoArt = Package + "/Art/RankInfo/";
         private const string HangarArt = Package + "/Art/Hangar/Icon/";
+        private const string ItemBlockSpritePath = "Assets/Art/Images/Item/block.png";
         private static readonly Vector3 RankInfoUnlockIconScale = new Vector3(.392f, .392f, 1f);
         private static TMP_FontAsset textFont;
 
@@ -49,7 +50,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var rankInfoPageBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("rankInfoPage").objectReferenceValue != null;
                 var bottomBarBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("bottomBar").objectReferenceValue != null;
                 var rankInfoReady = rankInfo != null && rankInfo.scroll != null && rankInfo.itemRankMain != null && rankInfo.itemRankReward != null && rankInfo.btnOffset != null && rankInfo.entries != null && rankInfo.entries.Length >= 12 && rankInfo.scroll.scrollRect != null && rankInfo.scroll.content != null && rankInfo.scroll.viewport != null && rankInfoPageBound && bottomBarBound;
-                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasDetailPreviewLevelBindings(entityDetails) || !HasAttributeAddValueBindings(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !HasDetailPreviewLevelBindings(spellDetails) || !HasSingleSpellAttributeCard(spellDetails) || !HasSpellAttributeAlignment(entityDetails, spellDetails) || !rankInfoReady))
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasDetailPreviewLevelBindings(entityDetails) || !HasAttributeAddValueBindings(entityDetails) || !HasShapePreview(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !HasDetailPreviewLevelBindings(spellDetails) || !HasSingleSpellAttributeCard(spellDetails) || !HasSpellAttributeAlignment(entityDetails, spellDetails) || !HasCompactSpellCooldownRow(spellDetails) || !HasRectMaskedSpellPreview(spellDetails) || !HasShapePreview(spellDetails) || !rankInfoReady))
                 {
                     Debug.Log("[PlanetWar] Rebuilding MainMenu Hangar with the original static card configuration.");
                     Rebuild();
@@ -387,6 +388,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
             CreateStaticPreviewItems(page.transform, view);
             var entityDetails = CreateStaticDetails(OriginalEntityDetailsPath, page.transform, view, "UICardInfo", HangarCardItem.CardKind.Entity);
             var spellDetails = CreateStaticDetails(OriginalSpellDetailsPath, page.transform, view, "UICardSpell", HangarCardItem.CardKind.Spell);
+            ExpandSpellDetailForShapePreview(spellDetails, entityDetails);
             var rankCoin = Find(page.transform, "resCoin");
             var rankDiamond = Find(page.transform, "resDiam");
             var topHud = CreateUi("HangarTopSafeArea", page.transform, Vector2.zero, Vector2.zero);
@@ -521,6 +523,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 preview.ConfigureOriginalLabels(levelPrefix, levelValue);
             }
             ConfigureCardProgressionPresentation(preview);
+            HangarShapePreview shapePreview = ConfigureShapePreview(panel);
             layout.Configure(
                 Find(panel.transform, "btnUpgrade")?.gameObject,
                 Find(panel.transform, "btnUpBattle")?.gameObject,
@@ -532,8 +535,124 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 preview,
                 FindAttributeValues(panel.transform),
                 FindAttributeLabels(panel.transform),
-                FindAttributeAddValues(panel.transform));
+                FindAttributeAddValues(panel.transform),
+                shapePreview);
             return layout;
+        }
+
+        private static void ExpandSpellDetailForShapePreview(GameObject spellDetails,
+            GameObject entityDetails)
+        {
+            if (spellDetails == null || entityDetails == null) return;
+
+            // UICardSpell is the source game's compact one-stat panel (491 px tall), while
+            // UICardInfo reserves a 400 px SkillScroll below the attributes. Match the latter's
+            // vertical layout so the shape preview is inside the spell panel, not behind the
+            // collection view or the bottom action row.
+            CopyRectLayout(FindDirectChild(spellDetails.transform, "bg"),
+                FindDirectChild(entityDetails.transform, "bg"));
+            CopyRectLayout(FindDirectChild(spellDetails.transform, "close"),
+                FindDirectChild(entityDetails.transform, "close"));
+            CopyRectLayout(FindDirectChild(spellDetails.transform, "namebg"),
+                FindDirectChild(entityDetails.transform, "nameBg"));
+            CopyRectLayout(FindDirectChild(spellDetails.transform, "desc"),
+                FindDirectChild(entityDetails.transform, "desc"));
+            CopyRectLayout(FindDirectChild(spellDetails.transform, "ItemCard (1)"),
+                FindDirectChild(entityDetails.transform, "ItemCard (1)"));
+            // Keep UICardSpell's original compact Image container. It owns the single CD row;
+            // copying UICardInfo's 250 px stat area here leaves a large, empty gap above the
+            // shape preview.
+            CopyRectLayout(FindDirectChild(spellDetails.transform, "btns"),
+                FindDirectChild(entityDetails.transform, "btns"));
+            CopyRectLayout(FindDirectChild(spellDetails.transform, "textLock"),
+                FindDirectChild(entityDetails.transform, "textLock"));
+
+            Transform oldBackground = FindDirectChild(spellDetails.transform,
+                "ShapePreviewBackground");
+            if (oldBackground != null) UnityEngine.Object.DestroyImmediate(oldBackground.gameObject);
+            Transform sourceBackground = FindDirectChild(entityDetails.transform, "SkillBg");
+            if (sourceBackground == null) return;
+            GameObject previewBackground = UnityEngine.Object.Instantiate(
+                sourceBackground.gameObject, spellDetails.transform, false);
+            previewBackground.name = "ShapePreviewBackground";
+            foreach (Image image in previewBackground.GetComponentsInChildren<Image>(true))
+                image.raycastTarget = false;
+            // The original compact spell Image owns the only CD row. SkillBg is opaque, so it
+            // must be inserted behind that authored row rather than appended above it.
+            Transform cooldownRow = FindDirectChild(spellDetails.transform, "Image");
+            if (cooldownRow != null)
+                previewBackground.transform.SetSiblingIndex(cooldownRow.GetSiblingIndex());
+        }
+
+        private static void CopyRectLayout(Transform target, Transform source)
+        {
+            RectTransform targetRect = target as RectTransform;
+            RectTransform sourceRect = source as RectTransform;
+            if (targetRect == null || sourceRect == null) return;
+            targetRect.anchorMin = sourceRect.anchorMin;
+            targetRect.anchorMax = sourceRect.anchorMax;
+            targetRect.pivot = sourceRect.pivot;
+            targetRect.anchoredPosition = sourceRect.anchoredPosition;
+            targetRect.sizeDelta = sourceRect.sizeDelta;
+        }
+
+        private static HangarShapePreview ConfigureShapePreview(GameObject panel)
+        {
+            Sprite blockSprite = AssetDatabase.LoadAssetAtPath<Sprite>(ItemBlockSpritePath);
+            if (blockSprite == null) throw new InvalidOperationException(
+                $"Hangar shape preview sprite is missing: {ItemBlockSpritePath}");
+
+            Transform viewport = null;
+            Transform existingScroll = Find(panel.transform, "SkillScroll");
+            if (existingScroll != null)
+            {
+                // UICardInfo already supplies a masked 560 x 400 region. Its source content
+                // is an unused skill-list template, so retain the viewport/mask and disable
+                // the old scrolling content before adding the centered shape layer.
+                ScrollRect scrollRect = existingScroll.GetComponent<ScrollRect>();
+                if (scrollRect != null)
+                {
+                    if (scrollRect.content != null) scrollRect.content.gameObject.SetActive(false);
+                    scrollRect.enabled = false;
+                }
+                viewport = FindDirectChild(existingScroll, "Viewport");
+            }
+            else
+            {
+                // UICardSpell has no SkillScroll. Give equipment the same masked lower panel
+                // so every backpack item has an identical shape-preview affordance.
+                Transform existingPreviewScroll = FindDirectChild(panel.transform,
+                    "ShapePreviewScroll");
+                GameObject scrollRoot = existingPreviewScroll != null
+                    ? existingPreviewScroll.gameObject
+                    : CreateUi("ShapePreviewScroll", panel.transform,
+                        new Vector2(0f, -175f), new Vector2(560f, 400f));
+                // A transparent Image + stencil Mask can reject runtime-created child Images
+                // on some Canvas rebuild paths. RectMask2D clips by rectangle and has no
+                // stencil/material dependency, so ShapeCell graphics stay visible.
+                Mask stencilMask = scrollRoot.GetComponent<Mask>();
+                if (stencilMask != null) UnityEngine.Object.DestroyImmediate(stencilMask);
+                Image maskGraphic = scrollRoot.GetComponent<Image>();
+                if (maskGraphic != null) UnityEngine.Object.DestroyImmediate(maskGraphic);
+                if (scrollRoot.GetComponent<RectMask2D>() == null)
+                    scrollRoot.AddComponent<RectMask2D>();
+                scrollRoot.transform.SetAsLastSibling();
+                viewport = scrollRoot.transform;
+            }
+
+            if (viewport == null) return null;
+            Transform previewRoot = FindDirectChild(viewport, "ShapePreview");
+            if (previewRoot == null)
+            {
+                GameObject created = CreateUi("ShapePreview", viewport, Vector2.zero, Vector2.zero);
+                Stretch(created.GetComponent<RectTransform>());
+                previewRoot = created.transform;
+            }
+            previewRoot.SetAsLastSibling();
+            HangarShapePreview preview = previewRoot.GetComponent<HangarShapePreview>() ??
+                previewRoot.gameObject.AddComponent<HangarShapePreview>();
+            preview.Configure(blockSprite, previewRoot as RectTransform);
+            return preview;
         }
 
         // The panel and its embedded ItemCard preview both contain name/desc nodes. The
@@ -568,6 +687,42 @@ namespace PlanetWar.ReusableMainMenu.Editor
             var additions = serialized.FindProperty("attributeAddValueTexts");
             return values != null && additions != null && values.arraySize > 0 &&
                    values.arraySize == additions.arraySize;
+        }
+
+        private static bool HasShapePreview(HangarDetailLayout layout)
+        {
+            if (layout == null) return false;
+            return new SerializedObject(layout).FindProperty("shapePreview")
+                .objectReferenceValue as HangarShapePreview != null;
+        }
+
+        private static bool HasCompactSpellCooldownRow(HangarDetailLayout layout)
+        {
+            RectTransform cooldownRow = layout != null
+                ? FindDirectChild(layout.transform, "Image") as RectTransform
+                : null;
+            return cooldownRow != null && Mathf.Approximately(cooldownRow.sizeDelta.x, 590f) &&
+                   Mathf.Approximately(cooldownRow.sizeDelta.y, 100f) &&
+                   Mathf.Approximately(cooldownRow.anchoredPosition.x, 0f) &&
+                   Mathf.Approximately(cooldownRow.anchoredPosition.y, -8f);
+        }
+
+        private static bool HasRectMaskedSpellPreview(HangarDetailLayout layout)
+        {
+            Transform preview = layout != null
+                ? FindDirectChild(layout.transform, "ShapePreviewScroll")
+                : null;
+            Transform background = layout != null
+                ? FindDirectChild(layout.transform, "ShapePreviewBackground")
+                : null;
+            Transform cooldownRow = layout != null
+                ? FindDirectChild(layout.transform, "Image")
+                : null;
+            return preview != null && background != null && cooldownRow != null &&
+                   background.GetSiblingIndex() < cooldownRow.GetSiblingIndex() &&
+                   preview.GetComponent<RectMask2D>() != null &&
+                   preview.GetComponent<Mask>() == null && preview.GetComponent<Image>() == null &&
+                   preview.GetSiblingIndex() > background.GetSiblingIndex();
         }
 
         private static bool HasSingleSpellAttributeCard(HangarDetailLayout layout)

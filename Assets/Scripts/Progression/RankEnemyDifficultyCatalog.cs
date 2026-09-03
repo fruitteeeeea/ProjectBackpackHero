@@ -58,12 +58,13 @@ namespace BackpackHero.Progression
                     error = $"段位 {rank} 的积分范围无效或不连续。";
                     return false;
                 }
-                if (entry.stages == null || entry.stages.Length != StagesPerRank)
+                if (entry.stages == null || entry.stages.Length < 1 ||
+                    entry.stages.Length > StagesPerRank)
                 {
-                    error = $"段位 {rank} 必须配置 {StagesPerRank} 个小阶段。";
+                    error = $"段位 {rank} 必须配置 1 至 {StagesPerRank} 个小阶段。";
                     return false;
                 }
-                for (int stage = 0; stage < StagesPerRank; stage++)
+                for (int stage = 0; stage < entry.stages.Length; stage++)
                 {
                     RankEnemyDifficultyStage value = entry.stages[stage];
                     string deckError = null;

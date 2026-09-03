@@ -52,9 +52,11 @@ namespace BackpackHero.Progression
             }
             if (rank == null) return false;
 
+            int stageCount = rank.stages.Length;
             int count = rank.maximumPoints - rank.minimumPoints + 1;
-            int rawStage = count == 1 ? RankEnemyDifficultyCatalog.StagesPerRank :
-                Mathf.Clamp(((points - rank.minimumPoints) * RankEnemyDifficultyCatalog.StagesPerRank) / count + 1, 1, RankEnemyDifficultyCatalog.StagesPerRank);
+            int rawStage = count == 1 ? 1 :
+                Mathf.Clamp(((points - rank.minimumPoints) * stageCount) / count + 1,
+                    1, stageCount);
             int effectiveStage = recovery != null && recovery.nodeId == currentNodeId &&
                 recovery.DowngradePending
                 ? Mathf.Max(1, rawStage - 1) : rawStage;

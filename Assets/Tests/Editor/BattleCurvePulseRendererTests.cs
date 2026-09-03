@@ -25,18 +25,27 @@ public sealed class BattleCurvePulseRendererTests
             Is.EqualTo(BattleCurvePulseSettings.MinimumPulseWidth));
     }
 
-    [TestCase(2.249f, true)]
-    [TestCase(2.25f, false)]
-    [TestCase(4.749f, false)]
-    [TestCase(4.75f, true)]
-    public void IsPulseVisibleAtCycleTime_HidesDuringCooldownAndRestartsAfterIt(
-        float elapsedTime,
-        bool expected)
+    [Test]
+    public void State_DoesNotStartUntilExplicitlyTriggered()
     {
-        bool visible = BattleCurvePulseRenderer.IsPulseVisibleAtCycleTime(
-            elapsedTime, 2f, .25f, 2.5f);
+        var state = new BattleCurvePulseStateModel();
 
-        Assert.That(visible, Is.EqualTo(expected));
+        Assert.That(state.IsPulseActive, Is.False);
+        Assert.That(state.Update(100f, 0f, .55f, .25f, 2.5f), Is.False);
+        Assert.That(state.IsPulseActive, Is.False);
+    }
+
+    [Test]
+    public void State_RejectsTriggersDuringPulseAndCooldown()
+    {
+        var state = new BattleCurvePulseStateModel();
+
+        Assert.That(state.TryTrigger(10f), Is.True);
+        Assert.That(state.TryTrigger(10.1f), Is.False);
+        Assert.That(state.Update(10.8f, 10f, .55f, .25f, 2.5f), Is.True);
+        Assert.That(state.CooldownEndsAt, Is.EqualTo(13.3f).Within(.0001f));
+        Assert.That(state.TryTrigger(13.299f), Is.False);
+        Assert.That(state.TryTrigger(13.3f), Is.True);
     }
 
     [Test]

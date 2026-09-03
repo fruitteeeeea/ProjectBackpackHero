@@ -5,6 +5,45 @@ using UnityEngine.Serialization;
 
 namespace BackpackHero.Input
 {
+    /// <summary>Tracks one pulse and the cooldown that follows it.</summary>
+    public sealed class BattleCurvePulseStateModel
+    {
+        public bool IsPulseActive { get; private set; }
+        public float CooldownEndsAt { get; private set; }
+
+        public bool TryTrigger(float time)
+        {
+            if (IsPulseActive || time < CooldownEndsAt)
+            {
+                return false;
+            }
+
+            IsPulseActive = true;
+            return true;
+        }
+
+        public bool Update(float time, float pulseStartedAt,
+            float travelTime, float fadeTime, float cooldownTime)
+        {
+            float completedAt = pulseStartedAt + Mathf.Max(.01f, travelTime) +
+                Mathf.Max(.01f, fadeTime);
+            if (!IsPulseActive || time < completedAt)
+            {
+                return false;
+            }
+
+            IsPulseActive = false;
+            CooldownEndsAt = completedAt + Mathf.Max(0f, cooldownTime);
+            return true;
+        }
+
+        public void Reset()
+        {
+            IsPulseActive = false;
+            CooldownEndsAt = 0f;
+        }
+    }
+
     [DisallowMultipleComponent]
     public sealed class BattleCurvePulseRenderer : MonoBehaviour
     {
@@ -17,47 +56,32 @@ namespace BackpackHero.Input
         [SerializeField] private Material pulseMaterial;
 
         [Header("Pulse Timing")]
-        [SerializeField, Min(0.01f)] private float travelDuration = 0.55f;
-        [SerializeField, Min(0.01f)] private float endFadeDuration = 0.25f;
+        [SerializeField, Min(0.01f)] private float travelDuration = .55f;
+        [SerializeField, Min(0.01f)] private float endFadeDuration = .25f;
         [FormerlySerializedAs("intervalDuration")]
-        [SerializeField, Min(0f)] private float cooldownDuration = 2.5f;
+        [SerializeField, Min(0f)] private float cooldownDuration = 6f;
 
         [Header("Pulse Shape")]
-        [SerializeField, Range(0.01f, 1f)] private float pulseLength = 0.16f;
+        [SerializeField, Range(.01f, 1f)] private float pulseLength = .16f;
         [SerializeField, Range(MinimumSampleCount, MaximumSampleCount)]
         private int sampleCount = 12;
-        [SerializeField, Min(0.001f)] private float pulseWidth = 0.42f;
+        [SerializeField, Min(.001f)] private float pulseWidth = .42f;
 
+        private readonly BattleCurvePulseStateModel pulseState = new();
         private Vector3[] sampledPositions;
-        private float combatStartTime;
+        private float pulseStartedAt;
         private float materialOpacity = 1f;
         private float runtimeVisibility = 1f;
         private MaterialPropertyBlock materialProperties;
 
-        private static readonly int OpacityId =
-            Shader.PropertyToID("_Opacity");
+        private static readonly int OpacityId = Shader.PropertyToID("_Opacity");
 
         public static BattleCurvePulseRenderer ActiveInstance { get; private set; }
-
-        /// <summary>
-        /// True while the current pulse is travelling or fading at the curve end.
-        /// </summary>
-        public bool IsPulseActive { get; private set; }
-
-        public BattleCurvePulseSettings Settings => new(
-            travelDuration,
-            endFadeDuration,
-            cooldownDuration,
-            pulseLength,
-            sampleCount,
-            pulseWidth);
-
-        /// <summary>
-        /// Raised when a visible pulse completes its travel and end fade naturally.
-        /// </summary>
+        public bool IsPulseActive => pulseState.IsPulseActive;
+        public BattleCurvePulseSettings Settings => new(travelDuration,
+            endFadeDuration, cooldownDuration, pulseLength, sampleCount, pulseWidth);
         public event Action PulseCompleted;
 
-        /// <summary>即时应用调试面板编辑的脉冲显示参数。</summary>
         public void SetSettings(BattleCurvePulseSettings settings)
         {
             travelDuration = settings.TravelDuration;
@@ -69,53 +93,48 @@ namespace BackpackHero.Input
             EnsureLineRenderer();
         }
 
-        public static void CalculatePulseRange(
-            float progress,
-            float length,
-            out float tailTime,
-            out float headTime)
+        /// <summary>Starts one pulse if combat, visibility, and cooldown permit it.</summary>
+        public bool TryTriggerPulse()
         {
-            headTime = Mathf.Clamp01(progress);
-            tailTime = Mathf.Clamp01(
-                headTime - Mathf.Clamp01(length));
+            if (!Application.isPlaying || !BattleFlowController.IsCombatPhase ||
+                curve == null || pulseLineRenderer == null || runtimeVisibility <= 0f)
+            {
+                return false;
+            }
+
+            float time = Time.unscaledTime;
+            CompletePulseIfFinished(time);
+            if (!pulseState.TryTrigger(time))
+            {
+                return false;
+            }
+
+            pulseStartedAt = time;
+            return true;
         }
 
-        public static float CalculateEndFadeOpacity(
-            float elapsedTime,
-            float travelTime,
-            float fadeTime)
+        public static void CalculatePulseRange(float progress, float length,
+            out float tailTime, out float headTime)
+        {
+            headTime = Mathf.Clamp01(progress);
+            tailTime = Mathf.Clamp01(headTime - Mathf.Clamp01(length));
+        }
+
+        public static float CalculateEndFadeOpacity(float elapsedTime,
+            float travelTime, float fadeTime)
         {
             if (elapsedTime <= travelTime)
             {
                 return 1f;
             }
 
-            return 1f - Mathf.Clamp01(
-                (elapsedTime - travelTime) /
-                Mathf.Max(0.01f, fadeTime));
+            return 1f - Mathf.Clamp01((elapsedTime - travelTime) /
+                Mathf.Max(.01f, fadeTime));
         }
 
-        public static bool IsPulseActiveAtElapsedTime(
-            float elapsedTime,
-            float travelTime,
-            float fadeTime)
-        {
-            return elapsedTime >= 0f &&
-                elapsedTime < Mathf.Max(0.01f, travelTime) +
-                Mathf.Max(0.01f, fadeTime);
-        }
-
-        public static bool IsPulseVisibleAtCycleTime(
-            float elapsedTime,
-            float travelTime,
-            float fadeTime,
-            float cooldownTime)
-        {
-            float cycleDuration = Mathf.Max(.01f, travelTime) +
-                Mathf.Max(.01f, fadeTime) + Mathf.Max(0f, cooldownTime);
-            float cycleTime = Mathf.Repeat(elapsedTime, cycleDuration);
-            return IsPulseActiveAtElapsedTime(cycleTime, travelTime, fadeTime);
-        }
+        public static bool IsPulseActiveAtElapsedTime(float elapsedTime,
+            float travelTime, float fadeTime) => elapsedTime >= 0f &&
+            elapsedTime < Mathf.Max(.01f, travelTime) + Mathf.Max(.01f, fadeTime);
 
         public void SetRuntimeVisibility(float visibility)
         {
@@ -123,7 +142,6 @@ namespace BackpackHero.Input
             if (runtimeVisibility <= 0f)
             {
                 SetPulseVisible(false);
-                SetPulseActive(false, false);
             }
         }
 
@@ -138,25 +156,22 @@ namespace BackpackHero.Input
         private void OnDisable()
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
-            SetPulseActive(false, false);
+            pulseState.Reset();
+            SetPulseVisible(false);
             if (ActiveInstance == this)
             {
                 ActiveInstance = null;
             }
         }
 
-        private void OnValidate()
-        {
-            SetSettings(Settings);
-        }
+        private void OnValidate() => SetSettings(Settings);
 
         private void LateUpdate()
         {
-            if (!Application.isPlaying ||
-                !BattleFlowController.IsCombatPhase)
+            if (!Application.isPlaying || !BattleFlowController.IsCombatPhase)
             {
                 SetPulseVisible(false);
-                SetPulseActive(false, false);
+                pulseState.Reset();
                 return;
             }
 
@@ -165,73 +180,38 @@ namespace BackpackHero.Input
 
         private void HandlePhaseChanged(BattlePhase phase)
         {
-            if (phase == BattlePhase.Combat)
+            pulseState.Reset();
+            if (phase != BattlePhase.Combat)
             {
-                combatStartTime = Time.time;
-                SetPulseActive(false, false);
-                return;
+                SetPulseVisible(false);
             }
-
-            SetPulseVisible(false);
-            SetPulseActive(false, false);
         }
 
         private void RefreshPulse()
         {
-            if (curve == null || pulseLineRenderer == null)
+            float time = Time.unscaledTime;
+            if (CompletePulseIfFinished(time) || !IsPulseActive || curve == null ||
+                pulseLineRenderer == null || runtimeVisibility <= 0f)
             {
                 SetPulseVisible(false);
-                SetPulseActive(false, false);
                 return;
             }
 
-            if (runtimeVisibility <= 0f)
-            {
-                SetPulseVisible(false);
-                SetPulseActive(false, false);
-                return;
-            }
-
-            float elapsedTime = Time.time - combatStartTime;
-            float cycleDuration = travelDuration + endFadeDuration +
-                cooldownDuration;
-            float cycleTime = Mathf.Repeat(elapsedTime, cycleDuration);
-            if (!IsPulseVisibleAtCycleTime(
-                    elapsedTime,
-                    travelDuration,
-                    endFadeDuration,
-                    cooldownDuration))
-            {
-                SetPulseVisible(false);
-                SetPulseActive(false, true);
-                return;
-            }
-
-            CalculatePulseRange(
-                Mathf.Min(cycleTime / travelDuration, 1f),
-                pulseLength,
-                out float tailTime,
-                out float headTime);
-            SetPulseOpacity(CalculateEndFadeOpacity(
-                cycleTime,
-                travelDuration,
+            float elapsedTime = time - pulseStartedAt;
+            CalculatePulseRange(Mathf.Min(elapsedTime / travelDuration, 1f),
+                pulseLength, out float tailTime, out float headTime);
+            SetPulseOpacity(CalculateEndFadeOpacity(elapsedTime, travelDuration,
                 endFadeDuration) * runtimeVisibility);
+
             int positionCount = sampleCount + 1;
             EnsureSampleBuffer(positionCount);
-
             for (int index = 0; index < positionCount; index++)
             {
-                float normalizedPosition = (float)index / sampleCount;
-                float curveTime = Mathf.Lerp(
-                    tailTime,
-                    headTime,
-                    normalizedPosition);
-                if (!curve.TryEvaluatePoint(
-                        curveTime,
-                        out sampledPositions[index]))
+                float curveTime = Mathf.Lerp(tailTime, headTime,
+                    (float)index / sampleCount);
+                if (!curve.TryEvaluatePoint(curveTime, out sampledPositions[index]))
                 {
                     SetPulseVisible(false);
-                    SetPulseActive(false, false);
                     return;
                 }
             }
@@ -239,7 +219,18 @@ namespace BackpackHero.Input
             pulseLineRenderer.positionCount = positionCount;
             pulseLineRenderer.SetPositions(sampledPositions);
             pulseLineRenderer.enabled = true;
-            SetPulseActive(true, false);
+        }
+
+        private bool CompletePulseIfFinished(float time)
+        {
+            if (!pulseState.Update(time, pulseStartedAt, travelDuration,
+                    endFadeDuration, cooldownDuration))
+            {
+                return false;
+            }
+
+            PulseCompleted?.Invoke();
+            return true;
         }
 
         private void EnsureLineRenderer()
@@ -263,7 +254,6 @@ namespace BackpackHero.Input
             pulseLineRenderer.startWidth = pulseWidth;
             pulseLineRenderer.endWidth = pulseWidth;
             pulseLineRenderer.sortingOrder = 2;
-
             if (pulseMaterial != null)
             {
                 pulseLineRenderer.sharedMaterial = pulseMaterial;
@@ -271,26 +261,16 @@ namespace BackpackHero.Input
             }
 
             var gradient = new Gradient();
-            gradient.SetKeys(
-                new[]
-                {
-                    new GradientColorKey(
-                        new Color(0.35f, 0.8f, 1f), 0f),
-                    new GradientColorKey(Color.white, 1f),
-                },
-                new[]
-                {
-                    new GradientAlphaKey(0f, 0f),
-                    new GradientAlphaKey(0.35f, 0.35f),
-                    new GradientAlphaKey(1f, 1f),
-                });
+            gradient.SetKeys(new[] { new GradientColorKey(new Color(.35f, .8f, 1f), 0f),
+                new GradientColorKey(Color.white, 1f) }, new[] {
+                new GradientAlphaKey(0f, 0f), new GradientAlphaKey(.35f, .35f),
+                new GradientAlphaKey(1f, 1f) });
             pulseLineRenderer.colorGradient = gradient;
         }
 
         private void EnsureSampleBuffer(int positionCount)
         {
-            if (sampledPositions == null ||
-                sampledPositions.Length != positionCount)
+            if (sampledPositions == null || sampledPositions.Length != positionCount)
             {
                 sampledPositions = new Vector3[positionCount];
             }
@@ -304,19 +284,6 @@ namespace BackpackHero.Input
             }
         }
 
-        private void SetPulseActive(
-            bool isActive,
-            bool notifyCompletion)
-        {
-            bool completed = IsPulseActive && !isActive && notifyCompletion;
-            IsPulseActive = isActive;
-
-            if (completed)
-            {
-                PulseCompleted?.Invoke();
-            }
-        }
-
         private void SetPulseOpacity(float opacity)
         {
             if (pulseLineRenderer == null)
@@ -326,8 +293,7 @@ namespace BackpackHero.Input
 
             materialProperties ??= new MaterialPropertyBlock();
             pulseLineRenderer.GetPropertyBlock(materialProperties);
-            materialProperties.SetFloat(
-                OpacityId,
+            materialProperties.SetFloat(OpacityId,
                 materialOpacity * Mathf.Clamp01(opacity));
             pulseLineRenderer.SetPropertyBlock(materialProperties);
         }

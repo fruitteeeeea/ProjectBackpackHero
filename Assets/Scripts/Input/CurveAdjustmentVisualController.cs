@@ -164,10 +164,15 @@ namespace BackpackHero.Input
 
         private void HandlePointerActivity(Vector2 _)
         {
-            if (BattleFlowController.IsCombatPhase)
+            if (!BattleFlowController.IsCombatPhase)
             {
-                state.RegisterActivity(Time.unscaledTime);
+                return;
             }
+
+            state.RegisterActivity(Time.unscaledTime);
+            adjustmentVisibility = 1f;
+            ApplyVisuals();
+            adjustmentHighlight?.TryTriggerPulse();
         }
 
         private void HandlePulseCompleted()

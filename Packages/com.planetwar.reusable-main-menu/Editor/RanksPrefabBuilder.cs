@@ -50,7 +50,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 var rankInfoPageBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("rankInfoPage").objectReferenceValue != null;
                 var bottomBarBound = controllerForInfo != null && new SerializedObject(controllerForInfo).FindProperty("bottomBar").objectReferenceValue != null;
                 var rankInfoReady = rankInfo != null && rankInfo.scroll != null && rankInfo.itemRankMain != null && rankInfo.itemRankReward != null && rankInfo.btnOffset != null && rankInfo.entries != null && rankInfo.entries.Length >= 12 && rankInfo.scroll.scrollRect != null && rankInfo.scroll.content != null && rankInfo.scroll.viewport != null && rankInfoPageBound && bottomBarBound;
-                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasDetailPreviewLevelBindings(entityDetails) || !HasAttributeAddValueBindings(entityDetails) || !HasShapePreview(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !HasDetailPreviewLevelBindings(spellDetails) || !HasSingleSpellAttributeCard(spellDetails) || !HasSpellAttributeAlignment(entityDetails, spellDetails) || !HasCompactSpellCooldownRow(spellDetails) || !HasRectMaskedSpellPreview(spellDetails) || !HasShapePreview(spellDetails) || !rankInfoReady))
+                if (prefab != null && (prefab.transform.Find("UIRankList") == null || prefab.transform.Find("UIRankInfo") == null || prefab.transform.Find("UICardView") == null || prefab.transform.Find("UICardView/UICardInfo") == null || prefab.transform.Find("UICardView/UICardSpell") == null || firstPreview == null || fourthDeckPreview == null || lastCollectionPreview == null || firstPreview.GetComponent<HangarCardItem>() == null || firstDeckCard == null || !firstDeckCard.IsUnlocked || deckLockVisible || deckGuideVisible || deckLevelPrefix == null || deckLevelPrefix.text != "Lv" || !deckLabelReferences || !deckProgressReferences || !HasActiveDetailHeaderBindings(entityDetails) || !HasDetailPreviewLevelBindings(entityDetails) || !HasAttributeAddValueBindings(entityDetails) || !HasShapePreview(entityDetails) || !HasActiveDetailHeaderBindings(spellDetails) || !HasDetailPreviewLevelBindings(spellDetails) || !HasSingleSpellAttributeCard(spellDetails) || !HasSpellAttributeAlignment(entityDetails, spellDetails) || !HasFourPartSpellDetailLayout(spellDetails) || !HasRectMaskedSpellPreview(spellDetails) || !HasShapePreview(spellDetails) || !rankInfoReady))
                 {
                     Debug.Log("[PlanetWar] Rebuilding MainMenu Hangar with the original static card configuration.");
                     Rebuild();
@@ -388,7 +388,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
             CreateStaticPreviewItems(page.transform, view);
             var entityDetails = CreateStaticDetails(OriginalEntityDetailsPath, page.transform, view, "UICardInfo", HangarCardItem.CardKind.Entity);
             var spellDetails = CreateStaticDetails(OriginalSpellDetailsPath, page.transform, view, "UICardSpell", HangarCardItem.CardKind.Spell);
-            ExpandSpellDetailForShapePreview(spellDetails, entityDetails);
+            ArrangeSpellDetailForShapePreview(spellDetails, entityDetails);
             var rankCoin = Find(page.transform, "resCoin");
             var rankDiamond = Find(page.transform, "resDiam");
             var topHud = CreateUi("HangarTopSafeArea", page.transform, Vector2.zero, Vector2.zero);
@@ -540,32 +540,21 @@ namespace PlanetWar.ReusableMainMenu.Editor
             return layout;
         }
 
-        private static void ExpandSpellDetailForShapePreview(GameObject spellDetails,
+        private static void ArrangeSpellDetailForShapePreview(GameObject spellDetails,
             GameObject entityDetails)
         {
             if (spellDetails == null || entityDetails == null) return;
 
-            // UICardSpell is the source game's compact one-stat panel (491 px tall), while
-            // UICardInfo reserves a 400 px SkillScroll below the attributes. Match the latter's
-            // vertical layout so the shape preview is inside the spell panel, not behind the
-            // collection view or the bottom action row.
-            CopyRectLayout(FindDirectChild(spellDetails.transform, "bg"),
-                FindDirectChild(entityDetails.transform, "bg"));
-            CopyRectLayout(FindDirectChild(spellDetails.transform, "close"),
-                FindDirectChild(entityDetails.transform, "close"));
-            CopyRectLayout(FindDirectChild(spellDetails.transform, "namebg"),
-                FindDirectChild(entityDetails.transform, "nameBg"));
-            CopyRectLayout(FindDirectChild(spellDetails.transform, "desc"),
-                FindDirectChild(entityDetails.transform, "desc"));
-            CopyRectLayout(FindDirectChild(spellDetails.transform, "ItemCard (1)"),
-                FindDirectChild(entityDetails.transform, "ItemCard (1)"));
-            // Keep UICardSpell's original compact Image container. It owns the single CD row;
-            // copying UICardInfo's 250 px stat area here leaves a large, empty gap above the
-            // shape preview.
-            CopyRectLayout(FindDirectChild(spellDetails.transform, "btns"),
-                FindDirectChild(entityDetails.transform, "btns"));
-            CopyRectLayout(FindDirectChild(spellDetails.transform, "textLock"),
-                FindDirectChild(entityDetails.transform, "textLock"));
+            // The source UICardSpell is absolutely positioned. Keep its art, but organise the
+            // large detail panel as a real flow: header -> CD -> preview -> flexible spacer ->
+            // actions. Consequently content-length and future size changes do not require a
+            // new set of independent y coordinates.
+            SetRectLayout(FindDirectChild(spellDetails.transform, "bg"),
+                new Vector2(0f, -2f), new Vector2(642f, 1106f));
+            SetRectLayout(FindDirectChild(spellDetails.transform, "close"),
+                new Vector2(265f, 500f), new Vector2(60f, 61f));
+            SetRectLayout(FindDirectChild(spellDetails.transform, "textLock"),
+                new Vector2(0f, -450f), new Vector2(500f, 50f));
 
             Transform oldBackground = FindDirectChild(spellDetails.transform,
                 "ShapePreviewBackground");
@@ -577,23 +566,98 @@ namespace PlanetWar.ReusableMainMenu.Editor
             previewBackground.name = "ShapePreviewBackground";
             foreach (Image image in previewBackground.GetComponentsInChildren<Image>(true))
                 image.raycastTarget = false;
-            // The original compact spell Image owns the only CD row. SkillBg is opaque, so it
-            // must be inserted behind that authored row rather than appended above it.
-            Transform cooldownRow = FindDirectChild(spellDetails.transform, "Image");
-            if (cooldownRow != null)
-                previewBackground.transform.SetSiblingIndex(cooldownRow.GetSiblingIndex());
+
+            Transform card = FindDirectChild(spellDetails.transform, "ItemCard (1)");
+            Transform name = FindDirectChild(spellDetails.transform, "namebg");
+            Transform description = FindDirectChild(spellDetails.transform, "desc");
+            Transform cooldown = FindDirectChild(spellDetails.transform, "Image");
+            Transform preview = FindDirectChild(spellDetails.transform, "ShapePreviewScroll");
+            Transform actions = FindDirectChild(spellDetails.transform, "btns");
+            if (card == null || name == null || description == null || cooldown == null ||
+                preview == null || actions == null) return;
+
+            GameObject flowRoot = CreateUi("SpellAutoLayout", spellDetails.transform,
+                Vector2.zero, Vector2.zero);
+            Stretch(flowRoot.GetComponent<RectTransform>());
+            VerticalLayoutGroup flow = flowRoot.AddComponent<VerticalLayoutGroup>();
+            flow.padding = new RectOffset(26, 26, 55, 40);
+            flow.spacing = 14f;
+            flow.childAlignment = TextAnchor.UpperCenter;
+            flow.childControlWidth = true;
+            flow.childControlHeight = true;
+            flow.childForceExpandWidth = true;
+            flow.childForceExpandHeight = false;
+
+            GameObject header = CreateUi("Header", flowRoot.transform, Vector2.zero, Vector2.zero);
+            ConfigureElement(header.transform, 209f);
+            HorizontalLayoutGroup headerLayout = header.AddComponent<HorizontalLayoutGroup>();
+            headerLayout.spacing = 18f;
+            headerLayout.childAlignment = TextAnchor.UpperLeft;
+            headerLayout.childControlWidth = true;
+            headerLayout.childControlHeight = true;
+            headerLayout.childForceExpandWidth = false;
+            headerLayout.childForceExpandHeight = false;
+            card.SetParent(header.transform, false);
+            ConfigureElement(card, 209f, 158f);
+
+            GameObject headerText = CreateUi("HeaderText", header.transform, Vector2.zero, Vector2.zero);
+            ConfigureElement(headerText.transform, 209f, 362f);
+            VerticalLayoutGroup textLayout = headerText.AddComponent<VerticalLayoutGroup>();
+            textLayout.spacing = 14f;
+            textLayout.childAlignment = TextAnchor.UpperLeft;
+            textLayout.childControlWidth = false;
+            textLayout.childControlHeight = true;
+            textLayout.childForceExpandWidth = false;
+            textLayout.childForceExpandHeight = false;
+            name.SetParent(headerText.transform, false);
+            description.SetParent(headerText.transform, false);
+            ConfigureElement(name, 50f, 308f);
+            ConfigureElement(description, 106f, 362f);
+
+            cooldown.SetParent(flowRoot.transform, false);
+            ConfigureElement(cooldown, 100f);
+
+            GameObject previewSection = CreateUi("PreviewSection", flowRoot.transform,
+                Vector2.zero, Vector2.zero);
+            ConfigureElement(previewSection.transform, 420f);
+            VerticalLayoutGroup previewLayout = previewSection.AddComponent<VerticalLayoutGroup>();
+            previewLayout.padding = new RectOffset(15, 15, 10, 10);
+            previewLayout.childAlignment = TextAnchor.MiddleCenter;
+            previewLayout.childControlWidth = true;
+            previewLayout.childControlHeight = true;
+            previewLayout.childForceExpandWidth = false;
+            previewLayout.childForceExpandHeight = false;
+            previewBackground.transform.SetParent(previewSection.transform, false);
+            LayoutElement backgroundElement = previewBackground.GetComponent<LayoutElement>() ??
+                previewBackground.AddComponent<LayoutElement>();
+            backgroundElement.ignoreLayout = true;
+            Stretch(previewBackground.GetComponent<RectTransform>());
+            preview.SetParent(previewSection.transform, false);
+            ConfigureElement(preview, 400f, 560f);
+
+            GameObject spacer = CreateUi("ActionSpacer", flowRoot.transform, Vector2.zero, Vector2.zero);
+            ConfigureElement(spacer.transform, 0f, -1f, 1f);
+            actions.SetParent(flowRoot.transform, false);
+            ConfigureElement(actions, 144f);
         }
 
-        private static void CopyRectLayout(Transform target, Transform source)
+        private static void ConfigureElement(Transform transform, float preferredHeight,
+            float preferredWidth = -1f, float flexibleHeight = 0f)
+        {
+            LayoutElement element = transform.GetComponent<LayoutElement>() ??
+                transform.gameObject.AddComponent<LayoutElement>();
+            element.ignoreLayout = false;
+            element.preferredHeight = preferredHeight;
+            element.flexibleHeight = flexibleHeight;
+            if (preferredWidth >= 0f) element.preferredWidth = preferredWidth;
+        }
+
+        private static void SetRectLayout(Transform target, Vector2 position, Vector2 size)
         {
             RectTransform targetRect = target as RectTransform;
-            RectTransform sourceRect = source as RectTransform;
-            if (targetRect == null || sourceRect == null) return;
-            targetRect.anchorMin = sourceRect.anchorMin;
-            targetRect.anchorMax = sourceRect.anchorMax;
-            targetRect.pivot = sourceRect.pivot;
-            targetRect.anchoredPosition = sourceRect.anchoredPosition;
-            targetRect.sizeDelta = sourceRect.sizeDelta;
+            if (targetRect == null) return;
+            targetRect.anchoredPosition = position;
+            targetRect.sizeDelta = size;
         }
 
         private static HangarShapePreview ConfigureShapePreview(GameObject panel)
@@ -636,7 +700,7 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 if (maskGraphic != null) UnityEngine.Object.DestroyImmediate(maskGraphic);
                 if (scrollRoot.GetComponent<RectMask2D>() == null)
                     scrollRoot.AddComponent<RectMask2D>();
-                scrollRoot.transform.SetAsLastSibling();
+                PositionSpellPreviewLayers(panel.transform, scrollRoot.transform);
                 viewport = scrollRoot.transform;
             }
 
@@ -653,6 +717,19 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 previewRoot.gameObject.AddComponent<HangarShapePreview>();
             preview.Configure(blockSprite, previewRoot as RectTransform);
             return preview;
+        }
+
+        private static void PositionSpellPreviewLayers(Transform panel, Transform preview)
+        {
+            if (panel == null || preview == null || panel.name != "UICardSpell") return;
+            Transform background = FindDirectChild(panel, "ShapePreviewBackground");
+            Transform cooldown = FindDirectChild(panel, "Image");
+            Transform actions = FindDirectChild(panel, "btns");
+            if (background != null && cooldown != null)
+                background.SetSiblingIndex(cooldown.GetSiblingIndex());
+            if (cooldown != null)
+                preview.SetSiblingIndex(cooldown.GetSiblingIndex() + 1);
+            if (actions != null) actions.SetAsLastSibling();
         }
 
         // The panel and its embedded ItemCard preview both contain name/desc nodes. The
@@ -696,33 +773,41 @@ namespace PlanetWar.ReusableMainMenu.Editor
                 .objectReferenceValue as HangarShapePreview != null;
         }
 
-        private static bool HasCompactSpellCooldownRow(HangarDetailLayout layout)
+        private static bool HasFourPartSpellDetailLayout(HangarDetailLayout layout)
         {
-            RectTransform cooldownRow = layout != null
-                ? FindDirectChild(layout.transform, "Image") as RectTransform
-                : null;
-            return cooldownRow != null && Mathf.Approximately(cooldownRow.sizeDelta.x, 590f) &&
-                   Mathf.Approximately(cooldownRow.sizeDelta.y, 100f) &&
-                   Mathf.Approximately(cooldownRow.anchoredPosition.x, 0f) &&
-                   Mathf.Approximately(cooldownRow.anchoredPosition.y, -8f);
+            if (layout == null) return false;
+            RectTransform background = FindDirectChild(layout.transform, "bg") as RectTransform;
+            Transform flow = FindDirectChild(layout.transform, "SpellAutoLayout");
+            RectTransform card = flow?.Find("Header/ItemCard (1)") as RectTransform;
+            RectTransform description = flow?.Find("Header/HeaderText/desc") as RectTransform;
+            RectTransform cooldown = flow?.Find("Image") as RectTransform;
+            RectTransform preview = flow?.Find("PreviewSection/ShapePreviewScroll") as RectTransform;
+            RectTransform actions = flow?.Find("btns") as RectTransform;
+            LayoutElement cooldownElement = cooldown != null ? cooldown.GetComponent<LayoutElement>() : null;
+            LayoutElement previewElement = preview != null ? preview.GetComponent<LayoutElement>() : null;
+            LayoutElement actionsElement = actions != null ? actions.GetComponent<LayoutElement>() : null;
+            return background != null && flow != null && flow.GetComponent<VerticalLayoutGroup>() != null &&
+                   card != null && description != null && cooldown != null && preview != null &&
+                   actions != null && cooldownElement != null && previewElement != null &&
+                   actionsElement != null &&
+                   Mathf.Approximately(background.rect.height, 1106f) &&
+                   Mathf.Approximately(cooldownElement.preferredHeight, 100f) &&
+                   Mathf.Approximately(previewElement.preferredHeight, 400f) &&
+                   Mathf.Approximately(actionsElement.preferredHeight, 144f);
         }
 
         private static bool HasRectMaskedSpellPreview(HangarDetailLayout layout)
         {
-            Transform preview = layout != null
-                ? FindDirectChild(layout.transform, "ShapePreviewScroll")
-                : null;
-            Transform background = layout != null
-                ? FindDirectChild(layout.transform, "ShapePreviewBackground")
-                : null;
-            Transform cooldownRow = layout != null
-                ? FindDirectChild(layout.transform, "Image")
-                : null;
-            return preview != null && background != null && cooldownRow != null &&
-                   background.GetSiblingIndex() < cooldownRow.GetSiblingIndex() &&
+            Transform flow = layout != null ? FindDirectChild(layout.transform, "SpellAutoLayout") : null;
+            Transform preview = flow?.Find("PreviewSection/ShapePreviewScroll");
+            Transform background = flow?.Find("PreviewSection/ShapePreviewBackground");
+            Transform actions = flow?.Find("btns");
+            return preview != null && background != null && actions != null &&
+                   background.parent == preview.parent &&
+                   background.GetSiblingIndex() < preview.GetSiblingIndex() &&
                    preview.GetComponent<RectMask2D>() != null &&
                    preview.GetComponent<Mask>() == null && preview.GetComponent<Image>() == null &&
-                   preview.GetSiblingIndex() > background.GetSiblingIndex();
+                   actions.parent == flow;
         }
 
         private static bool HasSingleSpellAttributeCard(HangarDetailLayout layout)

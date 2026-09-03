@@ -166,6 +166,7 @@ namespace PlanetWar.ReusableMainMenu
             if (spellDetails != null) spellDetails.SetActive(true);
             ShowDetailMask(spellDetails);
             ApplyOriginalPreviewLayout(spellDetails, spellLayout, card);
+            EnsureSpellPreviewIsVisible(spellDetails);
             ConfigureUpgradeButton(spellDetails, card);
             ConfigureEquipButton(spellDetails, card);
         }
@@ -347,6 +348,28 @@ namespace PlanetWar.ReusableMainMenu
             if (upgrade != null) upgrade.gameObject.SetActive(false);
             if (equip != null) equip.gameObject.SetActive(true);
             if (slider != null && slider.parent != null) slider.parent.gameObject.SetActive(true);
+        }
+
+        // Prefabs baked before the ordering correction contain ShapePreviewScroll before the
+        // opaque ShapePreviewBackground. Repair that harmless serialization order at display
+        // time too, so opening a spell never waits on an editor-side rebake to show its shape.
+        private static void EnsureSpellPreviewIsVisible(GameObject panel)
+        {
+            if (panel == null) return;
+            Transform preview = FindDirectChild(panel.transform, "ShapePreviewScroll");
+            Transform background = FindDirectChild(panel.transform, "ShapePreviewBackground");
+            Transform actions = FindDirectChild(panel.transform, "btns");
+            if (preview != null && background != null)
+                preview.SetSiblingIndex(background.GetSiblingIndex() + 1);
+            if (actions != null) actions.SetAsLastSibling();
+        }
+
+        private static Transform FindDirectChild(Transform root, string name)
+        {
+            if (root == null) return null;
+            foreach (Transform child in root)
+                if (child.name == name) return child;
+            return null;
         }
 
         private static Transform Find(Transform root, string name)

@@ -10,6 +10,9 @@ namespace PlanetWar.ReusableMainMenu
         private const float DefaultCellSize = 100f;
         private const float CellSpacing = 6f;
         private const float SafePadding = 20f;
+        // block.png was authored for the lighter backpack grid. Tint it here so occupied
+        // cells remain legible over the spell detail panel's dark SkillBg.
+        private static readonly Color DetailCellColor = new(.42f, .88f, 1f, 1f);
 
         [SerializeField] private Sprite cellSprite;
         [SerializeField] private RectTransform previewContainer;
@@ -80,6 +83,7 @@ namespace PlanetWar.ReusableMainMenu
                 rect.sizeDelta = new Vector2(cellSize, cellSize);
                 var image = cell.GetComponent<Image>();
                 image.sprite = cellSprite;
+                image.color = DetailCellColor;
                 image.preserveAspect = true;
                 image.raycastTarget = false;
             }

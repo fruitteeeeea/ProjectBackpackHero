@@ -100,6 +100,41 @@ public sealed class HangarShapePreviewTests
     }
 
     [Test]
+    public void DetailLayout_ShowsSnapshotShapeInsideBoundPreview()
+    {
+        GameObject layoutRoot = new GameObject("Detail", typeof(RectTransform));
+        GameObject cardRoot = new GameObject("Card", typeof(RectTransform));
+        GameObject previewRoot = new GameObject("Preview", typeof(RectTransform));
+        try
+        {
+            HangarDetailLayout layout = layoutRoot.AddComponent<HangarDetailLayout>();
+            HangarCardItem card = cardRoot.AddComponent<HangarCardItem>();
+            HangarShapePreview preview = previewRoot.AddComponent<HangarShapePreview>();
+            preview.Configure(Sprite.Create(texture, new Rect(0f, 0f, 2f, 2f),
+                Vector2.one * .5f));
+            layout.Configure(null, null, null, null, null, null, null, null,
+                shape: preview);
+            card.Configure(null, new HangarItemSnapshot(HangarItemKind.Equipment,
+                "Wave Emitter", "", null, null, true, 1, 0, 1, 0, 3f, 1,
+                null, Color.white, "Unlocked",
+                shapeOffsets: new[] { Vector2Int.zero, Vector2Int.up }));
+
+            layout.ShowPreview(card);
+
+            Assert.That(preview.gameObject.activeSelf, Is.True);
+            Assert.That(preview.CellCount, Is.EqualTo(2));
+            foreach (Image cell in preview.GetComponentsInChildren<Image>())
+                Assert.That(cell.color.a, Is.GreaterThan(0f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(layoutRoot);
+            Object.DestroyImmediate(cardRoot);
+            Object.DestroyImmediate(previewRoot);
+        }
+    }
+
+    [Test]
     public void MainMenu_BindsBlockPreviewForAircraftAndEquipmentDetails()
     {
         GameObject menu = AssetDatabase.LoadAssetAtPath<GameObject>(
@@ -123,23 +158,22 @@ public sealed class HangarShapePreviewTests
     }
 
     [Test]
-    public void MainMenu_SpellPreviewFitsInsideExpandedDetailPanelAboveActions()
+    public void MainMenu_SpellUsesFourPartLayoutWithPreviewAboveActions()
     {
         GameObject menu = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Packages/com.planetwar.reusable-main-menu/Prefabs/MainMenu.prefab");
         Transform spell = menu.transform.Find("UICardView/UICardSpell");
         RectTransform background = spell.Find("bg") as RectTransform;
-        RectTransform preview = spell.Find("ShapePreviewScroll") as RectTransform;
-        RectTransform actions = spell.Find("btns") as RectTransform;
+        Transform flow = spell.Find("SpellAutoLayout");
+        RectTransform cooldown = flow.Find("Image") as RectTransform;
+        RectTransform preview = flow.Find("PreviewSection/ShapePreviewScroll") as RectTransform;
+        RectTransform actions = flow.Find("btns") as RectTransform;
 
-        Assert.That(spell.Find("ShapePreviewBackground"), Is.Not.Null);
+        Assert.That(flow.GetComponent<VerticalLayoutGroup>(), Is.Not.Null);
         Assert.That(background.rect.height, Is.GreaterThanOrEqualTo(1100f));
-        Assert.That(preview.rect.yMax + preview.anchoredPosition.y,
-            Is.LessThanOrEqualTo(background.rect.yMax + background.anchoredPosition.y));
-        Assert.That(preview.rect.yMin + preview.anchoredPosition.y,
-            Is.GreaterThanOrEqualTo(background.rect.yMin + background.anchoredPosition.y));
-        Assert.That(actions.rect.yMax + actions.anchoredPosition.y,
-            Is.LessThan(preview.rect.yMin + preview.anchoredPosition.y));
+        Assert.That(cooldown.GetComponent<LayoutElement>().preferredHeight, Is.EqualTo(100f));
+        Assert.That(preview.GetComponent<LayoutElement>().preferredHeight, Is.EqualTo(400f));
+        Assert.That(actions.GetComponent<LayoutElement>().preferredHeight, Is.EqualTo(144f));
     }
 
     [Test]
@@ -148,16 +182,16 @@ public sealed class HangarShapePreviewTests
         GameObject menu = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Packages/com.planetwar.reusable-main-menu/Prefabs/MainMenu.prefab");
         Transform spell = menu.transform.Find("UICardView/UICardSpell");
-        RectTransform cooldownRow = spell.Find("Image") as RectTransform;
-        Transform preview = spell.Find("ShapePreviewScroll");
-        Transform background = spell.Find("ShapePreviewBackground");
+        Transform flow = spell.Find("SpellAutoLayout");
+        RectTransform cooldownRow = flow.Find("Image") as RectTransform;
+        Transform preview = flow.Find("PreviewSection/ShapePreviewScroll");
+        Transform background = flow.Find("PreviewSection/ShapePreviewBackground");
 
-        Assert.That(cooldownRow.sizeDelta, Is.EqualTo(new Vector2(590f, 100f)));
-        Assert.That(cooldownRow.anchoredPosition, Is.EqualTo(new Vector2(0f, -8f)));
+        Assert.That(cooldownRow.GetComponent<LayoutElement>().preferredHeight, Is.EqualTo(100f));
         Assert.That(preview.GetComponent<RectMask2D>(), Is.Not.Null);
         Assert.That(preview.GetComponent<Mask>(), Is.Null);
         Assert.That(preview.GetComponent<Image>(), Is.Null);
-        Assert.That(background.GetSiblingIndex(), Is.LessThan(cooldownRow.GetSiblingIndex()));
+        Assert.That(background.parent, Is.EqualTo(preview.parent));
         Assert.That(preview.GetSiblingIndex(), Is.GreaterThan(background.GetSiblingIndex()));
     }
 

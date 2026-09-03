@@ -1,6 +1,7 @@
 using System.IO;
 using BackpackHero.Battle;
 using BackpackHero.Debugging;
+using BackpackHero.Config;
 using BackpackPrototype;
 using UnityEditor;
 using UnityEngine;
@@ -28,6 +29,16 @@ namespace BackpackHero.EditorTools
                 BalanceAdjustmentTestPreset next = (BalanceAdjustmentTestPreset)EditorGUILayout.ObjectField("保存目标", testTarget, typeof(BalanceAdjustmentTestPreset), false);
                 if (next != null && next != testTarget) { testTarget = next; testDraft.CopyFrom(next); message = null; }
                 EditorGUILayout.LabelField("资产路径", AssetDatabase.GetAssetPath(testTarget), EditorStyles.miniLabel);
+                EditorGUI.BeginChangeCheck();
+                BalanceProfile profile = (BalanceProfile)EditorGUILayout.EnumPopup(
+                    "数值 Profile", testDraft.BalanceProfile);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    testDraft.SetBalanceProfile(profile);
+                    message = profile == BalanceProfile.Legacy
+                        ? "Legacy 保留当前旧版数值；应用时会在准备阶段切换。"
+                        : "Proposed 使用首轮商业化调优数值；应用时会在准备阶段切换。";
+                }
                 EditorGUILayout.LabelField("未保存修改", !testDraft.ContentEquals(testTarget) ? "是" : "否", EditorStyles.miniLabel);
                 using (new EditorGUILayout.HorizontalScope())
                 {

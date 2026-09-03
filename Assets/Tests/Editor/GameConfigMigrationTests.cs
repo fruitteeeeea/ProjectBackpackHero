@@ -24,7 +24,7 @@ namespace BackpackHero.Tests.Editor
             Assert.That(item.Cooldown, Is.EqualTo(2f));
             Assert.That(item.FighterId, Is.EqualTo("fighter_normal"));
             Assert.That(GameConfigService.TryGetFighter("fighter_sniper", out FighterConfig fighter), Is.True);
-            Assert.That(fighter.ProjectileDamage, Is.EqualTo(2.5f));
+            Assert.That(fighter.ProjectileDamage, Is.EqualTo(2.2f));
             Assert.That(fighter.ProjectileLifetimeOverride, Is.EqualTo(6f));
             Assert.That(GameConfigService.TryGetFighter("fighter_normal", out FighterConfig normalFighter), Is.True);
             Assert.That(normalFighter.ProjectileLifetimeOverride, Is.EqualTo(-1f));
@@ -40,6 +40,25 @@ namespace BackpackHero.Tests.Editor
                 Assert.That(strength.Health, Is.EqualTo(1f));
                 Assert.That(strength.Damage, Is.EqualTo(1f));
             }
+        }
+
+        [Test]
+        public void BalanceProfiles_SwitchBetweenFrozenLegacyAndProposedValues()
+        {
+            Assert.That(GameConfigService.TryGetItem("aircraft_charge", out ItemConfig proposed), Is.True);
+            Assert.That(proposed.Cooldown, Is.EqualTo(2.3f));
+            Assert.That(GameConfigService.TryGetFighter("fighter_charge", out FighterConfig proposedFighter), Is.True);
+            Assert.That(proposedFighter.ProjectileDamage, Is.EqualTo(.65f));
+
+            Assert.That(GameConfigService.TrySetBalanceProfile(BalanceProfile.Legacy), Is.True);
+            Assert.That(GameConfigService.TryGetItem("aircraft_charge", out ItemConfig legacy), Is.True);
+            Assert.That(legacy.Cooldown, Is.EqualTo(1.8f));
+            Assert.That(GameConfigService.TryGetFighter("fighter_charge", out FighterConfig legacyFighter), Is.True);
+            Assert.That(legacyFighter.ProjectileDamage, Is.EqualTo(.8f));
+            Assert.That(GameConfigService.GetEquipmentEffectConfig("equipment_arc_coil").MaximumChainTargets, Is.EqualTo(3));
+
+            Assert.That(GameConfigService.TrySetBalanceProfile(BalanceProfile.Proposed), Is.True);
+            Assert.That(GameConfigService.GetEquipmentEffectConfig("equipment_arc_coil").MaximumChainTargets, Is.EqualTo(2));
         }
 
         [Test]

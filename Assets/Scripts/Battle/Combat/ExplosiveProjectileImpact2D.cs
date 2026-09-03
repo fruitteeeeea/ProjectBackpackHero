@@ -24,6 +24,13 @@ namespace BackpackHero.Battle
             AircraftVisualDebugRuntime.GetExplosiveImpactRangeMultiplier();
         public float AreaDamageMultiplier => areaDamageMultiplier;
 
+        public void ConfigureBalance(float configuredRadius,
+            float configuredAreaDamageMultiplier)
+        {
+            radius = Mathf.Max(0f, configuredRadius);
+            areaDamageMultiplier = Mathf.Clamp01(configuredAreaDamageMultiplier);
+        }
+
         private void Awake() => FindReferences();
 
         public override bool ResolveImpact(

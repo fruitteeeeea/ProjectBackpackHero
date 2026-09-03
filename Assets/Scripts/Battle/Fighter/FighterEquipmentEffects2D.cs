@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BackpackPrototype;
+using BackpackHero.Config;
 using UnityEngine;
 
 namespace BackpackHero.Battle
@@ -43,7 +44,7 @@ namespace BackpackHero.Battle
         private readonly List<ProjectileEffectRuntime>
             projectileEffects = new();
 
-        private readonly List<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float CooldownModifier, float ProjectileStatModifier)>
+        private readonly List<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float CooldownModifier, float ProjectileStatModifier, int MaximumLinkedTargets)>
             laserLinkEffects = new();
 
         private float remainingSharedCooldown;
@@ -58,7 +59,7 @@ namespace BackpackHero.Battle
         public int ProjectileEffectCount =>
             projectileEffects.Count;
 
-        public IReadOnlyCollection<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float CooldownModifier, float ProjectileStatModifier)>
+        public IReadOnlyCollection<(LaserLinkEquipmentEffectDefinition Effect, ItemInstance Item, float CooldownModifier, float ProjectileStatModifier, int MaximumLinkedTargets)>
             LaserLinkEffects => laserLinkEffects;
 
         public bool HasLaserLinkEffect(
@@ -81,7 +82,7 @@ namespace BackpackHero.Battle
                     if (effect is LaserLinkEquipmentEffectDefinition laserLink &&
                         laserLink.LaserAttackPrefab != null)
                     {
-                        laserLinkEffects.Add((laserLink, null, 1f, 1f));
+                        laserLinkEffects.Add((laserLink, null, 1f, 1f, 3));
                         continue;
                     }
 
@@ -115,6 +116,9 @@ namespace BackpackHero.Battle
             if (effects != null)
                 foreach ((EquipmentEffectDefinition effect, ItemInstance item) in effects)
                     if (effect is ProjectileEquipmentEffectDefinition projectile && projectile.ProjectilePrefab != null)
+                    {
+                        EquipmentEffectBalanceConfig balance =
+                            GameConfigService.GetEquipmentEffectConfig(item?.Data?.Id);
                         projectileEffects.Add(new ProjectileEffectRuntime(
                             projectile.ProjectilePrefab,
                             item != null
@@ -122,21 +126,29 @@ namespace BackpackHero.Battle
                                 : projectile.Cooldown,
                             item,
                             equipmentItemModifier,
-                            applyEquipmentItemModifierToProjectileStats
-                                ? equipmentItemModifier
-                                : 1f));
+                            balance.DamageMultiplier *
+                            (applyEquipmentItemModifierToProjectileStats
+                                ? equipmentItemModifier : 1f)));
+                    }
                     else if (effect is LaserLinkEquipmentEffectDefinition laser && laser.LaserAttackPrefab != null)
+                    {
+                        EquipmentEffectBalanceConfig balance =
+                            GameConfigService.GetEquipmentEffectConfig(item?.Data?.Id);
                         laserLinkEffects.Add((
                             laser,
                             item,
                             Mathf.Max(
                                 ItemData.MinimumEquipmentItemModifier,
                                 equipmentItemModifier),
-                            applyEquipmentItemModifierToProjectileStats
+                            balance.DamageMultiplier *
+                            (applyEquipmentItemModifierToProjectileStats
                                 ? Mathf.Max(
                                     ItemData.MinimumEquipmentItemModifier,
                                     equipmentItemModifier)
-                                : 1f));
+                                : 1f),
+                            balance.MaximumLinkedTargets > 0
+                                ? balance.MaximumLinkedTargets : 3));
+                    }
             ResetCooldowns();
         }
 

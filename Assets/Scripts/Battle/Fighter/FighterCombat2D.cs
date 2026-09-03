@@ -1,5 +1,6 @@
 using BackpackHero.Debugging;
 using BackpackHero.Audio;
+using BackpackHero.Config;
 using BackpackPrototype;
 using System.Collections.Generic;
 using UnityEngine;
@@ -624,9 +625,24 @@ namespace BackpackHero.Battle
                 Instantiate(
                     attackPrefab,
                     firePoint.position,
-                    Quaternion.FromToRotation(
-                        Vector2.up,
-                        fireDirection));
+                Quaternion.FromToRotation(
+                    Vector2.up,
+                    fireDirection));
+
+            if (visualSource == ProjectileVisualSource.Equipment &&
+                sourceItem?.Data != null)
+            {
+                EquipmentEffectBalanceConfig balance =
+                    GameConfigService.GetEquipmentEffectConfig(sourceItem.Data.Id);
+                if (attack.TryGetComponent(out ExplosiveProjectileImpact2D explosive) &&
+                    balance.ExplosionRadius > 0f)
+                    explosive.ConfigureBalance(balance.ExplosionRadius,
+                        balance.AreaDamageMultiplier);
+                if (attack.TryGetComponent(out ChainLightningProjectileImpact2D chain) &&
+                    balance.MaximumChainTargets > 0)
+                    chain.ConfigureBalance(balance.MaximumChainTargets,
+                        balance.ChainDamageMultiplier);
+            }
 
             float attackModifier = Mathf.Max(
                 ItemData.MinimumEquipmentItemModifier,
@@ -648,9 +664,7 @@ namespace BackpackHero.Battle
                             (LevelFlowController.Instance?.IsOvertime == true
                                 ? LevelFlowController.OvertimeProjectileDamageMultiplier
                                 : 1f),
-                            fighter.Definition
-                                .ProjectileSpeed *
-                            attackModifier,
+                            fighter.Definition.ProjectileSpeed,
                             projectileLifetimeOverride,
                             firePoint.position,
                             fireDirection,

@@ -21,6 +21,13 @@ namespace BackpackHero.Battle
         public int MaximumExtraTargets => maximumExtraTargets;
         public float ChainDamageMultiplier => chainDamageMultiplier;
 
+        public void ConfigureBalance(int configuredMaximumExtraTargets,
+            float configuredChainDamageMultiplier)
+        {
+            maximumExtraTargets = Mathf.Max(0, configuredMaximumExtraTargets);
+            chainDamageMultiplier = Mathf.Max(0f, configuredChainDamageMultiplier);
+        }
+
         private void Awake() => FindReferences();
 
         public override bool ResolveImpact(

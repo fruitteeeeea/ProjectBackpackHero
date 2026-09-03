@@ -13,26 +13,26 @@ public sealed class ItemBalanceConfigurationTests
         AssertAircraft(
             "Aircraft_Explosive.asset",
             "Fighter_04_Explosive.asset",
-            "爆炸飞机", 2f, 2,
-            4.5f, 8, 0.5f, 30f, 0.5f, 0.8f, 8f,
+            "爆炸飞机", 3.6f, 2,
+            4.5f, 10, 0.5f, 30f, 0.5f, 0.7f, 8f,
             "ItemShape_1x2.asset");
         AssertAircraft(
             "Aircraft_Sniper.asset",
             "Fighter_05_Sniper.asset",
-            "狙击飞机", 3.5f, 1,
-            1f, 6, 6.5f, 45f, 1f, 2.5f, 12f,
+            "狙击飞机", 3.8f, 1,
+            1f, 7, 6.5f, 45f, 1f, 2.2f, 12f,
             "ItemShape_L_MissingTopLeft.asset");
         AssertAircraft(
             "Aircraft_Laser.asset",
             "Fighter_06_Laser.asset",
-            "激光飞机", 2f, 1,
-            3f, 8, 2.5f, 45f, 1f, 0.5f, 12f,
+            "激光飞机", 2.8f, 1,
+            3f, 8, 2.5f, 45f, .75f, .8f, 12f,
             "ItemShape_1x2.asset");
         AssertAircraft(
             "Aircraft_Shotgun.asset",
             "Fighter_07_Shotgun.asset",
-            "霰弹飞机", 2f, 1,
-            2.5f, 16, 1.5f, 40f, 1f, 0.8f, 8f,
+            "霰弹飞机", 2.8f, 1,
+            2.5f, 16, 1.5f, 40f, 1f, .65f, 8f,
             "ItemShape_2x1.asset");
 
         FighterDefinition explosive = Load<FighterDefinition>(
@@ -69,7 +69,7 @@ public sealed class ItemBalanceConfigurationTests
 
         Assert.That(lAircraft.SpawnCount, Is.EqualTo(2));
         Assert.That(chargeFighter.ProjectileDamage,
-            Is.EqualTo(0.8f));
+            Is.EqualTo(0.65f));
         Assert.That(shieldFighter.TargetingPriority,
             Is.EqualTo(1));
         Assert.That(shieldItem.Icon,

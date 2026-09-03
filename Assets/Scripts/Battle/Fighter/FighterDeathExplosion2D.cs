@@ -1,4 +1,5 @@
 using BackpackHero.Debugging;
+using BackpackHero.Config;
 using BackpackPrototype;
 using UnityEngine;
 
@@ -57,6 +58,16 @@ namespace BackpackHero.Battle
                     attackPrefab);
                 Destroy(attack.gameObject);
                 return;
+            }
+
+            if (impact is ExplosiveProjectileImpact2D explosive)
+            {
+                EquipmentEffectBalanceConfig balance =
+                    GameConfigService.GetAircraftDeathExplosionConfig(
+                        fighter.DamageSourceItem?.Data?.Id);
+                if (balance.ExplosionRadius > 0f)
+                    explosive.ConfigureBalance(balance.ExplosionRadius,
+                        balance.AreaDamageMultiplier);
             }
 
             float damage = fighter.Definition.ProjectileDamage *

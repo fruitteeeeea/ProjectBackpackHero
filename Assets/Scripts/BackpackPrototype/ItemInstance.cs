@@ -1,5 +1,6 @@
 using UnityEngine;
 using BackpackHero.Debugging;
+using BackpackHero.Config;
 
 namespace BackpackPrototype
 {
@@ -108,6 +109,9 @@ namespace BackpackPrototype
             float progressionMultiplier = Data != null
                 ? Data.GetEquipmentIntervalMultiplierForProgressionLevel(ProgressionLevel)
                 : 1f;
+            float configuredInterval = Data != null
+                ? GameConfigService.GetEquipmentEffectConfig(Data.Id).Interval
+                : 0f;
 
             if (effect is
                 ProjectileEquipmentEffectDefinition projectile)
@@ -115,7 +119,7 @@ namespace BackpackPrototype
                 return Mathf.Max(
                     ProjectileEquipmentEffectDefinition
                         .MinimumCooldown,
-                    projectile.Cooldown * inMatchLevelMultiplier *
+                    (configuredInterval > 0f ? configuredInterval : projectile.Cooldown) * inMatchLevelMultiplier *
                     progressionMultiplier);
             }
 
@@ -125,7 +129,7 @@ namespace BackpackPrototype
                 return Mathf.Max(
                     LaserLinkEquipmentEffectDefinition
                         .MinimumCooldown,
-                    laser.Cooldown * inMatchLevelMultiplier *
+                    (configuredInterval > 0f ? configuredInterval : laser.Cooldown) * inMatchLevelMultiplier *
                     progressionMultiplier);
             }
 

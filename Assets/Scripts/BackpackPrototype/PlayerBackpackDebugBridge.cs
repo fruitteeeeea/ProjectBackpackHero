@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using BackpackHero.Battle;
 using BackpackHero.Debugging;
+using BackpackHero.Config;
 using UnityEngine;
 using UnityEngine.InputSystem;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -356,6 +357,7 @@ namespace BackpackPrototype
                 GetComponent<PlayerRandomFlightCurveController>();
             preset.SetRuntimeState(
                 GamePacingDebugRuntime.Instance?.GameSpeed ?? 1f,
+                GameConfigService.ActiveBalanceProfile,
                 flight != null ? flight.Mode : RandomFlightCurveMode.Off,
                 InitialBackpackItemAutoPlacementDebug.IsEnabled,
                 playerProgressionLevel,
@@ -384,6 +386,12 @@ namespace BackpackPrototype
                 !ValidatePreset(preset, playerBackpackSystem.Backpack,
                     enemyBackpackSystem.Backpack, out error))
             {
+                return false;
+            }
+
+            if (!GameConfigService.TrySetBalanceProfile(preset.BalanceProfile))
+            {
+                error = "当前阶段无法切换数值 Profile。";
                 return false;
             }
 

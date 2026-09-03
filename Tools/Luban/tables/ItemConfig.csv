@@ -1,15 +1,15 @@
 id,itemType,name,description,unlockRequirementText,cost,debris,upgradeFragmentsLevel1,upgradeFragmentsLevel9,aircraftHealthMultiplierLevel1,aircraftHealthMultiplierLevel10,aircraftDamageMultiplierLevel1,aircraftDamageMultiplierLevel10,equipmentIntervalMultiplierLevel1,equipmentIntervalMultiplierLevel10,cooldown,count,equipmentItemModifier,applyEquipmentItemModifierToProjectileStats,price,aircraftCooldownReductionLevel2,aircraftCooldownReductionLevel3,equipmentEffectIntervalReductionLevel2,equipmentEffectIntervalReductionLevel3,fighterId,shapeId
 aircraft_first,0,Vanguard,A balanced frontline fighter with reliable firepower.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2,1,1,0,0,0.2,0.4,0.1,0.2,fighter_normal,shape_2x1
-aircraft_charge,0,Charger,A high-speed attacker that trades durability for mobility.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,1.8,1,1,0,0,0.2,0.4,0.1,0.2,fighter_charge,shape_1x2
-aircraft_shield,0,Shield Guard,A durable defender that holds the frontline.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3.5,1,1,0,0,0.2,0.4,0.1,0.2,fighter_shield,shape_1x2
-aircraft_explosive,0,Exploder,"Explodes on death, damaging nearby enemy fighters.",Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2,2,1,0,0,0.2,0.4,0.1,0.2,fighter_explosive,shape_1x2
-aircraft_sniper,0,Sniper,A high-damage single-shot fighter with extreme range.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,4.5,1,0.2,0,0,0.2,0.4,0.1,0.2,fighter_sniper,shape_l_missing_top_left
-aircraft_laser,0,Laser Link,Targets the farthest enemy fighter within its attack range.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2,1,1,0,0,0.2,0.4,0.1,0.2,fighter_laser,shape_2x1
-aircraft_shotgun,0,Scattershot,Fires three spread shots at close range.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3.5,1,1,0,0,0.2,0.4,0.1,0.2,fighter_shotgun,shape_2x1
-aircraft_l,0,Twin Formation,Deploys two balanced fighters in a compact formation.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,4,2,1,0,0,0.2,0.4,0.1,0.2,fighter_normal,shape_l_missing_bottom_right
-equipment_first,1,Blast Module,Adds explosive shots to adjacent fighters.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,4,1,1,0,0,0.2,0.4,0.1,0.2,,shape_2x1
-equipment_rapid_cannon,1,Rapid Cannon,Adds rapid straight shots to adjacent fighters.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2.5,1,1,0,0,0.2,0.4,0.1,0.2,,shape_1x2
+aircraft_charge,0,Charger,A high-speed attacker that trades durability for mobility.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2.3,1,1,0,0,0.2,0.4,0.1,0.2,fighter_charge,shape_1x2
+aircraft_shield,0,Shield Guard,A durable defender that holds the frontline.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3,1,1,0,0,0.2,0.4,0.1,0.2,fighter_shield,shape_1x2
+aircraft_explosive,0,Exploder,"Explodes on death, damaging nearby enemy fighters.",Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3.6,2,1,0,0,0.2,0.4,0.1,0.2,fighter_explosive,shape_1x2
+aircraft_sniper,0,Sniper,A high-damage single-shot fighter with extreme range.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3.8,1,1,0,0,0.2,0.4,0.1,0.2,fighter_sniper,shape_l_missing_top_left
+aircraft_laser,0,Laser Link,Targets the farthest enemy fighter within its attack range.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2.8,1,1,0,0,0.2,0.4,0.1,0.2,fighter_laser,shape_2x1
+aircraft_shotgun,0,Scattershot,Fires three spread shots at close range.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2.8,1,1,0,0,0.2,0.4,0.1,0.2,fighter_shotgun,shape_2x1
+aircraft_l,0,Twin Formation,Deploys two balanced fighters in a compact formation.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3.5,2,1,0,0,0.2,0.4,0.1,0.2,fighter_normal,shape_l_missing_bottom_right
+equipment_first,1,Blast Module,Adds explosive shots to adjacent fighters.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3.2,1,1,0,0,0.2,0.4,0.1,0.2,,shape_2x1
+equipment_rapid_cannon,1,Rapid Cannon,Adds rapid straight shots to adjacent fighters.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2.8,1,1,0,0,0.2,0.4,0.1,0.2,,shape_1x2
 equipment_wave_emitter,1,Wave Emitter,Adds weaving wave shots to adjacent fighters.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3,1,1,0,0,0.2,0.4,0.1,0.2,,shape_1x2
-equipment_laser_link,1,Laser Link Module,Fires lasers at up to 3 farthest linked allies every 3 seconds.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3,1,1,0,0,0.2,0.4,0.1,0.2,,shape_2x1
-equipment_1x2,1,Arc Launcher,Adds arcing shots to adjacent fighters.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2.5,1,1,0,0,0.2,0.4,0.1,0.2,,shape_1x2
-equipment_arc_coil,1,Arc Coil,Adds chain-lightning shots to adjacent fighters.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3.5,1,1,0,0,0.2,0.4,0.1,0.2,,shape_2x1
+equipment_laser_link,1,Laser Link Module,Fires lasers at up to 3 farthest linked allies every 3 seconds.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2.5,1,1,0,0,0.2,0.4,0.1,0.2,,shape_2x1
+equipment_1x2,1,Arc Launcher,Adds arcing shots to adjacent fighters.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,2.8,1,1,0,0,0.2,0.4,0.1,0.2,,shape_1x2
+equipment_arc_coil,1,Arc Coil,Adds chain-lightning shots to adjacent fighters.,Unlocked by default,0,0,2,100,1,1.4,1,1.4,1,0.8,3.2,1,1,0,0,0.2,0.4,0.1,0.2,,shape_2x1

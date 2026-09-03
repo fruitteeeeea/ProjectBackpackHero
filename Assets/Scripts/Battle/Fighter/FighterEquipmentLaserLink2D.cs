@@ -7,7 +7,6 @@ namespace BackpackHero.Battle
     [DisallowMultipleComponent]
     public sealed class FighterEquipmentLaserLink2D : MonoBehaviour
     {
-        private const int MaximumLinkedTargets = 3;
 
         private readonly List<Fighter2D> candidates = new();
         private readonly Dictionary<
@@ -49,10 +48,11 @@ namespace BackpackHero.Battle
                 return;
             }
 
-            foreach ((LaserLinkEquipmentEffectDefinition effect, ItemInstance item, float cooldownModifier, float projectileStatModifier) in
+            foreach ((LaserLinkEquipmentEffectDefinition effect, ItemInstance item, float cooldownModifier, float projectileStatModifier, int maximumLinkedTargets) in
                      equipmentEffects.LaserLinkEffects)
             {
-                FireLinks(effect, item, cooldownModifier, projectileStatModifier);
+                FireLinks(effect, item, cooldownModifier, projectileStatModifier,
+                    maximumLinkedTargets);
             }
         }
 
@@ -60,7 +60,7 @@ namespace BackpackHero.Battle
             LaserLinkEquipmentEffectDefinition effect,
             ItemInstance item,
             float cooldownModifier,
-            float projectileStatModifier)
+            float projectileStatModifier, int maximumLinkedTargets)
         {
             if (effect?.LaserAttackPrefab == null)
             {
@@ -105,7 +105,7 @@ namespace BackpackHero.Battle
                     : left.GetEntityId().CompareTo(right.GetEntityId());
             });
 
-            int targetCount = Mathf.Min(MaximumLinkedTargets, candidates.Count);
+            int targetCount = Mathf.Min(maximumLinkedTargets, candidates.Count);
             if (targetCount == 0)
             {
                 return;

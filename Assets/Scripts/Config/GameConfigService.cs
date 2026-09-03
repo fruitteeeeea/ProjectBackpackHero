@@ -22,6 +22,10 @@ namespace BackpackHero.Config
         private static string error;
         private static Tables tables;
 
+        public static BalanceProfile ActiveBalanceProfile { get; private set; } =
+            BalanceProfile.Proposed;
+        public static event Action<BalanceProfile> BalanceProfileChanged;
+
         public static bool IsReady { get { EnsureLoaded(); return error == null; } }
         public static string Error { get { EnsureLoaded(); return error; } }
         public static bool UsesNativeLubanRuntime { get { EnsureLoaded(); return error == null && tables != null; } }
@@ -42,7 +46,36 @@ namespace BackpackHero.Config
             return Fighters.TryGetValue(id ?? string.Empty, out config);
         }
 
+        /// <summary>Profiles may only change before combat so a match never mixes values.</summary>
+        public static bool TrySetBalanceProfile(BalanceProfile profile)
+        {
+#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+            if (profile != BalanceProfile.Proposed) return false;
+#endif
+            if (BattleFlowController.IsCombatPhase) return false;
+            if (ActiveBalanceProfile == profile) return true;
+            ActiveBalanceProfile = profile;
+            ResetLoadedData();
+            EnsureLoaded();
+            if (error == null) BalanceProfileChanged?.Invoke(profile);
+            return error == null;
+        }
+
+        public static EquipmentEffectBalanceConfig GetEquipmentEffectConfig(
+            string itemId) => BalanceProfileData.GetEquipmentEffect(
+            ActiveBalanceProfile, itemId);
+
+        public static EquipmentEffectBalanceConfig GetAircraftDeathExplosionConfig(
+            string itemId) => BalanceProfileData.GetAircraftDeathExplosion(
+            ActiveBalanceProfile, itemId);
+
         public static void ResetForTests()
+        {
+            ActiveBalanceProfile = BalanceProfile.Proposed;
+            ResetLoadedData();
+        }
+
+        private static void ResetLoadedData()
         {
             attempted = false;
             error = null;
@@ -102,6 +135,7 @@ namespace BackpackHero.Config
                     EquipmentEffectIntervalReductionLevel2 = row.EquipmentEffectIntervalReductionLevel2, EquipmentEffectIntervalReductionLevel3 = row.EquipmentEffectIntervalReductionLevel3,
                     FighterId = row.FighterId, ShapeId = row.ShapeId
                 };
+                BalanceProfileData.Apply(ActiveBalanceProfile, config);
                 AddUnique(Items, config.Id, config, "item");
             }
             if (Items.Count == 0) throw new InvalidOperationException("ItemConfig has no rows.");
@@ -119,6 +153,7 @@ namespace BackpackHero.Config
                     ProjectileDamage = row.ProjectileDamage, ProjectileSpeed = row.ProjectileSpeed,
                     ProjectileLifetimeOverride = row.ProjectileLifetimeOverride
                 };
+                BalanceProfileData.Apply(ActiveBalanceProfile, config);
                 AddUnique(Fighters, config.Id, config, "fighter");
             }
             if (Fighters.Count == 0) throw new InvalidOperationException("FighterConfig has no rows.");

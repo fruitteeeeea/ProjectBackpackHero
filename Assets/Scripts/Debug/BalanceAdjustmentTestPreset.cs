@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BackpackPrototype;
+using BackpackHero.Config;
 using UnityEngine;
 
 namespace BackpackHero.Debugging
@@ -25,6 +26,7 @@ namespace BackpackHero.Debugging
         }
 
         [SerializeField, Range(0f, 2f)] private float gameSpeed = 1f;
+        [SerializeField] private BalanceProfile balanceProfile = BalanceProfile.Proposed;
         [SerializeField] private RandomFlightCurveMode randomFlightMode;
         [SerializeField] private bool autoAddConfiguredItems;
         [SerializeField, Range(1, 10)] private int playerProgressionLevel = 1;
@@ -36,6 +38,7 @@ namespace BackpackHero.Debugging
         [SerializeField] private List<LayoutEntry> enemyLayout = new();
 
         public float GameSpeed => gameSpeed;
+        public BalanceProfile BalanceProfile => balanceProfile;
         public RandomFlightCurveMode RandomFlightMode => randomFlightMode;
         public bool AutoAddConfiguredItems => autoAddConfiguredItems;
         public int PlayerProgressionLevel => playerProgressionLevel;
@@ -46,10 +49,14 @@ namespace BackpackHero.Debugging
         public IReadOnlyList<LayoutEntry> PlayerLayout => playerLayout;
         public IReadOnlyList<LayoutEntry> EnemyLayout => enemyLayout;
 
+        public void SetBalanceProfile(BalanceProfile profile) =>
+            balanceProfile = profile;
+
         public void CopyFrom(BalanceAdjustmentTestPreset source)
         {
             if (source == null) return;
             gameSpeed = source.gameSpeed;
+            balanceProfile = source.balanceProfile;
             randomFlightMode = source.randomFlightMode;
             autoAddConfiguredItems = source.autoAddConfiguredItems;
             playerProgressionLevel = source.playerProgressionLevel;
@@ -65,6 +72,7 @@ namespace BackpackHero.Debugging
         {
             return other != null &&
                 Mathf.Approximately(gameSpeed, other.gameSpeed) &&
+                balanceProfile == other.balanceProfile &&
                 randomFlightMode == other.randomFlightMode &&
                 autoAddConfiguredItems == other.autoAddConfiguredItems &&
                 playerProgressionLevel == other.playerProgressionLevel &&
@@ -92,13 +100,15 @@ namespace BackpackHero.Debugging
             return true;
         }
 
-        public void SetRuntimeState(float speed, RandomFlightCurveMode flightMode,
+        public void SetRuntimeState(float speed, BalanceProfile profile,
+            RandomFlightCurveMode flightMode,
             bool autoAddItems,
             int playerLevel, int enemyLevel, DeckPreset enemyPreset,
             IEnumerable<ItemData> playerDeckItems, IEnumerable<ItemData> enemyDeckItems,
             IEnumerable<LayoutEntry> playerLayoutItems, IEnumerable<LayoutEntry> enemyLayoutItems)
         {
             gameSpeed = Mathf.Clamp(speed, 0f, 2f);
+            balanceProfile = profile;
             randomFlightMode = flightMode;
             autoAddConfiguredItems = autoAddItems;
             playerProgressionLevel = Mathf.Clamp(playerLevel, 1, 10);
@@ -109,5 +119,21 @@ namespace BackpackHero.Debugging
             playerLayout = playerLayoutItems != null ? new List<LayoutEntry>(playerLayoutItems) : new List<LayoutEntry>();
             enemyLayout = enemyLayoutItems != null ? new List<LayoutEntry>(enemyLayoutItems) : new List<LayoutEntry>();
         }
+
+        /// <summary>
+        /// Compatibility overload for existing debug presets and tests. New callers
+        /// should pass an explicit profile; old callers retain the release default.
+        /// </summary>
+        public void SetRuntimeState(float speed,
+            RandomFlightCurveMode flightMode, bool autoAddItems,
+            int playerLevel, int enemyLevel, DeckPreset enemyPreset,
+            IEnumerable<ItemData> playerDeckItems,
+            IEnumerable<ItemData> enemyDeckItems,
+            IEnumerable<LayoutEntry> playerLayoutItems,
+            IEnumerable<LayoutEntry> enemyLayoutItems) =>
+            SetRuntimeState(speed, BalanceProfile.Proposed, flightMode,
+                autoAddItems, playerLevel, enemyLevel, enemyPreset,
+                playerDeckItems, enemyDeckItems, playerLayoutItems,
+                enemyLayoutItems);
     }
 }

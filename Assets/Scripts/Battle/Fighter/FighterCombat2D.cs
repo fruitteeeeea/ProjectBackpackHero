@@ -558,7 +558,8 @@ namespace BackpackHero.Battle
                 sourceItem ?? aircraftItem,
                 equipmentItemModifier,
                 true,
-                isSpreadShot);
+                isSpreadShot,
+                currentTarget.TargetHealth);
         }
 
         /// <summary>
@@ -597,7 +598,8 @@ namespace BackpackHero.Battle
             ItemInstance sourceItem = null,
             float equipmentItemModifier = 1f,
             bool countsForDamageStatistics = true,
-            bool isSpreadShot = false)
+            bool isSpreadShot = false,
+            Health targetHealth = null)
         {
             if (fighter == null ||
                 fighter.Definition == null ||
@@ -655,7 +657,8 @@ namespace BackpackHero.Battle
                             canDamageBackpack,
                             new BattleDamageSource(
                                 sourceItem,
-                                countsForDamageStatistics));
+                                countsForDamageStatistics),
+                            targetHealth);
 
             attack.Initialize(launchContext);
 

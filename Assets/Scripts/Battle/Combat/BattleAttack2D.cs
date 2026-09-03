@@ -56,6 +56,11 @@ namespace BackpackHero.Battle
         public bool CanDamageBackpack { get; }
         public ProjectileVisualSource VisualSource { get; }
         public BattleDamageSource DamageSource { get; }
+        /// <summary>
+        /// 发射时锁定的生命目标。飞行子弹用它在目标死亡后提前退场；
+        /// 空值表示这是纯定点攻击，不追踪目标生死。
+        /// </summary>
+        public Health TargetHealth { get; }
 
         public BattleAttackLaunchContext(
             BattleFaction faction,
@@ -71,7 +76,8 @@ namespace BackpackHero.Battle
             ProjectileVisualSource visualSource =
                 ProjectileVisualSource.FighterDefault,
             bool canDamageBackpack = true,
-            BattleDamageSource damageSource = default)
+            BattleDamageSource damageSource = default,
+            Health targetHealth = null)
         {
             Faction = faction;
             Damage = Mathf.Max(0f, damage);
@@ -90,6 +96,7 @@ namespace BackpackHero.Battle
             CanDamageBackpack = canDamageBackpack;
             VisualSource = visualSource;
             DamageSource = damageSource;
+            TargetHealth = targetHealth;
         }
 
         public static BattleAttackLaunchContext
@@ -103,10 +110,11 @@ namespace BackpackHero.Battle
                 Vector2 shooterPosition,
                 Vector2 shooterForward,
                 Vector2 aimPoint,
-                ProjectileVisualSource visualSource =
-                    ProjectileVisualSource.FighterDefault,
-                bool canDamageBackpack = true,
-                BattleDamageSource damageSource = default)
+            ProjectileVisualSource visualSource =
+                ProjectileVisualSource.FighterDefault,
+            bool canDamageBackpack = true,
+            BattleDamageSource damageSource = default,
+            Health targetHealth = null)
         {
             return new BattleAttackLaunchContext(
                 faction,
@@ -121,7 +129,8 @@ namespace BackpackHero.Battle
                 aimPoint,
                 visualSource,
                 canDamageBackpack,
-                damageSource);
+                damageSource,
+                targetHealth);
         }
 
         public static BattleAttackLaunchContext
@@ -134,10 +143,11 @@ namespace BackpackHero.Battle
                 Vector2 fireDirection,
                 Vector2 shooterPosition,
                 Vector2 shooterForward,
-                ProjectileVisualSource visualSource =
-                    ProjectileVisualSource.FighterDefault,
-                bool canDamageBackpack = true,
-                BattleDamageSource damageSource = default)
+            ProjectileVisualSource visualSource =
+                ProjectileVisualSource.FighterDefault,
+            bool canDamageBackpack = true,
+            BattleDamageSource damageSource = default,
+            Health targetHealth = null)
         {
             return new BattleAttackLaunchContext(
                 faction,
@@ -152,7 +162,8 @@ namespace BackpackHero.Battle
                 Vector2.zero,
                 visualSource,
                 canDamageBackpack,
-                damageSource);
+                damageSource,
+                targetHealth);
         }
 
         private static Vector2 GetSafeDirection(

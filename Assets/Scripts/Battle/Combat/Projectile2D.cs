@@ -11,6 +11,7 @@ namespace BackpackHero.Battle
     [RequireComponent(
         typeof(ProjectileTrajectoryController2D))]
     [RequireComponent(typeof(HitBox2D))]
+    [RequireComponent(typeof(BattleFadeOut2D))]
     public sealed class Projectile2D : BattleAttack2D
     {
         [Header("References")]
@@ -24,6 +25,9 @@ namespace BackpackHero.Battle
         [SerializeField]
         private ProjectileVisualController2D visualController;
 
+        private Health subscribedTargetHealth;
+        private bool isFading;
+
         public BattleFaction Faction =>
             hitBox != null
                 ? hitBox.Faction
@@ -32,6 +36,11 @@ namespace BackpackHero.Battle
         private void Awake()
         {
             FindReferences();
+        }
+
+        private void OnDestroy()
+        {
+            UnsubscribeFromTargetDeath();
         }
 
         public override void Initialize(
@@ -62,7 +71,8 @@ namespace BackpackHero.Battle
                 trajectoryContext,
                 context.VisualSource,
                 context.CanDamageBackpack,
-                context.DamageSource);
+                context.DamageSource,
+                context.TargetHealth);
 
             LifetimeAndScreenBounds2D lifetime =
                 GetComponent<LifetimeAndScreenBounds2D>();
@@ -119,7 +129,8 @@ namespace BackpackHero.Battle
             ProjectileVisualSource visualSource =
                 ProjectileVisualSource.FighterDefault,
             bool canDamageBackpack = true,
-            BattleDamageSource damageSource = default)
+            BattleDamageSource damageSource = default,
+            Health targetHealth = null)
         {
             FindReferences();
 
@@ -160,8 +171,62 @@ namespace BackpackHero.Battle
                     .GetProjectileSpeedMultiplier(),
                 safeContext);
 
+            SubscribeToTargetDeath(targetHealth);
+
             gameObject.name =
                 $"{faction} Projectile";
+        }
+
+        private void SubscribeToTargetDeath(Health targetHealth)
+        {
+            UnsubscribeFromTargetDeath();
+            isFading = false;
+
+            if (targetHealth == null)
+            {
+                return;
+            }
+
+            subscribedTargetHealth = targetHealth;
+            subscribedTargetHealth.Died += HandleTargetDied;
+
+            if (subscribedTargetHealth.IsDead &&
+                BattleFlowController
+                    .IsProjectileTargetDeathFadeEnabled)
+            {
+                BeginFadeOut();
+            }
+        }
+
+        private void UnsubscribeFromTargetDeath()
+        {
+            if (subscribedTargetHealth != null)
+            {
+                subscribedTargetHealth.Died -= HandleTargetDied;
+            }
+
+            subscribedTargetHealth = null;
+        }
+
+        private void HandleTargetDied()
+        {
+            if (BattleFlowController
+                    .IsProjectileTargetDeathFadeEnabled)
+            {
+                BeginFadeOut();
+            }
+        }
+
+        private void BeginFadeOut()
+        {
+            if (isFading)
+            {
+                return;
+            }
+
+            isFading = true;
+            UnsubscribeFromTargetDeath();
+            BattleFadeOut2D.Begin(gameObject);
         }
 
         private void FindReferences()

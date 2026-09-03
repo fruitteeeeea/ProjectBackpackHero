@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 1163074887673446638}
   - component: {fileID: 9181062788350396426}
   - component: {fileID: 6034817294058162739}
+  - component: {fileID: 4830035014500423881}
   m_Layer: 8
   m_Name: Projectile
   m_TagString: Untagged
@@ -197,6 +198,19 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.ProjectileVisualController2D
   settings: {fileID: 11400000, guid: a7c4e1f9b2d3486ca05e7d3f8b9c6142, type: 2}
+--- !u!114 &4830035014500423881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6542516442177575068}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0068fbc298dd4786861ca72ef3c4e804, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.BattleFadeOut2D
+  duration: 0.5
 --- !u!1 &7112485868174335815
 GameObject:
   m_ObjectHideFlags: 0

@@ -14,6 +14,11 @@ namespace BackpackHero.Battle
         [SerializeField]
         private bool persistBetweenScenes = true;
 
+        [Header("Combat Rules")]
+        [Tooltip("开启时，飞行子弹的锁定目标在命中前死亡会使子弹渐隐退场。")]
+        [SerializeField]
+        private bool fadeProjectilesWhenTargetDies = true;
+
         public static BattleFlowController Instance { get; private set; }
 
         public static BattlePhase CurrentPhase =>
@@ -23,6 +28,14 @@ namespace BackpackHero.Battle
 
         public static bool IsCombatPhase =>
             CurrentPhase == BattlePhase.Combat;
+
+        /// <summary>
+        /// 锁定目标死亡时，飞行子弹是否应提前渐隐退场。
+        /// 尚未创建流程控制器时保持默认开启，保证自动创建控制器前后行为一致。
+        /// </summary>
+        public static bool IsProjectileTargetDeathFadeEnabled =>
+            Instance == null ||
+            Instance.fadeProjectilesWhenTargetDies;
 
         public static event Action<BattlePhase> PhaseChanged;
 
@@ -138,6 +151,15 @@ namespace BackpackHero.Battle
                 currentPhase == BattlePhase.Preparation
                     ? BattlePhase.Combat
                     : BattlePhase.Preparation);
+        }
+
+        /// <summary>
+        /// 运行时切换锁定目标死亡时的子弹提前退场规则。
+        /// 已经开始渐隐的对象不会被恢复，后续死亡事件按新值结算。
+        /// </summary>
+        public void SetProjectileTargetDeathFadeEnabled(bool enabled)
+        {
+            fadeProjectilesWhenTargetDies = enabled;
         }
 
         private static void RestoreAllBackpackHealth()

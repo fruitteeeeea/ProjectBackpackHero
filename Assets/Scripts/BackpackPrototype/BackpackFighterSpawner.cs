@@ -192,7 +192,8 @@ namespace BackpackPrototype
                     canDamageBackpack: false,
                     damageSource: new BattleDamageSource(
                         null,
-                        countsForDamageStatistics: false)));
+                        countsForDamageStatistics: false),
+                    targetHealth: target.Health));
             return true;
         }
 

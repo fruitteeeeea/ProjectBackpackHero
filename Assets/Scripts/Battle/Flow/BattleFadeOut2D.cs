@@ -12,6 +12,15 @@ namespace BackpackHero.Battle
         private float duration = 0.5f;
 
         private bool hasStarted;
+        private SpriteRenderer[] renderers;
+        private Color[] originalColors;
+
+        public bool IsFading => hasStarted;
+
+        private void Awake()
+        {
+            renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        }
 
         public static void Begin(GameObject target)
         {
@@ -39,6 +48,7 @@ namespace BackpackHero.Battle
             }
 
             hasStarted = true;
+            CacheRenderersAndColors();
 
             FighterCombat2D combat =
                 GetComponent<FighterCombat2D>();
@@ -66,20 +76,6 @@ namespace BackpackHero.Battle
 
         private IEnumerator FadeAndDestroy()
         {
-            SpriteRenderer[] renderers =
-                GetComponentsInChildren<SpriteRenderer>(true);
-
-            Color[] originalColors =
-                new Color[renderers.Length];
-
-            for (int index = 0;
-                 index < renderers.Length;
-                 index++)
-            {
-                originalColors[index] =
-                    renderers[index].color;
-            }
-
             float elapsed = 0f;
             float safeDuration = Mathf.Max(0.05f, duration);
 
@@ -106,6 +102,21 @@ namespace BackpackHero.Battle
             }
 
             Destroy(gameObject);
+        }
+
+        private void CacheRenderersAndColors()
+        {
+            if (renderers == null)
+            {
+                renderers = GetComponentsInChildren<SpriteRenderer>(true);
+            }
+
+            originalColors = new Color[renderers.Length];
+
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                originalColors[index] = renderers[index].color;
+            }
         }
     }
 }

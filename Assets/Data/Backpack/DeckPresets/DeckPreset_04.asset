@@ -10,11 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1bc3567a0b5e448f9ec9410037045512, type: 3}
-  m_Name: DeckPreset_04
+  m_Name: DeckPreset_04_CloseSweep
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.DeckPreset
   slots:
-  - {fileID: 11400000, guid: 31f9b30f4f5746ab8e933c27cd5d3291, type: 2}
   - {fileID: 11400000, guid: e5ea4fab34d1460d9bbbe3285783fab3, type: 2}
-  - {fileID: 11400000, guid: 6007433df60c04aecab6ba619a64cb26, type: 2}
-  - {fileID: 11400000, guid: daaef9150fc594dd99de956ba14ff6b4, type: 2}
-  - {fileID: 11400000, guid: 1078dec6aa2324917a0dc4f3f01deec3, type: 2}
+  - {fileID: 11400000, guid: ee27c5917c4254171a17b0f020f2332c, type: 2}
+  - {fileID: 11400000, guid: 77720dbcc67ba409d8cce5c77a86ec51, type: 2}
+  - {fileID: 11400000, guid: be3fb60727ecb4e828e4b4174e60ac6f, type: 2}
+  - {fileID: 11400000, guid: 929801f3993d745089b19529098347d5, type: 2}
+  strategyHint: "贴脸扫荡：护盾创造接近时间，需要霩弹和冲锋在短窗口内完成爆发。"
+  adjacencyHint: "爆炸模块覆盖需弹和护盾；弧线发射器交给冲锋机打干扰。"

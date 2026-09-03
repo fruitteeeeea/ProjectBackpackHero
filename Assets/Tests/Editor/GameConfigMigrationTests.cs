@@ -49,16 +49,23 @@ namespace BackpackHero.Tests.Editor
             Assert.That(proposed.Cooldown, Is.EqualTo(2.3f));
             Assert.That(GameConfigService.TryGetFighter("fighter_charge", out FighterConfig proposedFighter), Is.True);
             Assert.That(proposedFighter.ProjectileDamage, Is.EqualTo(.65f));
+            Assert.That(proposedFighter.AttackInterval, Is.EqualTo(.35f));
+            Assert.That(GameConfigService.TryGetFighter("fighter_laser", out FighterConfig proposedLaser), Is.True);
+            Assert.That(proposedLaser.AttackRange, Is.EqualTo(3.5f));
+            Assert.That(proposedLaser.ProjectileDamage, Is.EqualTo(.9f));
 
             Assert.That(GameConfigService.TrySetBalanceProfile(BalanceProfile.Legacy), Is.True);
             Assert.That(GameConfigService.TryGetItem("aircraft_charge", out ItemConfig legacy), Is.True);
             Assert.That(legacy.Cooldown, Is.EqualTo(1.8f));
             Assert.That(GameConfigService.TryGetFighter("fighter_charge", out FighterConfig legacyFighter), Is.True);
             Assert.That(legacyFighter.ProjectileDamage, Is.EqualTo(.8f));
+            Assert.That(GameConfigService.TryGetFighter("fighter_laser", out FighterConfig legacyLaser), Is.True);
+            Assert.That(legacyLaser.AttackRange, Is.EqualTo(2.5f));
             Assert.That(GameConfigService.GetEquipmentEffectConfig("equipment_arc_coil").MaximumChainTargets, Is.EqualTo(3));
 
             Assert.That(GameConfigService.TrySetBalanceProfile(BalanceProfile.Proposed), Is.True);
             Assert.That(GameConfigService.GetEquipmentEffectConfig("equipment_arc_coil").MaximumChainTargets, Is.EqualTo(2));
+            Assert.That(GameConfigService.GetEquipmentEffectConfig("equipment_rapid_cannon").DamageMultiplier, Is.EqualTo(.7f));
         }
 
         [Test]

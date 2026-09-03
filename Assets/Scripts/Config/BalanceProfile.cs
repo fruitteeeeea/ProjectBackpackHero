@@ -65,7 +65,7 @@ namespace BackpackHero.Config
                 case "fighter_shield": fighter.AttackInterval = 1f; fighter.ProjectileDamage = 2f; break;
                 case "fighter_explosive": fighter.MaximumHealth = 12; fighter.ProjectileDamage = .8f; break;
                 case "fighter_sniper": fighter.MaximumHealth = 6; fighter.ProjectileDamage = 2.5f; break;
-                case "fighter_laser": fighter.AttackInterval = 1f; fighter.ProjectileDamage = .5f; break;
+                case "fighter_laser": fighter.AttackRange = 2.5f; fighter.AttackInterval = 1f; fighter.ProjectileDamage = .5f; break;
                 case "fighter_shotgun": fighter.ProjectileDamage = .8f; break;
             }
         }
@@ -78,22 +78,22 @@ namespace BackpackHero.Config
             {
                 "equipment_first" => legacy
                     ? new EquipmentEffectBalanceConfig(.8f, 1f, .8f, .5f)
-                    : new EquipmentEffectBalanceConfig(.9f, .75f, .8f, .4f),
+                    : new EquipmentEffectBalanceConfig(.9f, .7f, .8f, .35f),
                 "equipment_rapid_cannon" => legacy
                     ? new EquipmentEffectBalanceConfig(.6f, 1f)
-                    : new EquipmentEffectBalanceConfig(.55f, .65f),
+                    : new EquipmentEffectBalanceConfig(.55f, .7f),
                 "equipment_wave_emitter" => legacy
                     ? new EquipmentEffectBalanceConfig(.8f, 1f)
-                    : new EquipmentEffectBalanceConfig(.75f, .8f),
+                    : new EquipmentEffectBalanceConfig(.75f, .85f),
                 "equipment_laser_link" => legacy
                     ? new EquipmentEffectBalanceConfig(3f, 1f, maximumLinkedTargets: 3)
-                    : new EquipmentEffectBalanceConfig(2.5f, .45f, maximumLinkedTargets: 2),
+                    : new EquipmentEffectBalanceConfig(2.5f, .5f, maximumLinkedTargets: 2),
                 "equipment_1x2" => legacy
                     ? new EquipmentEffectBalanceConfig(.8f, 1f)
                     : new EquipmentEffectBalanceConfig(.8f, .9f),
                 "equipment_arc_coil" => legacy
                     ? new EquipmentEffectBalanceConfig(.8f, 1f, maximumChainTargets: 3, chainDamageMultiplier: .5f)
-                    : new EquipmentEffectBalanceConfig(.9f, .55f, maximumChainTargets: 2, chainDamageMultiplier: .4f),
+                    : new EquipmentEffectBalanceConfig(.9f, .5f, maximumChainTargets: 2, chainDamageMultiplier: .4f),
                 _ => new EquipmentEffectBalanceConfig(0f, 1f),
             };
         }
@@ -102,7 +102,7 @@ namespace BackpackHero.Config
             BalanceProfile profile, string itemId) => itemId == "aircraft_explosive"
             ? profile == BalanceProfile.Legacy
                 ? new EquipmentEffectBalanceConfig(0f, 1f, .8f, .5f)
-                : new EquipmentEffectBalanceConfig(0f, 1f, .8f, .4f)
+                : new EquipmentEffectBalanceConfig(0f, 1f, .8f, .35f)
             : new EquipmentEffectBalanceConfig(0f, 1f);
     }
 }

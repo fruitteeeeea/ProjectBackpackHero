@@ -266,7 +266,7 @@ namespace BackpackPrototype
                 if (item == null || !IsUnlocked(item) || !IsDeckSlotFor(item, slot) || !used.Add(item.ItemId)) data.DeckItemIds[slot] = null;
             }
             if (!needsInitialDeck || catalog == null) return;
-            FillInitialDeck(new[] { "aircraft_charge", "aircraft_first", "aircraft_shield", "equipment_1x2", "equipment_arc_coil" }, used);
+            FillInitialDeck(new[] { "aircraft_first", "aircraft_charge", "aircraft_shield", "equipment_rapid_cannon", "equipment_1x2" }, used);
             FillInitialDeck(ItemType.Aircraft, 0, AircraftDeckSlotCount, used);
             FillInitialDeck(ItemType.Equipment, AircraftDeckSlotCount, EquipmentDeckSlotCount, used);
         }

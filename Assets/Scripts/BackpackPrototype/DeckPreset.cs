@@ -9,7 +9,19 @@ namespace BackpackPrototype
     public sealed class DeckPreset : ScriptableObject
     {
         [SerializeField] private List<ItemData> slots = new();
+        [TextArea(2, 4)]
+        [SerializeField] private string strategyHint;
+        [TextArea(2, 4)]
+        [SerializeField] private string adjacencyHint;
         public IReadOnlyList<ItemData> Slots => slots;
+        public string StrategyHint => strategyHint ?? string.Empty;
+        public string AdjacencyHint => adjacencyHint ?? string.Empty;
+
+        public void SetGuidance(string strategy, string adjacency)
+        {
+            strategyHint = strategy?.Trim() ?? string.Empty;
+            adjacencyHint = adjacency?.Trim() ?? string.Empty;
+        }
 
         public bool IsValid(out string error)
         {

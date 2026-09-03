@@ -45,6 +45,16 @@ namespace BackpackHero.EditorTools
         private void DrawPresetItems(DeckPreset preset)
         {
             EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("流派说明", EditorStyles.boldLabel);
+            string strategy = EditorGUILayout.TextArea(preset.StrategyHint, GUILayout.MinHeight(34f));
+            string adjacency = EditorGUILayout.TextArea(preset.AdjacencyHint, GUILayout.MinHeight(34f));
+            if (strategy != preset.StrategyHint || adjacency != preset.AdjacencyHint)
+            {
+                Undo.RecordObject(preset, "Edit deck preset guidance");
+                preset.SetGuidance(strategy, adjacency);
+                EditorUtility.SetDirty(preset);
+                AssetDatabase.SaveAssets();
+            }
             EditorGUILayout.LabelField("当前配置物品", EditorStyles.boldLabel);
             if (!preset.IsValid(out string error)) EditorGUILayout.HelpBox(error, MessageType.Error);
             string[] labels = { "飞机 1", "飞机 2", "飞机 3", "装备 1", "装备 2" };

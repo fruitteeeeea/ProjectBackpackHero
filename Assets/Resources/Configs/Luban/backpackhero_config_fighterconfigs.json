@@ -22,7 +22,7 @@
     "targetingArcAngle": 30,
     "targetingPriority": 0,
     "targetingMode": 0,
-    "attackInterval": 0.3,
+    "attackInterval": 0.35,
     "projectileDamage": 0.65,
     "projectileSpeed": 8,
     "projectileLifetimeOverride": -1
@@ -74,12 +74,12 @@
     "displayName": "激光飞机",
     "baseSpeed": 3,
     "maximumHealth": 8,
-    "attackRange": 2.5,
+    "attackRange": 3.5,
     "targetingArcAngle": 45,
     "targetingPriority": 0,
     "targetingMode": 1,
     "attackInterval": 0.75,
-    "projectileDamage": 0.8,
+    "projectileDamage": 0.9,
     "projectileSpeed": 12,
     "projectileLifetimeOverride": -1
   },

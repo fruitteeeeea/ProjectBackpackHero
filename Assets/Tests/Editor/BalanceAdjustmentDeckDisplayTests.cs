@@ -15,7 +15,7 @@ public sealed class BalanceAdjustmentDeckDisplayTests
         DeckPreset preset = LoadDefaultPreset();
 
         Assert.That(BalanceAdjustmentDeckDisplay.DescribePlayer(preset.Slots),
-            Is.EqualTo("DeckPreset_01"));
+            Is.EqualTo("DeckPreset_01_GuardlineAssault"));
     }
 
     [Test]
@@ -26,7 +26,7 @@ public sealed class BalanceAdjustmentDeckDisplayTests
 
         Assert.That(BalanceAdjustmentDeckDisplay.DescribeEnemy(runtimeDeck,
                 "Runtime Deck"),
-            Is.EqualTo("DeckPreset_01"));
+            Is.EqualTo("DeckPreset_01_GuardlineAssault"));
     }
 
     [Test]

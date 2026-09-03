@@ -116,7 +116,8 @@ namespace BackpackHero.Config
                     Id = row.Id, DisplayName = row.DisplayName, BaseSpeed = row.BaseSpeed, MaximumHealth = row.MaximumHealth,
                     AttackRange = row.AttackRange, TargetingArcAngle = row.TargetingArcAngle, TargetingPriority = row.TargetingPriority,
                     TargetingMode = (FighterTargetSelectionMode)row.TargetingMode, AttackInterval = row.AttackInterval,
-                    ProjectileDamage = row.ProjectileDamage, ProjectileSpeed = row.ProjectileSpeed
+                    ProjectileDamage = row.ProjectileDamage, ProjectileSpeed = row.ProjectileSpeed,
+                    ProjectileLifetimeOverride = row.ProjectileLifetimeOverride
                 };
                 AddUnique(Fighters, config.Id, config, "fighter");
             }

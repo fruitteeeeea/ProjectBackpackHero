@@ -31,8 +31,8 @@ const fieldTypes = new Map([
   ["fighterId", "string"], ["shapeId", "string"],
 ]);
 
-const fighterColumns = ["id", "displayName", "baseSpeed", "maximumHealth", "attackRange", "targetingArcAngle", "targetingPriority", "targetingMode", "attackInterval", "projectileDamage", "projectileSpeed"];
-const fighterTypes = ["string", "string", "float", "int", "float", "float", "int", "int", "float", "float", "float"];
+const fighterColumns = ["id", "displayName", "baseSpeed", "maximumHealth", "attackRange", "targetingArcAngle", "targetingPriority", "targetingMode", "attackInterval", "projectileDamage", "projectileSpeed", "projectileLifetimeOverride"];
+const fighterTypes = ["string", "string", "float", "int", "float", "float", "int", "int", "float", "float", "float", "float"];
 const levelColumns = ["playerAircraftHealthMultiplier", "playerAircraftDamageMultiplier", "backpackRoundHealthMultipliers", "enemyStages"];
 const levelTypes = ["float", "float", "string", "string"];
 

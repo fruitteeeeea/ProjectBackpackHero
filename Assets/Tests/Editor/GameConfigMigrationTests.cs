@@ -5,6 +5,7 @@ using BackpackHero.Debugging;
 using BackpackHero.Editor;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 
 namespace BackpackHero.Tests.Editor
 {
@@ -24,6 +25,9 @@ namespace BackpackHero.Tests.Editor
             Assert.That(item.FighterId, Is.EqualTo("fighter_normal"));
             Assert.That(GameConfigService.TryGetFighter("fighter_sniper", out FighterConfig fighter), Is.True);
             Assert.That(fighter.ProjectileDamage, Is.EqualTo(2.5f));
+            Assert.That(fighter.ProjectileLifetimeOverride, Is.EqualTo(6f));
+            Assert.That(GameConfigService.TryGetFighter("fighter_normal", out FighterConfig normalFighter), Is.True);
+            Assert.That(normalFighter.ProjectileLifetimeOverride, Is.EqualTo(-1f));
             Assert.That(GameConfigService.Level.BackpackRoundHealthMultipliers, Has.Length.EqualTo(6));
             Assert.That(
                 GameConfigService.Level.EnemyStages,
@@ -49,6 +53,20 @@ namespace BackpackHero.Tests.Editor
                 AssetDatabase.GetAssetPath(catalog.LevelDifficulty),
                 Is.EqualTo(
                     "Assets/GameData/Gameplay/LevelDifficultyDefault.asset"));
+        }
+
+        [Test]
+        public void BaseProjectile_UsesTwoSecondLifetime()
+        {
+            GameObject projectilePrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/Prefabs/Battle/Projectiles/Projectile.prefab");
+
+            Assert.That(projectilePrefab, Is.Not.Null);
+            Assert.That(
+                projectilePrefab.GetComponent<LifetimeAndScreenBounds2D>()
+                    .Lifetime,
+                Is.EqualTo(2f));
         }
 
         [Test]

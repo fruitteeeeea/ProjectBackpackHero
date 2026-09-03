@@ -28,6 +28,7 @@ public sealed partial class FighterConfig : Luban.BeanBase
         { if(!_buf["attackInterval"].IsNumber) { throw new SerializationException(); }  AttackInterval = _buf["attackInterval"]; }
         { if(!_buf["projectileDamage"].IsNumber) { throw new SerializationException(); }  ProjectileDamage = _buf["projectileDamage"]; }
         { if(!_buf["projectileSpeed"].IsNumber) { throw new SerializationException(); }  ProjectileSpeed = _buf["projectileSpeed"]; }
+        { if(!_buf["projectileLifetimeOverride"].IsNumber) { throw new SerializationException(); }  ProjectileLifetimeOverride = _buf["projectileLifetimeOverride"]; }
     }
 
     public static FighterConfig DeserializeFighterConfig(JSONNode _buf)
@@ -46,6 +47,7 @@ public sealed partial class FighterConfig : Luban.BeanBase
     public readonly float AttackInterval;
     public readonly float ProjectileDamage;
     public readonly float ProjectileSpeed;
+    public readonly float ProjectileLifetimeOverride;
    
     public const int __ID__ = 1213040231;
     public override int GetTypeId() => __ID__;
@@ -68,6 +70,7 @@ public sealed partial class FighterConfig : Luban.BeanBase
         + "attackInterval:" + AttackInterval + ","
         + "projectileDamage:" + ProjectileDamage + ","
         + "projectileSpeed:" + ProjectileSpeed + ","
+        + "projectileLifetimeOverride:" + ProjectileLifetimeOverride + ","
         + "}";
     }
 }

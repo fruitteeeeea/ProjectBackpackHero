@@ -65,6 +65,10 @@ namespace BackpackHero.Battle
         [SerializeField, Min(0.1f)]
         private float projectileSpeed = 8f;
 
+        [Tooltip("-1表示使用子弹Prefab的默认寿命；大于0时覆盖默认攻击子弹寿命。")]
+        [SerializeField]
+        private float projectileLifetimeOverride = -1f;
+
         [Header("Default Attack Override")]
         [Tooltip("留空时使用 Fighter Prefab 的默认攻击预制体。")]
         [SerializeField]
@@ -110,6 +114,19 @@ namespace BackpackHero.Battle
         public float ProjectileSpeed =>
             Mathf.Max(0.1f, Config?.ProjectileSpeed ?? projectileSpeed);
 
+        /// <summary>
+        /// 默认攻击子弹的寿命覆盖值；-1表示使用攻击Prefab的配置。
+        /// </summary>
+        public float ProjectileLifetimeOverride
+        {
+            get
+            {
+                float value = Config?.ProjectileLifetimeOverride ??
+                    projectileLifetimeOverride;
+                return value > 0f ? value : -1f;
+            }
+        }
+
         public BattleAttack2D DefaultAttackPrefab =>
             defaultAttackPrefab;
 
@@ -148,6 +165,11 @@ namespace BackpackHero.Battle
 
             projectileSpeed =
                 Mathf.Max(0.1f, projectileSpeed);
+
+            projectileLifetimeOverride =
+                projectileLifetimeOverride > 0f
+                    ? projectileLifetimeOverride
+                    : -1f;
         }
 #endif
     }

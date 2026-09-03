@@ -559,7 +559,10 @@ namespace BackpackHero.Battle
                 equipmentItemModifier,
                 true,
                 isSpreadShot,
-                currentTarget.TargetHealth);
+                currentTarget.TargetHealth,
+                visualSource == ProjectileVisualSource.FighterDefault
+                    ? fighter.Definition.ProjectileLifetimeOverride
+                    : -1f);
         }
 
         /// <summary>
@@ -599,7 +602,8 @@ namespace BackpackHero.Battle
             float equipmentItemModifier = 1f,
             bool countsForDamageStatistics = true,
             bool isSpreadShot = false,
-            Health targetHealth = null)
+            Health targetHealth = null,
+            float projectileLifetimeOverride = -1f)
         {
             if (fighter == null ||
                 fighter.Definition == null ||
@@ -647,7 +651,7 @@ namespace BackpackHero.Battle
                             fighter.Definition
                                 .ProjectileSpeed *
                             attackModifier,
-                            -1f,
+                            projectileLifetimeOverride,
                             firePoint.position,
                             fireDirection,
                             transform.position,

@@ -68,7 +68,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c90b86100aa48f789b727d87d88e862, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Battle.LifetimeAndScreenBounds2D
-  lifetime: 5
+  lifetime: 2
   destroyWhenLeavingScreen: 1
   viewportMargin: 0.05
 --- !u!114 &3654579863661423356

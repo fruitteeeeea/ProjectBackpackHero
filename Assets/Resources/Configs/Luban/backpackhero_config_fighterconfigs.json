@@ -10,7 +10,8 @@
     "targetingMode": 0,
     "attackInterval": 0.5,
     "projectileDamage": 1,
-    "projectileSpeed": 8
+    "projectileSpeed": 8,
+    "projectileLifetimeOverride": -1
   },
   {
     "id": "fighter_charge",
@@ -23,7 +24,8 @@
     "targetingMode": 0,
     "attackInterval": 0.25,
     "projectileDamage": 0.8,
-    "projectileSpeed": 8
+    "projectileSpeed": 8,
+    "projectileLifetimeOverride": -1
   },
   {
     "id": "fighter_shield",
@@ -36,7 +38,8 @@
     "targetingMode": 0,
     "attackInterval": 1,
     "projectileDamage": 2,
-    "projectileSpeed": 8
+    "projectileSpeed": 8,
+    "projectileLifetimeOverride": -1
   },
   {
     "id": "fighter_explosive",
@@ -49,7 +52,8 @@
     "targetingMode": 0,
     "attackInterval": 0.5,
     "projectileDamage": 0.8,
-    "projectileSpeed": 8
+    "projectileSpeed": 8,
+    "projectileLifetimeOverride": -1
   },
   {
     "id": "fighter_sniper",
@@ -62,7 +66,8 @@
     "targetingMode": 0,
     "attackInterval": 1,
     "projectileDamage": 2.5,
-    "projectileSpeed": 12
+    "projectileSpeed": 12,
+    "projectileLifetimeOverride": 6
   },
   {
     "id": "fighter_laser",
@@ -75,7 +80,8 @@
     "targetingMode": 1,
     "attackInterval": 1,
     "projectileDamage": 0.5,
-    "projectileSpeed": 12
+    "projectileSpeed": 12,
+    "projectileLifetimeOverride": -1
   },
   {
     "id": "fighter_shotgun",
@@ -88,6 +94,7 @@
     "targetingMode": 0,
     "attackInterval": 1,
     "projectileDamage": 0.8,
-    "projectileSpeed": 8
+    "projectileSpeed": 8,
+    "projectileLifetimeOverride": -1
   }
 ]

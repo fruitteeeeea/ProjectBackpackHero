@@ -50,6 +50,7 @@ namespace BackpackHero.Config
         public float AttackInterval { get; internal set; }
         public float ProjectileDamage { get; internal set; }
         public float ProjectileSpeed { get; internal set; }
+        public float ProjectileLifetimeOverride { get; internal set; }
     }
 
     public sealed class LevelConfig

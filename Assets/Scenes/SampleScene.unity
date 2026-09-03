@@ -7158,7 +7158,7 @@ MonoBehaviour:
   pulseMaterial: {fileID: 2100000, guid: 7f10a90c38724cc9b11abda468255e47, type: 2}
   travelDuration: 2
   endFadeDuration: 0.25
-  intervalDuration: 1.25
+  cooldownDuration: 2.5
   pulseLength: 0.6
   sampleCount: 12
   pulseWidth: 0.42

@@ -145,7 +145,7 @@ namespace BackpackPrototype
         /// <summary>Roll 次数变化后通知商店 UI 刷新显示。</summary>
         public event Action RollStateChanged;
 
-        /// <summary>拖拽物品变化后通知物品信息 UI 刷新。</summary>
+        /// <summary>按住或拖拽物品变化后通知物品信息 UI 刷新。</summary>
         public event Action<ItemView> SelectedItemChanged;
 
         public BackpackController Backpack =>
@@ -1780,6 +1780,8 @@ namespace BackpackPrototype
 
             view.SelectionRequested +=
                 HandleSelectionRequested;
+            view.SelectionReleased +=
+                HandleSelectionReleased;
             view.MergedSuccessfully +=
                 HandleItemMerged;
             view.DragStateChanged +=
@@ -2121,6 +2123,15 @@ namespace BackpackPrototype
             ItemView view)
         {
             SetSelectedItem(view);
+        }
+
+        private void HandleSelectionReleased(
+            ItemView view)
+        {
+            if (SelectedItem == view)
+            {
+                SetSelectedItem(null);
+            }
         }
 
         private void HandleItemPlaced(ItemView view)

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace BackpackPrototype
 {
     /// <summary>
-    /// 在拖拽物品期间显示其名称、等级和描述。
+    /// 在按住或拖拽物品期间显示其名称、等级和描述。
     /// 视觉层级保留在预制体中，便于直接调整排版。
     /// </summary>
     public sealed class ItemInfoPanel : MonoBehaviour
@@ -69,7 +69,6 @@ namespace BackpackPrototype
         public void RefreshPresentation(ItemView selectedItem)
         {
             if (selectedItem == null ||
-                !selectedItem.IsDragging ||
                 selectedItem.Instance?.Data == null)
             {
                 SetVisible(false);

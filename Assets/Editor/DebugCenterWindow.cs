@@ -37,6 +37,7 @@ namespace BackpackHero.EditorTools
         StyleTendency,
         AircraftVisual,
         BackpackVisual,
+        BattleCurveVisual,
         DeckPresets,
         ItemProgression,
         Pack,
@@ -115,6 +116,12 @@ namespace BackpackHero.EditorTools
             new(DebugCenterTab.BackpackVisual, DebugCenterKind.VisualEffects, "背包动效",
                 () => BackpackVisualDebugRuntime.Instance != null,
                 () => ScriptableObject.CreateInstance<BackpackVisualDebugWindow>()),
+            new(DebugCenterTab.BattleCurveVisual, DebugCenterKind.VisualEffects, "战斗曲线视觉效果",
+                () => EditorApplication.isPlaying &&
+                    BattleCurvePulseRenderer.ActiveInstance != null &&
+                    BattleCurvePulseRenderer.ActiveInstance.gameObject.scene.path ==
+                        "Assets/Scenes/SampleScene.unity",
+                () => ScriptableObject.CreateInstance<BattleCurveVisualDebugWindow>()),
             new(DebugCenterTab.FloatingDamageText, DebugCenterKind.VisualEffects, "伤害飘字",
                 () => FloatingDamageTextDebugRuntime.Instance != null,
                 VisualEffectsDebugCenterWindow.CreateFloatingDamageTextContent),
@@ -366,6 +373,7 @@ namespace BackpackHero.EditorTools
                 case LevelDebugWindow level: level.DrawTab(); break;
                 case AircraftVisualDebugWindow aircraftVisual: aircraftVisual.DrawTab(); break;
                 case BackpackVisualDebugWindow backpackVisual: backpackVisual.DrawTab(); break;
+                case BattleCurveVisualDebugWindow battleCurveVisual: battleCurveVisual.DrawTab(); break;
                 case ArtAssetDebugWindow artAsset: artAsset.DrawTab(); break;
                 case LevelDifficultyDebugWindow levelDifficulty: levelDifficulty.DrawTab(); break;
                 case DeckPresetDebugWindow deckPresets: deckPresets.DrawTab(); break;

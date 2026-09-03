@@ -14,7 +14,9 @@ namespace BackpackPrototype
 {
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasGroup))]
-    public sealed class ItemView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, ICanvasRaycastFilter
+    public sealed class ItemView : MonoBehaviour, IPointerDownHandler,
+        IPointerUpHandler, IBeginDragHandler, IDragHandler, IEndDragHandler,
+        ICanvasRaycastFilter
     {
         private const float LevelBadgeSize = 35f;
         private const float LevelBadgeCircleBrightness = .85f;
@@ -223,6 +225,7 @@ namespace BackpackPrototype
         public event Action<ItemView> PlacedSuccessfully;
         public event Action<ItemView> DeletedSuccessfully;
         public event Action<ItemView> SelectionRequested;
+        public event Action<ItemView> SelectionReleased;
         public event Action<ItemView, ItemInstance> MergedSuccessfully;
         public event Action<ItemView, bool> DragStateChanged;
         public event Action<ItemView> DragPreviewChanged;
@@ -1286,6 +1289,23 @@ namespace BackpackPrototype
             RefreshAircraftQualityPulse();
         }
 
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (BattleFlowController.IsCombatPhase ||
+                canvasGroup == null ||
+                !canvasGroup.interactable)
+            {
+                return;
+            }
+
+            RequestSelection();
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            SelectionReleased?.Invoke(this);
+        }
+
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (BattleFlowController.IsCombatPhase ||
@@ -1299,7 +1319,6 @@ namespace BackpackPrototype
             PlayBackpackItemSfx();
             RefreshAircraftGlow();
             RefreshAircraftQualityPulse();
-            RequestSelection();
             canDeleteFromTrash = IsPlacedInBackpack;
             originalParent = rectTransform.parent;
             originalSiblingIndex = rectTransform.GetSiblingIndex();

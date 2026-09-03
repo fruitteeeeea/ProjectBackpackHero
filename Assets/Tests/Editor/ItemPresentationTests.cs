@@ -5,6 +5,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using BackpackPrototype;
 
 public sealed class ItemPresentationTests
@@ -392,7 +393,7 @@ public sealed class ItemPresentationTests
     }
 
     [Test]
-    public void ItemInfoPanel_ResolvesLabelsAndOnlyShowsWhileDragging()
+    public void ItemInfoPanel_ResolvesLabelsAndShowsForSelectedItem()
     {
         GameObject root = new GameObject("ItemInfoPanel");
         GameObject itemRoot = new GameObject("Item", typeof(RectTransform));
@@ -415,8 +416,6 @@ public sealed class ItemPresentationTests
                 "Assets/Data/Backpack/Items/Equipment_RapidCannon.asset");
             ItemView item = itemRoot.AddComponent<ItemView>();
             SetAutoProperty(item, "Instance", new ItemInstance(data.ItemId, data, Vector2Int.zero));
-            SetField(item, "isDragging", true);
-
             panel.RefreshPresentation(item);
 
             Assert.That(panel.IsShowing, Is.True);
@@ -428,14 +427,40 @@ public sealed class ItemPresentationTests
                 "<color=#3DDB37>0.6s</color>."));
             Assert.That(description.text, Does.Not.Contain(data.Description));
 
-            SetField(item, "isDragging", false);
-            panel.RefreshPresentation(item);
+            panel.RefreshPresentation(null);
             Assert.That(panel.IsShowing, Is.False);
         }
         finally
         {
             Object.DestroyImmediate(itemRoot);
             Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
+    public void ItemView_PointerPressRequestsAndReleasesSelection()
+    {
+        GameObject itemRoot = new GameObject("Item", typeof(RectTransform),
+            typeof(CanvasGroup));
+        try
+        {
+            ItemView item = itemRoot.AddComponent<ItemView>();
+            bool selected = false;
+            bool released = false;
+            item.SelectionRequested += _ => selected = true;
+            item.SelectionReleased += _ => released = true;
+
+            PointerEventData eventData = new PointerEventData(null);
+            item.OnPointerDown(eventData);
+            item.OnPointerUp(eventData);
+
+            Assert.That(selected, Is.True);
+            Assert.That(released, Is.True);
+            Assert.That(item.IsDragging, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(itemRoot);
         }
     }
 

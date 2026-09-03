@@ -1,6 +1,7 @@
 using System;
 using BackpackHero.Battle;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace BackpackHero.Input
 {
@@ -18,7 +19,8 @@ namespace BackpackHero.Input
         [Header("Pulse Timing")]
         [SerializeField, Min(0.01f)] private float travelDuration = 0.55f;
         [SerializeField, Min(0.01f)] private float endFadeDuration = 0.25f;
-        [SerializeField, Min(0f)] private float intervalDuration = 1.25f;
+        [FormerlySerializedAs("intervalDuration")]
+        [SerializeField, Min(0f)] private float cooldownDuration = 2.5f;
 
         [Header("Pulse Shape")]
         [SerializeField, Range(0.01f, 1f)] private float pulseLength = 0.16f;
@@ -35,15 +37,37 @@ namespace BackpackHero.Input
         private static readonly int OpacityId =
             Shader.PropertyToID("_Opacity");
 
+        public static BattleCurvePulseRenderer ActiveInstance { get; private set; }
+
         /// <summary>
         /// True while the current pulse is travelling or fading at the curve end.
         /// </summary>
         public bool IsPulseActive { get; private set; }
 
+        public BattleCurvePulseSettings Settings => new(
+            travelDuration,
+            endFadeDuration,
+            cooldownDuration,
+            pulseLength,
+            sampleCount,
+            pulseWidth);
+
         /// <summary>
         /// Raised when a visible pulse completes its travel and end fade naturally.
         /// </summary>
         public event Action PulseCompleted;
+
+        /// <summary>即时应用调试面板编辑的脉冲显示参数。</summary>
+        public void SetSettings(BattleCurvePulseSettings settings)
+        {
+            travelDuration = settings.TravelDuration;
+            endFadeDuration = settings.EndFadeDuration;
+            cooldownDuration = settings.CooldownDuration;
+            pulseLength = settings.PulseLength;
+            sampleCount = settings.SampleCount;
+            pulseWidth = settings.PulseWidth;
+            EnsureLineRenderer();
+        }
 
         public static void CalculatePulseRange(
             float progress,
@@ -81,6 +105,18 @@ namespace BackpackHero.Input
                 Mathf.Max(0.01f, fadeTime);
         }
 
+        public static bool IsPulseVisibleAtCycleTime(
+            float elapsedTime,
+            float travelTime,
+            float fadeTime,
+            float cooldownTime)
+        {
+            float cycleDuration = Mathf.Max(.01f, travelTime) +
+                Mathf.Max(.01f, fadeTime) + Mathf.Max(0f, cooldownTime);
+            float cycleTime = Mathf.Repeat(elapsedTime, cycleDuration);
+            return IsPulseActiveAtElapsedTime(cycleTime, travelTime, fadeTime);
+        }
+
         public void SetRuntimeVisibility(float visibility)
         {
             runtimeVisibility = Mathf.Clamp01(visibility);
@@ -93,6 +129,7 @@ namespace BackpackHero.Input
 
         private void OnEnable()
         {
+            ActiveInstance = this;
             EnsureLineRenderer();
             BattleFlowController.PhaseChanged += HandlePhaseChanged;
             HandlePhaseChanged(BattleFlowController.CurrentPhase);
@@ -102,20 +139,15 @@ namespace BackpackHero.Input
         {
             BattleFlowController.PhaseChanged -= HandlePhaseChanged;
             SetPulseActive(false, false);
+            if (ActiveInstance == this)
+            {
+                ActiveInstance = null;
+            }
         }
 
         private void OnValidate()
         {
-            travelDuration = Mathf.Max(0.01f, travelDuration);
-            endFadeDuration = Mathf.Max(0.01f, endFadeDuration);
-            intervalDuration = Mathf.Max(0f, intervalDuration);
-            pulseLength = Mathf.Clamp01(pulseLength);
-            sampleCount = Mathf.Clamp(
-                sampleCount,
-                MinimumSampleCount,
-                MaximumSampleCount);
-            pulseWidth = Mathf.Max(0.001f, pulseWidth);
-            EnsureLineRenderer();
+            SetSettings(Settings);
         }
 
         private void LateUpdate()
@@ -160,16 +192,15 @@ namespace BackpackHero.Input
                 return;
             }
 
-            float activeDuration = travelDuration + endFadeDuration;
-            float cycleDuration = activeDuration + intervalDuration;
-            float cycleTime = cycleDuration > 0f
-                ? Mathf.Repeat(Time.time - combatStartTime, cycleDuration)
-                : 0f;
-
-            if (!IsPulseActiveAtElapsedTime(
-                    cycleTime,
+            float elapsedTime = Time.time - combatStartTime;
+            float cycleDuration = travelDuration + endFadeDuration +
+                cooldownDuration;
+            float cycleTime = Mathf.Repeat(elapsedTime, cycleDuration);
+            if (!IsPulseVisibleAtCycleTime(
+                    elapsedTime,
                     travelDuration,
-                    endFadeDuration))
+                    endFadeDuration,
+                    cooldownDuration))
             {
                 SetPulseVisible(false);
                 SetPulseActive(false, true);

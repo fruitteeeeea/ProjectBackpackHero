@@ -8,7 +8,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPrototype.DeckPreset
   slots:
   - {fileID: 11400000, guid: 6f2d43cf12b3465aa4404aef06c4f984, type: 2}
-  - {fileID: 11400000, guid: daaef9150fc594dd99de956ba14ff6b4, type: 2}
   - {fileID: 11400000, guid: 77720dbcc67ba409d8cce5c77a86ec51, type: 2}
   - {fileID: 11400000, guid: 4e2977e6d8b94cfa9f5ac4e84cc61c12, type: 2}
+  - {fileID: 11400000, guid: daaef9150fc594dd99de956ba14ff6b4, type: 2}
   - {fileID: 11400000, guid: 1078dec6aa2324917a0dc4f3f01deec3, type: 2}

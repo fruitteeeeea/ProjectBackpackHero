@@ -11,19 +11,27 @@ using BackpackPrototype;
 public sealed class ItemPresentationTests
 {
     [Test]
-    public void PlayerItemHangarPresenter_EquipmentDetailContainsOnlyCd()
+    public void PlayerItemHangarPresenter_EquipmentDetailUsesCurrentAndNextEffectCooldown()
     {
         ItemData item = AssetDatabase.LoadAssetAtPath<ItemData>(
-            "Assets/Data/Backpack/Items/Equipment_ArcCoil.asset");
+            "Assets/Data/Backpack/Items/Equipment_WaveEmitter.asset");
         MethodInfo method = typeof(PlayerItemHangarPresenter).GetMethod(
             "BuildEquipmentDetailAttributes", BindingFlags.Static | BindingFlags.NonPublic);
 
         HangarDetailAttribute[] attributes =
-            (HangarDetailAttribute[])method.Invoke(null, new object[] { item });
+            (HangarDetailAttribute[])method.Invoke(null, new object[] { item, 1 });
 
         Assert.That(attributes, Has.Length.EqualTo(1));
         Assert.That(attributes[0].Label, Is.EqualTo("CD"));
-        Assert.That(attributes[0].Value, Is.EqualTo(item.Cd.ToString("0.##") + "s"));
+        Assert.That(attributes[0].Value, Is.EqualTo("0.8s"));
+        Assert.That(attributes[0].AdditionalValue, Is.EqualTo("-0.02s"));
+
+        attributes = (HangarDetailAttribute[])method.Invoke(null, new object[]
+        {
+            item, PlayerItemSystem.MaximumLevel
+        });
+        Assert.That(attributes[0].Value, Is.EqualTo("0.64s"));
+        Assert.That(attributes[0].AdditionalValue, Is.Empty);
     }
 
     [Test]
@@ -81,22 +89,33 @@ public sealed class ItemPresentationTests
                 labels[index] = NewText(attributeCard.transform, "label");
                 values[index] = NewText(value.transform, "val");
             }
-            layout.Configure(null, null, null, null, null, null, null, null, values, labels);
+            TMP_Text addition = NewText(attributeRow.transform, "addVal");
+            layout.Configure(null, null, null, null, null, null, null, null, values, labels,
+                new[] { addition });
 
             HangarCardItem card = cardRoot.AddComponent<HangarCardItem>();
             card.Configure(new HangarItemSnapshot(HangarItemKind.Equipment, "Arc Coil", "", null,
                 null, true, 1, 0, 0, 0, 3.5f, 1, null, Color.white, "Unlocked",
-                new[] { new HangarDetailAttribute("CD", "3.5s") }));
+                new[] { new HangarDetailAttribute("CD", "0.8s", "-0.02s") }));
 
             layout.ShowPreview(card);
 
             Assert.That(labels[0].text, Is.EqualTo("CD"));
-            Assert.That(values[0].text, Is.EqualTo("3.5s"));
+            Assert.That(values[0].text, Is.EqualTo("0.8s"));
+            Assert.That(addition.text, Is.EqualTo("-0.02s"));
+            Assert.That(addition.gameObject.activeSelf, Is.True);
             HorizontalLayoutGroup rowLayout = attributeRow.GetComponent<HorizontalLayoutGroup>();
             Assert.That(rowLayout.childAlignment, Is.EqualTo(TextAnchor.MiddleLeft));
             Assert.That(rowLayout.padding.left, Is.EqualTo(11));
             for (int index = 1; index < values.Length; index++)
                 Assert.That(values[index].transform.parent.parent.gameObject.activeSelf, Is.False);
+
+            card.Configure(new HangarItemSnapshot(HangarItemKind.Equipment, "Arc Coil", "", null,
+                null, true, 10, 0, 0, 0, 3.5f, 1, null, Color.white, "Unlocked",
+                new[] { new HangarDetailAttribute("CD", "0.64s") }, maximumLevel: 10));
+            layout.ShowPreview(card);
+            Assert.That(addition.gameObject.activeSelf, Is.False);
+            Assert.That(addition.text, Is.Empty);
         }
         finally
         {

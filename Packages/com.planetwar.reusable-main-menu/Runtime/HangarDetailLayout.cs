@@ -165,9 +165,8 @@ namespace PlanetWar.ReusableMainMenu
                 if (label == null) label = FindSiblingLabel(text);
                 if (label != null) label.text = attribute.Label;
 
-                // UICardInfo separates the current value (white val) from the next-level
-                // delta (green addVal). Equipment keeps its existing UICardSpell rendering.
-                if (snapshot.Kind != HangarItemKind.Aircraft) continue;
+                // Both detail panels separate the current value (white val) from the
+                // next-level delta (green addVal).
                 TMP_Text addValue = attributeAddValueTexts != null &&
                     index < attributeAddValueTexts.Length ? attributeAddValueTexts[index] : null;
                 if (addValue == null) continue;

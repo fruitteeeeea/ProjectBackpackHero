@@ -142,7 +142,7 @@ namespace BackpackPrototype
 
         private static HangarDetailAttribute[] BuildDetailAttributes(ItemData item, int level)
         {
-            if (item.ItemType == ItemType.Equipment) return BuildEquipmentDetailAttributes(item);
+            if (item.ItemType == ItemType.Equipment) return BuildEquipmentDetailAttributes(item, level);
             if (item.FighterDefinition == null) return null;
             FighterDefinition fighter = item.FighterDefinition;
             // The migrated UICardInfo prefab serializes its six visible rows in this order:
@@ -178,12 +178,41 @@ namespace BackpackPrototype
                    GamePacingDebugRuntime.GetDamageFloatingTextMagicNumber();
         }
 
-        private static HangarDetailAttribute[] BuildEquipmentDetailAttributes(ItemData item)
+        private static HangarDetailAttribute[] BuildEquipmentDetailAttributes(ItemData item,
+            int level)
         {
+            float baseCooldown = item.Cd;
+            bool hasNumericEffect = false;
+            foreach (EquipmentEffectDefinition effect in item.EquipmentEffects)
+            {
+                if (effect == null || !effect.TryGetHangarStats(out EquipmentHangarStats stats))
+                    continue;
+                baseCooldown = stats.Interval;
+                hasNumericEffect = true;
+                break;
+            }
+
+            float currentCooldown = hasNumericEffect
+                ? baseCooldown * item.GetEquipmentIntervalMultiplierForProgressionLevel(level)
+                : baseCooldown;
+            float nextCooldown = level < PlayerItemSystem.MaximumLevel && hasNumericEffect
+                ? baseCooldown *
+                    item.GetEquipmentIntervalMultiplierForProgressionLevel(level + 1)
+                : 0f;
             return new[]
             {
-                new HangarDetailAttribute("CD", item.Cd.ToString("0.##") + "s")
+                CreateEquipmentCooldownProgressionAttribute(currentCooldown, nextCooldown)
             };
+        }
+
+        private static HangarDetailAttribute CreateEquipmentCooldownProgressionAttribute(
+            float value, float next)
+        {
+            float change = next - value;
+            string addition = next > 0f && !Mathf.Approximately(change, 0f)
+                ? (change > 0f ? "+" : string.Empty) + change.ToString("0.##") + "s"
+                : string.Empty;
+            return new HangarDetailAttribute("CD", value.ToString("0.##") + "s", addition);
         }
 
         // Mirrors UICardInfo.textAttList/textAddList: current stats stay in val and only

@@ -61,8 +61,10 @@ namespace BackpackHero.Progression
                 recovery.DowngradePending
                 ? Mathf.Max(1, rawStage - 1) : rawStage;
             RankEnemyDifficultyStage stage = rank.stages[effectiveStage - 1];
+            DeckPreset deckPreset = stage.deckPresets[
+                UnityEngine.Random.Range(0, stage.deckPresets.Length)];
             profile = new EnemyMatchProfile(rank.rank, rawStage, effectiveStage,
-                stage.progressionLevel, stage.deckPreset);
+                stage.progressionLevel, deckPreset);
             return true;
         }
     }

@@ -3,6 +3,7 @@ using BackpackHero.Progression;
 using BackpackPrototype;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 
 public sealed class RankEnemyDifficultyTests
 {
@@ -49,7 +50,7 @@ public sealed class RankEnemyDifficultyTests
     }
 
     [Test]
-    public void Catalog_HasTwentyTwoFullDeckStages_WithAOneStageFinalRank()
+    public void Catalog_HasTwentyTwoStagesWithAllFiveSharedDeckCandidates()
     {
         RankEnemyDifficultyCatalog catalog = LoadCatalog();
         Assert.That(catalog.IsValid(out string error), Is.True, error);
@@ -69,59 +70,57 @@ public sealed class RankEnemyDifficultyTests
                 Assert.That(stage.progressionLevel,
                     Is.EqualTo(expectedLevels[index++]));
                 Assert.That(stage.progressionLevel, Is.InRange(1, 10));
-                Assert.That(stage.deckPreset.Slots, Has.Count.EqualTo(5));
+                Assert.That(stage.deckPresets, Has.Length.EqualTo(5));
+                foreach (DeckPreset deckPreset in stage.deckPresets)
+                    Assert.That(deckPreset.Slots, Has.Count.EqualTo(5));
             }
         }
         Assert.That(index, Is.EqualTo(expectedLevels.Length));
     }
 
     [Test]
-    public void RankOne_DoesNotUseItemsUnlockedInLaterRanks()
+    public void EveryStage_UsesAllFiveSharedDeckPresets()
     {
-        RankEnemyDifficultyRank rank = LoadCatalog().FindRank(1);
-        string[] futureItems =
+        DeckPreset[] expectedDecks =
         {
-            "aircraft_explosive", "equipment_rapid_cannon",
-            "aircraft_sniper", "equipment_wave_emitter",
-            "aircraft_laser", "equipment_laser_link",
-            "aircraft_shotgun", "equipment_first", "aircraft_l"
+            LoadDeck("DeckPreset_01"), LoadDeck("DeckPreset_02"),
+            LoadDeck("DeckPreset_03"), LoadDeck("DeckPreset_04"),
+            LoadDeck("DeckPreset_05")
         };
 
+        foreach (RankEnemyDifficultyRank rank in LoadCatalog().Ranks)
         foreach (RankEnemyDifficultyStage stage in rank.stages)
-        foreach (ItemData item in stage.deckPreset.Slots)
-        {
-            Assert.That(Array.IndexOf(futureItems, item.ItemId), Is.EqualTo(-1));
-        }
+            CollectionAssert.AreEquivalent(expectedDecks, stage.deckPresets);
     }
 
     [Test]
-    public void TwinFormation_FirstAppearsAtRankSix()
+    public void Resolver_RandomlySelectsOnlyCurrentStageCandidates()
     {
         RankEnemyDifficultyCatalog catalog = LoadCatalog();
-        for (int rankNumber = 1; rankNumber < 6; rankNumber++)
-        foreach (RankEnemyDifficultyStage stage in catalog.FindRank(rankNumber).stages)
-        foreach (ItemData item in stage.deckPreset.Slots)
+        RankEnemyDifficultyStage stage = catalog.FindRank(1).stages[0];
+        Random.State previousRandomState = Random.state;
+        try
         {
-            Assert.That(item.ItemId, Is.Not.EqualTo("aircraft_l"));
+            Random.InitState(20260903);
+            for (int attempt = 0; attempt < 50; attempt++)
+            {
+                Assert.That(RankEnemyDifficultyResolver.TryResolve(catalog, 0,
+                    1001, null, out EnemyMatchProfile profile), Is.True);
+                CollectionAssert.Contains(stage.deckPresets, profile.DeckPreset);
+                Assert.That(profile.DeckPreset.IsValid(out string error), Is.True, error);
+            }
         }
-
-        bool rankSixHasTwinFormation = false;
-        foreach (ItemData item in catalog.FindRank(6).stages[0].deckPreset.Slots)
-            rankSixHasTwinFormation |= item.ItemId == "aircraft_l";
-        Assert.That(rankSixHasTwinFormation, Is.True);
+        finally { Random.state = previousRandomState; }
     }
 
     [Test]
-    public void FinalRank_HasOneReachableLevelTenLinkFormation()
+    public void FinalRank_HasOneReachableLevelTenStageWithAllDeckCandidates()
     {
         RankEnemyDifficultyRank finalRank = LoadCatalog().FindRank(8);
 
         Assert.That(finalRank.stages, Has.Length.EqualTo(1));
         Assert.That(finalRank.stages[0].progressionLevel, Is.EqualTo(10));
-        bool hasLaserLink = false;
-        foreach (ItemData item in finalRank.stages[0].deckPreset.Slots)
-            hasLaserLink |= item.ItemId == "equipment_laser_link";
-        Assert.That(hasLaserLink, Is.True);
+        Assert.That(finalRank.stages[0].deckPresets, Has.Length.EqualTo(5));
     }
 
     private static RankEnemyDifficultyCatalog LoadCatalog()
@@ -131,4 +130,8 @@ public sealed class RankEnemyDifficultyTests
         Assert.That(catalog, Is.Not.Null);
         return catalog;
     }
+
+    private static DeckPreset LoadDeck(string deckName) =>
+        AssetDatabase.LoadAssetAtPath<DeckPreset>(
+            $"Assets/Data/Backpack/DeckPresets/{deckName}.asset");
 }

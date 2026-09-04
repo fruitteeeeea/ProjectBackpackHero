@@ -10,7 +10,7 @@ namespace BackpackHero.Progression
     {
         [Range(PlayerItemSystem.DefaultLevel, PlayerItemSystem.MaximumLevel)]
         public int progressionLevel = PlayerItemSystem.DefaultLevel;
-        public DeckPreset deckPreset;
+        public DeckPreset[] deckPresets = Array.Empty<DeckPreset>();
     }
 
     [Serializable]
@@ -68,14 +68,27 @@ namespace BackpackHero.Progression
                 {
                     RankEnemyDifficultyStage value = entry.stages[stage];
                     string deckError = null;
+                    bool hasDeckCandidates = value != null && value.deckPresets != null &&
+                        value.deckPresets.Length > 0;
+                    bool validDeckCandidates = hasDeckCandidates;
+                    if (validDeckCandidates)
+                    {
+                        foreach (DeckPreset preset in value.deckPresets)
+                        {
+                            if (preset == null || !IsFullDeck(preset, out deckError))
+                            {
+                                validDeckCandidates = false;
+                                break;
+                            }
+                        }
+                    }
                     bool validStage = value != null &&
                         value.progressionLevel >= PlayerItemSystem.DefaultLevel &&
                         value.progressionLevel <= PlayerItemSystem.MaximumLevel &&
-                        value.deckPreset != null &&
-                        IsFullDeck(value.deckPreset, out deckError);
+                        validDeckCandidates;
                     if (!validStage)
                     {
-                        error = $"段位 {rank}，阶段 {stage + 1} 无效：{deckError ?? "养成等级或卡组缺失"}";
+                        error = $"段位 {rank}，阶段 {stage + 1} 无效：{deckError ?? "养成等级或候选卡组缺失"}";
                         return false;
                     }
                 }

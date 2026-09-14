@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d4ea6a7a2a84d88a8c5704ace4a1df2, type: 3}
   m_Name: BackpackVisual
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.BackpackVisualDebugSettings
-  overridesEnabled: 1
+  overridesEnabled: 0
   dragOpacity: 0.5
   legalPreviewColor: {r: 0.95, g: 0.78, b: 0.18, a: 1}
   illegalPreviewColor: {r: 0.86, g: 0.22, b: 0.18, a: 1}

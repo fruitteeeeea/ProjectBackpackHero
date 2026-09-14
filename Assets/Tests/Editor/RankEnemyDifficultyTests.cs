@@ -4,6 +4,7 @@ using BackpackPrototype;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public sealed class RankEnemyDifficultyTests
 {

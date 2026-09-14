@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: AircraftVisual
   m_EditorClassIdentifier: Assembly-CSharp::BackpackHero.Debugging.AircraftVisualDebugSettings
   aircraftVisualOverridesEnabled: 1
-  attackScaleTween: 0
-  hitRotationShakeTween: 0
+  attackScaleTween: 1
+  hitRotationShakeTween: 1
   hitParticles: 1
   hitWhiteFlash: 1
   hitParticlesStartSpeed: 5.5
   hitParticlesTexture: {fileID: 2800000, guid: 30ca206fdcf588648943f2923b9563fe, type: 3}
   hitParticlesStartSize: 0.5
   hitParticlesBurstCount: 3
-  deathRotationTween: 0
-  deathScaleTween: 0
+  deathRotationTween: 1
+  deathScaleTween: 1
   deathExplosionParticles: 1
   deathFlashParticles: 1
   aircraftLifetimeEnabled: 0
